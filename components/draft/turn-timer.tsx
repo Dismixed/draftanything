@@ -8,6 +8,7 @@ interface TurnTimerProps {
   draftId: string;
   isMyTurn: boolean;
   myPlayerId: string;
+  serverNow: string;
 }
 
 export function TurnTimer({
@@ -16,6 +17,7 @@ export function TurnTimer({
   draftId,
   isMyTurn,
   myPlayerId,
+  serverNow,
 }: TurnTimerProps) {
   const [expired, setExpired] = useState(false);
   const [display, setDisplay] = useState<number | null>(null);
@@ -29,11 +31,15 @@ export function TurnTimer({
 
     let mounted = true;
 
+    const deadlineMs = new Date(deadline).getTime();
+    const serverNowMs = new Date(serverNow).getTime();
+    const clockOffset = Date.now() - serverNowMs;
+
     const tick = () => {
       if (!mounted) return;
-      const deadlineMs = new Date(deadline).getTime();
       const nowMs = Date.now();
-      const remaining = Math.max(0, Math.floor((deadlineMs - nowMs) / 1000));
+      const adjustedNow = nowMs - clockOffset;
+      const remaining = Math.max(0, Math.floor((deadlineMs - adjustedNow) / 1000));
 
       setDisplay(remaining);
       if (remaining <= 0) {
@@ -48,7 +54,7 @@ export function TurnTimer({
       mounted = false;
       clearInterval(interval);
     };
-  }, [deadline, timerSeconds]);
+  }, [deadline, timerSeconds, serverNow]);
 
   useEffect(() => {
     if (!deadline || !timerSeconds) {
@@ -57,12 +63,14 @@ export function TurnTimer({
     }
 
     const deadlineMs = new Date(deadline).getTime();
-    const nowMs = Date.now();
-    if (nowMs >= deadlineMs && !autoPickTriggeredRef.current && isMyTurn) {
+    const serverNowMs = new Date(serverNow).getTime();
+    const clockOffset = Date.now() - serverNowMs;
+    const adjustedNow = Date.now() - clockOffset;
+    if (adjustedNow >= deadlineMs && !autoPickTriggeredRef.current && isMyTurn) {
       autoPickTriggeredRef.current = true;
       void triggerAutoPick(draftId);
     }
-  }, [deadline, timerSeconds, draftId, isMyTurn, myPlayerId]);
+  }, [deadline, timerSeconds, serverNow, draftId, isMyTurn, myPlayerId]);
 
   if (!timerSeconds || display === null) {
     return null;

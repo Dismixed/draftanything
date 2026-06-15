@@ -1,5 +1,6 @@
 import { z } from "zod/v4";
 import { AppError } from "@/lib/errors";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { requireGuestSession } from "@/features/guest/session";
 import { getMyPlayerId } from "@/features/room/service";
 import {
@@ -67,6 +68,22 @@ export async function POST(
   try {
     const { guestId } = await requireGuestSession();
     const { draftId } = await params;
+
+    const rateResult = checkRateLimit(
+      `suggestion:${draftId}:${guestId}`,
+      30,
+      60 * 60 * 1000,
+    );
+
+    if (!rateResult.allowed) {
+      return Response.json(
+        { error: "RATE_LIMITED", message: "Too many suggestions. Try again later." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(Math.ceil(rateResult.retryAfterMs / 1000)) },
+        },
+      );
+    }
 
     const myPlayerId = await getMyPlayerId(draftId, guestId);
     if (!myPlayerId) {

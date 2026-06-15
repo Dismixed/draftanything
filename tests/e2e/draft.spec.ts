@@ -1,4 +1,11 @@
-import { test, expect, BrowserContext, Page } from "@playwright/test";
+import { test, expect, type APIRequestContext } from "@playwright/test";
+import type { BrowserContext, Page } from "@playwright/test";
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const BASE_URL = "http://127.0.0.1:3000";
 
 // ---------------------------------------------------------------------------
 // Helpers (shared with lobby.spec.ts)
@@ -49,10 +56,179 @@ async function joinRoom(page: Page, roomCode: string, displayName: string) {
 }
 
 // ---------------------------------------------------------------------------
+// API helpers (no UI required)
+// ---------------------------------------------------------------------------
+
+async function apiBootstrapGuest(ctx: APIRequestContext) {
+  const res = await ctx.post("/api/guest");
+  expect(res.ok()).toBeTruthy();
+}
+
+async function apiCreateRoom(ctx: APIRequestContext, overrides: Record<string, unknown> = {}) {
+  const res = await ctx.post("/api/drafts", {
+    data: {
+      displayName: "Host",
+      topic: "E2E Draft",
+      maxPlayers: 2,
+      rounds: 1,
+      draftType: "standard",
+      judgingMode: "ai",
+      aiPersonality: "analyst",
+      timerSeconds: 60,
+      ...overrides,
+    },
+  });
+  expect(res.ok()).toBeTruthy();
+  return res.json() as Promise<{
+    draftId: string;
+    roomCode: string;
+    hostPlayerId: string;
+    players: { id: string; seat: number }[];
+  }>;
+}
+
+async function apiStartPoolReview(ctx: APIRequestContext, draftId: string) {
+  const res = await ctx.post(`/api/drafts/${draftId}/pool`, {
+    data: { action: "start-review" },
+  });
+  expect(res.ok()).toBeTruthy();
+}
+
+async function apiAddItems(ctx: APIRequestContext, draftId: string, names: string[]) {
+  for (const name of names) {
+    const res = await ctx.post(`/api/drafts/${draftId}/pool`, {
+      data: { action: "add-item", name },
+    });
+    expect(res.ok()).toBeTruthy();
+  }
+}
+
+async function apiLockPool(ctx: APIRequestContext, draftId: string) {
+  const res = await ctx.post(`/api/drafts/${draftId}/pool`, {
+    data: { action: "lock" },
+  });
+  expect(res.ok()).toBeTruthy();
+}
+
+async function apiStartDraft(ctx: APIRequestContext, draftId: string, pickOrder: { overallPick: number; round: number; pickInRound: number; seat: number }[]) {
+  const res = await ctx.post(`/api/drafts/${draftId}/start`, {
+    data: { pickOrder },
+  });
+  expect(res.ok()).toBeTruthy();
+}
+
+async function apiGetProjection(ctx: APIRequestContext, draftId: string) {
+  const res = await ctx.get(`/api/drafts/${draftId}/projection`);
+  expect(res.ok()).toBeTruthy();
+  return res.json() as Promise<{
+    draft: {
+      id: string;
+      phase: string;
+      currentPickIndex: number;
+      pickOrder: { overallPick: number; round: number; pickInRound: number; seat: number }[];
+      turnDeadline: string | null;
+      timerSeconds: number | null;
+      rounds: number;
+    };
+    players: { id: string; displayName: string; seat: number; isHost: boolean }[];
+    availableItems: { id: string; name: string; isAvailable: boolean }[];
+    picks: { id: string; playerId: string; itemId: string; overallPick: number; round: number; pickInRound: number; isAutoPick: boolean }[];
+    serverNow: string;
+  }>;
+}
+
+async function apiPick(ctx: APIRequestContext, draftId: string, itemId: string, expectedPick: number) {
+  return ctx.post(`/api/drafts/${draftId}/pick`, {
+    data: { itemId, expectedPick },
+  });
+}
+
+async function apiAutoPick(ctx: APIRequestContext, draftId: string) {
+  return ctx.post(`/api/drafts/${draftId}/auto-pick`, {
+    data: {},
+  });
+}
+
+/**
+ * Sets up a complete 2-player draft through the pool phase.
+ * Returns the draftId and roomCode.
+ * The draft is in DRAFTING phase after lock but NOT started yet.
+ * @param guestCtx - A pre-authenticated API context for the second player.
+ */
+async function setupTwoPlayerDraft(
+  hostCtx: APIRequestContext,
+  guestCtx: APIRequestContext,
+  options: {
+    draftType?: string;
+    rounds?: number;
+    timerSeconds?: number | null;
+    itemNames?: string[];
+  } = {},
+) {
+  const {
+    draftType = "standard",
+    rounds = 1,
+    timerSeconds = 60,
+    itemNames = ["Alpha Item", "Beta Item", "Gamma Item", "Delta Item"],
+  } = options;
+
+  const room = await apiCreateRoom(hostCtx, {
+    maxPlayers: 2,
+    rounds,
+    draftType,
+    timerSeconds,
+  });
+  const { draftId, roomCode } = room;
+
+  const joinRes = await guestCtx.post(`/api/drafts/by-code/${roomCode}/join`, {
+    data: { displayName: "Guest" },
+  });
+  expect(joinRes.ok()).toBeTruthy();
+
+  // Pool flow
+  await apiStartPoolReview(hostCtx, draftId);
+  await apiAddItems(hostCtx, draftId, itemNames);
+  await apiLockPool(hostCtx, draftId);
+
+  return { draftId, roomCode };
+}
+
+/**
+ * Sets up a 1-player draft (host only) through the pool phase.
+ * Room is set to 2 max players to allow proper pick order validation.
+ * The draft is in DRAFTING phase after lock but NOT started yet.
+ */
+async function setupSinglePlayerDraft(
+  ctx: APIRequestContext,
+  options: {
+    timerSeconds?: number | null;
+    itemNames?: string[];
+  } = {},
+) {
+  const {
+    timerSeconds = 60,
+    itemNames = ["Alpha Item", "Beta Item", "Gamma Item", "Delta Item"],
+  } = options;
+
+  const room = await apiCreateRoom(ctx, {
+    maxPlayers: 2,
+    rounds: 1,
+    timerSeconds,
+  });
+  const { draftId } = room;
+
+  await apiStartPoolReview(ctx, draftId);
+  await apiAddItems(ctx, draftId, itemNames);
+  await apiLockPool(ctx, draftId);
+
+  return { draftId };
+}
+
+// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
-test.describe("Draft flow", () => {
+test.describe("Draft flow (UI)", () => {
   let hostContext: BrowserContext;
   let guestContext: BrowserContext;
   let hostPage: Page;
@@ -95,7 +271,9 @@ test.describe("Draft flow", () => {
     // Host generates AI items (or adds items manually)
     // For simplicity, we'll test via the API directly for the draft phase
   });
+});
 
+test.describe("Draft flow (API)", () => {
   test("pick and auto-pick via API", async ({ request }) => {
     // Create a draft via API directly and test the pick/auto-pick RPCs
     // This tests the business logic without going through the full UI
@@ -126,18 +304,8 @@ test.describe("Draft flow", () => {
     });
     expect(reviewRes.ok()).toBeTruthy();
 
-    // Generate AI items or add items manually
-    const addRes = await request.post(`/api/drafts/${draftId}/pool`, {
-      data: {
-        action: "generate",
-        topic: "API Draft Test",
-        targetCount: 4,
-        existingItems: [],
-      },
-    });
-    expect(addRes.ok()).toBeTruthy();
-    const pool = await addRes.json();
-    expect(pool.items.length).toBeGreaterThanOrEqual(2);
+    // Add items manually (avoids external AI dependency)
+    await apiAddItems(request, draftId, ["Alpha Item", "Beta Item", "Gamma Item", "Delta Item"]);
 
     // Lock the pool
     const lockRes = await request.post(`/api/drafts/${draftId}/pool`, {
@@ -200,5 +368,215 @@ test.describe("Draft flow", () => {
     });
     // Should fail since timer hasn't expired
     expect(autoRes.ok()).toBeFalsy();
+  });
+
+  // -----------------------------------------------------------------------
+  // Snake direction reversal
+  // -----------------------------------------------------------------------
+
+  test("snake direction reversal via API", async ({ request, playwright }) => {
+    const guestCtx = await playwright.request.newContext({ baseURL: BASE_URL });
+    await apiBootstrapGuest(guestCtx);
+    const { draftId } = await setupTwoPlayerDraft(request, guestCtx, {
+      draftType: "snake",
+      rounds: 2,
+      timerSeconds: null,
+    });
+
+    // Build snake pick order: 2 players, 2 rounds
+    // Round 1: seat 1, seat 2
+    // Round 2: seat 2, seat 1
+    const pickOrder = [
+      { overallPick: 1, round: 1, pickInRound: 1, seat: 1 },
+      { overallPick: 2, round: 1, pickInRound: 2, seat: 2 },
+      { overallPick: 3, round: 2, pickInRound: 1, seat: 2 },
+      { overallPick: 4, round: 2, pickInRound: 2, seat: 1 },
+    ];
+
+    await apiStartDraft(request, draftId, pickOrder);
+    const proj = await apiGetProjection(request, draftId);
+    const avail = proj.availableItems.filter((i) => i.isAvailable);
+
+    // Host picks (seat 1, round 1)
+    const pick1 = await apiPick(request, draftId, avail[0].id, 0);
+    expect(pick1.ok()).toBeTruthy();
+
+    // Guest picks (seat 2, round 1)
+    const pick2 = await apiPick(guestCtx, draftId, avail[1].id, 1);
+    expect(pick2.ok()).toBeTruthy();
+
+    // After 2 picks, round 1 is done. In snake, round 2 starts with seat 2.
+    const proj2 = await apiGetProjection(request, draftId);
+    expect(proj2.draft.currentPickIndex).toBe(2);
+    const slot3 = proj2.draft.pickOrder[2];
+    expect(slot3.round).toBe(2);
+    // Snake reverses: seat 2 picks first in round 2
+    expect(slot3.seat).toBe(2);
+
+    // Guest picks (seat 2, round 2, pick 1)
+    const avail2 = proj2.availableItems.filter((i) => i.isAvailable);
+    const pick3 = await apiPick(guestCtx, draftId, avail2[0].id, 2);
+    expect(pick3.ok()).toBeTruthy();
+
+    // Host picks (seat 1, round 2, pick 2) — final pick
+    const proj3 = await apiGetProjection(request, draftId);
+    const avail3 = proj3.availableItems.filter((i) => i.isAvailable);
+    const pick4 = await apiPick(request, draftId, avail3[0].id, 3);
+    expect(pick4.ok()).toBeTruthy();
+
+    // Verify draft transitions to DEFENSE
+    const finalProj = await apiGetProjection(request, draftId);
+    expect(finalProj.draft.phase).toBe("DEFENSE");
+  });
+
+  // -----------------------------------------------------------------------
+  // Same-item contention
+  // -----------------------------------------------------------------------
+
+  test("same-item contention via API", async ({ request, playwright }) => {
+    const guestCtx = await playwright.request.newContext({ baseURL: BASE_URL });
+    await apiBootstrapGuest(guestCtx);
+    const { draftId } = await setupTwoPlayerDraft(request, guestCtx, {
+      timerSeconds: null,
+    });
+
+    // Standard pick order: 2 players, 1 round
+    const pickOrder = [
+      { overallPick: 1, round: 1, pickInRound: 1, seat: 1 },
+      { overallPick: 2, round: 1, pickInRound: 2, seat: 2 },
+    ];
+
+    await apiStartDraft(request, draftId, pickOrder);
+    const proj = await apiGetProjection(request, draftId);
+    const avail = proj.availableItems.filter((i) => i.isAvailable);
+
+    // Host picks first available item
+    const pick1 = await apiPick(request, draftId, avail[0].id, 0);
+    expect(pick1.ok()).toBeTruthy();
+
+    // Guest tries to pick the same item — should fail (ITEM_UNAVAILABLE)
+    const pick2 = await apiPick(guestCtx, draftId, avail[0].id, 1);
+    expect(pick2.ok()).toBeFalsy();
+    const err2 = await pick2.json();
+    expect(err2.error).toBe("INVALID_INPUT");
+    expect(err2.message).toContain("unavailable");
+
+    // Guest picks a different item instead — should succeed
+    const pick3 = await apiPick(guestCtx, draftId, avail[1].id, 1);
+    expect(pick3.ok()).toBeTruthy();
+  });
+
+  // -----------------------------------------------------------------------
+  // Stale client recovery (dedicated test)
+  // -----------------------------------------------------------------------
+
+  test("stale client recovery via API", async ({ request }) => {
+    const { draftId } = await setupSinglePlayerDraft(request, {
+      timerSeconds: null,
+    });
+
+    const pickOrder = [
+      { overallPick: 1, round: 1, pickInRound: 1, seat: 1 },
+      { overallPick: 2, round: 1, pickInRound: 2, seat: 2 },
+    ];
+
+    await apiStartDraft(request, draftId, pickOrder);
+    const proj = await apiGetProjection(request, draftId);
+    const avail = proj.availableItems.filter((i) => i.isAvailable);
+
+    // Make a valid pick to advance the pick index
+    const pick1 = await apiPick(request, draftId, avail[0].id, 0);
+    expect(pick1.ok()).toBeTruthy();
+
+    // Submit with stale expectedPick
+    const stale = await apiPick(request, draftId, avail[1].id, 0);
+    expect(stale.status()).toBe(409);
+    const staleErr = await stale.json();
+    expect(staleErr.error).toBe("STALE_STATE");
+  });
+
+  // -----------------------------------------------------------------------
+  // Timer auto-pick on expiration
+  // -----------------------------------------------------------------------
+
+  test("timer auto-pick on expiration via API", async ({ request }) => {
+    test.setTimeout(60000);
+
+    // Use minimum timer (15s) to minimize wait time
+    const { draftId } = await setupSinglePlayerDraft(request, {
+      timerSeconds: 15,
+    });
+
+    // Pick order — seat 1's turn is the one that will auto-pick
+    const pickOrder = [
+      { overallPick: 1, round: 1, pickInRound: 1, seat: 1 },
+      { overallPick: 2, round: 1, pickInRound: 2, seat: 2 },
+    ];
+
+    await apiStartDraft(request, draftId, pickOrder);
+
+    // Verify timer is running
+    const proj = await apiGetProjection(request, draftId);
+    expect(proj.draft.turnDeadline).not.toBeNull();
+    expect(proj.draft.currentPickIndex).toBe(0);
+
+    // Auto-pick should fail before timer expires
+    const earlyAuto = await apiAutoPick(request, draftId);
+    expect(earlyAuto.ok()).toBeFalsy();
+
+    // Wait for the timer to expire (15s timer + buffer)
+    await new Promise((resolve) => setTimeout(resolve, 17000));
+
+    // Auto-pick should succeed now
+    const autoRes = await apiAutoPick(request, draftId);
+    expect(autoRes.ok()).toBeTruthy();
+    const autoResult = await autoRes.json();
+    expect(autoResult.o_current_pick_index).toBe(1);
+    expect(autoResult.o_phase).toBe("DRAFTING");
+  });
+
+  // -----------------------------------------------------------------------
+  // Final → DEFENSE transition
+  // -----------------------------------------------------------------------
+
+  test("final pick transitions to defense phase via API", async ({ request, playwright }) => {
+    const guestCtx = await playwright.request.newContext({ baseURL: BASE_URL });
+    await apiBootstrapGuest(guestCtx);
+    const { draftId } = await setupTwoPlayerDraft(request, guestCtx, {
+      timerSeconds: null,
+    });
+
+    // 2 players, 1 round = 2 picks total
+    const pickOrder = [
+      { overallPick: 1, round: 1, pickInRound: 1, seat: 1 },
+      { overallPick: 2, round: 1, pickInRound: 2, seat: 2 },
+    ];
+
+    await apiStartDraft(request, draftId, pickOrder);
+    const proj = await apiGetProjection(request, draftId);
+    expect(proj.draft.phase).toBe("DRAFTING");
+    expect(proj.draft.currentPickIndex).toBe(0);
+
+    const avail = proj.availableItems.filter((i) => i.isAvailable);
+
+    // First pick (seat 1)
+    const pick1 = await apiPick(request, draftId, avail[0].id, 0);
+    expect(pick1.ok()).toBeTruthy();
+    const res1 = await pick1.json();
+    expect(res1.o_current_pick_index).toBe(1);
+    expect(res1.o_phase).toBe("DRAFTING");
+
+    // Second pick (seat 2) — this is the final pick
+    const pick2 = await apiPick(guestCtx, draftId, avail[1].id, 1);
+    expect(pick2.ok()).toBeTruthy();
+    const res2 = await pick2.json();
+    expect(res2.o_current_pick_index).toBe(2);
+    expect(res2.o_phase).toBe("DEFENSE");
+    expect(res2.o_turn_deadline).toBeNull();
+
+    // Verify projection shows DEFENSE
+    const finalProj = await apiGetProjection(request, draftId);
+    expect(finalProj.draft.phase).toBe("DEFENSE");
+    expect(finalProj.draft.currentPickIndex).toBe(2);
   });
 });

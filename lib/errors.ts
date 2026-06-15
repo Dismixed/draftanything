@@ -7,7 +7,8 @@ export type ApiErrorCode =
   | "INVALID_PHASE"
   | "STALE_STATE"
   | "RATE_LIMITED"
-  | "UNAUTHORIZED";
+  | "UNAUTHORIZED"
+  | "INSUFFICIENT_ITEMS";
 
 export class AppError extends Error {
   constructor(

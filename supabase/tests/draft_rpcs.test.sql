@@ -295,56 +295,7 @@ values
   ('30000000-0000-0000-0000-000000000005', '10000000-0000-0000-0000-000000000001', 'Item Epsilon', 'item epsilon', 'ai'),
   ('30000000-0000-0000-0000-000000000006', '10000000-0000-0000-0000-000000000001', 'Item Zeta', 'item zeta', 'ai');
 
--- Pick 4: Player3 already went this round, now it's round 2, pickInRound 1, seat 3
--- Wait let me check the pick order:
--- pick 0 (ci=0): round 1, piR 1, seat 1 ✓
--- pick 1 (ci=1): round 1, piR 2, seat 2 ✓
--- pick 2 (ci=2): round 1, piR 3, seat 3 ✓
--- pick 3 (ci=3): round 2, piR 1, seat 3 ← current (Player3)
--- pick 4 (ci=4): round 2, piR 2, seat 2
--- pick 5 (ci=5): round 2, piR 3, seat 1
-
--- Actually wait, Player3 already went (ci=3). Let me think again.
--- ci=2: seat 3 (Player3), they picked Item Gamma ✓
--- ci=3: seat 3 (Player3) - this doesn't make sense, should be seat 2 for snake reversal...
-
--- Wait, let me re-check the pick_order:
--- Snake with 3 players, 2 rounds:
--- Round 1: seats 1, 2, 3 (ascending)
--- Round 2: seats 3, 2, 1 (descending/snake)
--- So pick_order is:
--- 0: seat 1, round 1, piR 1 - Host ✓
--- 1: seat 2, round 1, piR 2 - Player2 ✓
--- 2: seat 3, round 1, piR 3 - Player3 ✓
--- 3: seat 3, round 2, piR 1 - Player3 (first pick of round 2)
--- 4: seat 2, round 2, piR 2 - Player2
--- 5: seat 1, round 2, piR 3 - Host
-
--- OK so ci=3 is seat 3 (Player3), which they already took. ci=4 is seat 2 (Player2). ci=5 is seat 1 (Host).
-
--- But wait, current_pick_index is 3 now (after three picks). The next pick (ci=3) should be by seat 3 (Player3).
--- Player3 already picked Item Gamma. But we need to make the fourth pick (ci=3 - seat 3).
-
--- Let me check: ci=3 is the 4th pick (index 3, 0-indexed). The current player is seat 3 (Player3).
-
--- So ci=3 hasn't been made yet - we just set up the state. Let me verify:
--- ci=0 → seat 1 picked ✓
--- ci=1 → seat 2 picked ✓  
--- ci=2 → seat 3 picked ✓
--- ci=3 → seat 3 should pick now ✓ (current)
-
--- Yes, ci=3 is the current turn. Player3 (seat 3) needs to pick.
-
--- Actually wait, I think there's a problem with my understanding. Let me re-check.
-
--- The submit_pick already incremented ci to 3 after the third pick (ci=2).
--- So ci=3 means: "the 4th pick (0-indexed: 3) is the next pick to be made".
--- The pick_order at index 3: {seat: 3, round: 2, pickInRound: 1, overallPick: 4}
-
--- So ci=3 is the current pick to be made. Player3 (seat 3) should pick next.
--- That's the current state. Good.
-
--- ci=3: Player3 picks Item Delta
+-- ci=3 (current): seat 3 (round 2, pickInRound 1) → Player3 picks Item Delta
 select lives_ok(
   $$
     select public.submit_pick(

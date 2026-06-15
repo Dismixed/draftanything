@@ -3,7 +3,7 @@ import { AppError } from "@/lib/errors";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { requireGuestSession } from "@/features/guest/session";
 import { getMyPlayerId } from "@/features/room/service";
-import { generatePool } from "@/features/ai/client";
+import { generatePool } from "@/features/ai/pool";
 
 
 const GENERATE_RATE_LIMIT_MAX = 10;

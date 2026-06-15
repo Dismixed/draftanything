@@ -3,6 +3,7 @@ import { AppError } from "@/lib/errors";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { requireGuestSession } from "@/features/guest/session";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { handleCommentaryForPick } from "@/features/ai/commentary";
 
 const pickSchema = z.object({
   itemId: z.string().uuid(),
@@ -79,6 +80,10 @@ export async function POST(
     }
 
     const result = Array.isArray(data) ? data[0] : data;
+
+    // Fire-and-forget commentary — pick response never waits for this
+    void handleCommentaryForPick(draftId);
+
     return Response.json(result ?? { success: true });
   } catch (e) {
     if (e instanceof AppError) {

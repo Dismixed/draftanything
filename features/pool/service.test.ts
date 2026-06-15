@@ -4,7 +4,7 @@ vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(),
 }));
 
-vi.mock("@/features/ai/client", () => ({
+vi.mock("@/features/ai/pool", () => ({
   generatePool: vi.fn(),
 }));
 

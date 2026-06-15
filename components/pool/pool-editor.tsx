@@ -108,7 +108,7 @@ export function PoolEditor({ pool, draftId, isHost, search, onPoolChange }: Pool
               )}
 
               <span className="text-xs text-gray-400">
-                {Object.keys(item.metadata).length} stats
+                {item.metadata.categories} stats
               </span>
 
               {isHost && editingId !== item.id && (

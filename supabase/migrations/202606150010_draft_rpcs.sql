@@ -275,6 +275,7 @@ begin
         'DRAFTING'::text as o_phase,
         v_draft.turn_deadline as o_turn_deadline;
     end if;
+    return;
   end if;
 
   -- Pick first available item (alphabetically for determinism)

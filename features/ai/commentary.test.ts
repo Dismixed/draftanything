@@ -1,5 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
-import { z } from "zod/v4";
+import { describe, expect, it } from "vitest";
 import { buildCommentaryPrompt } from "./prompts/commentary";
 import { commentaryOutputSchema, COMMENTARY_PROMPT_VERSION } from "./commentary";
 

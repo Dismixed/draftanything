@@ -3,7 +3,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { AppError } from "@/lib/errors";
 import { normalizeItemName } from "./normalize";
-import { generatePool } from "@/features/ai/client";
+import { generatePool } from "@/features/ai/pool";
 import type { GeneratePoolInput } from "@/features/ai/schemas";
 
 export interface PoolItem {
@@ -12,7 +12,7 @@ export interface PoolItem {
   normalizedName: string;
   source: "ai" | "manual";
   isAvailable: boolean;
-  metadata: Record<string, number>;
+  metadata: { categories: number };
 }
 
 export interface PoolProjection {
@@ -97,7 +97,7 @@ export async function getPool(draftId: string): Promise<PoolProjection> {
       normalizedName: item.normalized_name,
       source: item.source as "ai" | "manual",
       isAvailable: item.is_available,
-      metadata: item.hidden_metadata as Record<string, number>,
+      metadata: { categories: Object.keys(item.hidden_metadata ?? {}).length },
     })),
   };
 }
@@ -117,6 +117,11 @@ export async function generateAndAddPoolItems(
     existingItems: input.existingItems,
   };
 
+  const { count: existingItemCount } = await db
+    .from("draft_items")
+    .select("*", { count: "exact", head: true })
+    .eq("draft_id", draftId);
+
   const poolResult = await generatePool(generationInput);
 
   const { data: draft } = await db
@@ -128,7 +133,12 @@ export async function generateAndAddPoolItems(
   const rubric = poolResult.rubric;
 
   if (draft) {
-    await db.from("drafts").update({ rubric }).eq("id", draftId);
+    const existingRubric = (draft.rubric ?? {}) as Record<string, number>;
+    const mergedRubric =
+      existingItemCount && existingItemCount > 0
+        ? { ...rubric, ...existingRubric }
+        : rubric;
+    await db.from("drafts").update({ rubric: mergedRubric }).eq("id", draftId);
   }
 
   const normalizedNames = new Set<string>();
@@ -258,12 +268,12 @@ export async function submitSuggestion(
 
   if (action === "add") {
     if (!payload.suggestedName) throw new AppError("INVALID_INPUT", "suggestedName is required for add suggestions");
-    normalizeItemName(payload.suggestedName);
+    const normalized = normalizeItemName(payload.suggestedName);
     const { error } = await db.from("pool_suggestions").insert({
       draft_id: draftId,
       player_id: playerId,
       action: "add",
-      suggested_name: payload.suggestedName,
+      suggested_name: normalized,
     });
     if (error) throw new AppError("INVALID_INPUT", error.message);
   } else {
@@ -315,7 +325,6 @@ export async function acceptSuggestion(
     .single();
 
   if (!suggestion) throw new AppError("INVALID_INPUT", "Suggestion not found");
-  if (suggestion.status !== "pending") throw new AppError("INVALID_INPUT", "Suggestion is already resolved");
 
   const now = new Date().toISOString();
 
@@ -344,10 +353,15 @@ export async function acceptSuggestion(
 
     if (insertError) {
       if (insertError.message?.includes("unique") || insertError.message?.includes("duplicate")) {
-        await db
+        const { data: rejected } = await db
           .from("pool_suggestions")
           .update({ status: "rejected", decided_at: now })
-          .eq("id", suggestionId);
+          .eq("id", suggestionId)
+          .eq("status", "pending")
+          .select();
+        if (!rejected || rejected.length === 0) {
+          throw new AppError("INVALID_INPUT", "Suggestion was already resolved");
+        }
         throw new AppError("NAME_TAKEN", "Suggested item already exists in the pool");
       }
       throw new AppError("INVALID_INPUT", insertError.message);
@@ -362,10 +376,16 @@ export async function acceptSuggestion(
     if (deleteError) throw new AppError("INVALID_INPUT", deleteError.message);
   }
 
-  await db
+  const { data: accepted } = await db
     .from("pool_suggestions")
     .update({ status: "accepted", decided_at: now })
-    .eq("id", suggestionId);
+    .eq("id", suggestionId)
+    .eq("status", "pending")
+    .select();
+
+  if (!accepted || accepted.length === 0) {
+    throw new AppError("INVALID_INPUT", "Suggestion was already resolved");
+  }
 
   return getPool(draftId);
 }

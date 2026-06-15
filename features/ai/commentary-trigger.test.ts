@@ -8,8 +8,6 @@ const lowItem: Record<string, number> = { quality: 2, speed: 1, style: 1 };
 
 const midItem: Record<string, number> = { quality: 5, speed: 5, style: 5 };
 
-const highItem: Record<string, number> = { quality: 9, speed: 9, style: 9 };
-
 const allItems = [
   { quality: 9, speed: 9, style: 9 },
   { quality: 8, speed: 8, style: 8 },

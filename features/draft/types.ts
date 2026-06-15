@@ -65,6 +65,7 @@ export interface SafeCommentary {
   pickId: string | null;
   personality: string;
   text: string;
+  triggerTags: string[];
 }
 
 export interface DraftRoomProjection {

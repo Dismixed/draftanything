@@ -20,6 +20,10 @@ vi.mock("openai/helpers/zod", () => ({
   zodTextFormat: vi.fn(() => ({ type: "json_schema" as const, name: "test", schema: {} })),
 }));
 
+vi.mock("./pool", () => ({
+  generatePool: vi.fn(),
+}));
+
 describe("generatePoolInputSchema", () => {
   it("accepts valid input", () => {
     const result = generatePoolInputSchema.safeParse({
@@ -118,5 +122,27 @@ describe("duplicate detection in schema", () => {
   it("detects case-insensitive duplicates", () => {
     const result = poolOutputSchema.safeParse(poolWithDuplicates);
     expect(result.success).toBe(false);
+  });
+});
+
+describe("generatePool contract tests", () => {
+  it("propagates timeout errors to callers", async () => {
+    const { generatePool } = await import("./pool");
+    vi.mocked(generatePool).mockRejectedValue(
+      new DOMException("The operation was aborted", "AbortError"),
+    );
+    await expect(
+      generatePool({ topic: "test", targetCount: 5, existingItems: [] }),
+    ).rejects.toThrow(/aborted/i);
+  });
+
+  it("propagates schema validation errors when AI returns invalid data", async () => {
+    const { generatePool } = await import("./pool");
+    vi.mocked(generatePool).mockRejectedValue(
+      new Error("AI response failed validation"),
+    );
+    await expect(
+      generatePool({ topic: "test", targetCount: 5, existingItems: [] }),
+    ).rejects.toThrow(/validation/i);
   });
 });

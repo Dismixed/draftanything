@@ -1,5 +1,3 @@
-import type { CommentaryTag } from "../commentary-trigger";
-
 export interface BuildCommentaryPromptInput {
   personality: string;
   playerName: string;

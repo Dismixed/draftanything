@@ -81,6 +81,7 @@ export function buildProjection(
     pickId: (c.pick_id as string | null) ?? null,
     personality: c.personality as string,
     text: c.text as string,
+    triggerTags: (c.trigger_tags as string[]) ?? [],
   }));
 
   return {
@@ -121,10 +122,10 @@ export async function getDraftRoomProjection(
   if (draftError || !draft) {
     throw new AppError("ROOM_NOT_FOUND", "Draft not found");
   }
-  if (playersError) throw new AppError("INVALID_INPUT", playersError.message);
-  if (itemsError) throw new AppError("INVALID_INPUT", itemsError.message);
-  if (picksError) throw new AppError("INVALID_INPUT", picksError.message);
-  if (commentaryError) throw new AppError("INVALID_INPUT", commentaryError.message);
+  if (playersError) throw new Error("Failed to fetch draft players");
+  if (itemsError) throw new Error("Failed to fetch draft items");
+  if (picksError) throw new Error("Failed to fetch draft picks");
+  if (commentaryError) throw new Error("Failed to fetch draft commentary");
 
   const serverNowRaw = nowResult as unknown;
   const serverNow = Array.isArray(serverNowRaw)
