@@ -133,8 +133,22 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
 
   async function handleStart() {
     if (!canStart) return;
-    // Task 6+ will implement the start action
-    alert("Start draft — to be implemented in Task 6");
+    try {
+      const res = await fetch(`/api/drafts/${room.draftId}/pool`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "start-review" }),
+      });
+      if (res.ok) {
+        const updated: RoomProjection = await res.json();
+        setRoom(updated);
+      } else {
+        const err = await res.json();
+        console.error("Failed to start pool review:", err.message);
+      }
+    } catch {
+      console.error("Failed to start pool review");
+    }
   }
 
   const statusDot: Record<ConnectionStatus, string> = {

@@ -1182,6 +1182,20 @@ export type Database = {
           draft_id: string
         }[]
       }
+      start_pool_review: {
+        Args: {
+          p_draft_id: string
+          p_guest_id: string
+        }
+        Returns: Record<string, unknown>[]
+      }
+      lock_pool: {
+        Args: {
+          p_draft_id: string
+          p_guest_id: string
+        }
+        Returns: Record<string, unknown>[]
+      }
     }
     Enums: {
       ai_personality: "analyst" | "hype" | "roast"
