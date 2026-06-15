@@ -2,15 +2,14 @@ export type DraftType = "standard" | "snake" | "random";
 
 export type JudgingMode = "ai" | "community" | "hybrid";
 
-export enum DraftPhase {
-  LOBBY = "LOBBY",
-  POOL_REVIEW = "POOL_REVIEW",
-  DRAFTING = "DRAFTING",
-  DEFENSE = "DEFENSE",
-  VOTING = "VOTING",
-  JUDGING = "JUDGING",
-  COMPLETE = "COMPLETE",
-}
+export type DraftPhase =
+  | "LOBBY"
+  | "POOL_REVIEW"
+  | "DRAFTING"
+  | "DEFENSE"
+  | "VOTING"
+  | "JUDGING"
+  | "COMPLETE";
 
 export interface PickSlot {
   overallPick: number;

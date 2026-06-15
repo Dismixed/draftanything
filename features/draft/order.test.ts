@@ -1,8 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import { buildPickOrder, seededRandom } from "./order";
+import type { DraftPhase } from "./types";
+
+const lobbyPhase: DraftPhase = "LOBBY";
 
 describe("buildPickOrder", () => {
+  it("accepts raw draft phase values", () => {
+    expect(lobbyPhase).toBe("LOBBY");
+  });
+
   it.each([
     [1, 1],
     [7, 1],
