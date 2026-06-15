@@ -66,6 +66,33 @@ export interface SafeCommentary {
   personality: string;
   text: string;
   triggerTags: string[];
+  createdAt: string;
+}
+
+export interface SafeDefense {
+  id: string;
+  playerId: string;
+  defenseText: string | null;
+  skipped: boolean;
+  submittedAt: string;
+}
+
+export interface SafeVote {
+  id: string;
+  voterPlayerId: string;
+  selectedPlayerId: string;
+}
+
+export interface SafeJudgment {
+  id: string;
+  source: "ai" | "fallback";
+  playerScores: Record<string, number>;
+  ranking: string[];
+  winnerPlayerIds: string[];
+  awards: Record<string, unknown>;
+  explanation: string;
+  model: string | null;
+  createdAt: string;
 }
 
 export interface DraftRoomProjection {
@@ -74,5 +101,8 @@ export interface DraftRoomProjection {
   availableItems: SafeItem[];
   picks: SafePick[];
   commentary: SafeCommentary[];
+  defenses: SafeDefense[];
+  votes: SafeVote[];
+  judgment: SafeJudgment | null;
   serverNow: string;
 }

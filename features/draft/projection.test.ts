@@ -110,6 +110,9 @@ describe("buildProjection", () => {
       itemRows as unknown as Record<string, unknown>[],
       pickRows as unknown as Record<string, unknown>[],
       commentaryRows as unknown as Record<string, unknown>[],
+      [],
+      [],
+      null,
       serverNow,
     );
 
@@ -118,6 +121,9 @@ describe("buildProjection", () => {
     expect(result).toHaveProperty("availableItems");
     expect(result).toHaveProperty("picks");
     expect(result).toHaveProperty("commentary");
+    expect(result).toHaveProperty("defenses");
+    expect(result).toHaveProperty("votes");
+    expect(result).toHaveProperty("judgment");
     expect(result).toHaveProperty("serverNow");
   });
 
@@ -128,6 +134,9 @@ describe("buildProjection", () => {
       [],
       [],
       [],
+      [],
+      [],
+      null,
       serverNow,
     );
 
@@ -149,6 +158,9 @@ describe("buildProjection", () => {
       [],
       [],
       [],
+      [],
+      [],
+      null,
       serverNow,
     );
 
@@ -166,6 +178,9 @@ describe("buildProjection", () => {
       itemRows as unknown as Record<string, unknown>[],
       [],
       [],
+      [],
+      [],
+      null,
       serverNow,
     );
 
@@ -183,6 +198,9 @@ describe("buildProjection", () => {
       itemRows as unknown as Record<string, unknown>[],
       pickRows as unknown as Record<string, unknown>[],
       [],
+      [],
+      [],
+      null,
       serverNow,
     );
 
@@ -199,6 +217,9 @@ describe("buildProjection", () => {
       [],
       pickRows as unknown as Record<string, unknown>[],
       commentaryRows as unknown as Record<string, unknown>[],
+      [],
+      [],
+      null,
       serverNow,
     );
 
@@ -214,6 +235,9 @@ describe("buildProjection", () => {
       [],
       [],
       [],
+      [],
+      [],
+      null,
       serverNow,
     );
 
@@ -233,6 +257,9 @@ describe("buildProjection", () => {
       [],
       [],
       [],
+      [],
+      [],
+      null,
       serverNow,
     );
 
@@ -260,6 +287,9 @@ describe("buildProjection", () => {
       [],
       [],
       [],
+      [],
+      [],
+      null,
       serverNow,
     );
 
@@ -274,6 +304,9 @@ describe("buildProjection", () => {
       [],
       [],
       [],
+      [],
+      [],
+      null,
       serverNow,
     );
 

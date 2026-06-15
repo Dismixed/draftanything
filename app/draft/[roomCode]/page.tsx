@@ -6,6 +6,8 @@ import { getDraftRoomProjection } from "@/features/draft/projection";
 import { Lobby } from "@/components/lobby/lobby";
 import { PoolReview } from "@/components/pool/pool-review";
 import { DraftBoard } from "@/components/draft/draft-board";
+import { DefensePanel } from "@/components/draft/defense-panel";
+import { VotingPanel } from "@/components/draft/voting-panel";
 
 interface DraftLobbyPageProps {
   params: Promise<{ roomCode: string }>;
@@ -55,8 +57,60 @@ export default async function DraftLobbyPage({ params }: DraftLobbyPageProps) {
         />
       );
     case "DRAFTING":
-    case "DEFENSE": {
+    case "DEFENSE":
+    case "VOTING":
+    case "JUDGING": {
       const projection = await getDraftRoomProjection(room.draftId);
+
+      if (room.phase === "DEFENSE") {
+        return (
+          <div className="min-h-screen bg-gray-50 p-4">
+            <div className="max-w-2xl mx-auto space-y-4">
+              <DefensePanel projection={projection} myPlayerId={myPlayerId} />
+              <DraftBoard
+                initial={projection}
+                myPlayerId={myPlayerId}
+              />
+            </div>
+          </div>
+        );
+      }
+
+      if (room.phase === "VOTING") {
+        return (
+          <div className="min-h-screen bg-gray-50 p-4">
+            <div className="max-w-2xl mx-auto space-y-4">
+              <VotingPanel projection={projection} myPlayerId={myPlayerId} />
+              <DraftBoard
+                initial={projection}
+                myPlayerId={myPlayerId}
+              />
+            </div>
+          </div>
+        );
+      }
+
+      if (room.phase === "JUDGING") {
+        return (
+          <div className="min-h-screen bg-gray-50 p-4">
+            <div className="max-w-2xl mx-auto space-y-4">
+              <div className="bg-white rounded-xl border p-4">
+                <h2 className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-3">
+                  Judging in Progress
+                </h2>
+                <p className="text-sm text-gray-600">
+                  The AI commissioner is evaluating rosters. Results will appear shortly.
+                </p>
+              </div>
+              <DraftBoard
+                initial={projection}
+                myPlayerId={myPlayerId}
+              />
+            </div>
+          </div>
+        );
+      }
+
       return (
         <DraftBoard
           initial={projection}

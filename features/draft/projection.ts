@@ -9,6 +9,9 @@ import type {
   SafeItem,
   SafePick,
   SafeCommentary,
+  SafeDefense,
+  SafeVote,
+  SafeJudgment,
   DraftPhase,
   PickSlot,
 } from "./types";
@@ -19,6 +22,9 @@ export function buildProjection(
   items: Record<string, unknown>[],
   picks: Record<string, unknown>[],
   commentary: Record<string, unknown>[],
+  defenses: Record<string, unknown>[],
+  votes: Record<string, unknown>[],
+  judgment: Record<string, unknown> | null,
   serverNow: string,
 ): DraftRoomProjection {
   const pickOrder = (draft.pick_order as unknown[]) ?? [];
@@ -82,7 +88,36 @@ export function buildProjection(
     personality: c.personality as string,
     text: c.text as string,
     triggerTags: (c.trigger_tags as string[]) ?? [],
+    createdAt: c.created_at as string,
   }));
+
+  const safeDefenses: SafeDefense[] = (defenses ?? []).map((d) => ({
+    id: d.id as string,
+    playerId: d.player_id as string,
+    defenseText: (d.defense_text as string | null) ?? null,
+    skipped: d.skipped as boolean,
+    submittedAt: d.submitted_at as string,
+  }));
+
+  const safeVotes: SafeVote[] = (votes ?? []).map((v) => ({
+    id: v.id as string,
+    voterPlayerId: v.voter_player_id as string,
+    selectedPlayerId: v.selected_player_id as string,
+  }));
+
+  const safeJudgment: SafeJudgment | null = judgment
+    ? {
+        id: judgment.id as string,
+        source: judgment.source as "ai" | "fallback",
+        playerScores: judgment.player_scores as Record<string, number>,
+        ranking: judgment.ranking as string[],
+        winnerPlayerIds: judgment.winner_player_ids as string[],
+        awards: judgment.awards as Record<string, unknown>,
+        explanation: judgment.explanation as string,
+        model: (judgment.model as string | null) ?? null,
+        createdAt: judgment.created_at as string,
+      }
+    : null;
 
   return {
     draft: safeDraft,
@@ -90,6 +125,9 @@ export function buildProjection(
     availableItems: safeItems,
     picks: safePicks,
     commentary: safeCommentary,
+    defenses: safeDefenses,
+    votes: safeVotes,
+    judgment: safeJudgment,
     serverNow,
   };
 }
@@ -105,6 +143,9 @@ export async function getDraftRoomProjection(
     { data: items, error: itemsError },
     { data: picks, error: picksError },
     { data: commentary, error: commentaryError },
+    { data: defenses, error: defensesError },
+    { data: votes, error: votesError },
+    { data: judgment, error: judgmentError },
     { data: nowResult },
   ] = await Promise.all([
     db.from("drafts").select("*").eq("id", draftId).single(),
@@ -116,6 +157,9 @@ export async function getDraftRoomProjection(
     db.from("draft_items").select("*").eq("draft_id", draftId),
     db.from("picks").select("*").eq("draft_id", draftId).order("overall_pick", { ascending: true }),
     db.from("commentary").select("*").eq("draft_id", draftId).order("created_at", { ascending: true }),
+    db.from("arguments").select("*").eq("draft_id", draftId),
+    db.from("votes").select("*").eq("draft_id", draftId),
+    db.from("judgments").select("*").eq("draft_id", draftId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     db.rpc("get_server_time"),
   ]);
 
@@ -126,6 +170,9 @@ export async function getDraftRoomProjection(
   if (itemsError) throw new Error("Failed to fetch draft items");
   if (picksError) throw new Error("Failed to fetch draft picks");
   if (commentaryError) throw new Error("Failed to fetch draft commentary");
+  if (defensesError) throw new Error("Failed to fetch draft defenses");
+  if (votesError) throw new Error("Failed to fetch draft votes");
+  if (judgmentError) throw new Error("Failed to fetch draft judgment");
 
   const serverNowRaw = nowResult as unknown;
   const serverNow = Array.isArray(serverNowRaw)
@@ -138,6 +185,9 @@ export async function getDraftRoomProjection(
     items ?? [],
     picks ?? [],
     commentary ?? [],
+    defenses ?? [],
+    votes ?? [],
+    (judgment as Record<string, unknown> | null) ?? null,
     serverNow,
   );
 }
