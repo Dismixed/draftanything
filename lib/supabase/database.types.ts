@@ -1152,7 +1152,18 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      join_draft: {
+        Args: {
+          p_draft_id: string
+          p_guest_id: string
+          p_display_name: string
+        }
+        Returns: {
+          player_id: string
+          seat: number
+          draft_id: string
+        }[]
+      }
     }
     Enums: {
       ai_personality: "analyst" | "hype" | "roast"

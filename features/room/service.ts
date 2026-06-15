@@ -64,6 +64,7 @@ function buildProjection(
     hostGuestId: draft.host_guest_id,
     players: players.map((p) => ({
       id: p.id,
+      guestId: p.guest_id,
       displayName: p.display_name,
       seat: p.seat,
       isReady: p.is_ready,
@@ -155,8 +156,8 @@ export async function createRoom(
 
 /**
  * Joins an existing draft room.
- * Enforces capacity, phase, and display name uniqueness.
- * Allocates the lowest open seat.
+ * Uses the join_draft RPC which locks the draft row, enforces capacity and
+ * uniqueness atomically, and allocates the lowest open seat.
  */
 export async function joinRoom(
   roomCode: string,
@@ -165,82 +166,44 @@ export async function joinRoom(
 ): Promise<RoomProjection> {
   const db = createAdminClient();
 
-  // Fetch the draft by room code
-  const { data: draft, error: draftError } = await db
+  // Resolve draft ID from room code (read-only; the RPC holds the real lock)
+  const { data: draftRow, error: lookupError } = await db
     .from("drafts")
-    .select("*")
+    .select("id")
     .eq("room_code", roomCode.toUpperCase())
     .single();
 
-  if (draftError || !draft) {
+  if (lookupError || !draftRow) {
     throw new AppError("ROOM_NOT_FOUND", `Room with code ${roomCode} not found`);
   }
 
-  if (draft.phase !== "LOBBY") {
-    throw new AppError("INVALID_PHASE", "Room is no longer in the lobby phase");
+  // Call the transactional RPC — handles locking, capacity, uniqueness, and seat allocation
+  const { error: rpcError } = await db.rpc("join_draft", {
+    p_draft_id: draftRow.id,
+    p_guest_id: guestId,
+    p_display_name: displayName,
+  });
+
+  if (rpcError) {
+    // Map Postgres raise exception messages to AppError codes
+    const msg = rpcError.message ?? "";
+    if (msg.includes("ROOM_NOT_FOUND")) {
+      throw new AppError("ROOM_NOT_FOUND", `Room with code ${roomCode} not found`);
+    }
+    if (msg.includes("INVALID_PHASE")) {
+      throw new AppError("INVALID_PHASE", "Room is no longer in the lobby phase");
+    }
+    if (msg.includes("ROOM_FULL")) {
+      throw new AppError("ROOM_FULL", "This room is full");
+    }
+    if (msg.includes("NAME_TAKEN")) {
+      throw new AppError("NAME_TAKEN", "This display name is already taken in this room");
+    }
+    throw new AppError("INVALID_INPUT", rpcError.message);
   }
 
-  // Fetch active players
-  const { data: existingPlayers, error: playersError } = await db
-    .from("draft_players")
-    .select("*")
-    .eq("draft_id", draft.id)
-    .is("removed_at", null);
-
-  if (playersError) {
-    throw new AppError("INVALID_INPUT", playersError.message);
-  }
-
-  const players = existingPlayers ?? [];
-
-  // Check if guest is already in the room
-  const existingPlayer = players.find((p) => p.guest_id === guestId);
-  if (existingPlayer) {
-    return buildProjection(draft, players);
-  }
-
-  // Enforce capacity
-  if (players.length >= draft.max_players) {
-    throw new AppError("ROOM_FULL", "This room is full");
-  }
-
-  // Enforce display name uniqueness
-  const nameTaken = players.some(
-    (p) => p.display_name.toLowerCase() === displayName.toLowerCase(),
-  );
-  if (nameTaken) {
-    throw new AppError("NAME_TAKEN", "This display name is already taken in this room");
-  }
-
-  // Find lowest open seat (seats are 1-indexed)
-  const occupiedSeats = new Set(players.map((p) => p.seat));
-  let nextSeat = 1;
-  while (occupiedSeats.has(nextSeat)) {
-    nextSeat++;
-  }
-
-  // Insert the new player
-  const { data: newPlayer, error: insertError } = await db
-    .from("draft_players")
-    .insert({
-      draft_id: draft.id,
-      guest_id: guestId,
-      display_name: displayName,
-      seat: nextSeat,
-      is_ready: false,
-    })
-    .select()
-    .single();
-
-  if (insertError) {
-    throw new AppError("INVALID_INPUT", insertError.message);
-  }
-
-  if (!newPlayer) {
-    throw new AppError("INVALID_INPUT", "Failed to join room");
-  }
-
-  return buildProjection(draft, [...players, newPlayer]);
+  // Return the full room projection after joining
+  return getRoom(draftRow.id);
 }
 
 /**

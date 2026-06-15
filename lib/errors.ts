@@ -1,13 +1,3 @@
-export class AppError extends Error {
-  constructor(
-    public readonly code: string,
-    message: string
-  ) {
-    super(message);
-    this.name = "AppError";
-  }
-}
-
 export type ApiErrorCode =
   | "INVALID_INPUT"
   | "ROOM_NOT_FOUND"
@@ -18,3 +8,13 @@ export type ApiErrorCode =
   | "STALE_STATE"
   | "RATE_LIMITED"
   | "UNAUTHORIZED";
+
+export class AppError extends Error {
+  constructor(
+    public readonly code: ApiErrorCode,
+    message: string
+  ) {
+    super(message);
+    this.name = "AppError";
+  }
+}

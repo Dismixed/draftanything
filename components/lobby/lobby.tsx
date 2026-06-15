@@ -58,7 +58,7 @@ export function Lobby({ initial, currentGuestId }: LobbyProps) {
         const supabase = createClient();
 
         const myPlayer = room.players.find(
-          (p) => room.hostGuestId === currentGuestId ? p.isHost : true,
+          (p) => p.guestId === currentGuestId,
         );
 
         channel = supabase.channel(`draft:${room.draftId}`, {
