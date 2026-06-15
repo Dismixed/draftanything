@@ -2,11 +2,11 @@ import { z } from "zod";
 
 const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.url(),
-  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
-  OPENAI_API_KEY: z.string().min(1),
-  OPENAI_MODEL: z.string().min(1).default("gpt-5.5"),
-  GUEST_TOKEN_PEPPER: z.string().min(32),
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().trim().min(1),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().trim().min(1),
+  OPENAI_API_KEY: z.string().trim().min(1),
+  OPENAI_MODEL: z.string().trim().min(1).default("gpt-5.5"),
+  GUEST_TOKEN_PEPPER: z.string().trim().min(32),
   APP_URL: z.url(),
 });
 
