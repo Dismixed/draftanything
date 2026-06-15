@@ -1196,6 +1196,42 @@ export type Database = {
         }
         Returns: Record<string, unknown>[]
       }
+      start_draft: {
+        Args: {
+          p_draft_id: string
+          p_guest_id: string
+          p_pick_order: unknown
+        }
+        Returns: Record<string, unknown>[]
+      }
+      submit_pick: {
+        Args: {
+          p_draft_id: string
+          p_guest_id: string
+          p_item_id: string
+          p_expected_pick: number
+        }
+        Returns: {
+          o_current_pick_index: number
+          o_phase: string
+          o_turn_deadline: string | null
+        }[]
+      }
+      auto_pick: {
+        Args: {
+          p_draft_id: string
+          p_guest_id: string
+        }
+        Returns: {
+          o_current_pick_index: number
+          o_phase: string
+          o_turn_deadline: string | null
+        }[]
+      }
+      get_server_time: {
+        Args: Record<string, never>
+        Returns: string[]
+      }
     }
     Enums: {
       ai_personality: "analyst" | "hype" | "roast"

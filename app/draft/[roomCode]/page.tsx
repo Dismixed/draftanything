@@ -2,8 +2,10 @@ import { notFound, redirect } from "next/navigation";
 import { AppError } from "@/lib/errors";
 import { requireGuestSession } from "@/features/guest/session";
 import { getRoomByCode, getMyPlayerId } from "@/features/room/service";
+import { getDraftRoomProjection } from "@/features/draft/projection";
 import { Lobby } from "@/components/lobby/lobby";
 import { PoolReview } from "@/components/pool/pool-review";
+import { DraftBoard } from "@/components/draft/draft-board";
 
 interface DraftLobbyPageProps {
   params: Promise<{ roomCode: string }>;
@@ -52,6 +54,16 @@ export default async function DraftLobbyPage({ params }: DraftLobbyPageProps) {
           room={room}
         />
       );
+    case "DRAFTING":
+    case "DEFENSE": {
+      const projection = await getDraftRoomProjection(room.draftId);
+      return (
+        <DraftBoard
+          initial={projection}
+          myPlayerId={myPlayerId}
+        />
+      );
+    }
     default:
       return <Lobby initial={room} myPlayerId={myPlayerId} />;
   }
