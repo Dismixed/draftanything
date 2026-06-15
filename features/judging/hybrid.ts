@@ -1,4 +1,5 @@
 import type { JudgingMode } from "../draft/types";
+import { compareFixed, fixedEqual } from "./fixed-point";
 
 export interface Vote {
   voterPlayerId: string;
@@ -30,10 +31,10 @@ const assertSamePlayerKeys = (
   }
 };
 
-const assertFiniteScores = (scores: PlayerScores, name: string): void => {
+const assertScoreMap = (scores: PlayerScores, name: string): void => {
   for (const score of Object.values(scores)) {
-    if (!Number.isFinite(score)) {
-      throw new RangeError(`${name} must contain finite scores`);
+    if (!Number.isFinite(score) || score < 0 || score > 10) {
+      throw new RangeError(`${name} must contain finite scores from 0 to 10`);
     }
   }
 };
@@ -110,27 +111,37 @@ export const resolveWinners = (
   if (playerIds.length === 0) {
     throw new Error("scores must contain at least one player");
   }
-  assertFiniteScores(scores, "scores");
+  assertScoreMap(scores, "scores");
 
-  const topScore = Math.max(...Object.values(scores));
-  let winners = playerIds.filter((playerId) => scores[playerId] === topScore);
+  if (tieBreak.mode === "hybrid") {
+    assertSamePlayerKeys(scores, tieBreak.aiScores);
+    assertSamePlayerKeys(scores, tieBreak.aggregateMetadata);
+    assertScoreMap(tieBreak.aiScores, "AI scores");
+    assertScoreMap(tieBreak.aggregateMetadata, "aggregate metadata");
+  }
+
+  const topScore = Object.values(scores).reduce((top, score) =>
+    compareFixed(score, top) > 0 ? score : top,
+  );
+  let winners = playerIds.filter((playerId) =>
+    fixedEqual(scores[playerId], topScore),
+  );
 
   if (tieBreak.mode !== "hybrid" || winners.length === 1) {
     return winners;
   }
 
-  assertSamePlayerKeys(scores, tieBreak.aiScores);
-  assertSamePlayerKeys(scores, tieBreak.aggregateMetadata);
-  Object.values(tieBreak.aiScores).forEach(normalizeAiScore);
-  assertFiniteScores(tieBreak.aggregateMetadata, "aggregate metadata");
-
-  const topAi = Math.max(...winners.map((playerId) => tieBreak.aiScores[playerId]));
-  winners = winners.filter((playerId) => tieBreak.aiScores[playerId] === topAi);
-
-  const topMetadata = Math.max(
-    ...winners.map((playerId) => tieBreak.aggregateMetadata[playerId]),
+  const topAi = winners
+    .map((playerId) => tieBreak.aiScores[playerId])
+    .reduce((top, score) => (compareFixed(score, top) > 0 ? score : top));
+  winners = winners.filter((playerId) =>
+    fixedEqual(tieBreak.aiScores[playerId], topAi),
   );
-  return winners.filter(
-    (playerId) => tieBreak.aggregateMetadata[playerId] === topMetadata,
+
+  const topMetadata = winners
+    .map((playerId) => tieBreak.aggregateMetadata[playerId])
+    .reduce((top, score) => (compareFixed(score, top) > 0 ? score : top));
+  return winners.filter((playerId) =>
+    fixedEqual(tieBreak.aggregateMetadata[playerId], topMetadata),
   );
 };

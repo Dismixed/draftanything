@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildPickOrder, seededRandom } from "./order";
-import type { DraftPhase } from "./types";
+import type { DraftPhase, PickSlot } from "./types";
 
 const lobbyPhase: DraftPhase = "LOBBY";
 
@@ -93,5 +93,15 @@ describe("buildPickOrder", () => {
 
     expect(Object.isFrozen(order)).toBe(true);
     expect(order.every(Object.isFrozen)).toBe(true);
+
+    if (false) {
+      // @ts-expect-error buildPickOrder exposes an immutable sequence
+      order.push({ overallPick: 3, round: 2, pickInRound: 1, seat: 1 });
+      // @ts-expect-error pick slots are immutable through the public return type
+      order[0].seat = 2;
+    }
+
+    const typedOrder: ReadonlyArray<Readonly<PickSlot>> = order;
+    expect(typedOrder).toHaveLength(2);
   });
 });

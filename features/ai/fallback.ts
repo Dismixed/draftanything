@@ -1,4 +1,9 @@
 import { normalizeItemName } from "../pool/normalize";
+import {
+  compareFixed,
+  fixedEqual,
+  toFixedUnits,
+} from "../judging/fixed-point";
 
 export interface RubricCategory {
   key: string;
@@ -43,7 +48,7 @@ export interface FallbackJudgment {
 
 const validateRubric = (rubric: readonly RubricCategory[]): void => {
   const keys = new Set<string>();
-  let total = 0;
+  let totalUnits = 0;
 
   for (const category of rubric) {
     if (
@@ -55,10 +60,10 @@ const validateRubric = (rubric: readonly RubricCategory[]): void => {
       throw new Error("rubric keys must be unique and weights nonnegative");
     }
     keys.add(category.key);
-    total += category.weight;
+    totalUnits += toFixedUnits(category.weight);
   }
 
-  if (total !== 100) {
+  if (totalUnits !== toFixedUnits(100)) {
     throw new Error("rubric weights must sum to 100");
   }
 };
@@ -105,18 +110,21 @@ export const selectAutoPick = (
     throw new Error("at least one available item is required");
   }
 
-  return [...available].sort((left, right) => {
-    const scoreDifference =
-      weightedItemScore(right.metadata, rubric) -
-      weightedItemScore(left.metadata, rubric);
+  const scored = available.map((item) => ({
+    item,
+    score: weightedItemScore(item.metadata, rubric),
+  }));
+
+  return scored.sort((left, right) => {
+    const scoreDifference = compareFixed(right.score, left.score);
     return (
       scoreDifference ||
       compareNamesAndIds(
-        { name: left.name, id: left.id },
-        { name: right.name, id: right.id },
+        { name: left.item.name, id: left.item.id },
+        { name: right.item.name, id: right.item.id },
       )
     );
-  })[0];
+  })[0].item;
 };
 
 export const rosterScore = (
@@ -157,6 +165,18 @@ export const deriveAwards = (
     throw new Error("at least one pick is required for awards");
   }
 
+  const positions = picks.map(({ overallPick }) => overallPick).sort(
+    (left, right) => left - right,
+  );
+  if (
+    positions.some(
+      (position, index) =>
+        !Number.isInteger(position) || position !== index + 1,
+    )
+  ) {
+    throw new Error("overallPick values must be unique contiguous integers");
+  }
+
   const scored = picks.map((pick) => ({
     pick,
     score: weightedItemScore(pick.metadata, rubric),
@@ -165,12 +185,12 @@ export const deriveAwards = (
 
   const byHighestScore = [...scored].sort(
     (left, right) =>
-      right.score - left.score ||
+      compareFixed(right.score, left.score) ||
       comparePickNamesAndIds(left.pick, right.pick),
   );
   const byLowestScore = [...scored].sort(
     (left, right) =>
-      left.score - right.score ||
+      compareFixed(left.score, right.score) ||
       comparePickNamesAndIds(left.pick, right.pick),
   );
   const bySteal = [...scored].sort((left, right) => {
@@ -179,7 +199,7 @@ export const deriveAwards = (
     const leftSteal = left.score - expected(left.pick.overallPick);
     const rightSteal = right.score - expected(right.pick.overallPick);
     return (
-      rightSteal - leftSteal ||
+      compareFixed(rightSteal, leftSteal) ||
       comparePickNamesAndIds(left.pick, right.pick)
     );
   });
@@ -214,11 +234,15 @@ export const fallbackJudge = (
       ),
     ]),
   );
-  const topScore = Math.max(...Object.values(rosterScores));
+  const topScore = Object.values(rosterScores).reduce((top, score) =>
+    compareFixed(score, top) > 0 ? score : top,
+  );
 
   return {
     rosterScores,
-    winnerIds: playerIds.filter((playerId) => rosterScores[playerId] === topScore),
+    winnerIds: playerIds.filter((playerId) =>
+      fixedEqual(rosterScores[playerId], topScore),
+    ),
     awards: deriveAwards(picks, rubric),
   };
 };

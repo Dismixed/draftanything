@@ -36,7 +36,7 @@ export const buildPickOrder = (
   rounds: number,
   type: DraftType,
   random: RandomSource,
-): PickSlot[] => {
+): ReadonlyArray<Readonly<PickSlot>> => {
   validateRange(players, 2, 6, "players");
   validateRange(rounds, 1, 10, "rounds");
 

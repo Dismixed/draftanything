@@ -50,6 +50,20 @@ describe("weightedItemScore", () => {
     ).toBe(6.8);
   });
 
+  it("accepts decimal rubric weights that total 100 within fixed-point precision", () => {
+    const score =
+      weightedItemScore(
+        { first: 10, second: 10, third: 10 },
+        [
+          { key: "first", weight: 0.01 },
+          { key: "second", weight: 64.04 },
+          { key: "third", weight: 35.95 },
+        ],
+      );
+
+    expect(score).toBeCloseTo(10, 12);
+  });
+
   it("rejects missing metadata keys", () => {
     expect(() => weightedItemScore({ quality: 8 }, rubric)).toThrow(
       /metadata/i,
@@ -119,6 +133,26 @@ describe("selectAutoPick", () => {
 
     expect(selectAutoPick(items, rubric).id).toBe("a-id");
   });
+
+  it("treats fixed-point equivalent item scores as tied", () => {
+    const exactRubric = [{ key: "score", weight: 100 }];
+    const items: DraftItem[] = [
+      {
+        id: "z",
+        name: "Alpha",
+        available: true,
+        metadata: { score: 0.1 + 0.2 },
+      },
+      {
+        id: "a",
+        name: "Beta",
+        available: true,
+        metadata: { score: 0.3 },
+      },
+    ];
+
+    expect(selectAutoPick(items, exactRubric).id).toBe("z");
+  });
 });
 
 describe("rosterScore", () => {
@@ -154,17 +188,115 @@ describe("deriveAwards", () => {
     });
   });
 
-  it("orders every award tie by normalized item name then id", () => {
+  it("orders best and worst award ties by normalized item name then id", () => {
     const tied = [
       pick("pick-z", "p1", item("z", "Alpha!", 5, 5), 1),
-      pick("pick-a", "p2", item("a", " alpha ", 5, 5), 1),
+      pick("pick-a", "p2", item("a", " alpha ", 5, 5), 2),
     ];
 
-    expect(deriveAwards(tied, rubric)).toEqual({
-      bestPick: { pickId: "pick-a", itemId: "a", playerId: "p2" },
-      worstPick: { pickId: "pick-a", itemId: "a", playerId: "p2" },
-      biggestSteal: { pickId: "pick-a", itemId: "a", playerId: "p2" },
+    const awards = deriveAwards(tied, rubric);
+    expect(awards.bestPick).toEqual({
+      pickId: "pick-a",
+      itemId: "a",
+      playerId: "p2",
     });
+    expect(awards.worstPick).toEqual({
+      pickId: "pick-a",
+      itemId: "a",
+      playerId: "p2",
+    });
+  });
+
+  it("uses fixed-point equality and normalized names for award ties", () => {
+    const exactRubric = [{ key: "score", weight: 100 }];
+    const tied = [
+      pick(
+        "pick-z",
+        "p1",
+        {
+          id: "z",
+          name: "Alpha",
+          available: true,
+          metadata: { score: 0.1 + 0.2 },
+        },
+        1,
+      ),
+      pick(
+        "pick-a",
+        "p2",
+        {
+          id: "a",
+          name: "Beta",
+          available: true,
+          metadata: { score: 0.3 },
+        },
+        2,
+      ),
+    ];
+
+    const awards = deriveAwards(tied, exactRubric);
+    expect(awards.bestPick).toEqual({
+      pickId: "pick-z",
+      itemId: "z",
+      playerId: "p1",
+    });
+    expect(awards.worstPick).toEqual({
+      pickId: "pick-z",
+      itemId: "z",
+      playerId: "p1",
+    });
+  });
+
+  it("uses fixed-point equality when ordering steal values", () => {
+    const exactRubric = [{ key: "score", weight: 100 }];
+    const tied: RosterPick[] = [
+      {
+        pickId: "pick-1",
+        playerId: "p1",
+        itemId: "low",
+        itemName: "Low",
+        metadata: { score: 0 },
+        overallPick: 1,
+      },
+      {
+        pickId: "pick-2",
+        playerId: "p2",
+        itemId: "alpha",
+        itemName: "Alpha",
+        metadata: { score: 5 + 0.1 + 0.2 },
+        overallPick: 2,
+      },
+      {
+        pickId: "pick-3",
+        playerId: "p3",
+        itemId: "beta",
+        itemName: "Beta",
+        metadata: { score: 0.3 },
+        overallPick: 3,
+      },
+    ];
+
+    expect(deriveAwards(tied, exactRubric).biggestSteal).toEqual({
+      pickId: "pick-2",
+      itemId: "alpha",
+      playerId: "p2",
+    });
+  });
+
+  it.each([
+    [0, 2],
+    [1, 1],
+    [1, 3],
+    [1, Number.NaN],
+    [1, Number.POSITIVE_INFINITY],
+    [1, 2.5],
+  ])("rejects invalid award positions %s and %s", (first, second) => {
+    const picks = [
+      pick("pick-1", "p1", item("a", "Alpha", 8, 8), first),
+      pick("pick-2", "p2", item("b", "Beta", 7, 7), second),
+    ];
+
+    expect(() => deriveAwards(picks, rubric)).toThrow(/overallPick/i);
   });
 });
 
@@ -184,5 +316,32 @@ describe("fallbackJudge", () => {
         biggestSteal: { pickId: "pick-2", itemId: "b", playerId: "p2" },
       },
     });
+  });
+
+  it("shares fallback wins for fixed-point equivalent roster scores", () => {
+    const exactRubric = [{ key: "score", weight: 100 }];
+    const picks: RosterPick[] = [
+      {
+        pickId: "pick-1",
+        playerId: "p1",
+        itemId: "a",
+        itemName: "Alpha",
+        metadata: { score: 0.1 + 0.2 },
+        overallPick: 1,
+      },
+      {
+        pickId: "pick-2",
+        playerId: "p2",
+        itemId: "b",
+        itemName: "Beta",
+        metadata: { score: 0.3 },
+        overallPick: 2,
+      },
+    ];
+
+    expect(fallbackJudge(["p1", "p2"], picks, exactRubric).winnerIds).toEqual([
+      "p1",
+      "p2",
+    ]);
   });
 });

@@ -80,6 +80,15 @@ describe("hybridScores", () => {
 });
 
 describe("resolveWinners", () => {
+  it("treats fixed-point equivalent totals as tied", () => {
+    expect(
+      resolveWinners(
+        { p1: 0.1 + 0.2, p2: 0.3 },
+        { mode: "community" },
+      ),
+    ).toEqual(["p1", "p2"]);
+  });
+
   it("keeps shared community winners", () => {
     expect(
       resolveWinners(
@@ -126,5 +135,42 @@ describe("resolveWinners", () => {
         },
       ),
     ).toEqual(["p1", "p2"]);
+  });
+
+  it("uses fixed-point equality for hybrid AI and metadata tie breaks", () => {
+    expect(
+      resolveWinners(
+        { p1: 7, p2: 7 },
+        {
+          mode: "hybrid",
+          aiScores: { p1: 0.1 + 0.2, p2: 0.3 },
+          aggregateMetadata: { p1: 0.1 + 0.2, p2: 0.3 },
+        },
+      ),
+    ).toEqual(["p1", "p2"]);
+  });
+
+  it("validates hybrid tie-break maps before returning a sole winner", () => {
+    expect(() =>
+      resolveWinners(
+        { p1: 9, p2: 8 },
+        {
+          mode: "hybrid",
+          aiScores: { p1: 9 },
+          aggregateMetadata: { p1: 9, p2: 8 },
+        },
+      ),
+    ).toThrow(/player keys/i);
+
+    expect(() =>
+      resolveWinners(
+        { p1: 9, p2: 8 },
+        {
+          mode: "hybrid",
+          aiScores: { p1: 9, p2: 8 },
+          aggregateMetadata: { p1: 9, p2: 11 },
+        },
+      ),
+    ).toThrow(/metadata/i);
   });
 });

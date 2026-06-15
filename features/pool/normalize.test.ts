@@ -11,7 +11,7 @@ describe("normalizeItemName", () => {
     ["  The   Matrix  ", "the matrix"],
     ["STAR WARS", "star wars"],
     ["Spider-Man: Homecoming!", "spider man homecoming"],
-    ["Amélie", "amélie"],
+    ["Amélie", "ame\u0301lie"],
     ["ＡＢＣ", "abc"],
   ])("normalizes %j to %j", (input, expected) => {
     expect(normalizeItemName(input)).toBe(expected);
@@ -25,6 +25,19 @@ describe("normalizeItemName", () => {
 
   it("rejects names that become empty", () => {
     expect(() => normalizeItemName("... -- !!!")).toThrow();
+  });
+
+  it.each([
+    "\u0000\u0007",
+    "\u200b\u2060",
+    "\u0301\u0327",
+    "\u200b\u0301\u0000",
+  ])("rejects invisible, control, or isolated-mark input %j", (input) => {
+    expect(() => normalizeItemName(input)).toThrow(/letters or numbers/i);
+  });
+
+  it("strips controls, formats, and isolated marks around visible text", () => {
+    expect(normalizeItemName("\u0301\u200bAlien\u0007\u0327")).toBe("alien");
   });
 });
 

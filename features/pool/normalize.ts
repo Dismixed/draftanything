@@ -10,14 +10,28 @@ const validateRange = (
 };
 
 export const normalizeItemName = (name: string): string => {
-  const normalized = name
-    .normalize("NFKC")
-    .toLowerCase()
-    .replace(/[\p{P}\p{S}]+/gu, " ")
-    .trim()
-    .replace(/\s+/gu, " ");
+  let folded = "";
+  let markCanAttach = false;
 
-  if (normalized.length === 0) {
+  for (const character of name.normalize("NFKD").toLowerCase()) {
+    if (/[\p{L}\p{N}]/u.test(character)) {
+      folded += character;
+      markCanAttach = true;
+    } else if (/\p{M}/u.test(character)) {
+      if (markCanAttach) {
+        folded += character;
+      }
+    } else if (/[\p{P}\p{S}\s]/u.test(character)) {
+      folded += " ";
+      markCanAttach = false;
+    } else {
+      markCanAttach = false;
+    }
+  }
+
+  const normalized = folded.trim().replace(/\s+/gu, " ");
+
+  if (!/[\p{L}\p{N}]/u.test(normalized)) {
     throw new Error("item name must contain letters or numbers");
   }
 
