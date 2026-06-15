@@ -32,7 +32,7 @@ export function JoinRoomForm({ initialRoomCode = "", onSuccess }: JoinRoomFormPr
       const res = await fetch(`/api/drafts/by-code/${roomCode.toUpperCase()}/join`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ displayName, roomCode: roomCode.toUpperCase() }),
+        body: JSON.stringify({ displayName }),
       });
 
       const data = await res.json();

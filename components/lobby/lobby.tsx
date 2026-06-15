@@ -12,10 +12,11 @@ type ConnectionStatus = "connecting" | "connected" | "disconnected";
 
 interface LobbyProps {
   initial: RoomProjection;
-  currentGuestId: string;
+  /** The player ID (draft_players.id) for the current user, returned by create/join. */
+  myPlayerId: string;
 }
 
-export function Lobby({ initial, currentGuestId }: LobbyProps) {
+export function Lobby({ initial, myPlayerId }: LobbyProps) {
   const [room, setRoom] = useState<RoomProjection>(initial);
   const [onlineCount, setOnlineCount] = useState(0);
   const [connectionStatus, setConnectionStatus] =
@@ -24,12 +25,12 @@ export function Lobby({ initial, currentGuestId }: LobbyProps) {
     import("@supabase/supabase-js").SupabaseClient["channel"]
   > | null>(null);
 
-  const isHost = room.hostGuestId === currentGuestId;
+  const isHost = room.hostPlayerId === myPlayerId;
   const playerCount = room.players.length;
   const canStart = isHost && playerCount >= 2;
 
-  // Poll for room updates (presence is display-only; authoritative state comes
-  // from the database via polling or a later subscription upgrade).
+  // Poll for room updates. Realtime postgres_changes fires immediately for
+  // player join/leave; this 30s interval is a fallback in case the socket drops.
   const fetchRoom = useCallback(async () => {
     try {
       const res = await fetch(`/api/drafts/${room.draftId}/state`);
@@ -43,12 +44,12 @@ export function Lobby({ initial, currentGuestId }: LobbyProps) {
   }, [room.draftId]);
 
   useEffect(() => {
-    // Subscribe to Supabase Realtime presence for the draft channel.
-    // Presence is display-only: it shows who is currently viewing the lobby
-    // but never authorizes an action.
+    // Subscribe to Supabase Realtime for both presence and authoritative DB changes.
     let channel: ReturnType<
       import("@supabase/supabase-js").SupabaseClient["channel"]
     > | null = null;
+
+    const draftId = room.draftId;
 
     async function setupChannel() {
       try {
@@ -57,12 +58,10 @@ export function Lobby({ initial, currentGuestId }: LobbyProps) {
         );
         const supabase = createClient();
 
-        const myPlayer = room.players.find(
-          (p) => p.guestId === currentGuestId,
-        );
+        const myPlayer = room.players.find((p) => p.id === myPlayerId);
 
-        channel = supabase.channel(`draft:${room.draftId}`, {
-          config: { presence: { key: currentGuestId } },
+        channel = supabase.channel(`draft:${draftId}`, {
+          config: { presence: { key: myPlayerId } },
         });
 
         channel
@@ -77,15 +76,24 @@ export function Lobby({ initial, currentGuestId }: LobbyProps) {
             }
             setOnlineCount(count);
           })
-          .on("presence", { event: "join" }, () => {
-            // Trigger a room state refresh when someone joins
-            void fetchRoom();
-          })
+          // postgres_changes: refetch immediately when draft_players changes
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "draft_players",
+              filter: `draft_id=eq.${draftId}`,
+            },
+            () => {
+              void fetchRoom();
+            },
+          )
           .subscribe(async (status) => {
             if (status === "SUBSCRIBED") {
               setConnectionStatus("connected");
               await channel!.track({
-                playerId: myPlayer?.id ?? currentGuestId,
+                playerId: myPlayer?.id ?? myPlayerId,
                 displayName: myPlayer?.displayName ?? "Guest",
               });
             } else if (status === "CLOSED" || status === "CHANNEL_ERROR") {
@@ -101,8 +109,8 @@ export function Lobby({ initial, currentGuestId }: LobbyProps) {
 
     void setupChannel();
 
-    // Poll every 5 seconds as a fallback for authoritative state
-    const pollInterval = setInterval(() => void fetchRoom(), 5000);
+    // 30-second fallback poll — Realtime postgres_changes handles immediate updates
+    const pollInterval = setInterval(() => void fetchRoom(), 30000);
 
     return () => {
       clearInterval(pollInterval);
@@ -111,7 +119,9 @@ export function Lobby({ initial, currentGuestId }: LobbyProps) {
         channelRef.current = null;
       }
     };
-  }, [room.draftId, currentGuestId, fetchRoom, room.hostGuestId, room.players]);
+    // Only re-run when draftId or myPlayerId changes (not on every room state update)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room.draftId, myPlayerId, fetchRoom]);
 
   async function handleCopyCode() {
     try {

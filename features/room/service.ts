@@ -9,23 +9,16 @@ import {
   type RoomProjection,
 } from "./schema";
 
-const MAX_ROOM_CODE_RETRIES = 5;
-
 /**
  * Generates a six-character room code from an ambiguity-free alphabet.
  * Excludes characters that look alike: 0, O, I, l, 1.
+ * Uses crypto.getRandomValues() for cryptographically secure randomness.
  */
 export function generateRoomCode(): string {
-  const chars: string[] = [];
-  const alphabetLength = ROOM_CODE_ALPHABET.length;
-
-  for (let i = 0; i < ROOM_CODE_LENGTH; i++) {
-    // Use crypto.getRandomValues for better entropy when available
-    const randomIndex = Math.floor(Math.random() * alphabetLength);
-    chars.push(ROOM_CODE_ALPHABET[randomIndex]);
-  }
-
-  return chars.join("");
+  const alphabet = ROOM_CODE_ALPHABET;
+  const array = new Uint32Array(ROOM_CODE_LENGTH);
+  crypto.getRandomValues(array);
+  return Array.from(array, (n) => alphabet[n % alphabet.length]).join("");
 }
 
 function buildProjection(
@@ -50,6 +43,10 @@ function buildProjection(
     guest_id: string;
   }>,
 ): RoomProjection {
+  // Determine the host player ID from the player who matches the host guest
+  const hostPlayer = players.find((p) => p.guest_id === draft.host_guest_id);
+  const hostPlayerId = hostPlayer?.id ?? "";
+
   return {
     draftId: draft.id,
     roomCode: draft.room_code,
@@ -61,10 +58,9 @@ function buildProjection(
     judgingMode: draft.judging_mode as "ai" | "community" | "hybrid",
     aiPersonality: draft.ai_personality as "analyst" | "hype" | "roast",
     phase: draft.phase,
-    hostGuestId: draft.host_guest_id,
+    hostPlayerId,
     players: players.map((p) => ({
       id: p.id,
-      guestId: p.guest_id,
       displayName: p.display_name,
       seat: p.seat,
       isReady: p.is_ready,
@@ -74,9 +70,9 @@ function buildProjection(
 }
 
 /**
- * Creates a new draft room.
- * Inserts the draft row, then inserts the host as player at seat 1.
- * Retries on room_code uniqueness conflict.
+ * Creates a new draft room atomically via the create_draft RPC.
+ * The RPC inserts the draft and host player in a single transaction,
+ * retrying on room code collisions. No orphaned rows can result.
  */
 export async function createRoom(
   input: CreateRoomInput,
@@ -84,74 +80,35 @@ export async function createRoom(
 ): Promise<RoomProjection> {
   const db = createAdminClient();
 
-  let lastError: Error | null = null;
+  const { data: rpcRows, error: rpcError } = await db.rpc("create_draft", {
+    p_host_guest_id: guestId,
+    p_display_name: input.displayName,
+    p_topic: input.topic,
+    p_max_players: input.maxPlayers,
+    p_rounds: input.rounds,
+    p_draft_type: input.draftType,
+    p_judging_mode: input.judgingMode,
+    p_ai_personality: input.aiPersonality,
+    p_timer_seconds: input.timerSeconds ?? null,
+  });
 
-  for (let attempt = 0; attempt < MAX_ROOM_CODE_RETRIES; attempt++) {
-    const roomCode = generateRoomCode();
-
-    const { data: draft, error: draftError } = await db
-      .from("drafts")
-      .insert({
-        room_code: roomCode,
-        host_guest_id: guestId,
-        topic: input.topic,
-        max_players: input.maxPlayers,
-        rounds: input.rounds,
-        timer_seconds: input.timerSeconds,
-        draft_type: input.draftType,
-        judging_mode: input.judgingMode,
-        ai_personality: input.aiPersonality,
-        phase: "LOBBY",
-        current_pick_index: 0,
-        pick_order: [],
-        rubric: {},
-      })
-      .select()
-      .single();
-
-    if (draftError) {
-      // Postgres unique violation code is 23505
-      if (draftError.code === "23505") {
-        lastError = new Error(draftError.message);
-        continue;
-      }
-      throw new AppError("INVALID_INPUT", draftError.message);
+  if (rpcError) {
+    const msg = rpcError.message ?? "";
+    if (msg.includes("ROOM_CODE_CONFLICT")) {
+      throw new AppError(
+        "STALE_STATE",
+        "Failed to generate a unique room code. Please try again.",
+      );
     }
-
-    if (!draft) {
-      throw new AppError("INVALID_INPUT", "Failed to create draft");
-    }
-
-    // Insert host as player at seat 1
-    const { data: player, error: playerError } = await db
-      .from("draft_players")
-      .insert({
-        draft_id: draft.id,
-        guest_id: guestId,
-        display_name: input.displayName,
-        seat: 1,
-        is_ready: false,
-      })
-      .select()
-      .single();
-
-    if (playerError) {
-      // Clean up draft on player insert failure
-      await db.from("drafts").delete().eq("id", draft.id);
-      throw new AppError("INVALID_INPUT", playerError.message);
-    }
-
-    if (!player) {
-      throw new AppError("INVALID_INPUT", "Failed to add host as player");
-    }
-
-    return buildProjection(draft, [player]);
+    throw new AppError("INVALID_INPUT", rpcError.message);
   }
 
-  throw new AppError(
-    "STALE_STATE",
-    `Failed to generate a unique room code after ${MAX_ROOM_CODE_RETRIES} attempts: ${lastError?.message}`,
-  );
+  const row = Array.isArray(rpcRows) ? rpcRows[0] : null;
+  if (!row?.draft_id) {
+    throw new AppError("INVALID_INPUT", "Failed to retrieve created room");
+  }
+
+  return getRoom(row.draft_id as string);
 }
 
 /**
@@ -233,6 +190,27 @@ export async function getRoom(draftId: string): Promise<RoomProjection> {
   }
 
   return buildProjection(draft, players ?? []);
+}
+
+/**
+ * Resolves the draft_players.id for a given guest in a draft.
+ * Returns an empty string if the guest is not an active player in this room.
+ */
+export async function getMyPlayerId(
+  draftId: string,
+  guestId: string,
+): Promise<string> {
+  const db = createAdminClient();
+
+  const { data } = await db
+    .from("draft_players")
+    .select("id")
+    .eq("draft_id", draftId)
+    .eq("guest_id", guestId)
+    .is("removed_at", null)
+    .single();
+
+  return data?.id ?? "";
 }
 
 /**

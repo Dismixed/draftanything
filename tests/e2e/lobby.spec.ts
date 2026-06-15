@@ -127,9 +127,8 @@ test.describe("Lobby flow", () => {
     await expect(guestPage.getByText("Alice")).toBeVisible();
     await expect(guestPage.getByText("Bob")).toBeVisible();
 
-    // Host page should also show Bob after a short poll / refresh
-    await hostPage.waitForTimeout(6000); // wait for 5s poll cycle + buffer
-    await expect(hostPage.getByText("Bob")).toBeVisible();
+    // Host page should also show Bob after Realtime push or fallback poll
+    await expect(hostPage.getByText("Bob")).toBeVisible({ timeout: 10000 });
 
     // Start button should now be enabled for the host (2 players)
     await expect(hostPage.getByRole("button", { name: "Start draft" })).toBeEnabled();

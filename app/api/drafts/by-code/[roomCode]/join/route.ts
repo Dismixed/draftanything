@@ -1,19 +1,24 @@
+import { z } from "zod";
 import { AppError } from "@/lib/errors";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { requireGuestSession } from "@/features/guest/session";
-import { joinRoomSchema } from "@/features/room/schema";
+import { displayNameSchema } from "@/features/room/schema";
 import { joinRoom } from "@/features/room/service";
 
 const JOIN_RATE_LIMIT_MAX = 30;
 const JOIN_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
+// Room code comes from the URL param; body only needs displayName
+const joinByCodeBodySchema = z.object({
+  displayName: displayNameSchema,
+});
+
 /**
  * POST /api/drafts/by-code/[roomCode]/join
  *
- * Joins a draft room by room code. This is the entry point used by the
- * join form where the guest knows the room code but not the draft ID.
+ * Joins a draft room by room code. Room code is taken from the URL param;
+ * the request body only needs { displayName }.
  *
- * Body: { displayName: string; roomCode: string }
  * Returns: RoomProjection
  */
 export async function POST(
@@ -39,8 +44,9 @@ export async function POST(
       );
     }
 
+    const { roomCode } = await params;
     const body = await request.json();
-    const parseResult = joinRoomSchema.safeParse(body);
+    const parseResult = joinByCodeBodySchema.safeParse(body);
 
     if (!parseResult.success) {
       return Response.json(
@@ -49,11 +55,8 @@ export async function POST(
       );
     }
 
-    const { roomCode } = await params;
-    const resolvedCode = roomCode ?? parseResult.data.roomCode;
-
     const room = await joinRoom(
-      resolvedCode.toUpperCase(),
+      roomCode.toUpperCase(),
       parseResult.data.displayName,
       guestId,
     );

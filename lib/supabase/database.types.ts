@@ -1152,6 +1152,24 @@ export type Database = {
       }
     }
     Functions: {
+      create_draft: {
+        Args: {
+          p_host_guest_id: string
+          p_display_name: string
+          p_topic: string
+          p_max_players: number
+          p_rounds: number
+          p_draft_type: string
+          p_judging_mode: string
+          p_ai_personality: string
+          p_timer_seconds: number | null
+        }
+        Returns: {
+          draft_id: string
+          room_code: string
+          player_id: string
+        }[]
+      }
       join_draft: {
         Args: {
           p_draft_id: string

@@ -54,7 +54,6 @@ export type JoinRoomInput = z.infer<typeof joinRoomSchema>;
 
 export interface RoomPlayer {
   id: string;
-  guestId: string;
   displayName: string;
   seat: number;
   isReady: boolean;
@@ -73,5 +72,5 @@ export interface RoomProjection {
   aiPersonality: "analyst" | "hype" | "roast";
   phase: string;
   players: RoomPlayer[];
-  hostGuestId: string;
+  hostPlayerId: string;
 }
