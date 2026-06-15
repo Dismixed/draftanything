@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 
+import { AppError } from "@/lib/errors";
 import { generateGuestToken, hashGuestToken } from "./token";
 
 const COOKIE_NAME = "guest_token";
@@ -27,7 +28,7 @@ async function readRawToken(): Promise<string | null> {
 function deriveGuestId(rawToken: string): string {
   const pepper = process.env.GUEST_TOKEN_PEPPER;
   if (!pepper) {
-    throw new Error("GUEST_TOKEN_PEPPER is not configured");
+    throw new AppError("INVALID_INPUT", "GUEST_TOKEN_PEPPER is not configured");
   }
   return hashGuestToken(rawToken, pepper);
 }
@@ -63,7 +64,7 @@ export async function requireGuestSession(): Promise<{ guestId: string }> {
   const existing = await readRawToken();
 
   if (!existing) {
-    throw new Error("No guest session found");
+    throw new AppError("UNAUTHORIZED", "No guest session found");
   }
 
   return { guestId: deriveGuestId(existing) };

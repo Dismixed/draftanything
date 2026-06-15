@@ -1,3 +1,4 @@
+import { AppError } from "@/lib/errors";
 import { ensureGuestSession } from "@/features/guest/session";
 
 /**
@@ -10,6 +11,13 @@ import { ensureGuestSession } from "@/features/guest/session";
  * Returns: { guestId: string }
  */
 export async function POST() {
-  const { guestId } = await ensureGuestSession();
-  return Response.json({ guestId });
+  try {
+    const { guestId } = await ensureGuestSession();
+    return Response.json({ guestId });
+  } catch (e) {
+    if (e instanceof AppError) {
+      return Response.json({ error: e.code }, { status: 400 });
+    }
+    return Response.json({ error: "internal_error" }, { status: 500 });
+  }
 }
