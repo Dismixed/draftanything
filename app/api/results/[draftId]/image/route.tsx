@@ -33,6 +33,7 @@ export async function GET(
 
     const url = new URL(_request.url);
     const isDownload = url.searchParams.get("download") === "1";
+    const bestPick = result.awards.find((a) => a.type === "bestPick");
 
     const res = new ImageResponse(
       (
@@ -119,7 +120,7 @@ export async function GET(
           </div>
 
           {/* Best Pick */}
-          {result.awards.find((a) => a.type === "bestPick") && (
+          {bestPick && (
             <div
               style={{
                 position: "absolute",
@@ -129,8 +130,7 @@ export async function GET(
                 color: "#a5b4fc",
               }}
             >
-              Best pick:{" "}
-              {result.awards.find((a) => a.type === "bestPick")!.itemName}
+              Best pick: {bestPick.itemName}
             </div>
           )}
 
@@ -151,9 +151,12 @@ export async function GET(
       {
         width: 1200,
         height: 630,
-        headers: isDownload
-          ? { "Content-Disposition": `attachment; filename="draft-result-${draftId}.png"` }
-          : {},
+        headers: {
+          "Cache-Control": "public, max-age=86400, s-maxage=3600",
+          ...(isDownload
+            ? { "Content-Disposition": `attachment; filename="draft-result-${draftId}.png"` }
+            : {}),
+        },
       },
     );
 

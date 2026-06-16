@@ -4,6 +4,8 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { requireGuestSession } from "@/features/guest/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { handleCommentaryForPick } from "@/features/ai/commentary";
+import { generateRequestId, setRequestIdHeader } from "@/lib/request-id";
+import { logRoute } from "@/lib/logger";
 
 const pickSchema = z.object({
   itemId: z.string().uuid(),
@@ -21,9 +23,13 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ draftId: string }> },
 ) {
+  const requestId = generateRequestId();
+  const start = performance.now();
+  let draftId: string | undefined;
+
   try {
     const { guestId } = await requireGuestSession();
-    const { draftId } = await params;
+    draftId = (await params).draftId;
 
     const rateResult = checkRateLimit(
       `pick:${draftId}:${guestId}`,
@@ -32,23 +38,29 @@ export async function POST(
     );
 
     if (!rateResult.allowed) {
-      return Response.json(
+      const res = Response.json(
         { error: "RATE_LIMITED", message: "Too many pick attempts." },
         {
           status: 429,
           headers: { "Retry-After": String(Math.ceil(rateResult.retryAfterMs / 1000)) },
         },
       );
+      setRequestIdHeader(res, requestId);
+      logRoute({ requestId, action: "submit_pick", draftId, result: "RATE_LIMITED", durationMs: performance.now() - start });
+      return res;
     }
 
     const body = await request.json();
     const parseResult = pickSchema.safeParse(body);
 
     if (!parseResult.success) {
-      return Response.json(
+      const res = Response.json(
         { error: "INVALID_INPUT", issues: parseResult.error.issues },
         { status: 400 },
       );
+      setRequestIdHeader(res, requestId);
+      logRoute({ requestId, action: "submit_pick", draftId, result: "INVALID_INPUT", durationMs: performance.now() - start });
+      return res;
     }
 
     const db = createAdminClient();
@@ -61,22 +73,19 @@ export async function POST(
 
     if (error) {
       const msg = error.message ?? "";
-      if (msg.includes("ROOM_NOT_FOUND")) {
-        return Response.json({ error: "ROOM_NOT_FOUND", message: "Draft not found" }, { status: 404 });
-      }
-      if (msg.includes("INVALID_PHASE")) {
-        return Response.json({ error: "INVALID_PHASE", message: "Draft is not in DRAFTING phase" }, { status: 400 });
-      }
-      if (msg.includes("STALE_STATE")) {
-        return Response.json({ error: "STALE_STATE", message: "Your state is stale. Please refresh." }, { status: 409 });
-      }
-      if (msg.includes("NOT_YOUR_TURN")) {
-        return Response.json({ error: "UNAUTHORIZED", message: "It's not your turn" }, { status: 403 });
-      }
-      if (msg.includes("ITEM_UNAVAILABLE")) {
-        return Response.json({ error: "INVALID_INPUT", message: "This item is no longer available" }, { status: 409 });
-      }
-      return Response.json({ error: "INVALID_INPUT", message: msg }, { status: 400 });
+      let errorCode = "INVALID_INPUT";
+      let status = 400;
+
+      if (msg.includes("ROOM_NOT_FOUND")) { errorCode = "ROOM_NOT_FOUND"; status = 404; }
+      else if (msg.includes("INVALID_PHASE")) { errorCode = "INVALID_PHASE"; status = 400; }
+      else if (msg.includes("STALE_STATE")) { errorCode = "STALE_STATE"; status = 409; }
+      else if (msg.includes("NOT_YOUR_TURN")) { errorCode = "UNAUTHORIZED"; status = 403; }
+      else if (msg.includes("ITEM_UNAVAILABLE")) { errorCode = "INVALID_INPUT"; status = 409; }
+
+      const res = Response.json({ error: errorCode, message: msg }, { status });
+      setRequestIdHeader(res, requestId);
+      logRoute({ requestId, action: "submit_pick", draftId, result: errorCode, durationMs: performance.now() - start });
+      return res;
     }
 
     const result = Array.isArray(data) ? data[0] : data;
@@ -84,13 +93,22 @@ export async function POST(
     // Fire-and-forget commentary — pick response never waits for this
     void handleCommentaryForPick(draftId);
 
-    return Response.json(result ?? { success: true });
+    const res = Response.json(result ?? { success: true });
+    setRequestIdHeader(res, requestId);
+    logRoute({ requestId, action: "submit_pick", draftId, result: "success", durationMs: performance.now() - start });
+    return res;
   } catch (e) {
     if (e instanceof AppError) {
       const status = e.code === "UNAUTHORIZED" ? 401 : 400;
-      return Response.json({ error: e.code, message: e.message }, { status });
+      const res = Response.json({ error: e.code, message: e.message }, { status });
+      setRequestIdHeader(res, requestId);
+      logRoute({ requestId, action: "submit_pick", draftId, result: e.code, durationMs: performance.now() - start });
+      return res;
     }
     console.error("[POST /api/drafts/:draftId/pick]", e);
-    return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    const res = Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    setRequestIdHeader(res, requestId);
+    logRoute({ requestId, action: "submit_pick", draftId, result: "INTERNAL_ERROR", durationMs: performance.now() - start });
+    return res;
   }
 }

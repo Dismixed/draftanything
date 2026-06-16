@@ -14,14 +14,13 @@ export interface CommentaryTriggerResult {
   priority: number;
 }
 
-export type CommentaryTag = "reach" | "steal" | "run" | "trend" | "surprise";
+export type CommentaryTag = "reach" | "steal" | "run" | "trend";
 
 const TAG_PRIORITY: Record<CommentaryTag, number> = {
   steal: 10,
   reach: 8,
   run: 5,
   trend: 5,
-  surprise: 3,
 };
 
 function computeCompositeScore(

@@ -12,6 +12,8 @@ import {
   removeItem,
   lockPool,
 } from "@/features/pool/service";
+import { generateRequestId, setRequestIdHeader } from "@/lib/request-id";
+import { logRoute } from "@/lib/logger";
 
 /**
  * GET /api/drafts/[draftId]/pool
@@ -22,18 +24,31 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ draftId: string }> },
 ) {
+  const requestId = generateRequestId();
+  const start = performance.now();
+  let draftId: string | undefined;
+
   try {
     await requireGuestSession();
-    const { draftId } = await params;
+    draftId = (await params).draftId;
     const pool = await getPool(draftId);
-    return Response.json(pool);
+    const res = Response.json(pool);
+    setRequestIdHeader(res, requestId);
+    logRoute({ requestId, action: "get_pool", draftId, result: "success", durationMs: performance.now() - start });
+    return res;
   } catch (e) {
     if (e instanceof AppError) {
       const status = e.code === "ROOM_NOT_FOUND" ? 404 : 400;
-      return Response.json({ error: e.code, message: e.message }, { status });
+      const res = Response.json({ error: e.code, message: e.message }, { status });
+      setRequestIdHeader(res, requestId);
+      logRoute({ requestId, action: "get_pool", draftId, result: e.code, durationMs: performance.now() - start });
+      return res;
     }
     console.error("[GET /api/drafts/:draftId/pool]", e);
-    return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    const res = Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    setRequestIdHeader(res, requestId);
+    logRoute({ requestId, action: "get_pool", draftId, result: "INTERNAL_ERROR", durationMs: performance.now() - start });
+    return res;
   }
 }
 
@@ -86,9 +101,13 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ draftId: string }> },
 ) {
+  const requestId = generateRequestId();
+  const start = performance.now();
+  let draftId: string | undefined;
+
   try {
     const { guestId } = await requireGuestSession();
-    const { draftId } = await params;
+    draftId = (await params).draftId;
 
     const rateResult = checkRateLimit(
       `pool:${draftId}:${guestId}`,
@@ -97,40 +116,51 @@ export async function POST(
     );
 
     if (!rateResult.allowed) {
-      return Response.json(
+      const res = Response.json(
         { error: "RATE_LIMITED", message: "Too many pool operations. Try again later." },
         {
           status: 429,
           headers: { "Retry-After": String(Math.ceil(rateResult.retryAfterMs / 1000)) },
         },
       );
+      setRequestIdHeader(res, requestId);
+      logRoute({ requestId, action: "pool_action", draftId, result: "RATE_LIMITED", durationMs: performance.now() - start });
+      return res;
     }
 
     const myPlayerId = await getMyPlayerId(draftId, guestId);
     if (!myPlayerId) {
-      return Response.json(
+      const res = Response.json(
         { error: "UNAUTHORIZED", message: "You are not a player in this room" },
         { status: 401 },
       );
+      setRequestIdHeader(res, requestId);
+      logRoute({ requestId, action: "pool_action", draftId, result: "UNAUTHORIZED", durationMs: performance.now() - start });
+      return res;
     }
 
     const body = await request.json();
     const parseResult = poolActionSchema.safeParse(body);
 
     if (!parseResult.success) {
-      return Response.json(
+      const res = Response.json(
         { error: "INVALID_INPUT", issues: parseResult.error.issues },
         { status: 400 },
       );
+      setRequestIdHeader(res, requestId);
+      logRoute({ requestId, action: "pool_action", draftId, result: "INVALID_INPUT", durationMs: performance.now() - start });
+      return res;
     }
 
     const { action } = parseResult.data;
+    let responseData: unknown;
 
     switch (action) {
       case "start-review": {
         await startPoolReview(draftId, guestId);
         const room = await getRoom(draftId);
-        return Response.json(room);
+        responseData = room;
+        break;
       }
       case "generate": {
         const { topic, targetCount, existingItems } = parseResult.data;
@@ -139,27 +169,37 @@ export async function POST(
           targetCount,
           existingItems,
         });
-        return Response.json(pool);
+        responseData = pool;
+        break;
       }
       case "add-item": {
         const currentPool = await getPool(draftId);
         const pool = await addItem(draftId, guestId, parseResult.data.name, currentPool.rubric);
-        return Response.json(pool);
+        responseData = pool;
+        break;
       }
       case "edit-item": {
         const pool = await editItem(draftId, guestId, parseResult.data.itemId, parseResult.data.name);
-        return Response.json(pool);
+        responseData = pool;
+        break;
       }
       case "remove-item": {
         const pool = await removeItem(draftId, guestId, parseResult.data.itemId);
-        return Response.json(pool);
+        responseData = pool;
+        break;
       }
       case "lock": {
         await lockPool(draftId, guestId);
         const room = await getRoom(draftId);
-        return Response.json(room);
+        responseData = room;
+        break;
       }
     }
+
+    const res = Response.json(responseData);
+    setRequestIdHeader(res, requestId);
+    logRoute({ requestId, action: `pool_${action}`, draftId, result: "success", durationMs: performance.now() - start });
+    return res;
   } catch (e) {
     if (e instanceof AppError) {
       const statusMap: Record<string, number> = {
@@ -171,9 +211,15 @@ export async function POST(
         RATE_LIMITED: 429,
       };
       const status = statusMap[e.code] ?? 400;
-      return Response.json({ error: e.code, message: e.message }, { status });
+      const res = Response.json({ error: e.code, message: e.message }, { status });
+      setRequestIdHeader(res, requestId);
+      logRoute({ requestId, action: "pool_action", draftId, result: e.code, durationMs: performance.now() - start });
+      return res;
     }
     console.error("[POST /api/drafts/:draftId/pool]", e);
-    return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    const res = Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    setRequestIdHeader(res, requestId);
+    logRoute({ requestId, action: "pool_action", draftId, result: "INTERNAL_ERROR", durationMs: performance.now() - start });
+    return res;
   }
 }

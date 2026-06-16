@@ -1,5 +1,6 @@
 import "server-only";
 
+import { AppError } from "@/lib/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   communityVoteShares,
@@ -42,7 +43,7 @@ export interface JudgmentRecord {
   idempotencyKey: string;
 }
 
-interface RosterInfo {
+export interface RosterInfo {
   pickIds: string[];
   playerId: string;
   itemIds: string[];
@@ -103,6 +104,107 @@ export async function judgeDraft(
     rosters,
     voteRecords,
   );
+}
+
+export interface JudgingData {
+  hostGuestId: string;
+  phase: string;
+  topic: string;
+  judgingMode: "ai" | "community" | "hybrid";
+  aiPersonality: string;
+  rubric: RubricCategory[];
+  safePlayers: SafePlayer[];
+  safePicks: SafePick[];
+  rosters: RosterInfo[];
+  voteRecords: Vote[];
+}
+
+export async function getJudgingData(draftId: string): Promise<JudgingData> {
+  const db = createAdminClient();
+
+  const { data: draft, error: draftError } = await db
+    .from("drafts")
+    .select("*")
+    .eq("id", draftId)
+    .single();
+
+  if (draftError || !draft) {
+    throw new AppError("ROOM_NOT_FOUND", "Draft not found");
+  }
+
+  const { data: players } = await db
+    .from("draft_players")
+    .select("id, guest_id, display_name, seat")
+    .eq("draft_id", draftId)
+    .is("removed_at", null);
+
+  if (!players || players.length === 0) {
+    throw new Error("No players found");
+  }
+
+  const { data: picks } = await db
+    .from("picks")
+    .select("id, player_id, item_id, overall_pick")
+    .eq("draft_id", draftId)
+    .order("overall_pick", { ascending: true });
+
+  const { data: votes } = await db
+    .from("votes")
+    .select("voter_player_id, selected_player_id")
+    .eq("draft_id", draftId);
+
+  const voteRecords: Vote[] = (votes ?? []).map((v) => ({
+    voterPlayerId: v.voter_player_id as string,
+    selectedPlayerId: v.selected_player_id as string,
+  }));
+
+  const safePlayers: SafePlayer[] = players.map((p) => ({
+    id: p.id as string,
+    displayName: p.display_name as string,
+    seat: p.seat as number,
+    isReady: false,
+    isHost: (p.guest_id as string) === (draft.host_guest_id as string),
+  }));
+
+  const safePicks: SafePick[] = (picks ?? []).map((p) => ({
+    id: p.id as string,
+    playerId: p.player_id as string,
+    itemId: p.item_id as string,
+    overallPick: p.overall_pick as number,
+    round: 1,
+    pickInRound: 1,
+    isAutoPick: false,
+  }));
+
+  const rosters: RosterInfo[] = players.map((p) => {
+    const playerPicks = (picks ?? []).filter(
+      (pick) => (pick.player_id as string) === (p.id as string),
+    );
+    return {
+      pickIds: playerPicks.map((pick) => pick.id as string),
+      playerId: p.id as string,
+      itemIds: playerPicks.map((pick) => pick.item_id as string),
+      displayName: p.display_name as string,
+    };
+  });
+
+  const rubricRaw = draft.rubric as Record<string, number> | null;
+  const rubric: RubricCategory[] = rubricRaw
+    ? Object.entries(rubricRaw).map(([key, weight]) => ({ key, weight }))
+    : [];
+
+  return {
+    hostGuestId: draft.host_guest_id as string,
+    phase: draft.phase as string,
+    topic: draft.topic as string,
+    judgingMode: draft.judging_mode as "ai" | "community" | "hybrid",
+    aiPersonality: (draft.ai_personality as string) ?? "",
+    rubric,
+    safePlayers,
+    safePicks,
+    rosters,
+    voteRecords,
+  };
 }
 
 async function judgeAiMode(
@@ -240,6 +342,28 @@ async function fetchDefenses(draftId: string): Promise<DefenseArg[]> {
   }));
 }
 
+async function fetchItems(
+  draftId: string,
+): Promise<Map<string, { name: string; hidden_metadata: Record<string, number> }>> {
+  const db = createAdminClient();
+  const { data, error } = await db
+    .from("draft_items")
+    .select("id, name, hidden_metadata")
+    .eq("draft_id", draftId);
+
+  if (error) throw new Error(`Failed to fetch items: ${error.message}`);
+
+  return new Map(
+    (data ?? []).map((item) => [
+      item.id as string,
+      {
+        name: item.name as string,
+        hidden_metadata: (item.hidden_metadata as Record<string, number>) ?? {},
+      },
+    ]),
+  );
+}
+
 async function buildJudgeInput(
   draftId: string,
   topic: string,
@@ -252,19 +376,31 @@ async function buildJudgeInput(
   const defenses = await fetchDefenses(draftId);
   const playerIds = players.map((p) => p.id);
 
-  const rosterPicks: RosterPick[] = [];
+  const itemMap = await fetchItems(draftId);
+
+  const rosterPicks: RosterPick[] = picks.map((p) => {
+    const item = itemMap.get(p.itemId);
+    return {
+      pickId: p.id,
+      playerId: p.playerId,
+      itemId: p.itemId,
+      itemName: item?.name ?? "",
+      metadata: item?.hidden_metadata ?? {},
+      overallPick: p.overallPick,
+    };
+  });
+
   const rosterInputs = rosters.map((r) => {
-    const playerPicks = picks
+    const playerPicks = rosterPicks
       .filter((p) => p.playerId === r.playerId)
       .sort((a, b) => a.overallPick - b.overallPick);
 
-    // We need item metadata - fetch from DB
     return {
       playerId: r.playerId,
       displayName: r.displayName,
       picks: playerPicks.map((p) => ({
-        itemName: "",
-        metadata: {} as Record<string, number>,
+        itemName: p.itemName,
+        metadata: p.metadata,
         overallPick: p.overallPick,
       })),
     };

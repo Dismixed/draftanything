@@ -4,6 +4,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { requireGuestSession } from "@/features/guest/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+
 const voteSchema = z.object({
   selectedPlayerId: z.string().uuid(),
 });

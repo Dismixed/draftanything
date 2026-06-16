@@ -44,6 +44,7 @@ export function buildProjection(
     judgingMode: draft.judging_mode as SafeDraft["judgingMode"],
     aiPersonality: draft.ai_personality as string,
     timerSeconds: (draft.timer_seconds as number | null) ?? null,
+    completedAt: (draft.completed_at as string | null) ?? null,
     pickOrder: pickOrder.map((s) => {
       const slot = s as Record<string, unknown>;
       return {

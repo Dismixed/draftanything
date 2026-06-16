@@ -12,13 +12,12 @@ const TAG_LABELS: Record<string, { label: string; color: string }> = {
   steal: { label: "Steal", color: "bg-emerald-100 text-emerald-700" },
   run: { label: "Run", color: "bg-blue-100 text-blue-700" },
   trend: { label: "Trend", color: "bg-purple-100 text-purple-700" },
-  surprise: { label: "Surprise", color: "bg-pink-100 text-pink-700" },
 };
 
 export function AiDesk({ commentary }: AiDeskProps) {
   const [collapsed, setCollapsed] = useState(false);
   const sorted = [...commentary].sort(
-    (a, b) => b.id.localeCompare(a.id),
+    (a, b) => b.createdAt.localeCompare(a.createdAt),
   );
   const latest = sorted[0] ?? null;
   const history = sorted.slice(1);

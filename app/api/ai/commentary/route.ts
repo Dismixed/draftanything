@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     const { draftId } = parseResult.data;
 
     // Fire-and-forget the commentary generation — don't await
-    handleCommentaryForPick(draftId);
+    void handleCommentaryForPick(draftId);
 
     return Response.json({ accepted: true });
   } catch (e) {

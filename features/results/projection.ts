@@ -55,7 +55,7 @@ export function buildPublicResult(
 ): PublicDraftResult {
   const { draft, players, picks, judgment, votes, availableItems } = projection;
 
-  const completedAt = draft.phase === "COMPLETE" ? new Date().toISOString() : "";
+  const completedAt = draft.phase === "COMPLETE" ? (draft.completedAt ?? judgment?.createdAt ?? new Date().toISOString()) : "";
 
   const playerScoreMap: Record<string, number> = {};
   const playerRankMap: Record<string, number> = {};

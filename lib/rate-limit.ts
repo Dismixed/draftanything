@@ -1,24 +1,17 @@
-/**
- * Minimal in-memory rate limiter stub.
- *
- * Task 11 will replace this with a full Redis-backed implementation.
- * This stub establishes the call interface that routes depend on.
- *
- * In production, a single-server in-memory store is not sufficient — it
- * resets on restart and does not share state across instances. Use this only
- * as a placeholder until Task 11 ships.
- */
-
 interface RateLimitWindow {
   count: number;
   resetAt: number;
 }
 
-// key → { count, resetAt }
 const store = new Map<string, RateLimitWindow>();
+
+const CLEANUP_INTERVAL_MS = 60_000;
+let lastCleanup = Date.now();
 
 function cleanup() {
   const now = Date.now();
+  if (now - lastCleanup < CLEANUP_INTERVAL_MS) return;
+  lastCleanup = now;
   for (const [key, window] of store.entries()) {
     if (now >= window.resetAt) {
       store.delete(key);
@@ -26,12 +19,6 @@ function cleanup() {
   }
 }
 
-/**
- * Checks whether `key` has exceeded `max` requests within `windowMs`.
- *
- * @returns `{ allowed: true }` when under the limit, or
- *          `{ allowed: false, retryAfterMs: number }` when the limit is hit.
- */
 export function checkRateLimit(
   key: string,
   max: number,
@@ -53,4 +40,15 @@ export function checkRateLimit(
 
   existing.count++;
   return { allowed: true };
+}
+
+/** Exposed for testing — resets all rate limit state. */
+export function _resetRateLimitStore(): void {
+  store.clear();
+  lastCleanup = Date.now();
+}
+
+/** Exposed for testing — access the internal store. */
+export function _getRateLimitStore(): Map<string, RateLimitWindow> {
+  return store;
 }

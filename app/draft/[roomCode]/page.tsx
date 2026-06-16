@@ -8,6 +8,7 @@ import { PoolReview } from "@/components/pool/pool-review";
 import { DraftBoard } from "@/components/draft/draft-board";
 import { DefensePanel } from "@/components/draft/defense-panel";
 import { VotingPanel } from "@/components/draft/voting-panel";
+import { JudgingPanel } from "@/components/draft/judging-panel";
 
 interface DraftLobbyPageProps {
   params: Promise<{ roomCode: string }>;
@@ -92,22 +93,13 @@ export default async function DraftLobbyPage({ params }: DraftLobbyPageProps) {
 
       if (room.phase === "JUDGING") {
         return (
-          <div className="min-h-screen bg-gray-50 p-4">
-            <div className="max-w-2xl mx-auto space-y-4">
-              <div className="bg-white rounded-xl border p-4">
-                <h2 className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-3">
-                  Judging in Progress
-                </h2>
-                <p className="text-sm text-gray-600">
-                  The AI commissioner is evaluating rosters. Results will appear shortly.
-                </p>
-              </div>
-              <DraftBoard
-                initial={projection}
-                myPlayerId={myPlayerId}
-              />
-            </div>
-          </div>
+          <>
+            <JudgingPanel projection={projection} myPlayerId={myPlayerId} />
+            <DraftBoard
+              initial={projection}
+              myPlayerId={myPlayerId}
+            />
+          </>
         );
       }
 
@@ -116,6 +108,45 @@ export default async function DraftLobbyPage({ params }: DraftLobbyPageProps) {
           initial={projection}
           myPlayerId={myPlayerId}
         />
+      );
+    }
+    case "COMPLETE": {
+      const projection = await getDraftRoomProjection(room.draftId);
+      const judgment = projection.judgment;
+
+      return (
+        <div className="min-h-screen bg-gray-50 p-4">
+          <div className="max-w-2xl mx-auto space-y-4">
+            <div className="bg-white rounded-xl border p-4">
+              <h2 className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-3">
+                Draft Complete
+              </h2>
+              {judgment ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600">
+                    The {judgment.source === "ai" ? "AI commissioner" : "community"} has evaluated the rosters.
+                  </p>
+                  <div className="flex gap-2">
+                    <a
+                      href={`/results/${room.draftId}`}
+                      className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+                    >
+                      View Full Results
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-600">
+                  The draft is complete. Results are being processed.
+                </p>
+              )}
+            </div>
+            <DraftBoard
+              initial={projection}
+              myPlayerId={myPlayerId}
+            />
+          </div>
+        </div>
       );
     }
     default:

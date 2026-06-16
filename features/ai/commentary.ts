@@ -9,7 +9,7 @@ import { evaluateCommentaryTrigger } from "./commentary-trigger";
 
 export const COMMENTARY_PROMPT_VERSION = "v1";
 
-const MODEL = process.env.OPENAI_MODEL || "gpt-5.5";
+const MODEL = process.env.OPENAI_MODEL || "gpt-4o";
 const TIMEOUT_MS = 60_000;
 
 let _client: OpenAI | null = null;
@@ -30,7 +30,6 @@ export const commentaryTagSchema = z.enum([
   "steal",
   "trend",
   "run",
-  "surprise",
 ]);
 
 export const commentaryOutputSchema = z.object({
@@ -63,7 +62,7 @@ export async function generateCommentary(
   const client = getClient();
   const prompt = buildCommentaryPrompt(input);
 
-  const response = await client.responses.create(
+  const response = await client.responses.parse(
     {
       model: MODEL,
       input: [
@@ -77,24 +76,11 @@ export async function generateCommentary(
     { signal: AbortSignal.timeout(TIMEOUT_MS) },
   );
 
-  const raw = response.output_text;
-  if (!raw) {
+  if (!response.output_parsed) {
     throw new Error("AI returned empty response");
   }
 
-  let parsedResult: unknown;
-  try {
-    parsedResult = JSON.parse(raw);
-  } catch {
-    throw new Error("AI returned invalid JSON");
-  }
-
-  const validation = commentaryOutputSchema.safeParse(parsedResult);
-  if (!validation.success) {
-    throw new Error(`AI response failed validation: ${validation.error.message}`);
-  }
-
-  return validation.data;
+  return response.output_parsed;
 }
 
 async function retry<T>(
@@ -109,6 +95,9 @@ async function retry<T>(
         console.error("[commentary] All retries exhausted:", e);
         return null;
       }
+      await new Promise((resolve) =>
+        setTimeout(resolve, 1000 * Math.pow(2, attempt)),
+      );
     }
   }
   return null;
@@ -295,7 +284,7 @@ export async function handleCommentaryForPick(
       personality,
       text: commentary.text,
       trigger_tags: triggerResult.tags,
-      model: process.env.OPENAI_MODEL || "gpt-5.5",
+      model: process.env.OPENAI_MODEL || "gpt-4o",
       prompt_version: "v1",
       idempotency_key: idempotencyKey,
     });

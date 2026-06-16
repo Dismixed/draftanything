@@ -4,6 +4,8 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { requireGuestSession } from "@/features/guest/session";
 import { displayNameSchema } from "@/features/room/schema";
 import { joinRoom } from "@/features/room/service";
+import { generateRequestId, setRequestIdHeader } from "@/lib/request-id";
+import { logRoute } from "@/lib/logger";
 
 const JOIN_RATE_LIMIT_MAX = 30;
 const JOIN_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
@@ -25,6 +27,9 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ roomCode: string }> },
 ) {
+  const requestId = generateRequestId();
+  const start = performance.now();
+
   try {
     const { guestId } = await requireGuestSession();
 
@@ -35,13 +40,16 @@ export async function POST(
     );
 
     if (!rateResult.allowed) {
-      return Response.json(
+      const res = Response.json(
         { error: "RATE_LIMITED", message: "Too many join attempts. Try again later." },
         {
           status: 429,
           headers: { "Retry-After": String(Math.ceil(rateResult.retryAfterMs / 1000)) },
         },
       );
+      setRequestIdHeader(res, requestId);
+      logRoute({ requestId, action: "join_room", result: "RATE_LIMITED", durationMs: performance.now() - start });
+      return res;
     }
 
     const { roomCode } = await params;
@@ -49,10 +57,13 @@ export async function POST(
     const parseResult = joinByCodeBodySchema.safeParse(body);
 
     if (!parseResult.success) {
-      return Response.json(
+      const res = Response.json(
         { error: "INVALID_INPUT", issues: parseResult.error.issues },
         { status: 400 },
       );
+      setRequestIdHeader(res, requestId);
+      logRoute({ requestId, action: "join_room", result: "INVALID_INPUT", durationMs: performance.now() - start });
+      return res;
     }
 
     const room = await joinRoom(
@@ -61,7 +72,10 @@ export async function POST(
       guestId,
     );
 
-    return Response.json(room, { status: 200 });
+    const res = Response.json(room, { status: 200 });
+    setRequestIdHeader(res, requestId);
+    logRoute({ requestId, action: "join_room", draftId: room.draftId, result: "success", durationMs: performance.now() - start });
+    return res;
   } catch (e) {
     if (e instanceof AppError) {
       const statusMap: Record<string, number> = {
@@ -72,9 +86,15 @@ export async function POST(
         INVALID_PHASE: 409,
       };
       const status = statusMap[e.code] ?? 400;
-      return Response.json({ error: e.code, message: e.message }, { status });
+      const res = Response.json({ error: e.code, message: e.message }, { status });
+      setRequestIdHeader(res, requestId);
+      logRoute({ requestId, action: "join_room", result: e.code, durationMs: performance.now() - start });
+      return res;
     }
     console.error("[POST /api/drafts/by-code/:roomCode/join]", e);
-    return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    const res = Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    setRequestIdHeader(res, requestId);
+    logRoute({ requestId, action: "join_room", result: "INTERNAL_ERROR", durationMs: performance.now() - start });
+    return res;
   }
 }

@@ -30,6 +30,7 @@ export interface SafeDraft {
   judgingMode: JudgingMode;
   aiPersonality: string;
   timerSeconds: number | null;
+  completedAt: string | null;
   pickOrder: PickSlot[];
   currentPickIndex: number;
   turnDeadline: string | null;

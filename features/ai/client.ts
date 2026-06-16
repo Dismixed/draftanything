@@ -6,7 +6,7 @@ import { zodTextFormat } from "openai/helpers/zod";
 import { generatePoolInputSchema, poolOutputSchema, type GeneratePoolInput } from "./schemas";
 import { buildPoolPrompt } from "./prompts/pool";
 
-const MODEL = process.env.OPENAI_MODEL || "gpt-5.5";
+const MODEL = process.env.OPENAI_MODEL || "gpt-4o";
 const TIMEOUT_MS = 60_000;
 
 let _client: OpenAI | null = null;
