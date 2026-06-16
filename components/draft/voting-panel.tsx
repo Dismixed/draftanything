@@ -103,6 +103,7 @@ export function VotingPanel({ projection, myPlayerId }: VotingPanelProps) {
             type="button"
             onClick={handleAdvance}
             disabled={submitting}
+            autoFocus
             className="mt-3 w-full bg-indigo-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
           >
             {submitting ? "Advancing..." : "Close Voting & Advance"}

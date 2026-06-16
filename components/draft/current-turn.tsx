@@ -36,6 +36,7 @@ export function CurrentTurn({
   return (
     <section
       aria-label="Current turn"
+      aria-live="polite"
       className={`rounded-xl border p-4 ${
         isMyTurn
           ? "bg-indigo-50 border-indigo-300"
