@@ -1,0 +1,243 @@
+import "server-only";
+
+import { createAdminClient } from "@/lib/supabase/admin";
+import { AppError } from "@/lib/errors";
+import {
+  ROOM_CODE_ALPHABET,
+  ROOM_CODE_LENGTH,
+  type CreateRoomInput,
+  type RoomProjection,
+} from "./schema";
+
+/**
+ * Generates a six-character room code from an ambiguity-free alphabet.
+ * Excludes characters that look alike: 0, O, I, l, 1.
+ * Uses crypto.getRandomValues() for cryptographically secure randomness.
+ */
+export function generateRoomCode(): string {
+  const alphabet = ROOM_CODE_ALPHABET;
+  const array = new Uint32Array(ROOM_CODE_LENGTH);
+  crypto.getRandomValues(array);
+  return Array.from(array, (n) => alphabet[n % alphabet.length]).join("");
+}
+
+function buildProjection(
+  draft: {
+    id: string;
+    room_code: string;
+    topic: string;
+    max_players: number;
+    rounds: number;
+    timer_seconds: number | null;
+    draft_type: string;
+    judging_mode: string;
+    ai_personality: string;
+    phase: string;
+    host_guest_id: string;
+  },
+  players: Array<{
+    id: string;
+    display_name: string;
+    seat: number;
+    is_ready: boolean;
+    guest_id: string;
+  }>,
+): RoomProjection {
+  // Determine the host player ID from the player who matches the host guest
+  const hostPlayer = players.find((p) => p.guest_id === draft.host_guest_id);
+  const hostPlayerId = hostPlayer?.id ?? "";
+
+  return {
+    draftId: draft.id,
+    roomCode: draft.room_code,
+    topic: draft.topic,
+    maxPlayers: draft.max_players,
+    rounds: draft.rounds,
+    timerSeconds: draft.timer_seconds,
+    draftType: draft.draft_type as "standard" | "snake" | "random",
+    judgingMode: draft.judging_mode as "ai" | "community" | "hybrid",
+    aiPersonality: draft.ai_personality as "analyst" | "hype" | "roast",
+    phase: draft.phase,
+    hostPlayerId,
+    players: players.map((p) => ({
+      id: p.id,
+      displayName: p.display_name,
+      seat: p.seat,
+      isReady: p.is_ready,
+      isHost: p.guest_id === draft.host_guest_id,
+    })),
+  };
+}
+
+/**
+ * Creates a new draft room atomically via the create_draft RPC.
+ * The RPC inserts the draft and host player in a single transaction,
+ * retrying on room code collisions. No orphaned rows can result.
+ */
+export async function createRoom(
+  input: CreateRoomInput,
+  guestId: string,
+): Promise<RoomProjection> {
+  const db = createAdminClient();
+
+  const { data: rpcRows, error: rpcError } = await db.rpc("create_draft", {
+    p_host_guest_id: guestId,
+    p_display_name: input.displayName,
+    p_topic: input.topic,
+    p_max_players: input.maxPlayers,
+    p_rounds: input.rounds,
+    p_draft_type: input.draftType,
+    p_judging_mode: input.judgingMode,
+    p_ai_personality: input.aiPersonality,
+    p_timer_seconds: input.timerSeconds ?? null,
+  });
+
+  if (rpcError) {
+    const msg = rpcError.message ?? "";
+    if (msg.includes("ROOM_CODE_CONFLICT")) {
+      throw new AppError(
+        "STALE_STATE",
+        "Failed to generate a unique room code. Please try again.",
+      );
+    }
+    throw new AppError("INVALID_INPUT", rpcError.message);
+  }
+
+  const row = Array.isArray(rpcRows) ? rpcRows[0] : null;
+  if (!row?.draft_id) {
+    throw new AppError("INVALID_INPUT", "Failed to retrieve created room");
+  }
+
+  return getRoom(row.draft_id as string);
+}
+
+/**
+ * Joins an existing draft room.
+ * Uses the join_draft RPC which locks the draft row, enforces capacity and
+ * uniqueness atomically, and allocates the lowest open seat.
+ */
+export async function joinRoom(
+  roomCode: string,
+  displayName: string,
+  guestId: string,
+): Promise<RoomProjection> {
+  const db = createAdminClient();
+
+  // Resolve draft ID from room code (read-only; the RPC holds the real lock)
+  const { data: draftRow, error: lookupError } = await db
+    .from("drafts")
+    .select("id")
+    .eq("room_code", roomCode.toUpperCase())
+    .single();
+
+  if (lookupError || !draftRow) {
+    throw new AppError("ROOM_NOT_FOUND", `Room with code ${roomCode} not found`);
+  }
+
+  // Call the transactional RPC — handles locking, capacity, uniqueness, and seat allocation
+  const { error: rpcError } = await db.rpc("join_draft", {
+    p_draft_id: draftRow.id,
+    p_guest_id: guestId,
+    p_display_name: displayName,
+  });
+
+  if (rpcError) {
+    // Map Postgres raise exception messages to AppError codes
+    const msg = rpcError.message ?? "";
+    if (msg.includes("ROOM_NOT_FOUND")) {
+      throw new AppError("ROOM_NOT_FOUND", `Room with code ${roomCode} not found`);
+    }
+    if (msg.includes("INVALID_PHASE")) {
+      throw new AppError("INVALID_PHASE", "Room is no longer in the lobby phase");
+    }
+    if (msg.includes("ROOM_FULL")) {
+      throw new AppError("ROOM_FULL", "This room is full");
+    }
+    if (msg.includes("NAME_TAKEN")) {
+      throw new AppError("NAME_TAKEN", "This display name is already taken in this room");
+    }
+    throw new AppError("INVALID_INPUT", rpcError.message);
+  }
+
+  // Return the full room projection after joining
+  return getRoom(draftRow.id);
+}
+
+/**
+ * Fetches a room projection by draft ID.
+ */
+export async function getRoom(draftId: string): Promise<RoomProjection> {
+  const db = createAdminClient();
+
+  const { data: draft, error: draftError } = await db
+    .from("drafts")
+    .select("*")
+    .eq("id", draftId)
+    .single();
+
+  if (draftError || !draft) {
+    throw new AppError("ROOM_NOT_FOUND", `Draft ${draftId} not found`);
+  }
+
+  const { data: players, error: playersError } = await db
+    .from("draft_players")
+    .select("*")
+    .eq("draft_id", draftId)
+    .is("removed_at", null);
+
+  if (playersError) {
+    throw new AppError("INVALID_INPUT", playersError.message);
+  }
+
+  return buildProjection(draft, players ?? []);
+}
+
+/**
+ * Resolves the draft_players.id for a given guest in a draft.
+ * Returns an empty string if the guest is not an active player in this room.
+ */
+export async function getMyPlayerId(
+  draftId: string,
+  guestId: string,
+): Promise<string> {
+  const db = createAdminClient();
+
+  const { data } = await db
+    .from("draft_players")
+    .select("id")
+    .eq("draft_id", draftId)
+    .eq("guest_id", guestId)
+    .is("removed_at", null)
+    .single();
+
+  return data?.id ?? "";
+}
+
+/**
+ * Fetches a room projection by room code.
+ */
+export async function getRoomByCode(roomCode: string): Promise<RoomProjection> {
+  const db = createAdminClient();
+
+  const { data: draft, error: draftError } = await db
+    .from("drafts")
+    .select("*")
+    .eq("room_code", roomCode.toUpperCase())
+    .single();
+
+  if (draftError || !draft) {
+    throw new AppError("ROOM_NOT_FOUND", `Room with code ${roomCode} not found`);
+  }
+
+  const { data: players, error: playersError } = await db
+    .from("draft_players")
+    .select("*")
+    .eq("draft_id", draft.id)
+    .is("removed_at", null);
+
+  if (playersError) {
+    throw new AppError("INVALID_INPUT", playersError.message);
+  }
+
+  return buildProjection(draft, players ?? []);
+}
