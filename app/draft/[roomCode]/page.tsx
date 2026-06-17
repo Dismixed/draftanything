@@ -55,6 +55,7 @@ export default async function DraftLobbyPage({ params }: DraftLobbyPageProps) {
         />
       );
     case "DRAFTING":
+    case "DRAFT_COMPLETE":
     case "DEFENSE":
     case "VOTING":
     case "JUDGING":

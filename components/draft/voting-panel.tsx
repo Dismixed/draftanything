@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { DraftRoomProjection, SafePick } from "@/features/draft/types";
+import { getPickItemLabel } from "@/features/draft/pick-label";
+import { ButtonLoadingLabel } from "@/components/ui/button-spinner";
 
 interface VotingPanelProps {
   projection: DraftRoomProjection;
@@ -18,6 +20,7 @@ export function VotingPanel({ projection, myPlayerId }: VotingPanelProps) {
   const router = useRouter();
   const [vote, setVote] = useState<VoteState>({ selectedPlayerId: null, submitted: false });
   const [submitting, setSubmitting] = useState(false);
+  const [pendingAction, setPendingAction] = useState<"vote" | "advance" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const myVote = projection.votes.find((v) => v.voterPlayerId === myPlayerId);
@@ -56,6 +59,7 @@ export function VotingPanel({ projection, myPlayerId }: VotingPanelProps) {
     if (!vote.selectedPlayerId) return;
 
     setSubmitting(true);
+    setPendingAction("vote");
     setError(null);
 
     try {
@@ -77,11 +81,13 @@ export function VotingPanel({ projection, myPlayerId }: VotingPanelProps) {
       setError(e instanceof Error ? e.message : "An error occurred");
     } finally {
       setSubmitting(false);
+      setPendingAction(null);
     }
   };
 
   const handleAdvance = async () => {
     setSubmitting(true);
+    setPendingAction("advance");
     try {
       const res = await fetch(`/api/drafts/${draft.id}/phase`, {
         method: "POST",
@@ -99,6 +105,7 @@ export function VotingPanel({ projection, myPlayerId }: VotingPanelProps) {
       setError(e instanceof Error ? e.message : "An error occurred");
     } finally {
       setSubmitting(false);
+      setPendingAction(null);
     }
   };
 
@@ -131,7 +138,11 @@ export function VotingPanel({ projection, myPlayerId }: VotingPanelProps) {
             className="btn-ghost"
             style={{ marginTop: '12px' }}
           >
-            {submitting ? "Advancing..." : "Close Voting Early"}
+            <ButtonLoadingLabel
+              loading={submitting && pendingAction === "advance"}
+              label="Close Voting Early"
+              loadingLabel="Advancing..."
+            />
           </button>
         )}
       </section>
@@ -239,9 +250,7 @@ export function VotingPanel({ projection, myPlayerId }: VotingPanelProps) {
                 {playerPicks.length === 0 ? (
                   <li style={{ fontSize: '11px', color: 'var(--text-dim)' }}>No picks yet</li>
                 ) : (
-                  playerPicks.map((pick) => {
-                    const item = itemMap.get(pick.itemId);
-                    return (
+                  playerPicks.map((pick) => (
                       <li
                         key={pick.id}
                         style={{
@@ -253,10 +262,9 @@ export function VotingPanel({ projection, myPlayerId }: VotingPanelProps) {
                         }}
                       >
                         <span style={{ color: 'var(--border-hi)' }}>#{pick.overallPick}</span>
-                        <span>{item?.name ?? "?"}</span>
+                        <span>{getPickItemLabel(pick, itemMap)}</span>
                       </li>
-                    );
-                  })
+                    ))
                 )}
               </ul>
             </button>
@@ -277,7 +285,11 @@ export function VotingPanel({ projection, myPlayerId }: VotingPanelProps) {
         className="btn-gold"
         style={{ marginTop: '16px' }}
       >
-        {submitting ? "Submitting Vote..." : "— Submit Vote —"}
+        <ButtonLoadingLabel
+          loading={submitting && pendingAction === "vote"}
+          label="— Submit Vote —"
+          loadingLabel="Submitting Vote..."
+        />
       </button>
 
       {isHost && (
@@ -288,7 +300,11 @@ export function VotingPanel({ projection, myPlayerId }: VotingPanelProps) {
           className="btn-ghost"
           style={{ marginTop: '8px' }}
         >
-          {submitting ? "Advancing..." : "Close Voting Early"}
+          <ButtonLoadingLabel
+            loading={submitting && pendingAction === "advance"}
+            label="Close Voting Early"
+            loadingLabel="Advancing..."
+          />
         </button>
       )}
 

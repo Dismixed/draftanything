@@ -40,14 +40,15 @@ function makeInput(overrides?: Partial<CommentaryTriggerInput>): CommentaryTrigg
 }
 
 describe("evaluateCommentaryTrigger", () => {
-  it("returns null when no trigger conditions are met", () => {
+  it("falls back to roundup on quiet picks after the last commentary", () => {
     const result = evaluateCommentaryTrigger(
       makeInput({
         pickedItemScores: { quality: 4, speed: 4, style: 4 },
         picksSinceLastCommentary: 1,
       }),
     );
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result!.tags).toEqual(["roundup"]);
   });
 
   it("tags solid picks above the median", () => {

@@ -208,6 +208,43 @@ describe("buildProjection", () => {
     expect(result.picks[0].overallPick).toBe(1);
     expect(result.picks[0].isAutoPick).toBe(false);
     expect(result.picks[0].playerId).toBe("player-1");
+    expect(result.picks[0].itemName).toBe("Item Alpha");
+  });
+
+  it("resolves off-the-dome pick names from item_name", () => {
+    const offTheDomeDraft = {
+      ...draftRow,
+      picking_mode: "off_the_dome",
+    };
+    const offTheDomePick = {
+      id: "pick-otd",
+      draft_id: "draft-1",
+      player_id: "player-1",
+      item_id: null,
+      item_name: "LeBron James",
+      overall_pick: 1,
+      round: 1,
+      pick_in_round: 1,
+      is_auto_pick: false,
+      forfeited: false,
+      created_at: "2026-06-15T12:30:00Z",
+    };
+
+    const result = buildProjection(
+      offTheDomeDraft as unknown as Record<string, unknown>,
+      playerRows as unknown as Record<string, unknown>[],
+      [],
+      [offTheDomePick as unknown as Record<string, unknown>],
+      [],
+      [],
+      [],
+      null,
+      serverNow,
+    );
+
+    expect(result.availableItems).toEqual([]);
+    expect(result.picks[0].itemName).toBe("LeBron James");
+    expect(result.picks[0].itemId).toBe("");
   });
 
   it("maps commentary correctly", () => {

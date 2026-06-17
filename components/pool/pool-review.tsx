@@ -6,6 +6,7 @@ import type { RoomProjection } from "@/features/room/schema";
 import { PoolEditor } from "./pool-editor";
 import { SuggestionQueue } from "./suggestion-queue";
 import type { PoolProjection, PoolSuggestion } from "@/features/pool/service";
+import { ButtonLoadingLabel } from "@/components/ui/button-spinner";
 
 interface PoolReviewProps {
   draftId: string;
@@ -20,6 +21,7 @@ export function PoolReview({ draftId, myPlayerId, hostPlayerId, room }: PoolRevi
   const [suggestions, setSuggestions] = useState<PoolSuggestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [locking, setLocking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [confirmLock, setConfirmLock] = useState(false);
@@ -152,6 +154,8 @@ export function PoolReview({ draftId, myPlayerId, hostPlayerId, room }: PoolRevi
   }
 
   async function handleLock() {
+    if (locking) return;
+    setLocking(true);
     try {
       const res = await fetch(`/api/drafts/${draftId}/pool`, {
         method: "POST",
@@ -167,6 +171,8 @@ export function PoolReview({ draftId, myPlayerId, hostPlayerId, room }: PoolRevi
       }
     } catch {
       setError("Lock failed");
+    } finally {
+      setLocking(false);
     }
   }
 
@@ -280,7 +286,11 @@ export function PoolReview({ draftId, myPlayerId, hostPlayerId, room }: PoolRevi
               className="btn-gold"
               style={{ width: "auto", padding: "10px 18px" }}
             >
-              {generating ? "Generating…" : "Generate with AI"}
+              <ButtonLoadingLabel
+                loading={generating}
+                label="Generate with AI"
+                loadingLabel="Generating…"
+              />
             </button>
 
             <button
@@ -324,10 +334,16 @@ export function PoolReview({ draftId, myPlayerId, hostPlayerId, room }: PoolRevi
                 <button
                   type="button"
                   onClick={handleLock}
+                  disabled={locking}
+                  aria-busy={locking}
                   className="btn-gold"
                   style={{ width: 'auto', padding: '6px 12px', fontSize: '12px' }}
                 >
-                  Confirm
+                  <ButtonLoadingLabel
+                    loading={locking}
+                    label="Confirm"
+                    loadingLabel="Locking…"
+                  />
                 </button>
                 <button
                   type="button"

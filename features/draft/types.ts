@@ -8,6 +8,7 @@ export type DraftPhase =
   | "LOBBY"
   | "POOL_REVIEW"
   | "DRAFTING"
+  | "DRAFT_COMPLETE"
   | "DEFENSE"
   | "VOTING"
   | "JUDGING"
@@ -38,6 +39,7 @@ export interface SafeDraft {
   pickOrder: PickSlot[];
   currentPickIndex: number;
   turnDeadline: string | null;
+  judgingStartedAt: string | null;
 }
 
 export interface SafePlayer {

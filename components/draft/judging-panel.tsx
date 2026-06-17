@@ -5,38 +5,12 @@ import { useRouter } from "next/navigation";
 import type { DraftRoomProjection } from "@/features/draft/types";
 import { buildPublicResult } from "@/features/results/build-public-result";
 import { ResultsBody } from "@/components/results/results-body";
+import { ButtonLoadingLabel, ButtonSpinner } from "@/components/ui/button-spinner";
 import { RosterColumn } from "./player-rosters";
 
 interface JudgingPanelProps {
   projection: DraftRoomProjection;
   myPlayerId: string;
-}
-
-function JudgingSpinner() {
-  return (
-    <svg
-      className="animate-spin"
-      style={{ width: "16px", height: "16px", flexShrink: 0 }}
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      aria-hidden
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-      />
-    </svg>
-  );
 }
 
 export function JudgingPanel({ projection, myPlayerId }: JudgingPanelProps) {
@@ -48,6 +22,8 @@ export function JudgingPanel({ projection, myPlayerId }: JudgingPanelProps) {
   const { draft, players, picks, availableItems, judgment } = projection;
   const isHost = players.find((p) => p.id === myPlayerId)?.isHost ?? false;
   const alreadyJudged = judgment !== null;
+  const isEvaluating =
+    !alreadyJudged && (judging || draft.judgingStartedAt != null);
 
   const result = useMemo(() => buildPublicResult(projection), [projection]);
 
@@ -193,16 +169,42 @@ export function JudgingPanel({ projection, myPlayerId }: JudgingPanelProps) {
               margin: "0 0 6px 0",
             }}
           >
-            {showResults && alreadyJudged ? result.topic : alreadyJudged ? "Results Ready" : "Run Judging"}
+            {showResults && alreadyJudged ? result.topic : alreadyJudged ? "Results Ready" : isEvaluating ? "Evaluating Rosters" : "Run Judging"}
           </h2>
           <p style={{ color: "var(--text-dim)", fontSize: "13px", margin: 0 }}>
             {showResults && alreadyJudged
               ? "Final rankings, awards, and the judge's explanation."
               : alreadyJudged
                 ? "Judging is complete. View the full results below."
-                : "Review the final rosters, then run judging when everyone is ready."}
+                : isEvaluating
+                  ? isHost
+                    ? "The judge is reviewing every roster. This can take a moment."
+                    : "The host started judging. Hang tight while rosters are evaluated."
+                  : "Review the final rosters, then run judging when everyone is ready."}
           </p>
         </header>
+
+        {isEvaluating && (
+          <div
+            role="status"
+            aria-live="polite"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              padding: "12px 14px",
+              background: "rgba(201,168,76,0.08)",
+              border: "1px solid rgba(201,168,76,0.35)",
+              color: "var(--gold-hi)",
+              fontSize: "13px",
+            }}
+          >
+            <ButtonSpinner size={16} />
+            <span>
+              {isHost ? "Evaluating rosters..." : "Host is evaluating rosters..."}
+            </span>
+          </div>
+        )}
 
         {showResults && alreadyJudged ? (
           <ResultsBody
@@ -289,7 +291,11 @@ export function JudgingPanel({ projection, myPlayerId }: JudgingPanelProps) {
                   className="btn-ghost"
                   style={{ flex: "1 1 160px" }}
                 >
-                  {judging ? "Advancing..." : "Advance to Complete"}
+                  <ButtonLoadingLabel
+                    loading={judging}
+                    label="Advance to Complete"
+                    loadingLabel="Advancing..."
+                  />
                 </button>
               )}
             </div>
@@ -298,25 +304,27 @@ export function JudgingPanel({ projection, myPlayerId }: JudgingPanelProps) {
               <button
                 type="button"
                 onClick={handleRunJudging}
-                disabled={judging}
+                disabled={isEvaluating}
                 className="btn-gold"
                 style={{ width: "100%" }}
               >
-                {judging ? (
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
-                    <JudgingSpinner />
-                    Evaluating...
-                  </span>
-                ) : (
-                  "— Run Judging —"
-                )}
+                <ButtonLoadingLabel
+                  loading={isEvaluating}
+                  label="— Run Judging —"
+                  loadingLabel="Evaluating..."
+                />
               </button>
             </div>
           ) : (
             <p style={{ color: "var(--text-dim)", fontSize: "13px", margin: 0 }}>
-              {judging
-                ? "The host is running judging now..."
-                : "Waiting for the host to run judging."}
+              {isEvaluating ? (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                  <ButtonSpinner size={16} />
+                  The host is evaluating rosters...
+                </span>
+              ) : (
+                "Waiting for the host to run judging."
+              )}
             </p>
           )}
 

@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 
 -- We'll test in a single plan counting all assertions
-select plan(32);
+select plan(36);
 
 -- =============================================================================
 -- Fixture setup: create a minimal draft that has been locked (POOL_REVIEW→DRAFTING)
@@ -46,6 +46,7 @@ values
 -- =============================================================================
 
 select has_function('public', 'start_draft', 'start_draft exists');
+select has_function('public', 'start_defense', 'start_defense exists');
 select has_function('public', 'submit_pick', 'submit_pick exists');
 select has_function('public', 'auto_pick', 'auto_pick exists');
 
@@ -321,7 +322,7 @@ select lives_ok(
   'pick 5 (Player2, round 2) succeeds'
 );
 
--- ci=5 (last pick): Host picks Item Zeta, should transition to DEFENSE
+-- ci=5 (last pick): Host picks Item Zeta, should transition to DRAFT_COMPLETE
 select results_eq(
   $$
     select o_current_pick_index, o_phase
@@ -332,15 +333,45 @@ select results_eq(
       5
     );
   $$,
-  $$ values (6, 'DEFENSE') $$,
-  'last pick transitions to DEFENSE and returns pick index 6'
+  $$ values (6, 'DRAFT_COMPLETE') $$,
+  'last pick transitions to DRAFT_COMPLETE and returns pick index 6'
 );
 
 -- Verify phase transitioned
 select is(
   (select phase::text from public.drafts where id = '10000000-0000-0000-0000-000000000001'),
+  'DRAFT_COMPLETE',
+  'draft phase is DRAFT_COMPLETE after last pick'
+);
+
+-- start_defense: non-host fails
+select throws_ok(
+  $$
+    select public.start_defense(
+      '10000000-0000-0000-0000-000000000001',
+      '00000000-0000-0000-0000-000000000002'
+    );
+  $$,
+  'P0001',
+  'NOT_HOST',
+  'start_defense fails for non-host'
+);
+
+-- Host can start defense
+select lives_ok(
+  $$
+    select public.start_defense(
+      '10000000-0000-0000-0000-000000000001',
+      '00000000-0000-0000-0000-000000000001'
+    );
+  $$,
+  'start_defense succeeds for host'
+);
+
+select is(
+  (select phase::text from public.drafts where id = '10000000-0000-0000-0000-000000000001'),
   'DEFENSE',
-  'draft phase is DEFENSE after last pick'
+  'draft phase is DEFENSE after start_defense'
 );
 
 -- =============================================================================

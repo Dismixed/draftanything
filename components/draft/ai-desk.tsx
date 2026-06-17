@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import type { SafeCommentary } from "@/features/draft/types";
+import type { SafeCommentary, SafePick, SafePlayer } from "@/features/draft/types";
 
 interface AiDeskProps {
   commentary: SafeCommentary[];
+  picks: SafePick[];
+  players: SafePlayer[];
 }
 
 const TAG_STYLES: Record<string, React.CSSProperties> = {
@@ -70,13 +72,67 @@ const tagPillBase: React.CSSProperties = {
   letterSpacing: '0.08em',
 };
 
-export function AiDesk({ commentary }: AiDeskProps) {
+function pickContextLabel(ctx: {
+  pickNumber: number;
+  playerName: string;
+  itemName: string;
+}) {
+  return `Pick #${ctx.pickNumber} · ${ctx.playerName} — ${ctx.itemName}`;
+}
+
+function CommentaryTags({ tags }: { tags: string[] }) {
+  if (tags.length === 0) return null;
+
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
+      {tags.map((tag) => {
+        const tagStyle = TAG_STYLES[tag] ?? {
+          background: 'rgba(106,112,144,0.1)',
+          color: 'var(--text-dim)',
+          border: '1px solid var(--border-hi)',
+        };
+        return (
+          <span key={tag} style={{ ...tagPillBase, ...tagStyle }}>
+            {TAG_LABELS[tag] ?? tag}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+export function AiDesk({ commentary, picks, players }: AiDeskProps) {
   const [collapsed, setCollapsed] = useState(false);
   const sorted = [...commentary].sort(
     (a, b) => b.createdAt.localeCompare(a.createdAt),
   );
   const latest = sorted[0] ?? null;
-  const history = sorted.slice(1);
+
+  const latestCompletedPick = picks.length > 0 ? picks[picks.length - 1] : null;
+  const commentedPickIds = new Set(
+    commentary.map((c) => c.pickId).filter((id): id is string => id != null),
+  );
+  const awaitingCommentary =
+    latestCompletedPick != null &&
+    !commentedPickIds.has(latestCompletedPick.id);
+
+  const resolvePickContext = (pickId: string | null) => {
+    if (!pickId) return null;
+    const pick = picks.find((p) => p.id === pickId);
+    if (!pick) return null;
+    const player = players.find((p) => p.id === pick.playerId);
+    return {
+      pickNumber: pick.overallPick,
+      playerName: player?.displayName ?? "Unknown",
+      itemName: pick.itemName ?? "Unknown",
+    };
+  };
+
+  const pendingContext = awaitingCommentary
+    ? resolvePickContext(latestCompletedPick!.id)
+    : null;
+
+  const hasContent = awaitingCommentary || sorted.length > 0;
 
   return (
     <section aria-label="AI Commissioner Commentary">
@@ -104,7 +160,15 @@ export function AiDesk({ commentary }: AiDeskProps) {
       </button>
 
       {!collapsed && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+            maxHeight: '420px',
+            overflowY: 'auto',
+          }}
+        >
           <div
             aria-live="polite"
             aria-atomic="true"
@@ -113,39 +177,7 @@ export function AiDesk({ commentary }: AiDeskProps) {
             {latest ? `New commentary: ${latest.text}` : ""}
           </div>
 
-          {latest ? (
-            <div className="panel-card" style={{ padding: '14px' }}>
-              <p
-                style={{
-                  fontSize: '13px',
-                  color: 'var(--text)',
-                  lineHeight: 1.65,
-                  margin: 0,
-                }}
-              >
-                {latest.text}
-              </p>
-              {latest.triggerTags.length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
-                  {latest.triggerTags.map((tag) => {
-                    const tagStyle = TAG_STYLES[tag] ?? {
-                      background: 'rgba(106,112,144,0.1)',
-                      color: 'var(--text-dim)',
-                      border: '1px solid var(--border-hi)',
-                    };
-                    return (
-                      <span
-                        key={tag}
-                        style={{ ...tagPillBase, ...tagStyle }}
-                      >
-                        {TAG_LABELS[tag] ?? tag}
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          ) : (
+          {!hasContent && (
             <div
               style={{
                 border: '1px dashed var(--border-hi)',
@@ -159,58 +191,64 @@ export function AiDesk({ commentary }: AiDeskProps) {
             </div>
           )}
 
-          {history.length > 0 && (
-            <details>
-              <summary
+          {awaitingCommentary && pendingContext && (
+            <div
+              className="panel-card"
+              style={{
+                padding: '14px',
+                borderStyle: 'dashed',
+              }}
+            >
+              <p
                 style={{
-                  fontSize: '11px',
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
                   color: 'var(--text-dim)',
-                  cursor: 'pointer',
-                  userSelect: 'none',
-                  padding: '2px 0',
+                  margin: '0 0 8px 0',
                 }}
               >
-                Previous commentary ({history.length})
-              </summary>
-              <div
-                style={{
-                  marginTop: '8px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px',
-                  maxHeight: '240px',
-                  overflowY: 'auto',
-                }}
-              >
-                {history.map((c) => (
-                  <div key={c.id} className="panel-card" style={{ padding: '10px 14px' }}>
-                    <p style={{ fontSize: '13px', color: 'var(--text)', lineHeight: 1.65, margin: 0 }}>
-                      {c.text}
-                    </p>
-                    {c.triggerTags.length > 0 && (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '8px' }}>
-                        {c.triggerTags.map((tag) => {
-                          const tagStyle = TAG_STYLES[tag] ?? {
-                            background: 'rgba(106,112,144,0.1)',
-                            color: 'var(--text-dim)',
-                            border: '1px solid var(--border-hi)',
-                          };
-                          return (
-                            <span
-                              key={tag}
-                              style={{ ...tagPillBase, ...tagStyle }}
-                            >
-                              {TAG_LABELS[tag] ?? tag}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </details>
+                {pickContextLabel(pendingContext)}
+              </p>
+              <p style={{ fontSize: '13px', color: 'var(--text-dim)', margin: 0 }}>
+                Commissioner is reacting to this pick…
+              </p>
+            </div>
           )}
+
+          {sorted.map((entry) => {
+            const context = resolvePickContext(entry.pickId);
+            return (
+              <div key={entry.id} className="panel-card" style={{ padding: '14px' }}>
+                {context && (
+                  <p
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 600,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: 'var(--text-dim)',
+                      margin: '0 0 8px 0',
+                    }}
+                  >
+                    {pickContextLabel(context)}
+                  </p>
+                )}
+                <p
+                  style={{
+                    fontSize: '13px',
+                    color: 'var(--text)',
+                    lineHeight: 1.65,
+                    margin: 0,
+                  }}
+                >
+                  {entry.text}
+                </p>
+                <CommentaryTags tags={entry.triggerTags} />
+              </div>
+            );
+          })}
         </div>
       )}
     </section>

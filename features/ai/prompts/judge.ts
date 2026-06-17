@@ -29,6 +29,7 @@ export const JUDGE_PROMPT_VERSION = "1.2.0";
 export function buildJudgePrompt(
   input: BuildJudgePromptInput,
 ): { system: string; user: string } {
+  const hasRubric = input.rubric.length > 0;
   const rubricLines = input.rubric.map(
     (c) => `  ${c.key}: weight ${c.weight}%`,
   );
@@ -71,17 +72,26 @@ export function buildJudgePrompt(
       "",
       "Evaluate each player's roster and defense, then produce a structured judgment.",
       "",
-      "Rubric categories and weights:",
-      ...rubricLines,
-      "",
-      "For each category, assign 0-10 per player, then compute a weighted overall score (0-10).",
+      ...(hasRubric
+        ? [
+            "Rubric categories and weights:",
+            ...rubricLines,
+            "",
+            "For each category, assign 0-10 per player, then compute a weighted overall score (0-10).",
+          ]
+        : [
+            "There is no locked rubric for this draft. Judge purely on topic fit, creativity, and roster coherence using the pick names provided.",
+            "Assign each player an overall score from 0-10 and leave categories empty.",
+          ]),
       "Rank players by overall score (highest first).",
       "Select winner(s): highest score — use ties ONLY if scores are exactly equal.",
       "Awards: choose the single best pick, worst pick, and biggest steal from across ALL picks.",
       "The biggest steal compares pick quality relative to draft position.",
       "",
       "Response format: JSON with keys:",
-      "  playerScores: [{ playerId, overall: 0-10, categories: [{ key: categoryKey, value: 0-10 }] }]",
+      hasRubric
+        ? "  playerScores: [{ playerId, overall: 0-10, categories: [{ key: categoryKey, value: 0-10 }] }]"
+        : "  playerScores: [{ playerId, overall: 0-10, categories: [] }]",
       "  ranking: [playerId, ...] (sorted descending by overall score)",
       "  winnerPlayerIds: [playerId, ...] (one or more if tied)",
       "  awards: { bestPick: { pickId, itemId, playerId }, worstPick: { ... }, biggestSteal: { ... } }",

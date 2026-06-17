@@ -1,6 +1,8 @@
+import { after } from "next/server";
 import { AppError } from "@/lib/errors";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { requireGuestSession } from "@/features/guest/session";
+import { handleCommentaryForPick } from "@/features/ai/commentary";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
@@ -62,6 +64,19 @@ export async function POST(
     }
 
     const result = Array.isArray(data) ? data[0] : data;
+
+    const { data: newPick } = await db
+      .from("picks")
+      .select("id")
+      .eq("draft_id", draftId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    after(() => {
+      void handleCommentaryForPick(draftId, newPick?.id);
+    });
+
     return Response.json(result ?? { success: true });
   } catch (e) {
     if (e instanceof AppError) {

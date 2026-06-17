@@ -149,6 +149,10 @@ async function apiAutoPick(ctx: APIRequestContext, draftId: string) {
   });
 }
 
+async function apiStartDefense(ctx: APIRequestContext, draftId: string) {
+  return ctx.post(`/api/drafts/${draftId}/start-defense`);
+}
+
 /**
  * Sets up a complete 2-player draft through the pool phase.
  * Returns the draftId and roomCode.
@@ -424,9 +428,15 @@ test.describe("Draft flow (API)", () => {
     const pick4 = await apiPick(request, draftId, avail3[0].id, 3);
     expect(pick4.ok()).toBeTruthy();
 
-    // Verify draft transitions to DEFENSE
+    // Verify draft transitions to DRAFT_COMPLETE
     const finalProj = await apiGetProjection(request, draftId);
-    expect(finalProj.draft.phase).toBe("DEFENSE");
+    expect(finalProj.draft.phase).toBe("DRAFT_COMPLETE");
+
+    const startDefense = await apiStartDefense(request, draftId);
+    expect(startDefense.ok()).toBeTruthy();
+
+    const defenseProj = await apiGetProjection(request, draftId);
+    expect(defenseProj.draft.phase).toBe("DEFENSE");
   });
 
   // -----------------------------------------------------------------------
@@ -539,7 +549,7 @@ test.describe("Draft flow (API)", () => {
   // Final → DEFENSE transition
   // -----------------------------------------------------------------------
 
-  test("final pick transitions to defense phase via API", async ({ request, playwright }) => {
+  test("final pick transitions to draft complete, then defense via API", async ({ request, playwright }) => {
     const guestCtx = await playwright.request.newContext({ baseURL: BASE_URL });
     await apiBootstrapGuest(guestCtx);
     const { draftId } = await setupTwoPlayerDraft(request, guestCtx, {
@@ -571,12 +581,18 @@ test.describe("Draft flow (API)", () => {
     expect(pick2.ok()).toBeTruthy();
     const res2 = await pick2.json();
     expect(res2.o_current_pick_index).toBe(2);
-    expect(res2.o_phase).toBe("DEFENSE");
+    expect(res2.o_phase).toBe("DRAFT_COMPLETE");
     expect(res2.o_turn_deadline).toBeNull();
 
-    // Verify projection shows DEFENSE
+    // Verify projection shows DRAFT_COMPLETE
     const finalProj = await apiGetProjection(request, draftId);
-    expect(finalProj.draft.phase).toBe("DEFENSE");
+    expect(finalProj.draft.phase).toBe("DRAFT_COMPLETE");
     expect(finalProj.draft.currentPickIndex).toBe(2);
+
+    const startDefense = await apiStartDefense(request, draftId);
+    expect(startDefense.ok()).toBeTruthy();
+
+    const defenseProj = await apiGetProjection(request, draftId);
+    expect(defenseProj.draft.phase).toBe("DEFENSE");
   });
 });

@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { handleCommentaryForPick } from "@/features/ai/commentary";
 import { logRoute } from "@/lib/logger";
 
 /**
@@ -84,6 +85,16 @@ export async function GET(request: Request) {
           errors.push({ draftId: draft.id, error: rpcError.message });
           continue;
         }
+
+        const { data: newPick } = await db
+          .from("picks")
+          .select("id")
+          .eq("draft_id", draft.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        void handleCommentaryForPick(draft.id, newPick?.id);
 
         processed++;
       } catch (e) {

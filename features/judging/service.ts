@@ -51,6 +51,30 @@ export interface RosterInfo {
   displayName: string;
 }
 
+export async function setJudgingStarted(draftId: string): Promise<void> {
+  const db = createAdminClient();
+  const { error } = await db
+    .from("drafts")
+    .update({ judging_started_at: new Date().toISOString() })
+    .eq("id", draftId);
+
+  if (error) {
+    throw new Error(`Failed to mark judging started: ${error.message}`);
+  }
+}
+
+export async function clearJudgingStarted(draftId: string): Promise<void> {
+  const db = createAdminClient();
+  const { error } = await db
+    .from("drafts")
+    .update({ judging_started_at: null })
+    .eq("id", draftId);
+
+  if (error) {
+    throw new Error(`Failed to clear judging started: ${error.message}`);
+  }
+}
+
 export async function persistJudgment(judgment: JudgmentRecord): Promise<void> {
   const db = createAdminClient();
 
@@ -155,7 +179,7 @@ export async function getJudgingData(draftId: string): Promise<JudgingData> {
 
   const { data: picks } = await db
     .from("picks")
-    .select("id, player_id, item_id, overall_pick")
+    .select("id, player_id, item_id, item_name, overall_pick")
     .eq("draft_id", draftId)
     .order("overall_pick", { ascending: true });
 
@@ -180,8 +204,8 @@ export async function getJudgingData(draftId: string): Promise<JudgingData> {
   const safePicks: SafePick[] = (picks ?? []).map((p) => ({
     id: p.id as string,
     playerId: p.player_id as string,
-    itemId: p.item_id as string,
-    itemName: null,
+    itemId: (p.item_id as string | null) ?? "",
+    itemName: (p.item_name as string | null) ?? null,
     overallPick: p.overall_pick as number,
     round: 1,
     pickInRound: 1,
@@ -413,12 +437,12 @@ async function buildJudgeInput(
   const itemMap = await fetchItems(draftId);
 
   const rosterPicks: RosterPick[] = picks.map((p) => {
-    const item = itemMap.get(p.itemId);
+    const item = p.itemId ? itemMap.get(p.itemId) : undefined;
     return {
       pickId: p.id,
       playerId: p.playerId,
       itemId: p.itemId,
-      itemName: item?.name ?? "",
+      itemName: p.itemName ?? item?.name ?? "",
       metadata: item?.hidden_metadata ?? {},
       overallPick: p.overallPick,
     };

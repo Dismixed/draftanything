@@ -21,6 +21,7 @@ interface DraftBoardProps {
 type MobileTab = "rosters" | "pool" | "ai";
 
 const PHASE_LABELS: Partial<Record<DraftRoomProjection["draft"]["phase"], string>> = {
+  DRAFT_COMPLETE: "Review",
   DEFENSE: "Defense",
   VOTING: "Voting",
   JUDGING: "Judging",
@@ -30,6 +31,7 @@ const PHASE_LABELS: Partial<Record<DraftRoomProjection["draft"]["phase"], string
 export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
   const router = useRouter();
   const initialPhaseRef = useRef(initial.draft.phase);
+  const setProjection = useDraftStore((s) => s.setProjection);
   const projection = useDraftStore((s) => s.projection) ?? initial;
   const connectionStatus = useDraftStore((s) => s.connectionStatus);
   const [mobileTab, setMobileTab] = useState<MobileTab>("rosters");
@@ -66,13 +68,21 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
 
   useEffect(() => {
     if (projection.draft.phase !== initialPhaseRef.current) {
+      setProjection(null);
+      initialPhaseRef.current = projection.draft.phase;
       router.refresh();
     }
-  }, [projection.draft.phase, router]);
+  }, [projection.draft.phase, router, setProjection]);
 
   const { draft, players, availableItems, picks } = projection;
   const isDrafting = draft.phase === "DRAFTING";
-  const phaseLabel = PHASE_LABELS[draft.phase];
+  const isEvaluatingJudgment =
+    draft.phase === "JUDGING" &&
+    draft.judgingStartedAt != null &&
+    projection.judgment === null;
+  const phaseLabel = isEvaluatingJudgment
+    ? "Evaluating"
+    : PHASE_LABELS[draft.phase];
   const currentSlot = isDrafting ? draft.pickOrder[draft.currentPickIndex] : undefined;
   const currentPlayer = currentSlot
     ? players.find((p) => p.seat === currentSlot.seat)
@@ -242,7 +252,7 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
 
       {draft.phase === "VOTING" && (
         <div style={{ padding: '20px 16px 0', maxWidth: '960px', margin: '0 auto' }}>
-          <PhasePanel initial={initial} myPlayerId={myPlayerId} />
+          <PhasePanel projection={projection} myPlayerId={myPlayerId} />
         </div>
       )}
 
@@ -299,12 +309,19 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
             "lg:col-span-1",
           ].join(" ")}
         >
-          <AiDesk commentary={projection.commentary} />
+          <AiDesk
+            commentary={projection.commentary}
+            picks={picks}
+            players={players}
+          />
         </div>
       </div>
 
-      {(draft.phase === "DEFENSE" || draft.phase === "JUDGING" || draft.phase === "COMPLETE") && (
-        <PhasePanel initial={initial} myPlayerId={myPlayerId} />
+      {(draft.phase === "DRAFT_COMPLETE" ||
+        draft.phase === "DEFENSE" ||
+        draft.phase === "JUDGING" ||
+        draft.phase === "COMPLETE") && (
+        <PhasePanel projection={projection} myPlayerId={myPlayerId} />
       )}
 
       {isDrafting && draft.pickingMode === "off_the_dome" && currentPlayer && (

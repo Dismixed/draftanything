@@ -84,6 +84,7 @@ async function retry<T>(
  */
 export async function handleCommentaryForPick(
   draftId: string,
+  targetPickId?: string,
 ): Promise<void> {
   try {
     const db = createAdminClient();
@@ -102,16 +103,30 @@ export async function handleCommentaryForPick(
     const topic = (draft.topic as string) ?? "";
     const pickOrder = (draft.pick_order as unknown[]) ?? [];
 
-    const { data: picks } = await db
-      .from("picks")
-      .select("id, item_id, item_name, overall_pick, player_id")
-      .eq("draft_id", draftId)
-      .order("overall_pick", { ascending: false })
-      .limit(1);
+    const pickSelect =
+      "id, item_id, item_name, overall_pick, player_id" as const;
 
-    if (!picks || picks.length === 0) return;
+    let latestPick: Record<string, unknown> | null = null;
 
-    const latestPick = picks[0];
+    if (targetPickId) {
+      const { data } = await db
+        .from("picks")
+        .select(pickSelect)
+        .eq("id", targetPickId)
+        .eq("draft_id", draftId)
+        .single();
+      latestPick = data as Record<string, unknown> | null;
+    } else {
+      const { data: picks } = await db
+        .from("picks")
+        .select(pickSelect)
+        .eq("draft_id", draftId)
+        .order("overall_pick", { ascending: false })
+        .limit(1);
+      latestPick = (picks?.[0] as Record<string, unknown> | undefined) ?? null;
+    }
+
+    if (!latestPick) return;
     const pickId = latestPick.id as string;
     const overallPick = latestPick.overall_pick as number;
     const itemId = latestPick.item_id as string | null;

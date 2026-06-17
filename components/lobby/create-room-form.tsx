@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { HOT_CATEGORIES } from "./hot-categories";
 import { TopicSuggestions } from "./topic-suggestions";
+import { ButtonLoadingLabel } from "@/components/ui/button-spinner";
 
 interface CreateRoomFormProps {
   onSuccess?: (draftId: string, roomCode: string) => void;
@@ -407,7 +408,11 @@ export function CreateRoomForm({ onSuccess }: CreateRoomFormProps) {
         className="btn-gold"
         aria-label="Create room"
       >
-        {submitting ? "Establishing…" : "— Establish Room —"}
+        <ButtonLoadingLabel
+          loading={submitting}
+          label="— Establish Room —"
+          loadingLabel="Establishing…"
+        />
       </button>
     </form>
   );

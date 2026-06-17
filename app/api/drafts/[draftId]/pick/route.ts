@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { z } from "zod/v4";
 import { AppError } from "@/lib/errors";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -120,8 +121,18 @@ export async function POST(
 
     const result = Array.isArray(data) ? data[0] : data;
 
-    // Fire-and-forget commentary — pick response never waits for this
-    void handleCommentaryForPick(draftId);
+    const { data: newPick } = await db
+      .from("picks")
+      .select("id")
+      .eq("draft_id", draftId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    // Run commentary after the response — tied to this pick, not "latest" at runtime
+    after(() => {
+      void handleCommentaryForPick(draftId, newPick?.id);
+    });
 
     const res = Response.json(result ?? { success: true });
     setRequestIdHeader(res, requestId);

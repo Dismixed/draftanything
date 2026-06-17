@@ -197,6 +197,8 @@ test.describe("Accessibility", () => {
     await request.post(`/api/drafts/${draftId}/pick`, { data: { itemId: avail[0].id, expectedPick: 0 } });
     await guestCtx.post(`/api/drafts/${draftId}/pick`, { data: { itemId: avail[1].id, expectedPick: 1 } });
 
+    await request.post(`/api/drafts/${draftId}/start-defense`);
+
     // Advance to COMPLETE
     await request.post(`/api/drafts/${draftId}/phase`, { data: { action: "advance" } });
     await request.post(`/api/drafts/${draftId}/phase`, { data: { action: "advance" } });

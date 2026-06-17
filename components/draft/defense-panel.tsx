@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { DraftRoomProjection } from "@/features/draft/types";
+import { ButtonLoadingLabel } from "@/components/ui/button-spinner";
 import { RosterColumn } from "./player-rosters";
 
 interface DefensePanelProps {
@@ -15,6 +16,7 @@ export function DefensePanel({ projection, myPlayerId }: DefensePanelProps) {
   const myDefense = projection.defenses.find((d) => d.playerId === myPlayerId);
   const [defenseText, setDefenseText] = useState(myDefense?.defenseText ?? "");
   const [submitting, setSubmitting] = useState(false);
+  const [pendingAction, setPendingAction] = useState<"submit" | "skip" | "advance" | null>(null);
   const [submitted, setSubmitted] = useState(myDefense != null);
   const [skippedDefense, setSkippedDefense] = useState(myDefense?.skipped ?? false);
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +74,7 @@ export function DefensePanel({ projection, myPlayerId }: DefensePanelProps) {
 
   const handleSubmit = async (skipped: boolean) => {
     setSubmitting(true);
+    setPendingAction(skipped ? "skip" : "submit");
     setError(null);
 
     try {
@@ -96,11 +99,13 @@ export function DefensePanel({ projection, myPlayerId }: DefensePanelProps) {
       setError(e instanceof Error ? e.message : "An error occurred");
     } finally {
       setSubmitting(false);
+      setPendingAction(null);
     }
   };
 
   const handleAdvance = async () => {
     setSubmitting(true);
+    setPendingAction("advance");
     try {
       const res = await fetch(`/api/drafts/${draft.id}/phase`, {
         method: "POST",
@@ -118,6 +123,7 @@ export function DefensePanel({ projection, myPlayerId }: DefensePanelProps) {
       setError(e instanceof Error ? e.message : "An error occurred");
     } finally {
       setSubmitting(false);
+      setPendingAction(null);
     }
   };
 
@@ -247,7 +253,11 @@ export function DefensePanel({ projection, myPlayerId }: DefensePanelProps) {
                   autoFocus
                   className="btn-ghost"
                 >
-                  {submitting ? "Advancing..." : "End Defense Early"}
+                  <ButtonLoadingLabel
+                    loading={submitting && pendingAction === "advance"}
+                    label="End Defense Early"
+                    loadingLabel="Advancing..."
+                  />
                 </button>
               )}
             </div>
@@ -282,7 +292,11 @@ export function DefensePanel({ projection, myPlayerId }: DefensePanelProps) {
                   className="btn-gold"
                   style={{ flex: "1 1 160px" }}
                 >
-                  {submitting ? "Submitting..." : "— Submit Defense —"}
+                  <ButtonLoadingLabel
+                    loading={submitting && pendingAction === "submit"}
+                    label="— Submit Defense —"
+                    loadingLabel="Submitting..."
+                  />
                 </button>
                 <button
                   type="button"
@@ -291,7 +305,11 @@ export function DefensePanel({ projection, myPlayerId }: DefensePanelProps) {
                   className="btn-ghost"
                   style={{ flex: "1 1 120px" }}
                 >
-                  Skip Defense
+                  <ButtonLoadingLabel
+                    loading={submitting && pendingAction === "skip"}
+                    label="Skip Defense"
+                    loadingLabel="Skipping..."
+                  />
                 </button>
               </div>
               {isHost && (
@@ -302,7 +320,11 @@ export function DefensePanel({ projection, myPlayerId }: DefensePanelProps) {
                   className="btn-ghost"
                   style={{ marginTop: "12px" }}
                 >
-                  {submitting ? "Advancing..." : "End Defense Early"}
+                  <ButtonLoadingLabel
+                    loading={submitting && pendingAction === "advance"}
+                    label="End Defense Early"
+                    loadingLabel="Advancing..."
+                  />
                 </button>
               )}
             </div>

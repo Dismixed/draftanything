@@ -1,6 +1,7 @@
 "use client";
 
 import type { SafePlayer, SafePick, SafeItem } from "@/features/draft/types";
+import { getPickItemLabel } from "@/features/draft/pick-label";
 import { useMemo } from "react";
 
 interface PlayerRostersProps {
@@ -93,7 +94,6 @@ export function RosterColumn({
       ) : (
         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '5px' }}>
           {playerPicks.map((pick) => {
-            const item = itemMap.get(pick.itemId);
             return (
               <li
                 key={pick.id}
@@ -115,13 +115,13 @@ export function RosterColumn({
                 <span
                   style={{
                     fontSize: '13px',
-                    color: 'var(--text)',
+                    color: pick.forfeited ? 'var(--text-dim)' : 'var(--text)',
                     lineHeight: 1.3,
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                   }}
                 >
-                  {item?.name ?? "?"}
+                  {getPickItemLabel(pick, itemMap)}
                 </span>
               </li>
             );

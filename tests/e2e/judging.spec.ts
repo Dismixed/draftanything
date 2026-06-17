@@ -83,7 +83,14 @@ async function completeDraft(
 
   const finalProj = await ctx.get(`/api/drafts/${draftId}/projection`);
   const final = await finalProj.json();
-  expect(final.draft.phase).toBe("DEFENSE");
+  expect(final.draft.phase).toBe("DRAFT_COMPLETE");
+
+  const startDefense = await ctx.post(`/api/drafts/${draftId}/start-defense`);
+  expect(startDefense.ok()).toBeTruthy();
+
+  const defenseProj = await ctx.get(`/api/drafts/${draftId}/projection`);
+  const defense = await defenseProj.json();
+  expect(defense.draft.phase).toBe("DEFENSE");
 }
 
 test.describe("Judging flow (API)", () => {

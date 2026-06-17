@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { RoomProjection } from "@/features/room/schema";
 import { SeatList } from "./player-seat";
+import { ButtonLoadingLabel } from "@/components/ui/button-spinner";
 
 interface PresenceState {
   [key: string]: Array<{ playerId: string; displayName: string }>;
@@ -23,6 +24,7 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
   const [onlineCount, setOnlineCount] = useState(0);
   const [connectionStatus, setConnectionStatus] =
     useState<ConnectionStatus>("connecting");
+  const [starting, setStarting] = useState(false);
   const channelRef = useRef<ReturnType<
     import("@supabase/supabase-js").SupabaseClient["channel"]
   > | null>(null);
@@ -153,7 +155,8 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
   }
 
   async function handleStart() {
-    if (!canStart) return;
+    if (!canStart || starting) return;
+    setStarting(true);
     try {
       const isOffTheDome = room.pickingMode === "off_the_dome";
       const res = await fetch(`/api/drafts/${room.draftId}/pool`, {
@@ -171,6 +174,8 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
       }
     } catch {
       console.error("Failed to start draft");
+    } finally {
+      setStarting(false);
     }
   }
 
@@ -336,13 +341,20 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
             <button
               type="button"
               onClick={handleStart}
-              disabled={!canStart}
-              aria-disabled={!canStart}
+              disabled={!canStart || starting}
+              aria-disabled={!canStart || starting}
+              aria-busy={starting}
               className="btn-gold"
             >
-              {canStart
-                ? "— Commence Draft —"
-                : `Need ${Math.max(0, 2 - playerCount)} more player${Math.max(0, 2 - playerCount) !== 1 ? "s" : ""}`}
+              {canStart ? (
+                <ButtonLoadingLabel
+                  loading={starting}
+                  label="— Commence Draft —"
+                  loadingLabel="Starting..."
+                />
+              ) : (
+                `Need ${Math.max(0, 2 - playerCount)} more player${Math.max(0, 2 - playerCount) !== 1 ? "s" : ""}`
+              )}
             </button>
           </section>
         )}

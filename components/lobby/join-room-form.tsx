@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ButtonLoadingLabel } from "@/components/ui/button-spinner";
 
 interface JoinRoomFormProps {
   /**
@@ -138,7 +139,11 @@ export function JoinRoomForm({ initialRoomCode = "", onSuccess }: JoinRoomFormPr
         className="btn-gold"
         style={{ marginTop: '4px' }}
       >
-        {submitting ? "Joining…" : "— Join Room —"}
+        <ButtonLoadingLabel
+          loading={submitting}
+          label="— Join Room —"
+          loadingLabel="Joining…"
+        />
       </button>
     </form>
   );

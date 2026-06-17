@@ -28,7 +28,7 @@ export type CommentaryTag =
 export const MIN_PICKS_BETWEEN_COMMENTARY = 1;
 
 /** Fallback commentary when no notable trigger fires for this many picks. */
-export const ROUNDUP_PICK_INTERVAL = 2;
+export const ROUNDUP_PICK_INTERVAL = 1;
 
 const TAG_PRIORITY: Record<CommentaryTag, number> = {
   steal: 10,

@@ -272,6 +272,7 @@ export type Database = {
           host_guest_id: string
           id: string
           judging_mode: Database["public"]["Enums"]["judging_mode"]
+          judging_started_at: string | null
           max_players: number
           phase: Database["public"]["Enums"]["draft_phase"]
           pick_order: Json
@@ -293,6 +294,7 @@ export type Database = {
           host_guest_id: string
           id?: string
           judging_mode: Database["public"]["Enums"]["judging_mode"]
+          judging_started_at?: string | null
           max_players: number
           phase?: Database["public"]["Enums"]["draft_phase"]
           pick_order?: Json
@@ -314,6 +316,7 @@ export type Database = {
           host_guest_id?: string
           id?: string
           judging_mode?: Database["public"]["Enums"]["judging_mode"]
+          judging_started_at?: string | null
           max_players?: number
           phase?: Database["public"]["Enums"]["draft_phase"]
           pick_order?: Json
@@ -864,6 +867,7 @@ export type Database = {
           draft_type: Database["public"]["Enums"]["draft_type"] | null
           id: string | null
           judging_mode: Database["public"]["Enums"]["judging_mode"] | null
+          judging_started_at: string | null
           max_players: number | null
           phase: Database["public"]["Enums"]["draft_phase"] | null
           pick_order: Json | null
@@ -883,6 +887,7 @@ export type Database = {
           draft_type?: Database["public"]["Enums"]["draft_type"] | null
           id?: string | null
           judging_mode?: Database["public"]["Enums"]["judging_mode"] | null
+          judging_started_at?: string | null
           max_players?: number | null
           phase?: Database["public"]["Enums"]["draft_phase"] | null
           pick_order?: Json | null
@@ -902,6 +907,7 @@ export type Database = {
           draft_type?: Database["public"]["Enums"]["draft_type"] | null
           id?: string | null
           judging_mode?: Database["public"]["Enums"]["judging_mode"] | null
+          judging_started_at?: string | null
           max_players?: number | null
           phase?: Database["public"]["Enums"]["draft_phase"] | null
           pick_order?: Json | null
@@ -1261,6 +1267,10 @@ export type Database = {
         Args: { p_draft_id: string; p_guest_id: string; p_pick_order: Json }
         Returns: undefined
       }
+      start_defense: {
+        Args: { p_draft_id: string; p_guest_id: string }
+        Returns: undefined
+      }
       start_pool_review: {
         Args: { p_draft_id: string; p_guest_id: string }
         Returns: undefined
@@ -1303,6 +1313,7 @@ export type Database = {
         | "LOBBY"
         | "POOL_REVIEW"
         | "DRAFTING"
+        | "DRAFT_COMPLETE"
         | "DEFENSE"
         | "VOTING"
         | "JUDGING"
@@ -1449,6 +1460,7 @@ export const Constants = {
         "LOBBY",
         "POOL_REVIEW",
         "DRAFTING",
+        "DRAFT_COMPLETE",
         "DEFENSE",
         "VOTING",
         "JUDGING",

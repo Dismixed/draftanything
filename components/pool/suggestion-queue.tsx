@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { PoolProjection, PoolSuggestion } from "@/features/pool/service";
+import { ButtonLoadingLabel } from "@/components/ui/button-spinner";
 
 interface SuggestionQueueProps {
   draftId: string;
@@ -118,7 +119,11 @@ export function SuggestionQueue({
             className="btn-gold"
             style={{ width: 'auto', padding: '8px 14px' }}
           >
-            Suggest
+            <ButtonLoadingLabel
+              loading={submitting}
+              label="Suggest"
+              loadingLabel="Sending…"
+            />
           </button>
         </div>
       )}

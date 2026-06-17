@@ -58,6 +58,7 @@ export function buildProjection(
     }),
     currentPickIndex: draft.current_pick_index as number,
     turnDeadline: (draft.turn_deadline as string | null) ?? null,
+    judgingStartedAt: (draft.judging_started_at as string | null) ?? null,
   };
 
   const safePlayers: SafePlayer[] = (players ?? []).map((p) => ({
@@ -79,17 +80,28 @@ export function buildProjection(
         isAvailable: item.is_available as boolean,
       }));
 
-  const safePicks: SafePick[] = (picks ?? []).map((p) => ({
-    id: p.id as string,
-    playerId: p.player_id as string,
-    itemId: p.item_id as string,
-    itemName: (p.item_name as string | null) ?? null,
-    overallPick: p.overall_pick as number,
-    round: p.round as number,
-    pickInRound: p.pick_in_round as number,
-    isAutoPick: p.is_auto_pick as boolean,
-    forfeited: (p.forfeited as boolean) ?? false,
-  }));
+  const itemNameById = new Map(
+    (items ?? []).map((item) => [item.id as string, item.name as string]),
+  );
+
+  const safePicks: SafePick[] = (picks ?? []).map((p) => {
+    const itemId = (p.item_id as string | null) ?? null;
+    const storedName = (p.item_name as string | null) ?? null;
+    const itemName =
+      storedName ?? (itemId ? itemNameById.get(itemId) ?? null : null);
+
+    return {
+      id: p.id as string,
+      playerId: p.player_id as string,
+      itemId: itemId ?? "",
+      itemName,
+      overallPick: p.overall_pick as number,
+      round: p.round as number,
+      pickInRound: p.pick_in_round as number,
+      isAutoPick: p.is_auto_pick as boolean,
+      forfeited: (p.forfeited as boolean) ?? false,
+    };
+  });
 
   const safeCommentary: SafeCommentary[] = (commentary ?? []).map((c) => ({
     id: c.id as string,

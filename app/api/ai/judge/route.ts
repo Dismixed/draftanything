@@ -2,7 +2,7 @@ import { z } from "zod/v4";
 import { AppError } from "@/lib/errors";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { requireGuestSession } from "@/features/guest/session";
-import { judgeDraft, persistJudgment, getJudgingData } from "@/features/judging/service";
+import { judgeDraft, persistJudgment, getJudgingData, setJudgingStarted, clearJudgingStarted } from "@/features/judging/service";
 
 const judgeSchema = z.object({
   draftId: z.string().uuid(),
@@ -55,28 +55,34 @@ export async function POST(
       return Response.json({ error: "INVALID_PHASE", message: "Draft must be in JUDGING phase" }, { status: 400 });
     }
 
-    const judgment = await judgeDraft(
-      draftId,
-      judgingData.topic,
-      judgingData.judgingMode,
-      judgingData.aiPersonality,
-      judgingData.customJudgePrompt,
-      judgingData.rubric,
-      judgingData.safePlayers,
-      judgingData.safePicks,
-      judgingData.rosters,
-      judgingData.voteRecords,
-    );
+    await setJudgingStarted(draftId);
 
-    await persistJudgment(judgment);
+    try {
+      const judgment = await judgeDraft(
+        draftId,
+        judgingData.topic,
+        judgingData.judgingMode,
+        judgingData.aiPersonality,
+        judgingData.customJudgePrompt,
+        judgingData.rubric,
+        judgingData.safePlayers,
+        judgingData.safePicks,
+        judgingData.rosters,
+        judgingData.voteRecords,
+      );
 
-    return Response.json({
-      source: judgment.source,
-      winnerPlayerIds: judgment.winnerPlayerIds,
-      ranking: judgment.ranking,
-      awards: judgment.awards,
-      explanation: judgment.explanation,
-    });
+      await persistJudgment(judgment);
+
+      return Response.json({
+        source: judgment.source,
+        winnerPlayerIds: judgment.winnerPlayerIds,
+        ranking: judgment.ranking,
+        awards: judgment.awards,
+        explanation: judgment.explanation,
+      });
+    } finally {
+      await clearJudgingStarted(draftId);
+    }
   } catch (e) {
     if (e instanceof AppError) {
       const status = e.code === "UNAUTHORIZED" ? 401 : 400;

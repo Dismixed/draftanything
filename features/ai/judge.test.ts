@@ -166,4 +166,20 @@ describe("validateJudgeOutput", () => {
       /ranking must contain/i,
     );
   });
+
+  it("accepts empty categories when rubric is empty", () => {
+    const output = {
+      playerScores: {
+        p1: { overall: 8, categories: {} },
+        p2: { overall: 6, categories: {} },
+        p3: { overall: 7, categories: {} },
+      },
+      ranking: ["p1", "p3", "p2"],
+      winnerPlayerIds: ["p1"],
+      awards: validOutput.awards,
+      explanation: "Off-the-dome judgment.",
+    };
+
+    expect(() => validateJudgeOutput(output, playerIds, [])).not.toThrow();
+  });
 });

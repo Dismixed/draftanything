@@ -211,11 +211,71 @@ export const deriveAwards = (
   };
 };
 
+const comparePickNames = (left: RosterPick, right: RosterPick): number =>
+  compareNamesAndIds(
+    { name: left.itemName, id: left.pickId },
+    { name: right.itemName, id: right.pickId },
+  );
+
+export const offTheDomeFallbackJudge = (
+  playerIds: readonly string[],
+  picks: readonly RosterPick[],
+): FallbackJudgment => {
+  if (new Set(playerIds).size !== playerIds.length || playerIds.length === 0) {
+    throw new Error("player IDs must be nonempty and unique");
+  }
+
+  const players = new Set(playerIds);
+  const activePicks = picks.filter((pick) => players.has(pick.playerId));
+  if (activePicks.length === 0) {
+    throw new Error("at least one pick is required for awards");
+  }
+
+  const rosterScores = Object.fromEntries(
+    playerIds.map((playerId) => {
+      const playerPicks = activePicks.filter((pick) => pick.playerId === playerId);
+      const score =
+        playerPicks.length === 0
+          ? 0
+          : playerPicks
+              .map((pick) => normalizeItemName(pick.itemName))
+              .sort()
+              .join("\0").length;
+      return [playerId, score];
+    }),
+  );
+
+  const topScore = Object.values(rosterScores).reduce((top, score) =>
+    compareFixed(score, top) > 0 ? score : top,
+  );
+
+  const byName = [...activePicks].sort(comparePickNames);
+  const byPickNumber = [...activePicks].sort(
+    (left, right) => left.overallPick - right.overallPick,
+  );
+
+  return {
+    rosterScores,
+    winnerIds: playerIds.filter((playerId) =>
+      fixedEqual(rosterScores[playerId], topScore),
+    ),
+    awards: {
+      bestPick: awardReference(byName[byName.length - 1]),
+      worstPick: awardReference(byName[0]),
+      biggestSteal: awardReference(byPickNumber[0]),
+    },
+  };
+};
+
 export const fallbackJudge = (
   playerIds: readonly string[],
   picks: readonly RosterPick[],
   rubric: readonly RubricCategory[],
 ): FallbackJudgment => {
+  if (rubric.length === 0) {
+    return offTheDomeFallbackJudge(playerIds, picks);
+  }
+
   if (new Set(playerIds).size !== playerIds.length || playerIds.length === 0) {
     throw new Error("player IDs must be nonempty and unique");
   }

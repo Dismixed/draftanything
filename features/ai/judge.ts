@@ -5,7 +5,7 @@ import { zodTextFormat } from "openai/helpers/zod";
 import OpenAI from "openai";
 
 import { buildJudgePrompt, JUDGE_PROMPT_VERSION } from "./prompts/judge";
-import { fallbackJudge } from "./fallback";
+import { fallbackJudge, offTheDomeFallbackJudge } from "./fallback";
 import type {
   RubricCategory,
   RosterPick,
@@ -165,10 +165,12 @@ export function validateJudgeOutput(
 
   // Category scores must use locked rubric keys
   const rubricKeys = rubric.map((r) => r.key);
-  for (const [, score] of Object.entries(parsed.playerScores)) {
-    const cats = Object.keys(score.categories);
-    if (cats.length !== rubricKeys.length || !rubricKeys.every((k) => cats.includes(k))) {
-      throw new Error("category scores must match rubric keys exactly");
+  if (rubricKeys.length > 0) {
+    for (const [, score] of Object.entries(parsed.playerScores)) {
+      const cats = Object.keys(score.categories);
+      if (cats.length !== rubricKeys.length || !rubricKeys.every((k) => cats.includes(k))) {
+        throw new Error("category scores must match rubric keys exactly");
+      }
     }
   }
 
@@ -293,7 +295,10 @@ export async function judgeRosters(input: JudgeInput): Promise<JudgeResult> {
     "[judge] AI judging failed after retries; using fallback.",
     lastError?.message ?? "unknown error",
   );
-  const fallbackResult = fallbackJudge(input.playerIds, input.picks, input.rubric);
+  const fallbackResult =
+    input.rubric.length === 0
+      ? offTheDomeFallbackJudge(input.playerIds, input.picks)
+      : fallbackJudge(input.playerIds, input.picks, input.rubric);
 
   const fallbackScores: Record<string, { overall: number; categories: Record<string, number> }> = {};
   for (const pid of input.playerIds) {
@@ -314,7 +319,9 @@ export async function judgeRosters(input: JudgeInput): Promise<JudgeResult> {
     winnerPlayerIds: fallbackResult.winnerIds,
     awards: fallbackResult.awards,
     explanation:
-      "AI judging was unavailable, so results were computed from the locked draft rubric and item metadata.",
+      input.rubric.length === 0
+        ? "AI judging was unavailable, so results were computed from roster pick names."
+        : "AI judging was unavailable, so results were computed from the locked draft rubric and item metadata.",
     model: null,
     promptVersion: JUDGE_PROMPT_VERSION,
     idempotencyKey,
