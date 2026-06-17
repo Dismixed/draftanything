@@ -131,12 +131,35 @@ describe("createRoomSchema — valid inputs", () => {
   });
 
   it("accepts all AI personalities", () => {
-    const personalities = ["analyst", "hype", "roast"] as const;
+    const personalities = ["analyst", "hype", "roast", "custom"] as const;
     for (const aiPersonality of personalities) {
       expect(
-        createRoomSchema.safeParse({ ...validCreateInput, aiPersonality }).success,
+        createRoomSchema.safeParse({
+          ...validCreateInput,
+          aiPersonality,
+          customJudgePrompt: aiPersonality === "custom" ? "Judge like a food critic." : null,
+        }).success,
       ).toBe(true);
     }
+  });
+
+  it("requires custom judge instructions when personality is custom", () => {
+    expect(
+      createRoomSchema.safeParse({
+        ...validCreateInput,
+        aiPersonality: "custom",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects custom judge instructions for preset personalities", () => {
+    expect(
+      createRoomSchema.safeParse({
+        ...validCreateInput,
+        aiPersonality: "analyst",
+        customJudgePrompt: "Judge like a food critic.",
+      }).success,
+    ).toBe(false);
   });
 });
 

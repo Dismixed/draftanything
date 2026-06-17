@@ -32,6 +32,7 @@ function buildProjection(
     draft_type: string;
     judging_mode: string;
     ai_personality: string;
+    custom_judge_prompt: string | null;
     phase: string;
     host_guest_id: string;
   },
@@ -56,7 +57,8 @@ function buildProjection(
     timerSeconds: draft.timer_seconds,
     draftType: draft.draft_type as "standard" | "snake" | "random",
     judgingMode: draft.judging_mode as "ai" | "community" | "hybrid",
-    aiPersonality: draft.ai_personality as "analyst" | "hype" | "roast",
+    aiPersonality: draft.ai_personality as "analyst" | "hype" | "roast" | "custom",
+    customJudgePrompt: draft.custom_judge_prompt,
     phase: draft.phase,
     hostPlayerId,
     players: players.map((p) => ({
@@ -90,6 +92,8 @@ export async function createRoom(
     p_judging_mode: input.judgingMode,
     p_ai_personality: input.aiPersonality,
     p_timer_seconds: input.timerSeconds ?? null,
+    p_custom_judge_prompt: input.customJudgePrompt ?? null,
+    p_picking_mode: input.pickingMode,
   });
 
   if (rpcError) {

@@ -3,6 +3,7 @@ import { AppError } from "@/lib/errors";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { requireGuestSession } from "@/features/guest/session";
 import { getMyPlayerId, getRoom } from "@/features/room/service";
+import { startDraft } from "@/features/draft/service";
 import {
   startPoolReview,
   getPool,
@@ -190,6 +191,7 @@ export async function POST(
       }
       case "lock": {
         await lockPool(draftId, guestId);
+        await startDraft(draftId, guestId);
         const room = await getRoom(draftId);
         responseData = room;
         break;

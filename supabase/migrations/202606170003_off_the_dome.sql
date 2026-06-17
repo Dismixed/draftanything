@@ -1,12 +1,10 @@
 -- Off the Dome: add picking_mode to drafts and freeform pick support to picks
 
--- 1. Add picking_mode column to drafts
-alter table public.drafts
-  add column picking_mode text not null default 'pool';
+-- 1. Create picking_mode enum and add column to drafts
+create type public.picking_mode as enum ('pool', 'off_the_dome');
 
 alter table public.drafts
-  add constraint drafts_picking_mode_values
-  check (picking_mode in ('pool', 'off_the_dome'));
+  add column picking_mode public.picking_mode not null default 'pool';
 
 -- 2. Make picks.item_id nullable (off-the-dome picks have no pool item)
 alter table public.picks
@@ -36,7 +34,7 @@ alter table public.picks
   check (
     (forfeited = true  and item_id is null and item_name is null)
     or (forfeited = false and item_id is not null and item_name is null)
-    or (forfeited = false and item_id is null and item_name is not null)
+    or (forfeited = false and item_id is null and item_name is not null and length(btrim(item_name)) > 0)
   );
 
 -- 6. Index for case-insensitive duplicate checking on item_name

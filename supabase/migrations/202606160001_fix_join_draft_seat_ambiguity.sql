@@ -1,3 +1,5 @@
+-- join_draft RETURNS TABLE includes a "seat" column, which shadows draft_players.seat
+-- in unqualified references inside the function body (PostgreSQL error 42702).
 create or replace function public.join_draft(
   p_draft_id uuid,
   p_guest_id uuid,
