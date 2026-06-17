@@ -7,6 +7,31 @@ export type Json =
   | Json[]
 
 export type Database = {
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       arguments: {
@@ -242,6 +267,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           current_pick_index: number
+          custom_judge_prompt: string | null
           draft_type: Database["public"]["Enums"]["draft_type"]
           host_guest_id: string
           id: string
@@ -249,6 +275,7 @@ export type Database = {
           max_players: number
           phase: Database["public"]["Enums"]["draft_phase"]
           pick_order: Json
+          picking_mode: string
           room_code: string
           rounds: number
           rubric: Json
@@ -261,6 +288,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           current_pick_index?: number
+          custom_judge_prompt?: string | null
           draft_type: Database["public"]["Enums"]["draft_type"]
           host_guest_id: string
           id?: string
@@ -268,6 +296,7 @@ export type Database = {
           max_players: number
           phase?: Database["public"]["Enums"]["draft_phase"]
           pick_order?: Json
+          picking_mode?: string
           room_code: string
           rounds: number
           rubric?: Json
@@ -280,6 +309,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           current_pick_index?: number
+          custom_judge_prompt?: string | null
           draft_type?: Database["public"]["Enums"]["draft_type"]
           host_guest_id?: string
           id?: string
@@ -287,6 +317,7 @@ export type Database = {
           max_players?: number
           phase?: Database["public"]["Enums"]["draft_phase"]
           pick_order?: Json
+          picking_mode?: string
           room_code?: string
           rounds?: number
           rubric?: Json
@@ -389,9 +420,11 @@ export type Database = {
         Row: {
           created_at: string
           draft_id: string
+          forfeited: boolean
           id: string
           is_auto_pick: boolean
-          item_id: string
+          item_id: string | null
+          item_name: string | null
           overall_pick: number
           pick_in_round: number
           player_id: string
@@ -400,9 +433,11 @@ export type Database = {
         Insert: {
           created_at?: string
           draft_id: string
+          forfeited?: boolean
           id?: string
           is_auto_pick?: boolean
-          item_id: string
+          item_id?: string | null
+          item_name?: string | null
           overall_pick: number
           pick_in_round: number
           player_id: string
@@ -411,9 +446,11 @@ export type Database = {
         Update: {
           created_at?: string
           draft_id?: string
+          forfeited?: boolean
           id?: string
           is_auto_pick?: boolean
-          item_id?: string
+          item_id?: string | null
+          item_name?: string | null
           overall_pick?: number
           pick_in_round?: number
           player_id?: string
@@ -823,12 +860,14 @@ export type Database = {
           completed_at: string | null
           created_at: string | null
           current_pick_index: number | null
+          custom_judge_prompt: string | null
           draft_type: Database["public"]["Enums"]["draft_type"] | null
           id: string | null
           judging_mode: Database["public"]["Enums"]["judging_mode"] | null
           max_players: number | null
           phase: Database["public"]["Enums"]["draft_phase"] | null
           pick_order: Json | null
+          picking_mode: string | null
           room_code: string | null
           rounds: number | null
           timer_seconds: number | null
@@ -840,12 +879,14 @@ export type Database = {
           completed_at?: string | null
           created_at?: string | null
           current_pick_index?: number | null
+          custom_judge_prompt?: string | null
           draft_type?: Database["public"]["Enums"]["draft_type"] | null
           id?: string | null
           judging_mode?: Database["public"]["Enums"]["judging_mode"] | null
           max_players?: number | null
           phase?: Database["public"]["Enums"]["draft_phase"] | null
           pick_order?: Json | null
+          picking_mode?: string | null
           room_code?: string | null
           rounds?: number | null
           timer_seconds?: number | null
@@ -857,12 +898,14 @@ export type Database = {
           completed_at?: string | null
           created_at?: string | null
           current_pick_index?: number | null
+          custom_judge_prompt?: string | null
           draft_type?: Database["public"]["Enums"]["draft_type"] | null
           id?: string | null
           judging_mode?: Database["public"]["Enums"]["judging_mode"] | null
           max_players?: number | null
           phase?: Database["public"]["Enums"]["draft_phase"] | null
           pick_order?: Json | null
+          picking_mode?: string | null
           room_code?: string | null
           rounds?: number | null
           timer_seconds?: number | null
@@ -932,9 +975,11 @@ export type Database = {
         Row: {
           created_at: string | null
           draft_id: string | null
+          forfeited: boolean | null
           id: string | null
           is_auto_pick: boolean | null
           item_id: string | null
+          item_name: string | null
           overall_pick: number | null
           pick_in_round: number | null
           player_id: string | null
@@ -943,9 +988,11 @@ export type Database = {
         Insert: {
           created_at?: string | null
           draft_id?: string | null
+          forfeited?: boolean | null
           id?: string | null
           is_auto_pick?: boolean | null
           item_id?: string | null
+          item_name?: string | null
           overall_pick?: number | null
           pick_in_round?: number | null
           player_id?: string | null
@@ -954,9 +1001,11 @@ export type Database = {
         Update: {
           created_at?: string | null
           draft_id?: string | null
+          forfeited?: boolean | null
           id?: string | null
           is_auto_pick?: boolean | null
           item_id?: string | null
+          item_name?: string | null
           overall_pick?: number | null
           pick_in_round?: number | null
           player_id?: string | null
@@ -1152,89 +1201,121 @@ export type Database = {
       }
     }
     Functions: {
-      create_draft: {
-        Args: {
-          p_host_guest_id: string
-          p_display_name: string
-          p_topic: string
-          p_max_players: number
-          p_rounds: number
-          p_draft_type: string
-          p_judging_mode: string
-          p_ai_personality: string
-          p_timer_seconds: number | null
-        }
+      advance_phase: {
+        Args: { p_draft_id: string; p_guest_id: string }
         Returns: {
-          draft_id: string
-          room_code: string
-          player_id: string
+          o_phase: string
         }[]
       }
-      join_draft: {
-        Args: {
-          p_draft_id: string
-          p_guest_id: string
-          p_display_name: string
-        }
+      auto_pick: {
+        Args: { p_draft_id: string; p_guest_id: string }
         Returns: {
+          o_current_pick_index: number
+          o_phase: string
+          o_turn_deadline: string
+        }[]
+      }
+      create_draft:
+        | {
+            Args: {
+              p_ai_personality: string
+              p_display_name: string
+              p_draft_type: string
+              p_host_guest_id: string
+              p_judging_mode: string
+              p_max_players: number
+              p_rounds: number
+              p_timer_seconds: number
+              p_topic: string
+            }
+            Returns: {
+              draft_id: string
+              player_id: string
+              room_code: string
+            }[]
+          }
+        | {
+            Args: {
+              p_ai_personality: string
+              p_custom_judge_prompt?: string
+              p_display_name: string
+              p_draft_type: string
+              p_host_guest_id: string
+              p_judging_mode: string
+              p_max_players: number
+              p_rounds: number
+              p_timer_seconds: number
+              p_topic: string
+            }
+            Returns: {
+              draft_id: string
+              player_id: string
+              room_code: string
+            }[]
+          }
+      ensure_guest_session: { Args: { p_token_hash: string }; Returns: string }
+      get_active_guest_session_id: {
+        Args: { p_token_hash: string }
+        Returns: string
+      }
+      get_server_time: { Args: never; Returns: string }
+      join_draft: {
+        Args: { p_display_name: string; p_draft_id: string; p_guest_id: string }
+        Returns: {
+          draft_id: string
           player_id: string
           seat: number
-          draft_id: string
         }[]
       }
-      start_pool_review: {
-        Args: {
-          p_draft_id: string
-          p_guest_id: string
-        }
-        Returns: Record<string, unknown>[]
-      }
       lock_pool: {
-        Args: {
-          p_draft_id: string
-          p_guest_id: string
-        }
-        Returns: Record<string, unknown>[]
+        Args: { p_draft_id: string; p_guest_id: string }
+        Returns: undefined
+      }
+      maybe_advance_from_defense: {
+        Args: { p_draft_id: string }
+        Returns: boolean
       }
       start_draft: {
+        Args: { p_draft_id: string; p_guest_id: string; p_pick_order: Json }
+        Returns: undefined
+      }
+      start_pool_review: {
+        Args: { p_draft_id: string; p_guest_id: string }
+        Returns: undefined
+      }
+      submit_defense: {
         Args: {
+          p_defense_text?: string
           p_draft_id: string
           p_guest_id: string
-          p_pick_order: unknown
+          p_skipped?: boolean
         }
-        Returns: Record<string, unknown>[]
+        Returns: undefined
       }
       submit_pick: {
         Args: {
           p_draft_id: string
+          p_expected_pick: number
           p_guest_id: string
           p_item_id: string
-          p_expected_pick: number
         }
         Returns: {
           o_current_pick_index: number
           o_phase: string
-          o_turn_deadline: string | null
+          o_turn_deadline: string
         }[]
       }
-      auto_pick: {
+      submit_vote: {
         Args: {
           p_draft_id: string
           p_guest_id: string
+          p_selected_player_id: string
         }
-        Returns: {
-          o_current_pick_index: number
-          o_phase: string
-          o_turn_deadline: string | null
-        }[]
-      }
-      get_server_time: {
-        Args: Record<string, never>
-        Returns: string[]
+        Returns: undefined
       }
     }
     Enums: {
-      ai_personality: "analyst" | "hype" | "roast"
+      ai_personality: "analyst" | "hype" | "roast" | "custom"
       draft_phase:
         | "LOBBY"
         | "POOL_REVIEW"
@@ -1374,9 +1455,12 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
-      ai_personality: ["analyst", "hype", "roast"],
+      ai_personality: ["analyst", "hype", "roast", "custom"],
       draft_phase: [
         "LOBBY",
         "POOL_REVIEW",

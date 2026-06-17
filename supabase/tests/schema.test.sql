@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(71);
+select plan(72);
 
 select has_extension('pgcrypto', 'pgcrypto extension is enabled');
 select has_extension('citext', 'citext extension is enabled');
@@ -39,8 +39,8 @@ select columns_are(
   array[
     'id', 'room_code', 'topic', 'phase', 'host_guest_id', 'max_players',
     'rounds', 'draft_type', 'judging_mode', 'ai_personality',
-    'timer_seconds', 'pick_order', 'current_pick_index', 'turn_deadline',
-    'rubric', 'created_at', 'completed_at'
+    'custom_judge_prompt', 'picking_mode', 'timer_seconds', 'pick_order',
+    'current_pick_index', 'turn_deadline', 'rubric', 'created_at', 'completed_at'
   ],
   'drafts has approved columns'
 );
@@ -66,8 +66,8 @@ select columns_are(
   'public',
   'picks',
   array[
-    'id', 'draft_id', 'player_id', 'item_id', 'overall_pick', 'round',
-    'pick_in_round', 'is_auto_pick', 'created_at'
+    'id', 'draft_id', 'player_id', 'item_id', 'item_name', 'overall_pick',
+    'round', 'pick_in_round', 'is_auto_pick', 'forfeited', 'created_at'
   ],
   'picks has approved columns'
 );
@@ -128,6 +128,7 @@ select has_index('public', 'drafts', 'drafts_phase_idx', 'draft phase reads are 
 select has_index('public', 'draft_players', 'draft_players_draft_id_idx', 'draft player reads are indexed');
 select has_index('public', 'draft_items', 'draft_items_draft_available_idx', 'available item reads are indexed');
 select has_index('public', 'picks', 'picks_draft_order_idx', 'ordered pick reads are indexed');
+select has_index('public', 'picks', 'picks_draft_item_name_lower_idx', 'lowercase item names are indexed for duplicate checking');
 
 select ok(
   not exists (
@@ -140,13 +141,15 @@ select ok(
         'drafts_max_players_range',
         'drafts_rounds_range',
         'drafts_timer_seconds_range',
+        'drafts_picking_mode_values',
         'draft_players_seat_range',
         'pool_suggestions_action_payload',
+        'picks_valid_pick',
         'arguments_skip_or_defense',
         'votes_not_self'
       )
     group by connamespace
-    having count(*) <> 9
+    having count(*) <> 11
   )
   and (
     select count(*)
@@ -158,12 +161,14 @@ select ok(
         'drafts_max_players_range',
         'drafts_rounds_range',
         'drafts_timer_seconds_range',
+        'drafts_picking_mode_values',
         'draft_players_seat_range',
         'pool_suggestions_action_payload',
+        'picks_valid_pick',
         'arguments_skip_or_defense',
         'votes_not_self'
       )
-  ) = 9,
+  ) = 11,
   'required named check constraints exist'
 );
 
