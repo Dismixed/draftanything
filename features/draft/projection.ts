@@ -68,12 +68,16 @@ export function buildProjection(
     isHost: (p.guest_id as string) === draft.host_guest_id,
   }));
 
-  const safeItems: SafeItem[] = (items ?? []).map((item) => ({
-    id: item.id as string,
-    name: item.name as string,
-    source: item.source as "ai" | "manual",
-    isAvailable: item.is_available as boolean,
-  }));
+  const isOffTheDome = (draft.picking_mode as string) === "off_the_dome";
+
+  const safeItems: SafeItem[] = isOffTheDome
+    ? []
+    : (items ?? []).map((item) => ({
+        id: item.id as string,
+        name: item.name as string,
+        source: item.source as "ai" | "manual",
+        isAvailable: item.is_available as boolean,
+      }));
 
   const safePicks: SafePick[] = (picks ?? []).map((p) => ({
     id: p.id as string,
