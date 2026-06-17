@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(72);
+select plan(76);
 
 select has_extension('pgcrypto', 'pgcrypto extension is enabled');
 select has_extension('citext', 'citext extension is enabled');
@@ -26,6 +26,7 @@ select has_type('public', 'suggestion_action', 'suggestion_action exists');
 select has_type('public', 'suggestion_status', 'suggestion_status exists');
 select has_type('public', 'item_source', 'item_source exists');
 select has_type('public', 'judgment_source', 'judgment_source exists');
+select has_type('public', 'picking_mode', 'picking_mode exists');
 
 select columns_are(
   'public',
@@ -141,7 +142,6 @@ select ok(
         'drafts_max_players_range',
         'drafts_rounds_range',
         'drafts_timer_seconds_range',
-        'drafts_picking_mode_values',
         'draft_players_seat_range',
         'pool_suggestions_action_payload',
         'picks_valid_pick',
@@ -149,7 +149,7 @@ select ok(
         'votes_not_self'
       )
     group by connamespace
-    having count(*) <> 11
+    having count(*) <> 10
   )
   and (
     select count(*)
@@ -161,14 +161,13 @@ select ok(
         'drafts_max_players_range',
         'drafts_rounds_range',
         'drafts_timer_seconds_range',
-        'drafts_picking_mode_values',
         'draft_players_seat_range',
         'pool_suggestions_action_payload',
         'picks_valid_pick',
         'arguments_skip_or_defense',
         'votes_not_self'
       )
-  ) = 11,
+  ) = 10,
   'required named check constraints exist'
 );
 
@@ -429,6 +428,29 @@ select ok(
 select ok(
   not has_table_privilege('authenticated', 'public.votes', 'INSERT'),
   'authenticated cannot insert votes directly'
+);
+
+select throws_ok(
+  $$insert into public.picks (draft_id, player_id, item_id, item_name, overall_pick, round, pick_in_round) values ('10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000002', 'both set', 2, 1, 2)$$,
+  '23514',
+  null,
+  'picks cannot have both item_id and item_name'
+);
+select throws_ok(
+  $$insert into public.picks (draft_id, player_id, item_name, overall_pick, round, pick_in_round) values ('10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002', '   ', 2, 1, 2)$$,
+  '23514',
+  null,
+  'item_name should not be just whitespace (trimmed to empty, so does not satisfy length > 0)'
+);
+select lives_ok(
+  $$insert into public.picks (draft_id, player_id, item_name, overall_pick, round, pick_in_round) values ('10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002', 'Off the dome item', 2, 1, 2)$$,
+  'valid off-the-dome pick with item_name is accepted'
+);
+select throws_ok(
+  $$insert into public.drafts (room_code, topic, host_guest_id, max_players, rounds, draft_type, judging_mode, ai_personality, picking_mode) values ('OTD001', 'Test invalid picking mode', '00000000-0000-0000-0000-000000000001', 2, 1, 'standard', 'ai', 'analyst', 'invalid')$$,
+  '22P02',
+  null,
+  'invalid picking_mode values are rejected'
 );
 
 select * from finish();
