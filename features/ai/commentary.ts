@@ -1,35 +1,22 @@
 import "server-only";
 
-import OpenAI from "openai";
-import { zodTextFormat } from "openai/helpers/zod";
 import { z } from "zod/v4";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildCommentaryPrompt } from "./prompts/commentary";
 import { evaluateCommentaryTrigger } from "./commentary-trigger";
+import { generateJson, getGeminiModel } from "./gemini";
 
 export const COMMENTARY_PROMPT_VERSION = "v1";
-
-const MODEL = process.env.OPENAI_MODEL || "gpt-4o";
-const TIMEOUT_MS = 60_000;
-
-let _client: OpenAI | null = null;
-
-function getClient(): OpenAI {
-  if (!_client) {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error("OPENAI_API_KEY is not configured");
-    }
-    _client = new OpenAI({ apiKey });
-  }
-  return _client;
-}
 
 export const commentaryTagSchema = z.enum([
   "reach",
   "steal",
   "trend",
   "run",
+  "surprise",
+  "solid",
+  "roundup",
+  "opening",
 ]);
 
 export const commentaryOutputSchema = z.object({
@@ -59,28 +46,15 @@ export interface GenerateCommentaryInput {
 export async function generateCommentary(
   input: GenerateCommentaryInput,
 ): Promise<CommentaryOutput> {
-  const client = getClient();
   const prompt = buildCommentaryPrompt(input);
 
-  const response = await client.responses.parse(
-    {
-      model: MODEL,
-      input: [
-        { role: "system", content: [{ type: "input_text", text: prompt.system }] },
-        { role: "user", content: [{ type: "input_text", text: prompt.user }] },
-      ],
-      text: { format: zodTextFormat(commentaryOutputSchema, "commentary_output") },
-      reasoning: { effort: "low" },
-      max_output_tokens: 512,
-    },
-    { signal: AbortSignal.timeout(TIMEOUT_MS) },
-  );
-
-  if (!response.output_parsed) {
-    throw new Error("AI returned empty response");
-  }
-
-  return response.output_parsed;
+  return generateJson({
+    systemPrompt: prompt.system,
+    userPrompt: prompt.user,
+    schema: commentaryOutputSchema,
+    schemaName: "commentary_output",
+    maxOutputTokens: 512,
+  });
 }
 
 async function retry<T>(
@@ -123,13 +97,14 @@ export async function handleCommentaryForPick(
     if (draftError || !draft) return;
 
     const rubric = (draft.rubric as Record<string, number>) ?? {};
-    const personality = (draft.ai_personality as "analyst" | "hype" | "roast") ?? "analyst";
+    const personality =
+      (draft.ai_personality as "analyst" | "hype" | "roast" | "custom") ?? "analyst";
     const topic = (draft.topic as string) ?? "";
     const pickOrder = (draft.pick_order as unknown[]) ?? [];
 
     const { data: picks } = await db
       .from("picks")
-      .select("id, item_id, overall_pick, player_id")
+      .select("id, item_id, item_name, overall_pick, player_id")
       .eq("draft_id", draftId)
       .order("overall_pick", { ascending: false })
       .limit(1);
@@ -139,7 +114,8 @@ export async function handleCommentaryForPick(
     const latestPick = picks[0];
     const pickId = latestPick.id as string;
     const overallPick = latestPick.overall_pick as number;
-    const itemId = latestPick.item_id as string;
+    const itemId = latestPick.item_id as string | null;
+    const pickItemName = latestPick.item_name as string | null;
     const playerId = latestPick.player_id as string;
 
     const idempotencyKey = makeIdempotencyKey(draftId, pickId);
@@ -150,6 +126,52 @@ export async function handleCommentaryForPick(
       .single();
 
     if (existingCommentary) return;
+
+    const { data: playerData } = await db
+      .from("draft_players")
+      .select("id, display_name, seat")
+      .eq("draft_id", draftId);
+
+    const players = (playerData ?? []) as Array<Record<string, unknown>>;
+    const pickPlayer = players.find(
+      (p: Record<string, unknown>) => p.id === playerId,
+    );
+    const playerName = (pickPlayer?.display_name as string) ?? "Unknown";
+
+    if (!itemId) {
+      const freeformName = pickItemName ?? "Unknown";
+      const tags: string[] = [];
+      if (overallPick === 1) tags.push("opening");
+      if (tags.length === 0) tags.push("solid");
+
+      const commentary = await retry(
+        () =>
+          generateCommentary({
+            personality,
+            playerName,
+            itemName: freeformName,
+            tags,
+            overallPick,
+            totalPicks: pickOrder.length,
+            topic,
+          }),
+        2,
+      );
+
+      if (!commentary) return;
+
+      await db.from("commentary").insert({
+        draft_id: draftId,
+        pick_id: pickId,
+        personality,
+        text: commentary.text,
+        trigger_tags: tags,
+        model: getGeminiModel(),
+        prompt_version: "v1",
+        idempotency_key: idempotencyKey,
+      });
+      return;
+    }
 
     const { data: allItems } = await db
       .from("draft_items")
@@ -186,17 +208,6 @@ export async function handleCommentaryForPick(
       Math.max(0, currentPickIndex - 2),
       currentPickIndex + 1,
     );
-
-    const { data: playerData } = await db
-      .from("draft_players")
-      .select("id, display_name, seat")
-      .eq("draft_id", draftId);
-
-    const players = (playerData ?? []) as Array<Record<string, unknown>>;
-    const pickPlayer = players.find(
-      (p: Record<string, unknown>) => p.id === playerId,
-    );
-    const playerName = (pickPlayer?.display_name as string) ?? "Unknown";
 
     const recentPickScores = recentPicks
       .map((p: Record<string, unknown>) => {
@@ -284,7 +295,7 @@ export async function handleCommentaryForPick(
       personality,
       text: commentary.text,
       trigger_tags: triggerResult.tags,
-      model: process.env.OPENAI_MODEL || "gpt-4o",
+      model: getGeminiModel(),
       prompt_version: "v1",
       idempotency_key: idempotencyKey,
     });
