@@ -1215,44 +1215,26 @@ export type Database = {
           o_turn_deadline: string
         }[]
       }
-      create_draft:
-        | {
-            Args: {
-              p_ai_personality: string
-              p_display_name: string
-              p_draft_type: string
-              p_host_guest_id: string
-              p_judging_mode: string
-              p_max_players: number
-              p_rounds: number
-              p_timer_seconds: number
-              p_topic: string
-            }
-            Returns: {
-              draft_id: string
-              player_id: string
-              room_code: string
-            }[]
-          }
-        | {
-            Args: {
-              p_ai_personality: string
-              p_custom_judge_prompt?: string
-              p_display_name: string
-              p_draft_type: string
-              p_host_guest_id: string
-              p_judging_mode: string
-              p_max_players: number
-              p_rounds: number
-              p_timer_seconds: number
-              p_topic: string
-            }
-            Returns: {
-              draft_id: string
-              player_id: string
-              room_code: string
-            }[]
-          }
+      create_draft: {
+        Args: {
+          p_ai_personality: string
+          p_custom_judge_prompt?: string | null
+          p_display_name: string
+          p_draft_type: string
+          p_host_guest_id: string
+          p_judging_mode: string
+          p_max_players: number
+          p_picking_mode?: string
+          p_rounds: number
+          p_timer_seconds: number | null
+          p_topic: string
+        }
+        Returns: {
+          draft_id: string
+          player_id: string
+          room_code: string
+        }[]
+      }
       ensure_guest_session: { Args: { p_token_hash: string }; Returns: string }
       get_active_guest_session_id: {
         Args: { p_token_hash: string }

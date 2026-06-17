@@ -2,6 +2,7 @@ import "server-only";
 
 import { AppError } from "@/lib/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { Json } from "@/lib/supabase/database.types";
 import {
   communityVoteShares,
   hybridScores,
@@ -61,7 +62,7 @@ export async function persistJudgment(judgment: JudgmentRecord): Promise<void> {
     ),
     ranking: judgment.ranking,
     winner_player_ids: judgment.winnerPlayerIds,
-    awards: judgment.awards,
+    awards: judgment.awards as unknown as Json,
     explanation: judgment.explanation,
     model: judgment.model,
     prompt_version: judgment.promptVersion,
