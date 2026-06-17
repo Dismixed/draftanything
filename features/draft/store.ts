@@ -4,7 +4,7 @@ import type { DraftRoomProjection } from "./types";
 export interface DraftStore {
   projection: DraftRoomProjection | null;
   connectionStatus: "connecting" | "connected" | "disconnected";
-  setProjection: (projection: DraftRoomProjection) => void;
+  setProjection: (projection: DraftRoomProjection | null) => void;
   setConnectionStatus: (status: "connecting" | "connected" | "disconnected") => void;
 }
 
