@@ -1,13 +1,17 @@
 import type { RubricCategory } from "../fallback";
+import { resolveJudgePersonality } from "./personalities";
 
 export interface BuildJudgePromptInput {
   topic: string;
   personality: string;
+  customJudgePrompt?: string | null;
   rubric: RubricCategory[];
   rosters: Array<{
     playerId: string;
     displayName: string;
     picks: Array<{
+      pickId: string;
+      itemId: string;
       itemName: string;
       metadata: Record<string, number>;
       overallPick: number;
@@ -20,7 +24,7 @@ export interface BuildJudgePromptInput {
   }>;
 }
 
-export const JUDGE_PROMPT_VERSION = "1.0.0";
+export const JUDGE_PROMPT_VERSION = "1.2.0";
 
 export function buildJudgePrompt(
   input: BuildJudgePromptInput,
@@ -34,12 +38,12 @@ export function buildJudgePrompt(
       const picksText = r.picks
         .map(
           (p) =>
-            `    Pick #${p.overallPick}: ${p.itemName} (${Object.entries(p.metadata)
+            `    Pick #${p.overallPick} [pickId=${p.pickId}, itemId=${p.itemId}]: ${p.itemName} (${Object.entries(p.metadata)
               .map(([k, v]) => `${k}: ${v}`)
               .join(", ")})`,
         )
         .join("\n");
-      return `  ${r.displayName}:\n${picksText}`;
+      return `  ${r.displayName} [playerId=${r.playerId}]:\n${picksText}`;
     })
     .join("\n");
 
@@ -48,16 +52,21 @@ export function buildJudgePrompt(
       const player = input.rosters.find((r) => r.playerId === d.playerId);
       const name = player?.displayName ?? "Unknown";
       if (d.skipped) {
-        return `  ${name}: (skipped defense)`;
+        return `  ${name} [playerId=${d.playerId}]: (skipped defense)`;
       }
-      return `  ${name}: ${d.defenseText ?? "(no defense)"}`;
+      return `  ${name} [playerId=${d.playerId}]: ${d.defenseText ?? "(no defense)"}`;
     })
     .join("\n");
+
+  const personalityPrompt = resolveJudgePersonality(
+    input.personality,
+    input.customJudgePrompt,
+  );
 
   return {
     system: [
       "You are an AI judge for a themed draft game.",
-      `Personality: ${input.personality}.`,
+      `Personality: ${personalityPrompt}`,
       `Topic: ${input.topic}`,
       "",
       "Evaluate each player's roster and defense, then produce a structured judgment.",
@@ -72,14 +81,19 @@ export function buildJudgePrompt(
       "The biggest steal compares pick quality relative to draft position.",
       "",
       "Response format: JSON with keys:",
-      "  playerScores: { [playerId]: { overall: 0-10, categories: { [categoryKey]: 0-10 } } }",
+      "  playerScores: [{ playerId, overall: 0-10, categories: [{ key: categoryKey, value: 0-10 }] }]",
       "  ranking: [playerId, ...] (sorted descending by overall score)",
       "  winnerPlayerIds: [playerId, ...] (one or more if tied)",
       "  awards: { bestPick: { pickId, itemId, playerId }, worstPick: { ... }, biggestSteal: { ... } }",
       "  explanation: string (1-3 sentences)",
+      "",
+      "Use the exact playerId, pickId, and itemId values from the input. Score every listed player.",
     ].join("\n"),
     user: [
       "Evaluate these rosters and defenses:",
+      "",
+      "Players to score (use these exact playerId values):",
+      ...input.rosters.map((r) => `  - ${r.displayName}: ${r.playerId}`),
       "",
       "Rosters:",
       rostersText,

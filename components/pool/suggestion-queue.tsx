@@ -10,7 +10,7 @@ interface SuggestionQueueProps {
   suggestions: PoolSuggestion[];
   onSuggestionsChange: (suggestions: PoolSuggestion[]) => void;
   pool: PoolProjection | null;
-  // pool is used for context; keeping param for future use
+  onPoolChange?: (pool: PoolProjection) => void;
 }
 
 export function SuggestionQueue({
@@ -18,9 +18,17 @@ export function SuggestionQueue({
   isHost,
   suggestions,
   onSuggestionsChange,
+  pool,
+  onPoolChange,
 }: SuggestionQueueProps) {
   const [suggestName, setSuggestName] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  function suggestionLabel(s: PoolSuggestion): string {
+    if (s.action === "add") return s.suggestedName ?? "";
+    const item = pool?.items.find((i) => i.id === s.targetItemId);
+    return item?.name ?? "Unknown item";
+  }
 
   const pending = suggestions.filter((s) => s.status === "pending");
   const resolved = suggestions.filter((s) => s.status !== "pending");
@@ -57,7 +65,7 @@ export function SuggestionQueue({
     if (res.ok) {
       const data = await res.json();
       if (data.items) {
-        // Accept returns pool projection
+        onPoolChange?.(data);
         onSuggestionsChange(
           suggestions.map((s) =>
             s.id === suggestionId ? { ...s, status: "accepted" as const } : s,
@@ -83,12 +91,14 @@ export function SuggestionQueue({
   }
 
   return (
-    <div className="bg-white rounded-xl border p-4 flex flex-col gap-4">
-      <h2 className="text-sm font-semibold text-gray-900">Suggestions</h2>
+    <div className="panel-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <p style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-dim)', margin: 0 }}>
+        Suggestions
+      </p>
 
       {/* Submit suggestion form (non-host) */}
       {!isHost && (
-        <div className="flex gap-2">
+        <div style={{ display: 'flex', gap: '8px' }}>
           <input
             type="text"
             value={suggestName}
@@ -97,14 +107,16 @@ export function SuggestionQueue({
               if (e.key === "Enter") void handleSubmitAdd();
             }}
             placeholder="Suggest an item…"
-            className="flex-1 border rounded px-2 py-1.5 text-sm"
+            className="da-input"
+            style={{ flex: 1 }}
             aria-label="Suggest item name"
           />
           <button
             type="button"
             onClick={() => void handleSubmitAdd()}
             disabled={submitting || !suggestName.trim()}
-            className="bg-amber-600 text-white rounded px-3 py-1.5 text-xs font-medium hover:bg-amber-700 disabled:opacity-40 transition-colors"
+            className="btn-gold"
+            style={{ width: 'auto', padding: '8px 14px' }}
           >
             Suggest
           </button>
@@ -113,32 +125,32 @@ export function SuggestionQueue({
 
       {/* Pending suggestions */}
       {pending.length === 0 ? (
-        <p className="text-xs text-gray-400">No pending suggestions.</p>
+        <p style={{ color: 'var(--text-dim)', fontSize: '12px', margin: 0 }}>No pending suggestions.</p>
       ) : (
-        <ul className="divide-y" role="list">
+        <ul role="list" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
           {pending.map((s) => (
-            <li key={s.id} className="py-2 flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <span className="text-xs uppercase font-semibold text-gray-400">
+            <li key={s.id} style={{ padding: '8px 0', borderBottom: '1px solid var(--border)', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-dim)' }}>
                   {s.action === "add" ? "Add" : "Remove"}
                 </span>
-                <p className="text-sm truncate">
-                  {s.action === "add" ? s.suggestedName : `Remove item`}
+                <p style={{ color: 'var(--text)', fontSize: '13px', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {suggestionLabel(s)}
                 </p>
               </div>
               {isHost && (
-                <div className="flex gap-1 flex-shrink-0">
+                <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
                   <button
                     type="button"
                     onClick={() => void handleAccept(s.id)}
-                    className="text-xs text-green-600 hover:underline"
+                    style={{ color: 'var(--cyan)', fontSize: '11px', background: 'none', border: 'none', cursor: 'pointer' }}
                   >
                     Accept
                   </button>
                   <button
                     type="button"
                     onClick={() => void handleReject(s.id)}
-                    className="text-xs text-red-600 hover:underline"
+                    style={{ color: '#ff4d4d', fontSize: '11px', background: 'none', border: 'none', cursor: 'pointer' }}
                   >
                     Reject
                   </button>
@@ -151,22 +163,18 @@ export function SuggestionQueue({
 
       {/* Resolved suggestions */}
       {resolved.length > 0 && (
-        <details className="text-xs">
-          <summary className="text-gray-400 cursor-pointer">
+        <details style={{ fontSize: '11px', color: 'var(--text-dim)' }}>
+          <summary style={{ cursor: 'pointer' }}>
             {resolved.length} resolved
           </summary>
-          <ul className="mt-2 space-y-1">
+          <ul style={{ listStyle: 'none', margin: '8px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {resolved.map((s) => (
-              <li key={s.id} className="flex gap-2">
-                <span
-                  className={
-                    s.status === "accepted" ? "text-green-600" : "text-red-600"
-                  }
-                >
+              <li key={s.id} style={{ display: 'flex', gap: '8px' }}>
+                <span style={{ color: s.status === "accepted" ? 'var(--cyan)' : '#ff4d4d' }}>
                   {s.status === "accepted" ? "Accepted" : "Rejected"}
                 </span>
-                <span className="text-gray-500 truncate">
-                  {s.action === "add" ? s.suggestedName : "Remove"}
+                <span style={{ color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {suggestionLabel(s)}
                 </span>
               </li>
             ))}

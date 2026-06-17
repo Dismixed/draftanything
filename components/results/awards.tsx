@@ -10,33 +10,42 @@ const awardLabels: Record<string, { label: string; emoji: string }> = {
   biggestSteal: { label: "Biggest Steal", emoji: "🤑" },
 };
 
+function getAwardSymbol(type: string): { symbol: string; color: string } {
+  if (type === "bestPick") return { symbol: "◆", color: "var(--gold)" };
+  if (type === "worstPick") return { symbol: "◈", color: "#ff4d4d" };
+  if (type === "biggestSteal") return { symbol: "◉", color: "var(--cyan)" };
+  return { symbol: "◆", color: "var(--text-dim)" };
+}
+
 export function Awards({ awards }: AwardsProps) {
   if (awards.length === 0) return null;
 
   return (
-    <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+    <div>
+      <p style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: '10px' }}>
         Awards
-      </h3>
-      <div className="grid gap-3 sm:grid-cols-3">
+      </p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
         {awards.map((award) => {
           const meta = awardLabels[award.type] ?? {
             label: award.type,
             emoji: "",
           };
+          const { symbol, color } = getAwardSymbol(award.type);
           return (
             <div
               key={award.type}
-              className="bg-white border rounded-xl p-4 text-center"
+              className="panel-card"
+              style={{ padding: '16px', textAlign: 'center' }}
             >
-              <span className="text-2xl">{meta.emoji}</span>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-1">
+              <span style={{ fontSize: '20px', color, lineHeight: 1, display: 'block' }}>{symbol}</span>
+              <p style={{ fontSize: '8px', fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-dim)', margin: '8px 0 0' }}>
                 {meta.label}
               </p>
-              <p className="font-semibold text-gray-900 mt-1">
+              <p style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: '16px', color: 'var(--gold-hi)', marginTop: '6px', marginBottom: 0 }}>
                 {award.itemName}
               </p>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p style={{ fontSize: '11px', color: 'var(--text-dim)', margin: '4px 0 0' }}>
                 by {award.playerName}
                 {award.pickNumber > 0 && ` (Pick #${award.pickNumber})`}
               </p>

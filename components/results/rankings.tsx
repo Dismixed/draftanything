@@ -9,37 +9,68 @@ export function Rankings({ ranking }: RankingsProps) {
     (a, b) => (a.rank ?? Infinity) - (b.rank ?? Infinity),
   );
 
+  function getRankBadgeStyle(rank: number | null | undefined): React.CSSProperties {
+    if (rank === 1) {
+      return {
+        background: 'rgba(201,168,76,0.15)',
+        color: 'var(--gold-hi)',
+        border: '1px solid rgba(201,168,76,0.35)',
+      };
+    }
+    if (rank === 2) {
+      return {
+        background: 'rgba(180,180,200,0.1)',
+        color: '#a0a8c0',
+        border: '1px solid rgba(180,180,200,0.25)',
+      };
+    }
+    if (rank === 3) {
+      return {
+        background: 'rgba(200,120,50,0.1)',
+        color: '#c87832',
+        border: '1px solid rgba(200,120,50,0.25)',
+      };
+    }
+    return {
+      background: 'var(--border)',
+      color: 'var(--text-dim)',
+    };
+  }
+
   return (
-    <div className="bg-white border rounded-xl">
-      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider px-4 pt-4 pb-2">
+    <div className="panel-card" style={{ padding: 0 }}>
+      <p style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-dim)', padding: '14px 16px 0', margin: 0 }}>
         Final Rankings
-      </h3>
-      <ol className="divide-y">
+      </p>
+      <ol style={{ listStyle: 'none', margin: 0, padding: 0 }}>
         {sorted.map((player) => (
           <li
             key={player.id}
-            className="flex items-center justify-between px-4 py-3"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 16px', borderBottom: '1px solid var(--border)' }}
           >
-            <div className="flex items-center gap-3">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <span
-                className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-                  player.rank === 1
-                    ? "bg-yellow-100 text-yellow-800"
-                    : player.rank === 2
-                      ? "bg-gray-100 text-gray-600"
-                      : player.rank === 3
-                        ? "bg-orange-100 text-orange-800"
-                        : "bg-gray-50 text-gray-400"
-                }`}
+                style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  flexShrink: 0,
+                  ...getRankBadgeStyle(player.rank),
+                }}
               >
                 {player.rank ?? "-"}
               </span>
-              <span className="font-medium text-gray-900">
+              <span style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: '15px', color: 'var(--text)' }}>
                 {player.displayName}
               </span>
             </div>
             {player.score !== null && (
-              <span className="text-sm font-semibold text-gray-700">
+              <span style={{ color: 'var(--gold)', fontFamily: '"Playfair Display", serif', fontWeight: 700, fontSize: '18px' }}>
                 {player.score.toFixed(1)}
               </span>
             )}

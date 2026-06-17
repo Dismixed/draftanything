@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import type { DraftRoomProjection, SafePick } from "@/features/draft/types";
 
 interface VotingPanelProps {
@@ -14,9 +15,21 @@ interface VoteState {
 }
 
 export function VotingPanel({ projection, myPlayerId }: VotingPanelProps) {
+  const router = useRouter();
   const [vote, setVote] = useState<VoteState>({ selectedPlayerId: null, submitted: false });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const myVote = projection.votes.find((v) => v.voterPlayerId === myPlayerId);
+
+  useEffect(() => {
+    if (myVote) {
+      setVote({
+        selectedPlayerId: myVote.selectedPlayerId,
+        submitted: true,
+      });
+    }
+  }, [myVote]);
 
   const { draft, players, picks, availableItems } = projection;
   const isHost = players.find((p) => p.id === myPlayerId)?.isHost ?? false;
@@ -80,6 +93,8 @@ export function VotingPanel({ projection, myPlayerId }: VotingPanelProps) {
         const data = await res.json();
         throw new Error(data.message ?? "Failed to advance phase");
       }
+
+      router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "An error occurred");
     } finally {
@@ -91,11 +106,20 @@ export function VotingPanel({ projection, myPlayerId }: VotingPanelProps) {
 
   if (vote.submitted) {
     return (
-      <section aria-label="Voting" className="bg-white rounded-xl border p-4">
-        <h2 className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-3">
+      <section aria-label="Voting" className="panel-card" style={{ padding: '16px' }}>
+        <h2
+          style={{
+            fontSize: '9px',
+            fontWeight: 600,
+            letterSpacing: '0.22em',
+            textTransform: 'uppercase',
+            color: 'var(--text-dim)',
+            margin: '0 0 12px 0',
+          }}
+        >
           Vote Recorded
         </h2>
-        <p className="text-sm text-green-600 font-medium">
+        <p style={{ color: 'var(--cyan)', fontSize: '13px' }}>
           Your vote has been recorded.
         </p>
         {isHost && (
@@ -104,9 +128,10 @@ export function VotingPanel({ projection, myPlayerId }: VotingPanelProps) {
             onClick={handleAdvance}
             disabled={submitting}
             autoFocus
-            className="mt-3 w-full bg-indigo-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+            className="btn-ghost"
+            style={{ marginTop: '12px' }}
           >
-            {submitting ? "Advancing..." : "Close Voting & Advance"}
+            {submitting ? "Advancing..." : "Close Voting Early"}
           </button>
         )}
       </section>
@@ -114,18 +139,27 @@ export function VotingPanel({ projection, myPlayerId }: VotingPanelProps) {
   }
 
   return (
-    <section aria-label="Voting" className="bg-white rounded-xl border p-4">
-      <h2 className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-3">
+    <section aria-label="Voting" className="panel-card" style={{ padding: '16px' }}>
+      <h2
+        style={{
+          fontSize: '9px',
+          fontWeight: 600,
+          letterSpacing: '0.22em',
+          textTransform: 'uppercase',
+          color: 'var(--text-dim)',
+          margin: '0 0 12px 0',
+        }}
+      >
         Vote for the Best Roster
       </h2>
 
       {currentVoter && (
-        <p className="text-xs text-gray-500 mb-3">
-          Voting as <span className="font-semibold">{currentVoter.displayName}</span>
+        <p style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '12px' }}>
+          Voting as <span style={{ color: 'var(--text)' }}>{currentVoter.displayName}</span>
         </p>
       )}
 
-      <div className="space-y-4">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {players.map((player) => {
           if (player.id === myPlayerId) return null;
 
@@ -138,32 +172,87 @@ export function VotingPanel({ projection, myPlayerId }: VotingPanelProps) {
               type="button"
               onClick={() => setVote((prev) => ({ ...prev, selectedPlayerId: player.id }))}
               disabled={submitting}
-              className={`w-full text-left border rounded-lg p-3 transition-colors ${
-                isSelected
-                  ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200"
-                  : "border-gray-200 hover:border-gray-300"
-              }`}
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                background: isSelected ? 'rgba(201,168,76,0.04)' : 'var(--panel)',
+                border: isSelected
+                  ? '1px solid rgba(201,168,76,0.5)'
+                  : '1px solid var(--border-hi)',
+                boxShadow: isSelected ? '0 0 20px rgba(201,168,76,0.08) inset' : 'none',
+                padding: '12px',
+                cursor: 'pointer',
+                transition: 'border-color 0.15s, background 0.15s, box-shadow 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                if (!isSelected) {
+                  e.currentTarget.style.borderColor = 'rgba(124,58,255,0.4)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isSelected) {
+                  e.currentTarget.style.borderColor = 'var(--border-hi)';
+                }
+              }}
               aria-pressed={isSelected}
             >
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className="font-semibold text-sm">{player.displayName}</span>
-                <span className="text-xs text-gray-400">Seat {player.seat}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                <span
+                  style={{
+                    fontFamily: '"Playfair Display", serif',
+                    fontStyle: 'italic',
+                    fontSize: '15px',
+                    color: 'var(--text)',
+                  }}
+                >
+                  {player.displayName}
+                </span>
+                <span
+                  style={{
+                    border: '1px solid var(--border-hi)',
+                    color: 'var(--text-dim)',
+                    fontSize: '9px',
+                    letterSpacing: '0.15em',
+                    textTransform: 'uppercase',
+                    padding: '2px 6px',
+                  }}
+                >
+                  Seat {player.seat}
+                </span>
                 {player.isHost && (
-                  <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                  <span
+                    style={{
+                      border: '1px solid var(--border-hi)',
+                      color: 'var(--text-dim)',
+                      fontSize: '9px',
+                      letterSpacing: '0.15em',
+                      textTransform: 'uppercase',
+                      padding: '2px 6px',
+                    }}
+                  >
                     Host
                   </span>
                 )}
               </div>
 
-              <ul className="space-y-0.5">
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '3px' }}>
                 {playerPicks.length === 0 ? (
-                  <li className="text-xs text-gray-400">No picks yet</li>
+                  <li style={{ fontSize: '11px', color: 'var(--text-dim)' }}>No picks yet</li>
                 ) : (
                   playerPicks.map((pick) => {
                     const item = itemMap.get(pick.itemId);
                     return (
-                      <li key={pick.id} className="text-xs text-gray-600 flex items-center gap-2">
-                        <span className="text-gray-300">#{pick.overallPick}</span>
+                      <li
+                        key={pick.id}
+                        style={{
+                          fontSize: '11px',
+                          color: 'var(--text-dim)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                        }}
+                      >
+                        <span style={{ color: 'var(--border-hi)' }}>#{pick.overallPick}</span>
                         <span>{item?.name ?? "?"}</span>
                       </li>
                     );
@@ -176,7 +265,7 @@ export function VotingPanel({ projection, myPlayerId }: VotingPanelProps) {
       </div>
 
       {players.filter((p) => p.id !== myPlayerId).length === 0 && (
-        <p className="text-sm text-gray-400 text-center py-4">
+        <p style={{ color: 'var(--text-dim)', fontSize: '13px', textAlign: 'center', padding: '16px 0' }}>
           No other players to vote for.
         </p>
       )}
@@ -185,9 +274,10 @@ export function VotingPanel({ projection, myPlayerId }: VotingPanelProps) {
         type="button"
         onClick={handleVote}
         disabled={submitting || !vote.selectedPlayerId}
-        className="mt-4 w-full bg-indigo-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+        className="btn-gold"
+        style={{ marginTop: '16px' }}
       >
-        {submitting ? "Submitting Vote..." : "Submit Vote"}
+        {submitting ? "Submitting Vote..." : "— Submit Vote —"}
       </button>
 
       {isHost && (
@@ -195,14 +285,15 @@ export function VotingPanel({ projection, myPlayerId }: VotingPanelProps) {
           type="button"
           onClick={handleAdvance}
           disabled={submitting}
-          className="mt-2 w-full bg-gray-200 text-gray-700 text-sm font-medium py-2 px-4 rounded-lg hover:bg-gray-300 disabled:opacity-50"
+          className="btn-ghost"
+          style={{ marginTop: '8px' }}
         >
-          {submitting ? "Advancing..." : "Close Voting Early & Advance"}
+          {submitting ? "Advancing..." : "Close Voting Early"}
         </button>
       )}
 
       {error && (
-        <p className="text-sm text-red-600 mt-2">{error}</p>
+        <p style={{ color: '#ff4d4d', fontSize: '12px', marginTop: '8px' }}>{error}</p>
       )}
     </section>
   );

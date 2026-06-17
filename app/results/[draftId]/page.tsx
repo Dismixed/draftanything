@@ -1,9 +1,6 @@
 import { getDraftRoomProjection } from "@/features/draft/projection";
 import { buildPublicResult } from "@/features/results/projection";
-import { WinnerReveal } from "@/components/results/winner-reveal";
-import { Rankings } from "@/components/results/rankings";
-import { Awards } from "@/components/results/awards";
-import { ShareActions } from "@/components/results/share-actions";
+import { ResultsBody } from "@/components/results/results-body";
 import type { Metadata } from "next";
 
 interface Props {
@@ -47,10 +44,12 @@ export default async function ResultsPage({ params }: Props) {
     projection = await getDraftRoomProjection(draftId);
   } catch {
     return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Draft not found</h1>
-          <p className="text-gray-500 mt-2">This draft room does not exist.</p>
+      <main style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+        <div style={{ textAlign: 'center' }}>
+          <h1 style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', color: 'var(--text)', fontSize: 'clamp(24px,6vw,32px)', margin: '0 0 8px' }}>
+            Draft not found
+          </h1>
+          <p style={{ color: 'var(--text-dim)', fontSize: '14px', margin: 0 }}>This draft room does not exist.</p>
         </div>
       </main>
     );
@@ -58,14 +57,14 @@ export default async function ResultsPage({ params }: Props) {
 
   if (projection.draft.phase !== "COMPLETE") {
     return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="text-center max-w-md">
-          <h1 className="text-2xl font-bold text-gray-900">
+      <main style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+        <div style={{ textAlign: 'center', maxWidth: '400px' }}>
+          <h1 style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', color: 'var(--text)', fontSize: 'clamp(24px,6vw,32px)', margin: '0 0 8px' }}>
             {projection.draft.topic}
           </h1>
-          <p className="text-gray-500 mt-2">
+          <p style={{ color: 'var(--text-dim)', fontSize: '14px', margin: 0 }}>
             Results are not ready yet. The draft is currently in the{" "}
-            <span className="font-semibold text-gray-700">
+            <span style={{ color: 'var(--text)', fontWeight: 600 }}>
               {projection.draft.phase}
             </span>{" "}
             phase.
@@ -78,53 +77,29 @@ export default async function ResultsPage({ params }: Props) {
   const result = buildPublicResult(projection);
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+    <main style={{ minHeight: '100vh', background: 'var(--bg)', position: 'relative' }}>
+      {/* Atmospheric gradient */}
+      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 80% 40% at 50% 0%, rgba(201,168,76,0.07), transparent)', pointerEvents: 'none' }} />
+
+      <div style={{ maxWidth: '640px', margin: '0 auto', padding: '32px 16px 80px', position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {/* Header */}
-        <div className="text-center">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: '8px' }}>
             Draft Complete
           </p>
-          <h1 className="text-2xl font-bold text-gray-900 mt-1">
+          <h1 style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: 'clamp(24px,6vw,32px)', color: 'var(--text)', margin: 0 }}>
             {result.topic}
           </h1>
         </div>
 
-        {/* Winner */}
-        {result.winner && (
-          <WinnerReveal winner={result.winner} topic={result.topic} />
-        )}
-
-        {/* Rankings */}
-        <Rankings ranking={result.ranking} />
-
-        {/* Awards */}
-        {result.awards.length > 0 && <Awards awards={result.awards} />}
-
-        {/* Explanation */}
-        {result.explanation && (
-          <div className="bg-white border rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">
-              Judge&apos;s Explanation
-            </h3>
-            <p className="text-sm text-gray-700 whitespace-pre-line">
-              {result.explanation}
-            </p>
-          </div>
-        )}
-
-        {/* Share */}
-        <ShareActions
+        <ResultsBody
+          result={result}
           draftId={draftId}
-          topic={result.topic}
-          rounds={result.rounds}
-          draftType={result.draftType}
-          judgingMode={result.judgingMode}
           maxPlayers={projection.draft.maxPlayers}
         />
 
         {/* Footer */}
-        <p className="text-center text-xs text-gray-400 pt-4 pb-8">
+        <p style={{ textAlign: 'center', fontSize: '11px', color: 'var(--text-dim)', opacity: 0.4, paddingTop: '20px', margin: 0 }}>
           Draft Anything — results are public and permanent.
         </p>
       </div>

@@ -11,6 +11,22 @@ interface JoinRoomFormProps {
   onSuccess?: (draftId: string, roomCode: string) => void;
 }
 
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: '9px',
+  fontWeight: 600,
+  letterSpacing: '0.22em',
+  textTransform: 'uppercase',
+  color: 'var(--text-dim)',
+  marginBottom: '5px',
+};
+
+const fieldStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '5px',
+};
+
 export function JoinRoomForm({ initialRoomCode = "", onSuccess }: JoinRoomFormProps) {
   const router = useRouter();
   const [displayName, setDisplayName] = useState("");
@@ -66,11 +82,11 @@ export function JoinRoomForm({ initialRoomCode = "", onSuccess }: JoinRoomFormPr
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-4 w-full max-w-md"
+      style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}
       aria-label="Join a room"
     >
-      <div className="flex flex-col gap-1">
-        <label htmlFor="join-room-code" className="text-sm font-medium">
+      <div style={fieldStyle}>
+        <label htmlFor="join-room-code" style={labelStyle}>
           Room code
         </label>
         <input
@@ -85,12 +101,13 @@ export function JoinRoomForm({ initialRoomCode = "", onSuccess }: JoinRoomFormPr
             setRoomCode(e.target.value.toUpperCase());
             setError(null);
           }}
-          className="border rounded px-3 py-2 text-sm font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-green-500"
+          className="da-input"
+          style={{ fontFamily: 'monospace', letterSpacing: '0.2em', fontSize: '16px', textTransform: 'uppercase' }}
         />
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="join-display-name" className="text-sm font-medium">
+      <div style={fieldStyle}>
+        <label htmlFor="join-display-name" style={labelStyle}>
           Your display name
         </label>
         <input
@@ -105,12 +122,12 @@ export function JoinRoomForm({ initialRoomCode = "", onSuccess }: JoinRoomFormPr
             setDisplayName(e.target.value);
             setError(null);
           }}
-          className="border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+          className="da-input"
         />
       </div>
 
       {error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" style={{ color: '#ff4d4d', fontSize: '12px', margin: 0 }}>
           {error}
         </p>
       )}
@@ -118,9 +135,10 @@ export function JoinRoomForm({ initialRoomCode = "", onSuccess }: JoinRoomFormPr
       <button
         type="submit"
         disabled={submitting}
-        className="bg-green-600 text-white rounded px-4 py-2 font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="btn-gold"
+        style={{ marginTop: '4px' }}
       >
-        {submitting ? "Joining…" : "Join room"}
+        {submitting ? "Joining…" : "— Join Room —"}
       </button>
     </form>
   );

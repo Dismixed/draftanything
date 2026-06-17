@@ -7,11 +7,67 @@ interface AiDeskProps {
   commentary: SafeCommentary[];
 }
 
-const TAG_LABELS: Record<string, { label: string; color: string }> = {
-  reach: { label: "Reach", color: "bg-orange-100 text-orange-700" },
-  steal: { label: "Steal", color: "bg-emerald-100 text-emerald-700" },
-  run: { label: "Run", color: "bg-blue-100 text-blue-700" },
-  trend: { label: "Trend", color: "bg-purple-100 text-purple-700" },
+const TAG_STYLES: Record<string, React.CSSProperties> = {
+  reach: {
+    background: 'rgba(240,100,0,0.1)',
+    color: '#f06000',
+    border: '1px solid rgba(240,100,0,0.3)',
+  },
+  steal: {
+    background: 'rgba(0,200,100,0.08)',
+    color: '#00c864',
+    border: '1px solid rgba(0,200,100,0.25)',
+  },
+  surprise: {
+    background: 'rgba(255,200,0,0.1)',
+    color: '#d4a000',
+    border: '1px solid rgba(255,200,0,0.3)',
+  },
+  run: {
+    background: 'rgba(0,180,255,0.08)',
+    color: '#00b4ff',
+    border: '1px solid rgba(0,180,255,0.25)',
+  },
+  trend: {
+    background: 'rgba(124,58,255,0.1)',
+    color: 'var(--purple)',
+    border: '1px solid rgba(124,58,255,0.3)',
+  },
+  solid: {
+    background: 'rgba(100,180,255,0.08)',
+    color: '#5a9fd4',
+    border: '1px solid rgba(100,180,255,0.25)',
+  },
+  roundup: {
+    background: 'rgba(160,160,160,0.1)',
+    color: 'var(--muted)',
+    border: '1px solid rgba(160,160,160,0.25)',
+  },
+  opening: {
+    background: 'rgba(255,80,120,0.08)',
+    color: '#e04070',
+    border: '1px solid rgba(255,80,120,0.25)',
+  },
+};
+
+const TAG_LABELS: Record<string, string> = {
+  reach: "Reach",
+  steal: "Steal",
+  surprise: "Surprise",
+  run: "Run",
+  trend: "Trend",
+  solid: "Solid",
+  roundup: "Roundup",
+  opening: "Opening",
+};
+
+const tagPillBase: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  padding: '2px 8px',
+  fontSize: '10px',
+  fontWeight: 600,
+  letterSpacing: '0.08em',
 };
 
 export function AiDesk({ commentary }: AiDeskProps) {
@@ -27,13 +83,28 @@ export function AiDesk({ commentary }: AiDeskProps) {
       <button
         type="button"
         onClick={() => setCollapsed((c) => !c)}
-        className="w-full text-left text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2 px-1 py-1 hover:text-gray-700 transition-colors"
+        style={{
+          width: '100%',
+          textAlign: 'left',
+          fontSize: '9px',
+          fontWeight: 600,
+          letterSpacing: '0.22em',
+          textTransform: 'uppercase',
+          color: 'var(--text-dim)',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          padding: '4px 2px 8px',
+          transition: 'color 0.15s',
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
+        onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-dim)')}
       >
         {collapsed ? "▲ AI Commentary" : "▼ AI Commentary"}
       </button>
 
       {!collapsed && (
-        <div className="space-y-2">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div
             aria-live="polite"
             aria-atomic="true"
@@ -43,55 +114,93 @@ export function AiDesk({ commentary }: AiDeskProps) {
           </div>
 
           {latest ? (
-            <div className="bg-white rounded-lg border p-3 shadow-sm">
-              <p className="text-sm text-gray-900 leading-relaxed">{latest.text}</p>
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {latest.triggerTags.map((tag) => {
-                  const meta = TAG_LABELS[tag] ?? {
-                    label: tag,
-                    color: "bg-gray-100 text-gray-600",
-                  };
-                  return (
-                    <span
-                      key={tag}
-                      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${meta.color}`}
-                    >
-                      {meta.label}
-                    </span>
-                  );
-                })}
-              </div>
+            <div className="panel-card" style={{ padding: '14px' }}>
+              <p
+                style={{
+                  fontSize: '13px',
+                  color: 'var(--text)',
+                  lineHeight: 1.65,
+                  margin: 0,
+                }}
+              >
+                {latest.text}
+              </p>
+              {latest.triggerTags.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
+                  {latest.triggerTags.map((tag) => {
+                    const tagStyle = TAG_STYLES[tag] ?? {
+                      background: 'rgba(106,112,144,0.1)',
+                      color: 'var(--text-dim)',
+                      border: '1px solid var(--border-hi)',
+                    };
+                    return (
+                      <span
+                        key={tag}
+                        style={{ ...tagPillBase, ...tagStyle }}
+                      >
+                        {TAG_LABELS[tag] ?? tag}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           ) : (
-            <div className="bg-gray-50 rounded-lg border border-dashed p-4 text-center">
-              <p className="text-sm text-gray-400">
-                AI commissioner commentary will appear here after notable picks.
+            <div
+              style={{
+                border: '1px dashed var(--border-hi)',
+                padding: '16px',
+                textAlign: 'center',
+              }}
+            >
+              <p style={{ fontSize: '13px', color: 'var(--text-dim)', margin: 0 }}>
+                AI commissioner commentary will appear here as picks are made.
               </p>
             </div>
           )}
 
           {history.length > 0 && (
-            <details className="group">
-              <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700 select-none">
+            <details>
+              <summary
+                style={{
+                  fontSize: '11px',
+                  color: 'var(--text-dim)',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                  padding: '2px 0',
+                }}
+              >
                 Previous commentary ({history.length})
               </summary>
-              <div className="mt-2 space-y-2 max-h-60 overflow-y-auto">
+              <div
+                style={{
+                  marginTop: '8px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                  maxHeight: '240px',
+                  overflowY: 'auto',
+                }}
+              >
                 {history.map((c) => (
-                  <div key={c.id} className="bg-white rounded border p-2.5">
-                    <p className="text-sm text-gray-800">{c.text}</p>
+                  <div key={c.id} className="panel-card" style={{ padding: '10px 14px' }}>
+                    <p style={{ fontSize: '13px', color: 'var(--text)', lineHeight: 1.65, margin: 0 }}>
+                      {c.text}
+                    </p>
                     {c.triggerTags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-1.5">
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '8px' }}>
                         {c.triggerTags.map((tag) => {
-                          const meta = TAG_LABELS[tag] ?? {
-                            label: tag,
-                            color: "bg-gray-100 text-gray-600",
+                          const tagStyle = TAG_STYLES[tag] ?? {
+                            background: 'rgba(106,112,144,0.1)',
+                            color: 'var(--text-dim)',
+                            border: '1px solid var(--border-hi)',
                           };
                           return (
                             <span
                               key={tag}
-                              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${meta.color}`}
+                              style={{ ...tagPillBase, ...tagStyle }}
                             >
-                              {meta.label}
+                              {TAG_LABELS[tag] ?? tag}
                             </span>
                           );
                         })}

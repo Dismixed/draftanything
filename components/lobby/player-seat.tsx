@@ -8,48 +8,74 @@ interface PlayerSeatProps {
 export function PlayerSeat({ seat, player }: PlayerSeatProps) {
   const isEmpty = player === null;
 
+  const filledStyle: React.CSSProperties = {
+    background: player?.isHost ? 'rgba(201,168,76,0.03)' : 'var(--panel)',
+    border: `1px solid ${player?.isHost ? 'rgba(201,168,76,0.4)' : 'rgba(201,168,76,0.2)'}`,
+    padding: '10px 14px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  };
+
+  const emptyStyle: React.CSSProperties = {
+    background: 'var(--panel)',
+    border: '1px dashed var(--border-hi)',
+    padding: '10px 14px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    opacity: 0.5,
+  };
+
   return (
     <div
       aria-label={isEmpty ? `Seat ${seat} — empty` : `Seat ${seat} — ${player.displayName}`}
-      className={[
-        "flex items-center gap-3 p-3 rounded-lg border transition-colors",
-        isEmpty
-          ? "border-dashed border-gray-300 bg-gray-50 text-gray-400"
-          : "border-solid border-gray-200 bg-white",
-      ].join(" ")}
+      style={isEmpty ? emptyStyle : filledStyle}
     >
-      {/* Seat number badge */}
-      <span className="flex-shrink-0 w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">
-        {seat}
-      </span>
-
       {isEmpty ? (
-        <span className="text-sm italic">Waiting for player…</span>
-      ) : (
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          {/* Display name */}
-          <span className="font-medium text-sm truncate">{player.displayName}</span>
-
-          {/* Badges */}
-          <div className="flex items-center gap-1 ml-auto flex-shrink-0">
-            {player.isHost && (
-              <span
-                aria-label="Host"
-                className="text-xs px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800 font-semibold"
-              >
-                Host
-              </span>
-            )}
-            {player.isReady && (
-              <span
-                aria-label="Ready"
-                className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 font-semibold"
-              >
-                Ready
-              </span>
-            )}
+        <>
+          {/* Empty monogram circle */}
+          <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px dashed var(--border-hi)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span style={{ fontSize: '10px', color: 'var(--text-dim)' }}>{seat}</span>
           </div>
-        </div>
+          <span style={{ fontSize: '11px', color: 'var(--text-dim)', fontStyle: 'normal', fontFamily: 'Outfit, sans-serif' }}>
+            Waiting for player…
+          </span>
+        </>
+      ) : (
+        <>
+          {/* Monogram circle */}
+          <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid rgba(201,168,76,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: '"Playfair Display", serif', fontSize: '14px', color: 'var(--gold)' }}>
+            {player.displayName.charAt(0).toUpperCase()}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+            {/* Display name */}
+            <span style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: '14px', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {player.displayName}
+            </span>
+
+            {/* Badges */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto', flexShrink: 0 }}>
+              {player.isHost && (
+                <span
+                  aria-label="Host"
+                  style={{ border: '1px solid rgba(201,168,76,0.3)', color: 'var(--gold)', fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '2px 7px', fontFamily: 'Outfit, sans-serif' }}
+                >
+                  Host
+                </span>
+              )}
+              {player.isReady && (
+                <span
+                  aria-label="Ready"
+                  style={{ border: '1px solid rgba(0,229,255,0.3)', color: 'var(--cyan)', fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '2px 7px', fontFamily: 'Outfit, sans-serif' }}
+                >
+                  Ready
+                </span>
+              )}
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
@@ -67,7 +93,7 @@ export function SeatList({ players, maxPlayers }: SeatListProps) {
   );
 
   return (
-    <div className="flex flex-col gap-2" aria-label="Player seats">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }} aria-label="Player seats">
       {Array.from({ length: maxPlayers }, (_, i) => i + 1).map((seat) => (
         <PlayerSeat
           key={seat}

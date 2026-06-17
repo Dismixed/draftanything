@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { RoomProjection } from "@/features/room/schema";
 import { PoolEditor } from "./pool-editor";
 import { SuggestionQueue } from "./suggestion-queue";
@@ -14,9 +15,11 @@ interface PoolReviewProps {
 }
 
 export function PoolReview({ draftId, myPlayerId, hostPlayerId, room }: PoolReviewProps) {
+  const router = useRouter();
   const [pool, setPool] = useState<PoolProjection | null>(null);
   const [suggestions, setSuggestions] = useState<PoolSuggestion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [confirmLock, setConfirmLock] = useState(false);
@@ -68,6 +71,18 @@ export function PoolReview({ draftId, myPlayerId, hostPlayerId, room }: PoolRevi
           .on(
             "postgres_changes",
             {
+              event: "UPDATE",
+              schema: "public",
+              table: "drafts",
+              filter: `id=eq.${draftId}`,
+            },
+            () => {
+              router.refresh();
+            },
+          )
+          .on(
+            "postgres_changes",
+            {
               event: "*",
               schema: "public",
               table: "draft_items",
@@ -105,10 +120,12 @@ export function PoolReview({ draftId, myPlayerId, hostPlayerId, room }: PoolRevi
         void channelRef.current.unsubscribe();
       }
     };
-  }, [draftId, fetchPool, fetchSuggestions]);
+  }, [draftId, fetchPool, fetchSuggestions, router]);
 
   async function handleGenerate() {
-    if (!pool) return;
+    if (!pool || generating) return;
+    setGenerating(true);
+    setError(null);
     try {
       const res = await fetch(`/api/drafts/${draftId}/pool`, {
         method: "POST",
@@ -129,6 +146,8 @@ export function PoolReview({ draftId, myPlayerId, hostPlayerId, room }: PoolRevi
       }
     } catch {
       setError("Generation failed");
+    } finally {
+      setGenerating(false);
     }
   }
 
@@ -141,6 +160,7 @@ export function PoolReview({ draftId, myPlayerId, hostPlayerId, room }: PoolRevi
       });
       if (res.ok) {
         setConfirmLock(false);
+        router.refresh();
       } else {
         const err = await res.json();
         setError(err.message ?? "Lock failed");
@@ -152,8 +172,8 @@ export function PoolReview({ draftId, myPlayerId, hostPlayerId, room }: PoolRevi
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4 md:p-8 flex items-center justify-center">
-        <p className="text-gray-500">Loading pool…</p>
+      <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: 'var(--text-dim)' }}>Loading pool…</p>
       </div>
     );
   }
@@ -163,46 +183,68 @@ export function PoolReview({ draftId, myPlayerId, hostPlayerId, room }: PoolRevi
   const pendingSuggestions = suggestions.filter((s) => s.status === "pending");
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-      <div className="max-w-4xl mx-auto flex flex-col gap-6">
-        <header className="flex items-center justify-between gap-4">
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', padding: '24px 16px' }}>
+      <div style={{ maxWidth: '960px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
           <div>
-            <p className="text-xs uppercase tracking-wider text-gray-500 font-semibold">
+            <p style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: '4px' }}>
               Pool Review
             </p>
-            <h1 className="text-2xl font-bold mt-0.5 truncate">{room.topic}</h1>
+            <h1 style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', color: 'var(--text)', fontSize: 'clamp(20px,4vw,28px)', margin: 0 }}>
+              {room.topic}
+            </h1>
           </div>
-          <p className="text-sm text-gray-500">
+          <p style={{ color: 'var(--text-dim)', fontSize: '13px', flexShrink: 0 }}>
             {itemCount} items (min {minItems})
           </p>
         </header>
 
         {error && (
-          <div role="alert" className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
-            {error}
+          <div role="alert" style={{ background: 'rgba(255,77,77,0.08)', border: '1px solid rgba(255,77,77,0.25)', padding: '12px 14px', color: '#ff4d4d', fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span>{error}</span>
             <button
               type="button"
               onClick={() => setError(null)}
-              className="ml-2 underline"
+              style={{ color: '#ff4d4d', background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', textDecoration: 'underline', marginLeft: '8px' }}
             >
               Dismiss
             </button>
           </div>
         )}
 
-        <div className="flex gap-2">
+        <div style={{ display: 'flex', gap: '8px' }}>
           <input
             type="search"
             placeholder="Search items…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 border rounded-lg px-3 py-2 text-sm"
+            className="da-input"
+            style={{ flex: 1 }}
             aria-label="Search pool items"
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div className="lg:col-span-2" style={{ position: "relative" }}>
+            {generating && (
+              <div
+                aria-live="polite"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  zIndex: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "rgba(8,8,12,0.72)",
+                  border: "1px solid var(--border-hi)",
+                }}
+              >
+                <p style={{ color: "var(--gold)", fontSize: "13px", margin: 0, letterSpacing: "0.08em" }}>
+                  Generating pool items…
+                </p>
+              </div>
+            )}
             {pool && (
               <PoolEditor
                 pool={pool}
@@ -223,18 +265,22 @@ export function PoolReview({ draftId, myPlayerId, hostPlayerId, room }: PoolRevi
               suggestions={suggestions}
               onSuggestionsChange={setSuggestions}
               pool={pool}
+              onPoolChange={setPool}
             />
           </div>
         </div>
 
         {isHost && (
-          <section aria-label="Host pool controls" className="flex flex-wrap gap-3">
+          <section aria-label="Host pool controls" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
             <button
               type="button"
               onClick={handleGenerate}
-              className="bg-indigo-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-indigo-700 transition-colors"
+              disabled={generating}
+              aria-busy={generating}
+              className="btn-gold"
+              style={{ width: "auto", padding: "10px 18px" }}
             >
-              Generate with AI
+              {generating ? "Generating…" : "Generate with AI"}
             </button>
 
             <button
@@ -251,7 +297,8 @@ export function PoolReview({ draftId, myPlayerId, hostPlayerId, room }: PoolRevi
                     .then((data) => { if (data) setPool(data); });
                 }
               }}
-              className="bg-white border rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-50 transition-colors"
+              className="btn-ghost"
+              style={{ width: 'auto' }}
             >
               Add manual item
             </button>
@@ -262,28 +309,31 @@ export function PoolReview({ draftId, myPlayerId, hostPlayerId, room }: PoolRevi
                 onClick={() => setConfirmLock(true)}
                 disabled={itemCount < minItems}
                 aria-disabled={itemCount < minItems}
-                className="bg-green-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="btn-gold"
+                style={{ width: 'auto', padding: '10px 18px', opacity: itemCount < minItems ? 0.4 : 1, cursor: itemCount < minItems ? 'not-allowed' : 'pointer' }}
               >
                 {itemCount >= minItems
                   ? `Lock pool (${itemCount} items)`
                   : `Need ${minItems - itemCount} more items`}
               </button>
             ) : (
-              <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                <span className="text-sm text-yellow-800">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.25)', padding: '10px 14px' }}>
+                <span style={{ fontSize: '13px', color: 'var(--text)' }}>
                   Lock pool with {itemCount} items?
                 </span>
                 <button
                   type="button"
                   onClick={handleLock}
-                  className="bg-yellow-600 text-white rounded px-3 py-1 text-xs font-medium hover:bg-yellow-700"
+                  className="btn-gold"
+                  style={{ width: 'auto', padding: '6px 12px', fontSize: '12px' }}
                 >
                   Confirm
                 </button>
                 <button
                   type="button"
                   onClick={() => setConfirmLock(false)}
-                  className="text-sm text-gray-500 underline"
+                  className="btn-ghost"
+                  style={{ width: 'auto', padding: '6px 12px', fontSize: '12px' }}
                 >
                   Cancel
                 </button>
@@ -291,7 +341,7 @@ export function PoolReview({ draftId, myPlayerId, hostPlayerId, room }: PoolRevi
             )}
 
             {pendingSuggestions.length > 0 && (
-              <span className="text-sm text-amber-600 self-center">
+              <span style={{ color: 'var(--gold)', fontSize: '12px' }}>
                 {pendingSuggestions.length} pending suggestion{pendingSuggestions.length !== 1 ? "s" : ""}
               </span>
             )}

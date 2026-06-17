@@ -62,20 +62,20 @@ export function PoolEditor({ pool, draftId, isHost, search, onPoolChange }: Pool
   }
 
   return (
-    <div className="bg-white rounded-xl border">
+    <div style={{ background: 'var(--panel)', border: '1px solid var(--border-hi)', position: 'relative' }}>
       {filteredItems.length === 0 ? (
-        <div className="p-6 text-center text-sm text-gray-500">
+        <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-dim)', fontSize: '13px' }}>
           {search ? "No items match your search." : "No items in the pool yet. Generate with AI or add manually."}
         </div>
       ) : (
-        <ul className="divide-y" role="list">
+        <ul role="list" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
           {filteredItems.map((item) => (
-            <li key={item.id} className="flex items-center gap-3 px-4 py-3">
-              <span className="text-xs uppercase font-semibold text-gray-400 w-10 flex-shrink-0">
+            <li key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px', borderBottom: '1px solid var(--border)' }}>
+              <span style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-dim)', width: '40px', flexShrink: 0 }}>
                 {item.source === "ai" ? "AI" : "Manual"}
               </span>
               {editingId === item.id && isHost ? (
-                <div className="flex-1 flex gap-2">
+                <div style={{ flex: 1, display: 'flex', gap: '8px', alignItems: 'center' }}>
                   <input
                     type="text"
                     value={editName}
@@ -84,42 +84,45 @@ export function PoolEditor({ pool, draftId, isHost, search, onPoolChange }: Pool
                       if (e.key === "Enter") void handleEdit(item.id);
                       if (e.key === "Escape") setEditingId(null);
                     }}
-                    className="flex-1 border rounded px-2 py-1 text-sm"
+                    className="da-input"
+                    style={{ flex: 1 }}
                     autoFocus
                     aria-label="Edit item name"
                   />
                   <button
                     type="button"
                     onClick={() => void handleEdit(item.id)}
-                    className="text-xs bg-indigo-600 text-white rounded px-2 py-1"
+                    className="btn-ghost"
+                    style={{ width: 'auto', padding: '4px 10px', fontSize: '11px' }}
                   >
                     Save
                   </button>
                   <button
                     type="button"
                     onClick={() => setEditingId(null)}
-                    className="text-xs text-gray-500 underline"
+                    className="btn-ghost"
+                    style={{ width: 'auto', padding: '4px 10px', fontSize: '11px' }}
                   >
                     Cancel
                   </button>
                 </div>
               ) : (
-                <span className="flex-1 text-sm font-medium">{item.name}</span>
+                <span style={{ fontSize: '13px', color: 'var(--text)', flex: 1 }}>{item.name}</span>
               )}
 
-              <span className="text-xs text-gray-400">
+              <span style={{ fontSize: '10px', color: 'var(--text-dim)' }}>
                 {item.metadata.categories} stats
               </span>
 
               {isHost && editingId !== item.id && (
-                <div className="flex gap-1">
+                <div style={{ display: 'flex', gap: '8px' }}>
                   <button
                     type="button"
                     onClick={() => {
                       setEditingId(item.id);
                       setEditName(item.name);
                     }}
-                    className="text-xs text-indigo-600 hover:underline"
+                    style={{ color: 'var(--gold)', fontSize: '11px', cursor: 'pointer', background: 'none', border: 'none' }}
                     aria-label={`Edit ${item.name}`}
                   >
                     Edit
@@ -127,7 +130,7 @@ export function PoolEditor({ pool, draftId, isHost, search, onPoolChange }: Pool
                   <button
                     type="button"
                     onClick={() => void handleRemove(item.id)}
-                    className="text-xs text-red-600 hover:underline"
+                    style={{ color: '#ff4d4d', fontSize: '11px', cursor: 'pointer', background: 'none', border: 'none' }}
                     aria-label={`Remove ${item.name}`}
                   >
                     Remove
@@ -139,7 +142,7 @@ export function PoolEditor({ pool, draftId, isHost, search, onPoolChange }: Pool
                 <button
                   type="button"
                   onClick={() => void handleSuggestRemove(item.id)}
-                  className="text-xs text-amber-600 hover:underline"
+                  style={{ color: 'var(--cyan)', fontSize: '11px', cursor: 'pointer', background: 'none', border: 'none' }}
                   aria-label={`Suggest removing ${item.name}`}
                 >
                   Suggest remove

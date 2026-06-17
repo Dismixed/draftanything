@@ -21,6 +21,10 @@ const PERSONALITY_PROMPTS: Record<string, string> = {
     "You are a sarcastic roaster. Playfully criticize picks with wit and humor.",
     "Keep it light and funny. The draft is a game, not a battlefield.",
   ].join(" "),
+  custom: [
+    "You are a draft commentator matching the room's custom judge tone.",
+    "Keep commentary short, playful, and aligned with the draft's competitive spirit.",
+  ].join(" "),
 };
 
 const SAFETY_CONSTRAINTS = [

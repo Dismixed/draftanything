@@ -114,6 +114,42 @@ export function useDraftRoom({
               refetch();
             },
           )
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "arguments",
+              filter: `draft_id=eq.${draftId}`,
+            },
+            () => {
+              refetch();
+            },
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "votes",
+              filter: `draft_id=eq.${draftId}`,
+            },
+            () => {
+              refetch();
+            },
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "judgments",
+              filter: `draft_id=eq.${draftId}`,
+            },
+            () => {
+              refetch();
+            },
+          )
           .subscribe(async (status) => {
             if (status === "SUBSCRIBED") {
               setConnectionStatus("connected");

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { evaluateCommentaryTrigger } from "./commentary-trigger";
+import {
+  evaluateCommentaryTrigger,
+  MIN_PICKS_BETWEEN_COMMENTARY,
+  ROUNDUP_PICK_INTERVAL,
+} from "./commentary-trigger";
 import type { CommentaryTriggerInput } from "./commentary-trigger";
 
 const weights: Record<string, number> = { quality: 40, speed: 30, style: 30 };
@@ -38,9 +42,23 @@ function makeInput(overrides?: Partial<CommentaryTriggerInput>): CommentaryTrigg
 describe("evaluateCommentaryTrigger", () => {
   it("returns null when no trigger conditions are met", () => {
     const result = evaluateCommentaryTrigger(
-      makeInput({ pickedItemScores: midItem }),
+      makeInput({
+        pickedItemScores: { quality: 4, speed: 4, style: 4 },
+        picksSinceLastCommentary: 1,
+      }),
     );
     expect(result).toBeNull();
+  });
+
+  it("tags solid picks above the median", () => {
+    const result = evaluateCommentaryTrigger(
+      makeInput({
+        pickedItemScores: { quality: 7, speed: 7, style: 7 },
+        picksSinceLastCommentary: 1,
+      }),
+    );
+    expect(result).not.toBeNull();
+    expect(result!.tags).toContain("solid");
   });
 
   it("detects a reach when item is in bottom quartile", () => {
@@ -68,7 +86,7 @@ describe("evaluateCommentaryTrigger", () => {
     expect(result!.priority).toBe(10);
   });
 
-  it("does not tag steal when top item is picked early", () => {
+  it("detects surprise when top-quartile item is picked early", () => {
     const result = evaluateCommentaryTrigger(
       makeInput({
         pickedItemScores: { quality: 9, speed: 9, style: 9 },
@@ -76,17 +94,31 @@ describe("evaluateCommentaryTrigger", () => {
         totalPicks: 10,
       }),
     );
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result!.tags).toContain("surprise");
+    expect(result!.priority).toBe(9);
   });
 
-  it("detects a category run when 3+ recent picks share a highest category", () => {
+  it("does not tag steal or surprise when top item is picked mid-draft", () => {
+    const result = evaluateCommentaryTrigger(
+      makeInput({
+        pickedItemScores: { quality: 9, speed: 9, style: 9 },
+        overallPick: 5,
+        totalPicks: 10,
+      }),
+    );
+    expect(result).not.toBeNull();
+    expect(result!.tags).not.toContain("steal");
+    expect(result!.tags).not.toContain("surprise");
+  });
+
+  it("detects a category run when 2+ recent picks share a highest category", () => {
     const result = evaluateCommentaryTrigger(
       makeInput({
         pickedItemScores: { quality: 9, speed: 1, style: 1 },
         recentPickScores: [
           { scores: { quality: 8, speed: 2, style: 2 }, seat: 1 },
           { scores: { quality: 7, speed: 3, style: 3 }, seat: 2 },
-          { scores: { quality: 6, speed: 4, style: 4 }, seat: 3 },
         ],
       }),
     );
@@ -110,25 +142,48 @@ describe("evaluateCommentaryTrigger", () => {
     expect(result!.priority).toBe(5);
   });
 
-  it("enforces minimum interval of 2 picks since last commentary", () => {
+  it(`enforces minimum interval of ${MIN_PICKS_BETWEEN_COMMENTARY} pick(s) since last commentary`, () => {
     const result = evaluateCommentaryTrigger(
       makeInput({
-        picksSinceLastCommentary: 1,
+        picksSinceLastCommentary: MIN_PICKS_BETWEEN_COMMENTARY - 1,
         pickedItemScores: { quality: 1, speed: 1, style: 1 },
       }),
     );
     expect(result).toBeNull();
   });
 
-  it("allows commentary exactly at interval boundary of 2", () => {
+  it("allows commentary at the minimum interval boundary", () => {
     const result = evaluateCommentaryTrigger(
       makeInput({
-        picksSinceLastCommentary: 2,
+        picksSinceLastCommentary: MIN_PICKS_BETWEEN_COMMENTARY,
         pickedItemScores: { quality: 1, speed: 1, style: 1 },
       }),
     );
     expect(result).not.toBeNull();
     expect(result!.tags).toContain("reach");
+  });
+
+  it(`falls back to roundup after ${ROUNDUP_PICK_INTERVAL} quiet picks`, () => {
+    const result = evaluateCommentaryTrigger(
+      makeInput({
+        pickedItemScores: { quality: 4, speed: 4, style: 4 },
+        picksSinceLastCommentary: ROUNDUP_PICK_INTERVAL,
+      }),
+    );
+    expect(result).not.toBeNull();
+    expect(result!.tags).toEqual(["roundup"]);
+  });
+
+  it("tags the first overall pick as opening", () => {
+    const result = evaluateCommentaryTrigger(
+      makeInput({
+        overallPick: 1,
+        pickedItemScores: { quality: 4, speed: 4, style: 4 },
+        picksSinceLastCommentary: 999,
+      }),
+    );
+    expect(result).not.toBeNull();
+    expect(result!.tags).toContain("opening");
   });
 
   it("returns highest priority tag when multiple triggers fire", () => {
@@ -150,14 +205,17 @@ describe("evaluateCommentaryTrigger", () => {
   it("treats equal category scores as no single highest category", () => {
     const result = evaluateCommentaryTrigger(
       makeInput({
-        pickedItemScores: { quality: 5, speed: 5, style: 5 },
+        pickedItemScores: { quality: 7, speed: 7, style: 7 },
         recentPickScores: [
-          { scores: { quality: 5, speed: 5, style: 5 }, seat: 1 },
-          { scores: { quality: 5, speed: 5, style: 5 }, seat: 2 },
+          { scores: { quality: 7, speed: 7, style: 7 }, seat: 1 },
+          { scores: { quality: 7, speed: 7, style: 7 }, seat: 2 },
         ],
+        picksSinceLastCommentary: 1,
       }),
     );
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result!.tags).toContain("solid");
+    expect(result!.tags).not.toContain("run");
   });
 
   it("ignores picks with empty scores", () => {

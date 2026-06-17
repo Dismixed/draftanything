@@ -14,13 +14,31 @@ export interface CommentaryTriggerResult {
   priority: number;
 }
 
-export type CommentaryTag = "reach" | "steal" | "run" | "trend";
+export type CommentaryTag =
+  | "reach"
+  | "steal"
+  | "run"
+  | "trend"
+  | "surprise"
+  | "solid"
+  | "roundup"
+  | "opening";
+
+/** Minimum picks between commentary lines (1 = every pick can comment). */
+export const MIN_PICKS_BETWEEN_COMMENTARY = 1;
+
+/** Fallback commentary when no notable trigger fires for this many picks. */
+export const ROUNDUP_PICK_INTERVAL = 2;
 
 const TAG_PRIORITY: Record<CommentaryTag, number> = {
   steal: 10,
+  surprise: 9,
   reach: 8,
+  opening: 7,
   run: 5,
   trend: 5,
+  solid: 4,
+  roundup: 3,
 };
 
 function computeCompositeScore(
@@ -73,10 +91,19 @@ function isTopQuartile(
   return score >= sorted[Math.max(0, cutoffIndex)];
 }
 
+function isAboveMedian(score: number, allScores: number[]): boolean {
+  if (allScores.length === 0) return false;
+  const sorted = [...allScores].sort((a, b) => a - b);
+  const median = sorted[Math.floor(sorted.length / 2)];
+  return score >= median;
+}
+
 export function evaluateCommentaryTrigger(
   input: CommentaryTriggerInput,
 ): CommentaryTriggerResult | null {
-  if (input.picksSinceLastCommentary < 2) return null;
+  if (input.picksSinceLastCommentary < MIN_PICKS_BETWEEN_COMMENTARY) return null;
+
+  if (Object.keys(input.pickedItemScores).length === 0) return null;
 
   const tags: CommentaryTag[] = [];
   const allCompositeScores = input.allItemScores.map((s) =>
@@ -94,19 +121,22 @@ export function evaluateCommentaryTrigger(
 
   if (isTopQuartile(pickedCompositeScore, allCompositeScores)) {
     const medianPick = input.totalPicks / 2;
+    const earlyCutoff = Math.max(1, Math.ceil(input.totalPicks / 3));
     if (input.overallPick > medianPick) {
       tags.push("steal");
+    } else if (input.overallPick <= earlyCutoff) {
+      tags.push("surprise");
     }
   }
 
   if (pickedCategory !== null) {
-    if (input.recentPickScores.length >= 2) {
+    if (input.recentPickScores.length >= 1) {
       const allPicks = [
         ...input.recentPickScores.map((p) => p.scores),
         input.pickedItemScores,
       ];
       const categories = allPicks.map((s) => findHighestCategory(s));
-      if (categories.length >= 3 && categories.every((c) => c === pickedCategory)) {
+      if (categories.length >= 2 && categories.every((c) => c === pickedCategory)) {
         tags.push("run");
       }
     }
@@ -118,6 +148,24 @@ export function evaluateCommentaryTrigger(
         tags.push("trend");
       }
     }
+  }
+
+  if (input.overallPick === 1) {
+    tags.push("opening");
+  }
+
+  if (
+    tags.length === 0 &&
+    isAboveMedian(pickedCompositeScore, allCompositeScores)
+  ) {
+    tags.push("solid");
+  }
+
+  if (
+    tags.length === 0 &&
+    input.picksSinceLastCommentary >= ROUNDUP_PICK_INTERVAL
+  ) {
+    tags.push("roundup");
   }
 
   if (tags.length === 0) return null;

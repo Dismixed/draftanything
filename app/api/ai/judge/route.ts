@@ -60,6 +60,7 @@ export async function POST(
       judgingData.topic,
       judgingData.judgingMode,
       judgingData.aiPersonality,
+      judgingData.customJudgePrompt,
       judgingData.rubric,
       judgingData.safePlayers,
       judgingData.safePicks,

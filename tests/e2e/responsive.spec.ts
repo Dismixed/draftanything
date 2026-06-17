@@ -160,17 +160,7 @@ test.describe("Responsive layout", () => {
       await lockButton.click();
       await hostPage.getByRole("button", { name: "Confirm" }).click();
 
-      // Navigate to draft page - use API to start the draft
-      const room = await (await request.get(`/api/drafts/by-code/${roomCode}`)).json();
-      const draftId = room.draftId;
-
-      const pickOrder = [
-        { overallPick: 1, round: 1, pickInRound: 1, seat: 1 },
-        { overallPick: 2, round: 1, pickInRound: 2, seat: 2 },
-      ];
-      await request.post(`/api/drafts/${draftId}/start`, { data: { pickOrder } });
-
-      // Reload to see drafting phase
+      // Reload to see drafting phase (pool lock auto-starts the draft)
       await hostPage.goto(`/draft/${roomCode}`);
       await expect(hostPage.getByText("Available Pool")).toBeVisible({ timeout: 5000 });
 

@@ -13,8 +13,8 @@ export function buildPoolPrompt(input: BuildPoolPromptInput): { system: string; 
   return {
     system: [
       "You are a creative assistant that generates draft pools for themed draft games.",
-      "Each item must have a name (max 60 chars) and numeric metadata (0-10) for every rubric category you define.",
-      'The rubric must have 3-6 categories with weights summing to exactly 100.',
+      "Each item must have a name (max 60 chars) and a scores array with a value (0-10) for every rubric category.",
+      "The rubric must be an array of 3-6 categories, each with a category name and weight, summing to exactly 100.",
       "Generate unique, interesting, and thematically appropriate items.",
     ].join(" "),
     user: [

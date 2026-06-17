@@ -33,10 +33,34 @@ const categoryScoreSchema = z.object({
   categories: z.record(z.string(), z.number().min(0).max(10)),
 });
 
+/** OpenAI structured output rejects `propertyNames` from z.record(); use explicit arrays for the API. */
+const categoryScoreAiSchema = z.object({
+  key: z.string().min(1),
+  value: z.number().min(0).max(10),
+});
+
+const playerScoreAiSchema = z.object({
+  playerId: z.string(),
+  overall: z.number().min(0).max(10),
+  categories: z.array(categoryScoreAiSchema).min(1),
+});
+
 const awardReferenceSchema = z.object({
   pickId: z.string(),
   itemId: z.string(),
   playerId: z.string(),
+});
+
+export const judgeOutputAiSchema = z.object({
+  playerScores: z.array(playerScoreAiSchema).min(1),
+  ranking: z.array(z.string()),
+  winnerPlayerIds: z.array(z.string()).min(1),
+  awards: z.object({
+    bestPick: awardReferenceSchema,
+    worstPick: awardReferenceSchema,
+    biggestSteal: awardReferenceSchema,
+  }),
+  explanation: z.string().min(1).max(4000),
 });
 
 const judgeOutputSchema = z.object({
@@ -51,16 +75,38 @@ const judgeOutputSchema = z.object({
   explanation: z.string().min(1).max(4000),
 });
 
+export type JudgeOutputAi = z.infer<typeof judgeOutputAiSchema>;
 export type JudgeOutput = z.infer<typeof judgeOutputSchema>;
+
+export function normalizeJudgeAiOutput(ai: JudgeOutputAi): JudgeOutput {
+  return {
+    playerScores: Object.fromEntries(
+      ai.playerScores.map((ps) => [
+        ps.playerId,
+        {
+          overall: ps.overall,
+          categories: Object.fromEntries(ps.categories.map((c) => [c.key, c.value])),
+        },
+      ]),
+    ),
+    ranking: ai.ranking,
+    winnerPlayerIds: ai.winnerPlayerIds,
+    awards: ai.awards,
+    explanation: ai.explanation,
+  };
+}
 
 export interface JudgeInput {
   topic: string;
   personality: string;
+  customJudgePrompt?: string | null;
   rubric: RubricCategory[];
   rosters: Array<{
     playerId: string;
     displayName: string;
     picks: Array<{
+      pickId: string;
+      itemId: string;
       itemName: string;
       metadata: Record<string, number>;
       overallPick: number;
@@ -175,6 +221,7 @@ export async function judgeRosters(input: JudgeInput): Promise<JudgeResult> {
   const prompt = buildJudgePrompt({
     topic: input.topic,
     personality: input.personality,
+    customJudgePrompt: input.customJudgePrompt,
     rubric: input.rubric,
     rosters: input.rosters,
     defenses: input.defenses,
@@ -192,7 +239,7 @@ export async function judgeRosters(input: JudgeInput): Promise<JudgeResult> {
             { role: "system", content: [{ type: "input_text", text: prompt.system }] },
             { role: "user", content: [{ type: "input_text", text: prompt.user }] },
           ],
-          text: { format: zodTextFormat(judgeOutputSchema, "judge_output") },
+          text: { format: zodTextFormat(judgeOutputAiSchema, "judge_output") },
           reasoning: { effort: "low" },
           max_output_tokens: 4096,
         },
@@ -211,7 +258,16 @@ export async function judgeRosters(input: JudgeInput): Promise<JudgeResult> {
         throw new Error("AI returned invalid JSON");
       }
 
-      const validated = validateJudgeOutput(parsed, input.playerIds, input.rubric);
+      const aiValidation = judgeOutputAiSchema.safeParse(parsed);
+      if (!aiValidation.success) {
+        throw new Error(`AI response failed validation: ${aiValidation.error.message}`);
+      }
+
+      const validated = validateJudgeOutput(
+        normalizeJudgeAiOutput(aiValidation.data),
+        input.playerIds,
+        input.rubric,
+      );
 
       return {
         source: "ai",
@@ -233,6 +289,10 @@ export async function judgeRosters(input: JudgeInput): Promise<JudgeResult> {
   }
 
   // Fallback: compute deterministic judgment
+  console.warn(
+    "[judge] AI judging failed after retries; using fallback.",
+    lastError?.message ?? "unknown error",
+  );
   const fallbackResult = fallbackJudge(input.playerIds, input.picks, input.rubric);
 
   const fallbackScores: Record<string, { overall: number; categories: Record<string, number> }> = {};
@@ -253,7 +313,8 @@ export async function judgeRosters(input: JudgeInput): Promise<JudgeResult> {
     ranking,
     winnerPlayerIds: fallbackResult.winnerIds,
     awards: fallbackResult.awards,
-    explanation: `Fallback judgment after AI ${lastError ? lastError.message : "failure"}.`,
+    explanation:
+      "AI judging was unavailable, so results were computed from the locked draft rubric and item metadata.",
     model: null,
     promptVersion: JUDGE_PROMPT_VERSION,
     idempotencyKey,

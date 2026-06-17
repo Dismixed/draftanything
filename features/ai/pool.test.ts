@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
+import { zodTextFormat } from "openai/helpers/zod";
 
-import { generatePoolInputSchema, poolOutputSchema } from "./schemas";
+import {
+  generatePoolInputSchema,
+  normalizePoolAiOutput,
+  poolOutputAiSchema,
+  poolOutputSchema,
+} from "./schemas";
 import {
   validPoolResult,
   poolWithDuplicates,
@@ -47,6 +53,39 @@ describe("generatePoolInputSchema", () => {
       targetCount: 0,
     });
     expect(result.success).toBe(false);
+  });
+});
+
+describe("poolOutputAiSchema", () => {
+  it("does not emit propertyNames in OpenAI JSON schema", () => {
+    const format = zodTextFormat(poolOutputAiSchema, "pool_output");
+    const schemaJson = JSON.stringify(format.schema);
+    expect(schemaJson).not.toContain("propertyNames");
+  });
+
+  it("normalizes to canonical pool output", () => {
+    const ai = {
+      items: [
+        {
+          name: "Inception",
+          scores: [
+            { category: "quality", value: 9 },
+            { category: "rewatchability", value: 8 },
+          ],
+        },
+      ],
+      rubric: [
+        { category: "quality", weight: 60 },
+        { category: "rewatchability", weight: 40 },
+      ],
+    };
+
+    const result = poolOutputSchema.safeParse(normalizePoolAiOutput(ai));
+    expect(result.success).toBe(true);
+    expect(result.data).toEqual({
+      items: [{ name: "Inception", metadata: { quality: 9, rewatchability: 8 } }],
+      rubric: { quality: 60, rewatchability: 40 },
+    });
   });
 });
 

@@ -6,6 +6,8 @@ const envSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().trim().min(1),
   OPENAI_API_KEY: z.string().trim().min(1),
   OPENAI_MODEL: z.string().trim().min(1).default("gpt-5.5"),
+  GEMINI_API_KEY: z.string().trim().min(1),
+  GEMINI_MODEL: z.string().trim().min(1).default("gemini-2.5-flash"),
   GUEST_TOKEN_PEPPER: z.string().trim().min(32),
   APP_URL: z.url(),
 });

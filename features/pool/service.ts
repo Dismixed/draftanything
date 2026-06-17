@@ -325,6 +325,9 @@ export async function acceptSuggestion(
     .single();
 
   if (!suggestion) throw new AppError("INVALID_INPUT", "Suggestion not found");
+  if (suggestion.status !== "pending") {
+    throw new AppError("INVALID_INPUT", "Suggestion was already resolved");
+  }
 
   const now = new Date().toISOString();
 
@@ -366,7 +369,29 @@ export async function acceptSuggestion(
       }
       throw new AppError("INVALID_INPUT", insertError.message);
     }
+
+    const { data: accepted } = await db
+      .from("pool_suggestions")
+      .update({ status: "accepted", decided_at: now })
+      .eq("id", suggestionId)
+      .eq("status", "pending")
+      .select();
+
+    if (!accepted || accepted.length === 0) {
+      throw new AppError("INVALID_INPUT", "Suggestion was already resolved");
+    }
   } else if (suggestion.action === "remove" && suggestion.target_item_id) {
+    const { data: accepted } = await db
+      .from("pool_suggestions")
+      .update({ status: "accepted", decided_at: now })
+      .eq("id", suggestionId)
+      .eq("status", "pending")
+      .select();
+
+    if (!accepted || accepted.length === 0) {
+      throw new AppError("INVALID_INPUT", "Suggestion was already resolved");
+    }
+
     const { error: deleteError } = await db
       .from("draft_items")
       .delete()
@@ -374,17 +399,8 @@ export async function acceptSuggestion(
       .eq("draft_id", draftId);
 
     if (deleteError) throw new AppError("INVALID_INPUT", deleteError.message);
-  }
-
-  const { data: accepted } = await db
-    .from("pool_suggestions")
-    .update({ status: "accepted", decided_at: now })
-    .eq("id", suggestionId)
-    .eq("status", "pending")
-    .select();
-
-  if (!accepted || accepted.length === 0) {
-    throw new AppError("INVALID_INPUT", "Suggestion was already resolved");
+  } else {
+    throw new AppError("INVALID_INPUT", "Suggestion payload is invalid");
   }
 
   return getPool(draftId);

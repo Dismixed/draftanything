@@ -3,8 +3,17 @@ import "server-only";
 import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 
-import { generatePoolInputSchema, poolOutputSchema, type GeneratePoolInput } from "./schemas";
+import {
+  generatePoolInputSchema,
+  normalizePoolAiOutput,
+  poolOutputAiSchema,
+  poolOutputSchema,
+  topicsOutputSchema,
+  type GeneratePoolInput,
+} from "./schemas";
 import { buildPoolPrompt } from "./prompts/pool";
+import { buildTopicsPrompt } from "./prompts/topics";
+import { generateJson } from "./gemini";
 
 const MODEL = process.env.OPENAI_MODEL || "gpt-4o";
 const TIMEOUT_MS = 60_000;
@@ -43,7 +52,7 @@ export async function generatePool(input: GeneratePoolInput): Promise<PoolGenera
         { role: "system", content: [{ type: "input_text", text: prompt.system }] },
         { role: "user", content: [{ type: "input_text", text: prompt.user }] },
       ],
-      text: { format: zodTextFormat(poolOutputSchema, "pool_output") },
+      text: { format: zodTextFormat(poolOutputAiSchema, "pool_output") },
       reasoning: { effort: "low" },
       max_output_tokens: 4096,
     },
@@ -62,10 +71,32 @@ export async function generatePool(input: GeneratePoolInput): Promise<PoolGenera
     throw new Error("AI returned invalid JSON");
   }
 
-  const validation = poolOutputSchema.safeParse(parsedResult);
+  const aiValidation = poolOutputAiSchema.safeParse(parsedResult);
+  if (!aiValidation.success) {
+    throw new Error(`AI response failed validation: ${aiValidation.error.message}`);
+  }
+
+  const validation = poolOutputSchema.safeParse(normalizePoolAiOutput(aiValidation.data));
   if (!validation.success) {
     throw new Error(`AI response failed validation: ${validation.error.message}`);
   }
 
   return validation.data;
+}
+
+export async function suggestTopics(options?: {
+  interests?: string;
+  exclude?: string[];
+}): Promise<string[]> {
+  const prompt = buildTopicsPrompt(options);
+
+  const result = await generateJson({
+    systemPrompt: prompt.system,
+    userPrompt: prompt.user,
+    schema: topicsOutputSchema,
+    schemaName: "topics_output",
+    maxOutputTokens: 1024,
+  });
+
+  return result.topics;
 }

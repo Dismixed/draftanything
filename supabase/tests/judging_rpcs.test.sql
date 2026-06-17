@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(46);
+select plan(53);
 
 -- =============================================================================
 -- Fixture setup
@@ -41,6 +41,7 @@ values
 select has_function('public', 'submit_defense', 'submit_defense exists');
 select has_function('public', 'advance_phase', 'advance_phase exists');
 select has_function('public', 'submit_vote', 'submit_vote exists');
+select has_function('public', 'maybe_advance_from_defense', 'maybe_advance_from_defense exists');
 
 -- =============================================================================
 -- submit_defense tests
@@ -150,25 +151,6 @@ select throws_ok(
 -- Reset phase back to DEFENSE
 update public.drafts set phase = 'DEFENSE' where id = '10000000-0000-0000-0000-000000000001';
 
--- Third player submits defense
-select lives_ok(
-  $$
-    select public.submit_defense(
-      '10000000-0000-0000-0000-000000000001',
-      '00000000-0000-0000-0000-000000000003',
-      'My roster is top-tier.',
-      false
-    );
-  $$,
-  'third player defense succeeds'
-);
-
-select is(
-  (select count(*)::integer from public.arguments where draft_id = '10000000-0000-0000-0000-000000000001'),
-  3,
-  'all three players submitted defense or skipped'
-);
-
 -- =============================================================================
 -- advance_phase tests (DEFENSE → VOTING for non-ai mode)
 -- =============================================================================
@@ -186,7 +168,7 @@ select throws_ok(
   'non-host cannot advance phase'
 );
 
--- Host advances from DEFENSE to VOTING (hybrid mode)
+-- Host advances from DEFENSE to VOTING (hybrid mode, before all players respond)
 select results_eq(
   $$
     select o_phase from public.advance_phase(
@@ -202,6 +184,36 @@ select is(
   (select phase::text from public.drafts where id = '10000000-0000-0000-0000-000000000001'),
   'VOTING',
   'phase is now VOTING'
+);
+
+-- =============================================================================
+-- submit_defense auto-advance when all players respond
+-- =============================================================================
+
+update public.drafts set phase = 'DEFENSE' where id = '10000000-0000-0000-0000-000000000001';
+
+select lives_ok(
+  $$
+    select public.submit_defense(
+      '10000000-0000-0000-0000-000000000001',
+      '00000000-0000-0000-0000-000000000003',
+      null,
+      true
+    );
+  $$,
+  'third player skip succeeds'
+);
+
+select is(
+  (select count(*)::integer from public.arguments where draft_id = '10000000-0000-0000-0000-000000000001'),
+  3,
+  'all three players submitted defense or skipped'
+);
+
+select is(
+  (select phase::text from public.drafts where id = '10000000-0000-0000-0000-000000000001'),
+  'VOTING',
+  'auto-advances to VOTING when every player has responded'
 );
 
 -- =============================================================================
@@ -508,6 +520,94 @@ select throws_ok(
   'P0001',
   'VOTES_INCOMPLETE',
   'community mode: cannot advance VOTING without all votes'
+);
+
+-- =============================================================================
+-- maybe_advance_from_defense repair tests
+-- =============================================================================
+
+insert into public.drafts (
+  id, room_code, topic, host_guest_id, max_players, rounds,
+  draft_type, judging_mode, ai_personality, timer_seconds, phase
+)
+values (
+  '10000000-0000-0000-0000-000000000004',
+  'JUDGE04',
+  'Stuck Defense Repair',
+  '00000000-0000-0000-0000-000000000001',
+  2, 1,
+  'standard', 'hybrid', 'analyst',
+  null, 'DEFENSE'
+);
+
+insert into public.draft_players (id, draft_id, guest_id, display_name, seat)
+values
+  ('20000000-0000-0000-0000-000000000008', '10000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000001', 'RepairHost', 1),
+  ('20000000-0000-0000-0000-000000000009', '10000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000002', 'RepairGuest', 2);
+
+insert into public.arguments (draft_id, player_id, defense_text, skipped)
+values
+  ('10000000-0000-0000-0000-000000000004', '20000000-0000-0000-0000-000000000008', null, true),
+  ('10000000-0000-0000-0000-000000000004', '20000000-0000-0000-0000-000000000009', null, true);
+
+select is(
+  public.maybe_advance_from_defense('10000000-0000-0000-0000-000000000004'),
+  true,
+  'repair advances stuck hybrid draft when all defenses are in'
+);
+
+select is(
+  (select phase::text from public.drafts where id = '10000000-0000-0000-0000-000000000004'),
+  'VOTING',
+  'repaired draft phase is VOTING'
+);
+
+select is(
+  public.maybe_advance_from_defense('10000000-0000-0000-0000-000000000004'),
+  false,
+  'repair is idempotent after phase already advanced'
+);
+
+insert into public.drafts (
+  id, room_code, topic, host_guest_id, max_players, rounds,
+  draft_type, judging_mode, ai_personality, timer_seconds, phase
+)
+values (
+  '10000000-0000-0000-0000-000000000005',
+  'JUDGE05',
+  'Stuck AI Defense Repair',
+  '00000000-0000-0000-0000-000000000001',
+  2, 1,
+  'standard', 'ai', 'analyst',
+  null, 'DEFENSE'
+);
+
+insert into public.draft_players (id, draft_id, guest_id, display_name, seat)
+values
+  ('20000000-0000-0000-0000-000000000010', '10000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000001', 'AIRepairHost', 1),
+  ('20000000-0000-0000-0000-000000000011', '10000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000002', 'AIRepairGuest', 2);
+
+insert into public.arguments (draft_id, player_id, defense_text, skipped)
+values
+  ('10000000-0000-0000-0000-000000000005', '20000000-0000-0000-0000-000000000010', null, true),
+  ('10000000-0000-0000-0000-000000000005', '20000000-0000-0000-0000-000000000011', null, true);
+
+select is(
+  public.maybe_advance_from_defense('10000000-0000-0000-0000-000000000005'),
+  true,
+  'repair advances stuck AI draft when all defenses are in'
+);
+
+select is(
+  (select phase::text from public.drafts where id = '10000000-0000-0000-0000-000000000005'),
+  'JUDGING',
+  'repaired AI draft phase is JUDGING'
+);
+
+select is(
+  public.maybe_advance_from_defense('10000000-0000-0000-0000-000000000003'),
+  false,
+  'repair no-ops when draft is not in DEFENSE'
 );
 
 select * from finish();

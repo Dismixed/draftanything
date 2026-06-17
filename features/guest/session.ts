@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 
 import { AppError } from "@/lib/errors";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { generateGuestToken, hashGuestToken } from "./token";
 
 const COOKIE_NAME = "guest_token";
@@ -22,20 +23,69 @@ async function readRawToken(): Promise<string | null> {
   return cookieStore.get(COOKIE_NAME)?.value ?? null;
 }
 
-/**
- * Derives the guestId (token hash) from a raw token using the server pepper.
- */
-function deriveGuestId(rawToken: string): string {
+function getPepper(): string {
   const pepper = process.env.GUEST_TOKEN_PEPPER;
   if (!pepper) {
     throw new AppError("INVALID_INPUT", "GUEST_TOKEN_PEPPER is not configured");
   }
-  return hashGuestToken(rawToken, pepper);
+  return pepper;
+}
+
+async function getActiveGuestSessionId(tokenHash: string): Promise<string | null> {
+  const db = createAdminClient();
+  const { data, error } = await db.rpc("get_active_guest_session_id", {
+    p_token_hash: tokenHash,
+  });
+
+  if (error) {
+    throw new AppError("INVALID_INPUT", error.message);
+  }
+
+  return data ?? null;
+}
+
+async function ensureGuestSessionRow(tokenHash: string): Promise<string> {
+  const db = createAdminClient();
+  const { data, error } = await db.rpc("ensure_guest_session", {
+    p_token_hash: tokenHash,
+  });
+
+  if (error) {
+    const msg = error.message ?? "";
+    if (msg.includes("GUEST_SESSION_EXPIRED")) {
+      throw new AppError("UNAUTHORIZED", "Guest session expired");
+    }
+    throw new AppError("INVALID_INPUT", error.message);
+  }
+
+  if (!data) {
+    throw new AppError("INVALID_INPUT", "Failed to create guest session");
+  }
+
+  return data;
+}
+
+async function resolveGuestSession(rawToken: string): Promise<string> {
+  const tokenHash = hashGuestToken(rawToken, getPepper());
+
+  const activeId = await getActiveGuestSessionId(tokenHash);
+  if (activeId) {
+    return activeId;
+  }
+
+  try {
+    return await ensureGuestSessionRow(tokenHash);
+  } catch (e) {
+    if (e instanceof AppError && e.code === "UNAUTHORIZED") {
+      throw e;
+    }
+    throw e;
+  }
 }
 
 /**
  * Ensures a guest session exists. Creates a new one if the cookie is absent.
- * Always returns the guestId (HMAC hash of the raw token).
+ * Persists the session in guest_sessions and returns its UUID primary key.
  *
  * Safe to call from any Server Component, Route Handler, or Server Action.
  */
@@ -43,15 +93,21 @@ export async function ensureGuestSession(): Promise<{ guestId: string }> {
   const existing = await readRawToken();
 
   if (existing) {
-    return { guestId: deriveGuestId(existing) };
+    try {
+      return { guestId: await resolveGuestSession(existing) };
+    } catch (e) {
+      if (!(e instanceof AppError && e.code === "UNAUTHORIZED")) {
+        throw e;
+      }
+      // Expired session — mint a fresh token below.
+    }
   }
 
-  // No session yet — mint a fresh token and set the cookie.
   const rawToken = generateGuestToken();
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, rawToken, COOKIE_OPTIONS);
 
-  return { guestId: deriveGuestId(rawToken) };
+  return { guestId: await resolveGuestSession(rawToken) };
 }
 
 /**
@@ -67,5 +123,12 @@ export async function requireGuestSession(): Promise<{ guestId: string }> {
     throw new AppError("UNAUTHORIZED", "No guest session found");
   }
 
-  return { guestId: deriveGuestId(existing) };
+  const tokenHash = hashGuestToken(existing, getPepper());
+  const sessionId = await getActiveGuestSessionId(tokenHash);
+
+  if (!sessionId) {
+    throw new AppError("UNAUTHORIZED", "Guest session expired or invalid");
+  }
+
+  return { guestId: sessionId };
 }

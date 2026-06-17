@@ -1,5 +1,47 @@
 import { describe, expect, it } from "vitest";
-import { validateJudgeOutput } from "./judge";
+import { zodTextFormat } from "openai/helpers/zod";
+import { judgeOutputAiSchema, normalizeJudgeAiOutput, validateJudgeOutput } from "./judge";
+
+describe("judgeOutputAiSchema", () => {
+  it("does not emit propertyNames in OpenAI JSON schema", () => {
+    const format = zodTextFormat(judgeOutputAiSchema, "judge_output");
+    const schemaJson = JSON.stringify(format.schema);
+    expect(schemaJson).not.toContain("propertyNames");
+  });
+
+  it("normalizes to canonical judge output", () => {
+    const ai = {
+      playerScores: [
+        {
+          playerId: "p1",
+          overall: 8,
+          categories: [
+            { key: "creativity", value: 8 },
+            { key: "execution", value: 8 },
+          ],
+        },
+      ],
+      ranking: ["p1"],
+      winnerPlayerIds: ["p1"],
+      awards: {
+        bestPick: { pickId: "pick1", itemId: "item1", playerId: "p1" },
+        worstPick: { pickId: "pick2", itemId: "item2", playerId: "p1" },
+        biggestSteal: { pickId: "pick3", itemId: "item3", playerId: "p1" },
+      },
+      explanation: "Strong roster.",
+    };
+
+    expect(normalizeJudgeAiOutput(ai)).toEqual({
+      playerScores: {
+        p1: { overall: 8, categories: { creativity: 8, execution: 8 } },
+      },
+      ranking: ["p1"],
+      winnerPlayerIds: ["p1"],
+      awards: ai.awards,
+      explanation: "Strong roster.",
+    });
+  });
+});
 
 describe("validateJudgeOutput", () => {
   const playerIds = ["p1", "p2", "p3"];
