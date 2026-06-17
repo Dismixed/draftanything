@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDraftStore } from "@/features/draft/store";
 import { useDraftRoom } from "@/features/draft/use-draft-room";
@@ -10,6 +10,7 @@ import { PickHistory } from "./pick-history";
 import { PlayerRosters } from "./player-rosters";
 import { TurnTimer } from "./turn-timer";
 import { AiDesk } from "./ai-desk";
+import { OffTheDomeInput } from "./off-the-dome-input";
 import { PhasePanel } from "./phase-panel";
 
 interface DraftBoardProps {
@@ -32,6 +33,30 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
   const projection = useDraftStore((s) => s.projection) ?? initial;
   const connectionStatus = useDraftStore((s) => s.connectionStatus);
   const [mobileTab, setMobileTab] = useState<MobileTab>("rosters");
+  const [isSubmittingPick, setIsSubmittingPick] = useState(false);
+
+  const handleOffTheDomePick = useCallback(
+    async (itemName: string) => {
+      setIsSubmittingPick(true);
+      try {
+        const res = await fetch(`/api/drafts/${projection.draft.id}/pick`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            itemName,
+            expectedPick: projection.draft.currentPickIndex,
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.message ?? "Pick failed");
+        }
+      } finally {
+        setIsSubmittingPick(false);
+      }
+    },
+    [projection.draft.id, projection.draft.currentPickIndex],
+  );
 
   useDraftRoom({
     draftId: projection.draft.id,
@@ -280,6 +305,15 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
 
       {(draft.phase === "DEFENSE" || draft.phase === "JUDGING" || draft.phase === "COMPLETE") && (
         <PhasePanel initial={initial} myPlayerId={myPlayerId} />
+      )}
+
+      {isDrafting && draft.pickingMode === "off_the_dome" && currentPlayer && (
+        <OffTheDomeInput
+          isMyTurn={!!isMyTurn}
+          currentPlayerName={currentPlayer.displayName}
+          onSubmit={handleOffTheDomePick}
+          isSubmitting={isSubmittingPick}
+        />
       )}
     </div>
   );
