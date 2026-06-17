@@ -30,6 +30,7 @@ function buildProjection(
     rounds: number;
     timer_seconds: number | null;
     draft_type: string;
+    picking_mode: string;
     judging_mode: string;
     ai_personality: string;
     custom_judge_prompt: string | null;
@@ -56,6 +57,7 @@ function buildProjection(
     rounds: draft.rounds,
     timerSeconds: draft.timer_seconds,
     draftType: draft.draft_type as "standard" | "snake" | "random",
+    pickingMode: (draft.picking_mode as "pool" | "off_the_dome") ?? "pool",
     judgingMode: draft.judging_mode as "ai" | "community" | "hybrid",
     aiPersonality: draft.ai_personality as "analyst" | "hype" | "roast" | "custom",
     customJudgePrompt: draft.custom_judge_prompt,

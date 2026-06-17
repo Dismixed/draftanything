@@ -84,6 +84,10 @@ const lockPoolSchema = z.object({
   action: z.literal("lock"),
 });
 
+const commenceDraftSchema = z.object({
+  action: z.literal("commence-draft"),
+});
+
 const poolActionSchema = z.discriminatedUnion("action", [
   addItemSchema,
   editItemSchema,
@@ -91,6 +95,7 @@ const poolActionSchema = z.discriminatedUnion("action", [
   generatePoolSchema,
   startReviewSchema,
   lockPoolSchema,
+  commenceDraftSchema,
 ]);
 
 /**
@@ -191,6 +196,29 @@ export async function POST(
       }
       case "lock": {
         await lockPool(draftId, guestId);
+        await startDraft(draftId, guestId);
+        const room = await getRoom(draftId);
+        responseData = room;
+        break;
+      }
+      case "commence-draft": {
+        const { createAdminClient: getAdmin } = await import("@/lib/supabase/admin");
+        const adminDb = getAdmin();
+        const { data: draftRow } = await adminDb
+          .from("drafts")
+          .select("picking_mode, phase")
+          .eq("id", draftId)
+          .single();
+        if (!draftRow || draftRow.picking_mode !== "off_the_dome") {
+          throw new AppError("INVALID_INPUT", "commence-draft is only available for off_the_dome mode");
+        }
+        if (draftRow.phase !== "LOBBY") {
+          throw new AppError("INVALID_PHASE", "Draft is not in lobby phase");
+        }
+        await adminDb
+          .from("drafts")
+          .update({ phase: "DRAFTING" })
+          .eq("id", draftId);
         await startDraft(draftId, guestId);
         const room = await getRoom(draftId);
         responseData = room;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { RoomProjection } from "@/features/room/schema";
 import { SeatList } from "./player-seat";
 
@@ -17,6 +18,7 @@ interface LobbyProps {
 }
 
 export function Lobby({ initial, myPlayerId }: LobbyProps) {
+  const router = useRouter();
   const [room, setRoom] = useState<RoomProjection>(initial);
   const [onlineCount, setOnlineCount] = useState(0);
   const [connectionStatus, setConnectionStatus] =
@@ -28,6 +30,13 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
   const isHost = room.hostPlayerId === myPlayerId;
   const playerCount = room.players.length;
   const canStart = isHost && playerCount >= 2;
+
+  // Phase is chosen by the server page; refresh when it advances (host action or realtime).
+  useEffect(() => {
+    if (room.phase !== "LOBBY") {
+      router.refresh();
+    }
+  }, [room.phase, router]);
 
   // Poll for room updates. Realtime postgres_changes fires immediately for
   // player join/leave; this 30s interval is a fallback in case the socket drops.
@@ -89,6 +98,18 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
               void fetchRoom();
             },
           )
+          .on(
+            "postgres_changes",
+            {
+              event: "UPDATE",
+              schema: "public",
+              table: "drafts",
+              filter: `id=eq.${draftId}`,
+            },
+            () => {
+              void fetchRoom();
+            },
+          )
           .subscribe(async (status) => {
             if (status === "SUBSCRIBED") {
               setConnectionStatus("connected");
@@ -134,27 +155,29 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
   async function handleStart() {
     if (!canStart) return;
     try {
+      const isOffTheDome = room.pickingMode === "off_the_dome";
       const res = await fetch(`/api/drafts/${room.draftId}/pool`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "start-review" }),
+        body: JSON.stringify({ action: isOffTheDome ? "commence-draft" : "start-review" }),
       });
       if (res.ok) {
         const updated: RoomProjection = await res.json();
         setRoom(updated);
+        router.refresh();
       } else {
         const err = await res.json();
-        console.error("Failed to start pool review:", err.message);
+        console.error("Failed to start draft:", err.message);
       }
     } catch {
-      console.error("Failed to start pool review");
+      console.error("Failed to start draft");
     }
   }
 
-  const statusDot: Record<ConnectionStatus, string> = {
-    connecting: "bg-yellow-400",
-    connected: "bg-green-400",
-    disconnected: "bg-red-400",
+  const statusDotColor: Record<ConnectionStatus, string> = {
+    connecting: '#f0c860',
+    connected: '#00ff87',
+    disconnected: '#ff4444',
   };
 
   const statusLabel: Record<ConnectionStatus, string> = {
@@ -163,46 +186,53 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
     disconnected: "Disconnected",
   };
 
+  const sectionLabelStyle: React.CSSProperties = {
+    fontSize: '9px',
+    fontWeight: 600,
+    letterSpacing: '0.22em',
+    textTransform: 'uppercase',
+    color: 'var(--text-dim)',
+    marginBottom: '12px',
+    display: 'block',
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-      <div className="max-w-2xl mx-auto flex flex-col gap-6">
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', padding: '16px' }}>
+      <div style={{ maxWidth: '672px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
         {/* Header */}
-        <header className="flex items-start justify-between gap-4">
+        <header style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
           <div>
-            <p className="text-xs uppercase tracking-wider text-gray-500 font-semibold">
+            <p style={{ margin: 0, fontSize: '9px', fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>
               Lobby
             </p>
-            <h1 className="text-2xl font-bold mt-0.5 truncate">{room.topic}</h1>
+            <h1 style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: 'clamp(20px, 5vw, 28px)', fontWeight: 700, margin: '4px 0 0', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '360px' }}>
+              {room.topic}
+            </h1>
           </div>
 
           {/* Connection status */}
           <div
-            className="flex items-center gap-1.5 text-xs text-gray-500 flex-shrink-0 mt-1"
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--text-dim)', flexShrink: 0, marginTop: '4px' }}
             aria-label={`Connection status: ${statusLabel[connectionStatus]}`}
           >
             <span
-              className={`w-2 h-2 rounded-full ${statusDot[connectionStatus]}`}
+              style={{ width: '7px', height: '7px', borderRadius: '50%', background: statusDotColor[connectionStatus], display: 'inline-block', boxShadow: `0 0 6px ${statusDotColor[connectionStatus]}` }}
             />
             {statusLabel[connectionStatus]}
-          {connectionStatus === "connected" && onlineCount > 0 && (
-            <span className="ml-1 text-gray-400">({onlineCount} online)</span>
-          )}
+            {connectionStatus === "connected" && onlineCount > 0 && (
+              <span style={{ color: 'var(--text-dim)', opacity: 0.6 }}>({onlineCount} online)</span>
+            )}
           </div>
         </header>
 
         {/* Room code */}
-        <section
-          aria-labelledby="room-code-label"
-          className="bg-white rounded-xl border p-4 flex items-center justify-between gap-4"
-        >
+        <section aria-labelledby="room-code-label" className="panel-card" style={{ padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
           <div>
-            <p
-              id="room-code-label"
-              className="text-xs uppercase tracking-wider text-gray-500 font-semibold"
-            >
+            <span id="room-code-label" style={sectionLabelStyle}>
               Room code
-            </p>
-            <p className="text-3xl font-mono font-bold tracking-widest mt-1">
+            </span>
+            <p style={{ fontFamily: 'monospace', fontSize: '28px', fontWeight: 700, color: 'var(--cyan)', letterSpacing: '0.2em', textShadow: '0 0 16px rgba(0,229,255,0.5), 0 0 48px rgba(0,229,255,0.18)', margin: 0 }}>
               {room.roomCode}
             </p>
           </div>
@@ -210,49 +240,77 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
             type="button"
             onClick={handleCopyCode}
             aria-label="Copy room code"
-            className="px-3 py-2 rounded-lg border text-sm font-medium hover:bg-gray-50 transition-colors"
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--border-hi)',
+              color: 'var(--text-dim)',
+              fontFamily: 'Outfit, sans-serif',
+              fontSize: '11px',
+              fontWeight: 500,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              padding: '8px 14px',
+              transition: 'border-color 0.2s, color 0.2s',
+              flexShrink: 0,
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(201,168,76,0.3)';
+              (e.currentTarget as HTMLButtonElement).style.color = 'var(--text)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-hi)';
+              (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-dim)';
+            }}
           >
             Copy
           </button>
         </section>
 
         {/* Configuration summary */}
-        <section
-          aria-labelledby="config-label"
-          className="bg-white rounded-xl border p-4"
-        >
-          <p
-            id="config-label"
-            className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-3"
-          >
+        <section aria-labelledby="config-label" className="panel-card" style={{ padding: '16px' }}>
+          <span id="config-label" style={sectionLabelStyle}>
             Configuration
-          </p>
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+          </span>
+          <dl style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', margin: 0 }}>
             <div>
-              <dt className="text-gray-500">Draft type</dt>
-              <dd className="font-medium capitalize">{room.draftType}</dd>
+              <dt style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '2px' }}>Draft type</dt>
+              <dd style={{ fontSize: '13px', color: 'var(--text)', margin: 0, fontWeight: 500, textTransform: 'capitalize' }}>{room.draftType}</dd>
             </div>
             <div>
-              <dt className="text-gray-500">Judging</dt>
-              <dd className="font-medium capitalize">{room.judgingMode}</dd>
+              <dt style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '2px' }}>Mode</dt>
+              <dd style={{ fontSize: '13px', color: 'var(--text)', margin: 0, fontWeight: 500 }}>
+                {room.pickingMode === "off_the_dome" ? "Off the Dome" : "From a Pool"}
+              </dd>
             </div>
             <div>
-              <dt className="text-gray-500">Rounds</dt>
-              <dd className="font-medium">{room.rounds}</dd>
+              <dt style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '2px' }}>Judging</dt>
+              <dd style={{ fontSize: '13px', color: 'var(--text)', margin: 0, fontWeight: 500, textTransform: 'capitalize' }}>{room.judgingMode}</dd>
             </div>
             <div>
-              <dt className="text-gray-500">Turn timer</dt>
-              <dd className="font-medium">
+              <dt style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '2px' }}>Rounds</dt>
+              <dd style={{ fontSize: '13px', color: 'var(--text)', margin: 0, fontWeight: 500 }}>{room.rounds}</dd>
+            </div>
+            <div>
+              <dt style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '2px' }}>Turn timer</dt>
+              <dd style={{ fontSize: '13px', color: 'var(--text)', margin: 0, fontWeight: 500 }}>
                 {room.timerSeconds ? `${room.timerSeconds}s` : "Off"}
               </dd>
             </div>
             <div>
-              <dt className="text-gray-500">AI personality</dt>
-              <dd className="font-medium capitalize">{room.aiPersonality}</dd>
+              <dt style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '2px' }}>AI judge</dt>
+              <dd style={{ fontSize: '13px', color: 'var(--text)', margin: 0, fontWeight: 500, textTransform: 'capitalize' }}>
+                {room.aiPersonality === "custom" ? "Custom" : room.aiPersonality}
+              </dd>
+              {room.aiPersonality === "custom" && room.customJudgePrompt && (
+                <dd style={{ fontSize: '12px', color: 'var(--text-dim)', margin: '4px 0 0', lineHeight: 1.4 }}>
+                  {room.customJudgePrompt}
+                </dd>
+              )}
             </div>
             <div>
-              <dt className="text-gray-500">Capacity</dt>
-              <dd className="font-medium">
+              <dt style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '2px' }}>Capacity</dt>
+              <dd style={{ fontSize: '13px', color: 'var(--text)', margin: 0, fontWeight: 500 }}>
                 {playerCount}/{room.maxPlayers} players
               </dd>
             </div>
@@ -260,13 +318,10 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
         </section>
 
         {/* Player seats */}
-        <section aria-labelledby="players-label" className="bg-white rounded-xl border p-4">
-          <p
-            id="players-label"
-            className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-3"
-          >
+        <section aria-labelledby="players-label" className="panel-card" style={{ padding: '16px' }}>
+          <span id="players-label" style={sectionLabelStyle}>
             Players
-          </p>
+          </span>
           <SeatList players={room.players} maxPlayers={room.maxPlayers} />
         </section>
 
@@ -274,7 +329,7 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
         {isHost && (
           <section aria-label="Host controls">
             {!canStart && (
-              <p className="text-sm text-gray-500 mb-2 text-center">
+              <p style={{ fontSize: '12px', color: 'var(--text-dim)', marginBottom: '10px', textAlign: 'center' }}>
                 Waiting for at least 2 players to join before you can start.
               </p>
             )}
@@ -283,18 +338,21 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
               onClick={handleStart}
               disabled={!canStart}
               aria-disabled={!canStart}
-              className="w-full bg-indigo-600 text-white rounded-lg px-4 py-3 font-semibold text-base hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="btn-gold"
             >
-              {canStart ? "Start draft" : `Need ${2 - playerCount > 0 ? 2 - playerCount : 0} more player${2 - playerCount !== 1 ? "s" : ""}`}
+              {canStart
+                ? "— Commence Draft —"
+                : `Need ${Math.max(0, 2 - playerCount)} more player${Math.max(0, 2 - playerCount) !== 1 ? "s" : ""}`}
             </button>
           </section>
         )}
 
         {!isHost && (
-          <p className="text-center text-sm text-gray-500">
+          <p style={{ textAlign: 'center', fontSize: '12px', color: 'var(--text-dim)' }}>
             Waiting for the host to start the draft…
           </p>
         )}
+
       </div>
     </div>
   );

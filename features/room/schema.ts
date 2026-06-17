@@ -92,6 +92,7 @@ export interface RoomProjection {
   rounds: number;
   timerSeconds: number | null;
   draftType: "standard" | "snake" | "random";
+  pickingMode: "pool" | "off_the_dome";
   judgingMode: "ai" | "community" | "hybrid";
   aiPersonality: "analyst" | "hype" | "roast" | "custom";
   customJudgePrompt: string | null;
