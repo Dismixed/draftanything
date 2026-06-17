@@ -1,26 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useDraftStore } from "@/features/draft/store";
 import { useDraftRoom } from "@/features/draft/use-draft-room";
 import type { DraftRoomProjection } from "@/features/draft/types";
 import { AvailablePool } from "./available-pool";
-import { CurrentTurn } from "./current-turn";
 import { PlayerRosters } from "./player-rosters";
 import { TurnTimer } from "./turn-timer";
 import { AiDesk } from "./ai-desk";
+import { PhasePanel } from "./phase-panel";
 
 interface DraftBoardProps {
   initial: DraftRoomProjection;
   myPlayerId: string;
 }
 
-type MobileTab = "pool" | "rosters" | "ai";
+type MobileTab = "rosters" | "pool" | "ai";
+
+const PHASE_LABELS: Partial<Record<DraftRoomProjection["draft"]["phase"], string>> = {
+  DEFENSE: "Defense",
+  VOTING: "Voting",
+  JUDGING: "Judging",
+  COMPLETE: "Complete",
+};
 
 export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
+  const router = useRouter();
+  const initialPhaseRef = useRef(initial.draft.phase);
   const projection = useDraftStore((s) => s.projection) ?? initial;
   const connectionStatus = useDraftStore((s) => s.connectionStatus);
-  const [mobileTab, setMobileTab] = useState<MobileTab>("pool");
+  const [mobileTab, setMobileTab] = useState<MobileTab>("rosters");
 
   useDraftRoom({
     draftId: projection.draft.id,
@@ -28,81 +38,196 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
     myPlayerId,
   });
 
-  const { draft, players, availableItems, picks } = projection;
-  const currentSlot = draft.pickOrder[draft.currentPickIndex];
-  const currentPlayer = players.find((p) => p.seat === currentSlot?.seat);
-  const isMyTurn = currentPlayer?.id === myPlayerId;
+  useEffect(() => {
+    if (projection.draft.phase !== initialPhaseRef.current) {
+      router.refresh();
+    }
+  }, [projection.draft.phase, router]);
 
-  const connectionColor =
+  const { draft, players, availableItems, picks } = projection;
+  const isDrafting = draft.phase === "DRAFTING";
+  const phaseLabel = PHASE_LABELS[draft.phase];
+  const currentSlot = isDrafting ? draft.pickOrder[draft.currentPickIndex] : undefined;
+  const currentPlayer = currentSlot
+    ? players.find((p) => p.seat === currentSlot.seat)
+    : undefined;
+  const isMyTurn = isDrafting && currentPlayer?.id === myPlayerId;
+
+  const connectionDotColor =
     connectionStatus === "connected"
-      ? "bg-green-400"
+      ? "#00ff87"
       : connectionStatus === "connecting"
-        ? "bg-yellow-400"
-        : "bg-red-400";
+        ? "#f0c860"
+        : "#ff4444";
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-white border-b px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3 min-w-0">
-          <h1 className="text-lg font-bold truncate">{draft.topic}</h1>
-          <span className="text-xs uppercase tracking-wider text-gray-500 font-semibold shrink-0">
-            R{currentSlot?.round ?? "?"}/{draft.rounds}
+      <header
+        style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+          background: 'rgba(11,14,28,0.95)',
+          backdropFilter: 'blur(12px)',
+          borderBottom: '1px solid var(--border-hi)',
+          padding: '10px 18px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+          <h1
+            style={{
+              fontFamily: '"Playfair Display", serif',
+              fontStyle: 'italic',
+              fontSize: '18px',
+              color: 'var(--text)',
+              margin: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {draft.topic}
+          </h1>
+          <span
+            style={{
+              fontSize: '9px',
+              fontWeight: 600,
+              letterSpacing: '0.22em',
+              textTransform: 'uppercase',
+              color: phaseLabel ? 'var(--gold)' : 'var(--text-dim)',
+              flexShrink: 0,
+            }}
+          >
+            {isDrafting
+              ? `R${currentSlot?.round ?? "?"}/${draft.rounds}`
+              : (phaseLabel ?? `R${draft.rounds}/${draft.rounds}`)}
           </span>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <TurnTimer
-            deadline={draft.turnDeadline}
-            timerSeconds={draft.timerSeconds}
-            draftId={draft.id}
-            isMyTurn={isMyTurn}
-            myPlayerId={myPlayerId}
-            serverNow={projection.serverNow}
-          />
+
+        {isDrafting && currentPlayer && currentSlot && (
+          <div
+            className="hidden sm:block"
+            style={{
+              fontSize: '12px',
+              color: 'var(--text-dim)',
+              textAlign: 'center',
+              flex: 1,
+              minWidth: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <span style={{ color: isMyTurn ? 'var(--gold)' : 'var(--text)' }}>
+              {isMyTurn ? "Your turn" : currentPlayer.displayName}
+            </span>
+            {" · Pick "}{currentSlot.overallPick}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+          {isDrafting && (
+            <TurnTimer
+              deadline={draft.turnDeadline}
+              timerSeconds={draft.timerSeconds}
+              draftId={draft.id}
+              isMyTurn={isMyTurn}
+              myPlayerId={myPlayerId}
+              serverNow={projection.serverNow}
+            />
+          )}
           <span
-            className={`w-2 h-2 rounded-full ${connectionColor}`}
+            style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: connectionDotColor,
+              display: 'inline-block',
+              flexShrink: 0,
+            }}
             aria-label={`Connection: ${connectionStatus}`}
           />
         </div>
       </header>
 
+      {/* Mobile turn strip */}
+      {isDrafting && currentPlayer && currentSlot && (
+        <div
+          className="sm:hidden"
+          style={{
+            padding: '8px 16px',
+            borderBottom: '1px solid var(--border-hi)',
+            background: isMyTurn ? 'rgba(201,168,76,0.06)' : 'rgba(11,14,28,0.98)',
+            fontSize: '12px',
+            color: 'var(--text-dim)',
+            textAlign: 'center',
+          }}
+        >
+          <span style={{ color: isMyTurn ? 'var(--gold)' : 'var(--text)' }}>
+            {isMyTurn ? "Your turn" : `${currentPlayer.displayName} on the clock`}
+          </span>
+          {" · Pick "}{currentSlot.overallPick}
+          {isMyTurn && " — tap Pool to select"}
+        </div>
+      )}
+
       {/* Mobile tabs */}
       <nav
-        className="flex border-b bg-white sticky top-[57px] z-10 md:hidden"
+        style={{
+          display: 'flex',
+          borderBottom: '1px solid var(--border-hi)',
+          background: 'rgba(11,14,28,0.98)',
+          position: 'sticky',
+          top: isDrafting && currentPlayer && currentSlot ? '89px' : '53px',
+          zIndex: 10,
+        }}
+        className="md:hidden"
         aria-label="Draft view tabs"
       >
-        {(["pool", "rosters", "ai"] as const).map((tab) => (
+        {(["rosters", "pool", "ai"] as const).map((tab) => (
           <button
             key={tab}
             type="button"
             onClick={() => setMobileTab(tab)}
-            className={`flex-1 text-xs font-semibold uppercase tracking-wider py-2.5 transition-colors ${
-              mobileTab === tab
-                ? "text-indigo-600 border-b-2 border-indigo-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            style={{
+              flex: 1,
+              fontSize: '9px',
+              fontWeight: 600,
+              letterSpacing: '0.22em',
+              textTransform: 'uppercase',
+              padding: '10px 0',
+              background: 'none',
+              border: 'none',
+              borderBottom: mobileTab === tab ? '2px solid var(--gold)' : '2px solid transparent',
+              color: mobileTab === tab ? 'var(--gold)' : 'var(--text-dim)',
+              cursor: 'pointer',
+              transition: 'color 0.15s, border-color 0.15s',
+            }}
           >
             {tab === "pool" ? "Pool" : tab === "rosters" ? "Rosters" : "AI"}
           </button>
         ))}
       </nav>
 
-      {/* Current turn indicator (mobile) */}
-      <div className="md:hidden px-4 pt-3 pb-2">
-        <CurrentTurn
-          currentSlot={currentSlot}
-          currentPlayer={currentPlayer}
-          isMyTurn={isMyTurn}
-          picks={picks}
-          players={players}
-        />
-      </div>
+      {draft.phase === "VOTING" && (
+        <div style={{ padding: '20px 16px 0', maxWidth: '960px', margin: '0 auto' }}>
+          <PhasePanel initial={initial} myPlayerId={myPlayerId} />
+        </div>
+      )}
 
-      {/* Main layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-        {/* Available pool: visible on desktop; on mobile only when pool tab active */}
+      {/* Main layout: pool | rosters (hero) | sidebar */}
+      <div
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[minmax(200px,1fr)_minmax(0,2.5fr)_minmax(200px,1fr)] gap-4 px-4 pt-6 pb-4 md:pt-8"
+        style={{ alignItems: 'start' }}
+      >
+        {/* Available pool */}
         <div
-          className={`md:col-span-1 ${mobileTab !== "pool" ? "hidden md:block" : ""}`}
+          className={`md:col-span-1 lg:col-span-1 order-2 md:order-1 ${mobileTab !== "pool" ? "hidden md:block" : ""}`}
         >
           <AvailablePool
             items={availableItems}
@@ -111,30 +236,13 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
             draftId={draft.id}
             currentPickIndex={draft.currentPickIndex}
             picks={picks}
+            pickingMode={draft.pickingMode}
           />
         </div>
 
-        {/* Current turn info (desktop only) */}
-        <div className="hidden lg:block lg:col-span-1">
-          <CurrentTurn
-            currentSlot={currentSlot}
-            currentPlayer={currentPlayer}
-            isMyTurn={isMyTurn}
-            picks={picks}
-            players={players}
-          />
-        </div>
-
-        {/* AI Commissioner Commentary */}
+        {/* Rosters — center hero */}
         <div
-          className={`md:col-span-1 ${mobileTab !== "ai" ? "hidden md:block" : ""}`}
-        >
-          <AiDesk commentary={projection.commentary} />
-        </div>
-
-        {/* Player rosters */}
-        <div
-          className={`md:col-span-1 ${mobileTab !== "rosters" ? "hidden md:block" : ""}`}
+          className={`md:col-span-1 lg:col-span-1 order-1 md:order-2 ${mobileTab !== "rosters" ? "hidden md:block" : ""}`}
         >
           <PlayerRosters
             players={players}
@@ -142,9 +250,27 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
             items={availableItems}
             draftId={draft.id}
             myPlayerId={myPlayerId}
+            currentPlayerId={currentPlayer?.id}
+            rounds={draft.rounds}
           />
         </div>
+
+        {/* AI commentary */}
+        <div
+          className={[
+            "order-3",
+            mobileTab === "ai" ? "block" : "hidden",
+            "md:block md:col-span-2 lg:col-span-1",
+            "lg:col-span-1",
+          ].join(" ")}
+        >
+          <AiDesk commentary={projection.commentary} />
+        </div>
       </div>
+
+      {(draft.phase === "DEFENSE" || draft.phase === "JUDGING" || draft.phase === "COMPLETE") && (
+        <PhasePanel initial={initial} myPlayerId={myPlayerId} />
+      )}
     </div>
   );
 }

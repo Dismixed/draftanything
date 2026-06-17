@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import type { SafeItem, SafePick } from "@/features/draft/types";
+import type { PickingMode, SafeItem, SafePick } from "@/features/draft/types";
 
 interface AvailablePoolProps {
   items: SafeItem[];
@@ -10,6 +10,7 @@ interface AvailablePoolProps {
   draftId: string;
   currentPickIndex: number;
   picks: SafePick[];
+  pickingMode?: PickingMode;
 }
 
 export function AvailablePool({
@@ -19,7 +20,9 @@ export function AvailablePool({
   draftId,
   currentPickIndex,
   picks,
+  pickingMode,
 }: AvailablePoolProps) {
+  if (pickingMode === "off_the_dome") return null;
   const [pickingItemId, setPickingItemId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,19 +64,42 @@ export function AvailablePool({
   return (
     <section
       aria-label="Available items to pick"
-      className="bg-white rounded-xl border p-4"
+      className="panel-card"
+      style={{ padding: '16px' }}
     >
-      <h2 className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-3">
+      <h2
+        style={{
+          fontSize: '9px',
+          fontWeight: 600,
+          letterSpacing: '0.22em',
+          textTransform: 'uppercase',
+          color: 'var(--text-dim)',
+          marginBottom: '12px',
+          margin: '0 0 12px 0',
+        }}
+      >
         Available Pool ({availableItems.length})
       </h2>
 
       {error && (
-        <p className="text-sm text-red-600 mb-2" role="alert">
+        <p
+          style={{ color: '#ff4d4d', fontSize: '12px', marginBottom: '8px' }}
+          role="alert"
+        >
           {error}
         </p>
       )}
 
-      <ul className="space-y-2">
+      <ul
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '7px',
+          listStyle: 'none',
+          padding: 0,
+          margin: 0,
+        }}
+      >
         {availableItems.map((item) => {
           const isPicking = pickingItemId === item.id;
           return (
@@ -82,19 +108,23 @@ export function AvailablePool({
                 type="button"
                 onClick={() => handlePick(item.id)}
                 disabled={!isMyTurn || isPicking}
-                className={`w-full text-left px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                  isMyTurn && !isPicking
-                    ? "hover:bg-indigo-50 border-indigo-200 cursor-pointer"
-                    : "opacity-60 cursor-not-allowed border-gray-200"
-                } ${isPicking ? "bg-indigo-100" : ""}`}
+                className={`pick-card${isPicking ? ' active' : ''}${!isMyTurn ? ' disabled' : ''}`}
+                style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
                 aria-busy={isPicking}
               >
-                <span className="flex items-center justify-between">
-                  <span>{item.name}</span>
-                  {isPicking && (
-                    <span className="text-xs text-indigo-600">Picking...</span>
-                  )}
-                </span>
+                <span>{item.name}</span>
+                {isPicking && (
+                  <span
+                    style={{
+                      width: '6px',
+                      height: '6px',
+                      borderRadius: '50%',
+                      background: 'var(--gold)',
+                      flexShrink: 0,
+                      marginLeft: '6px',
+                    }}
+                  />
+                )}
               </button>
             </li>
           );
@@ -102,7 +132,14 @@ export function AvailablePool({
       </ul>
 
       {availableItems.length === 0 && (
-        <p className="text-sm text-gray-400 text-center py-4">
+        <p
+          style={{
+            color: 'var(--text-dim)',
+            fontSize: '13px',
+            textAlign: 'center',
+            padding: '16px 0',
+          }}
+        >
           No items available
         </p>
       )}
