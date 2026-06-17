@@ -275,7 +275,7 @@ export type Database = {
           max_players: number
           phase: Database["public"]["Enums"]["draft_phase"]
           pick_order: Json
-          picking_mode: string
+          picking_mode: Database["public"]["Enums"]["picking_mode"]
           room_code: string
           rounds: number
           rubric: Json
@@ -296,7 +296,7 @@ export type Database = {
           max_players: number
           phase?: Database["public"]["Enums"]["draft_phase"]
           pick_order?: Json
-          picking_mode?: string
+          picking_mode?: Database["public"]["Enums"]["picking_mode"]
           room_code: string
           rounds: number
           rubric?: Json
@@ -317,7 +317,7 @@ export type Database = {
           max_players?: number
           phase?: Database["public"]["Enums"]["draft_phase"]
           pick_order?: Json
-          picking_mode?: string
+          picking_mode?: Database["public"]["Enums"]["picking_mode"]
           room_code?: string
           rounds?: number
           rubric?: Json
@@ -867,7 +867,7 @@ export type Database = {
           max_players: number | null
           phase: Database["public"]["Enums"]["draft_phase"] | null
           pick_order: Json | null
-          picking_mode: string | null
+          picking_mode: Database["public"]["Enums"]["picking_mode"] | null
           room_code: string | null
           rounds: number | null
           timer_seconds: number | null
@@ -886,7 +886,7 @@ export type Database = {
           max_players?: number | null
           phase?: Database["public"]["Enums"]["draft_phase"] | null
           pick_order?: Json | null
-          picking_mode?: string | null
+          picking_mode?: Database["public"]["Enums"]["picking_mode"] | null
           room_code?: string | null
           rounds?: number | null
           timer_seconds?: number | null
@@ -905,7 +905,7 @@ export type Database = {
           max_players?: number | null
           phase?: Database["public"]["Enums"]["draft_phase"] | null
           pick_order?: Json | null
-          picking_mode?: string | null
+          picking_mode?: Database["public"]["Enums"]["picking_mode"] | null
           room_code?: string | null
           rounds?: number | null
           timer_seconds?: number | null
@@ -1297,7 +1297,8 @@ export type Database = {
           p_draft_id: string
           p_expected_pick: number
           p_guest_id: string
-          p_item_id: string
+          p_item_id?: string
+          p_item_name?: string
         }
         Returns: {
           o_current_pick_index: number
@@ -1328,6 +1329,7 @@ export type Database = {
       item_source: "ai" | "manual"
       judging_mode: "ai" | "community" | "hybrid"
       judgment_source: "ai" | "fallback"
+      picking_mode: "pool" | "off_the_dome"
       suggestion_action: "add" | "remove"
       suggestion_status: "pending" | "accepted" | "rejected"
     }

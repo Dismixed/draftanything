@@ -7,8 +7,13 @@ import { handleCommentaryForPick } from "@/features/ai/commentary";
 import { generateRequestId, setRequestIdHeader } from "@/lib/request-id";
 import { logRoute } from "@/lib/logger";
 
-const pickSchema = z.object({
+const poolPickSchema = z.object({
   itemId: z.string().uuid(),
+  expectedPick: z.number().int().min(0),
+});
+
+const offTheDomePickSchema = z.object({
+  itemName: z.string().trim().min(1).max(200),
   expectedPick: z.number().int().min(0),
 });
 
@@ -51,7 +56,29 @@ export async function POST(
     }
 
     const body = await request.json();
-    const parseResult = pickSchema.safeParse(body);
+
+    // Fetch draft picking mode to determine which schema to use
+    const db = createAdminClient();
+    const { data: draftRow, error: draftError } = await db
+      .from("drafts")
+      .select("picking_mode")
+      .eq("id", draftId)
+      .single();
+
+    if (draftError || !draftRow) {
+      const res = Response.json(
+        { error: "ROOM_NOT_FOUND", message: "Draft not found." },
+        { status: 404 },
+      );
+      setRequestIdHeader(res, requestId);
+      logRoute({ requestId, action: "submit_pick", draftId, result: "ROOM_NOT_FOUND", durationMs: performance.now() - start });
+      return res;
+    }
+
+    const isOffTheDome = draftRow.picking_mode === "off_the_dome";
+    const parseResult = isOffTheDome
+      ? offTheDomePickSchema.safeParse(body)
+      : poolPickSchema.safeParse(body);
 
     if (!parseResult.success) {
       const res = Response.json(
@@ -63,13 +90,16 @@ export async function POST(
       return res;
     }
 
-    const db = createAdminClient();
-    const { data, error } = await db.rpc("submit_pick", {
+    const rpcParams = {
       p_draft_id: draftId,
       p_guest_id: guestId,
-      p_item_id: parseResult.data.itemId,
       p_expected_pick: parseResult.data.expectedPick,
-    });
+      ...(isOffTheDome
+        ? { p_item_name: (parseResult.data as { itemName: string }).itemName }
+        : { p_item_id: (parseResult.data as { itemId: string }).itemId }),
+    };
+
+    const { data, error } = await db.rpc("submit_pick", rpcParams);
 
     if (error) {
       const msg = error.message ?? "";
