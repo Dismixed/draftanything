@@ -6,6 +6,7 @@ import { useDraftStore } from "@/features/draft/store";
 import { useDraftRoom } from "@/features/draft/use-draft-room";
 import type { DraftRoomProjection } from "@/features/draft/types";
 import { AvailablePool } from "./available-pool";
+import { PickHistory } from "./pick-history";
 import { PlayerRosters } from "./player-rosters";
 import { TurnTimer } from "./turn-timer";
 import { AiDesk } from "./ai-desk";
@@ -225,19 +226,28 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[minmax(200px,1fr)_minmax(0,2.5fr)_minmax(200px,1fr)] gap-4 px-4 pt-6 pb-4 md:pt-8"
         style={{ alignItems: 'start' }}
       >
-        {/* Available pool */}
+        {/* Available pool / Pick history */}
         <div
           className={`md:col-span-1 lg:col-span-1 order-2 md:order-1 ${mobileTab !== "pool" ? "hidden md:block" : ""}`}
         >
-          <AvailablePool
-            items={availableItems}
-            myPlayerId={myPlayerId}
-            currentPlayerId={currentPlayer?.id ?? ""}
-            draftId={draft.id}
-            currentPickIndex={draft.currentPickIndex}
-            picks={picks}
-            pickingMode={draft.pickingMode}
-          />
+          {draft.pickingMode === "off_the_dome" ? (
+            <PickHistory
+              picks={picks}
+              players={players}
+              currentPickIndex={draft.currentPickIndex}
+              pickOrder={draft.pickOrder}
+            />
+          ) : (
+            <AvailablePool
+              items={availableItems}
+              myPlayerId={myPlayerId}
+              currentPlayerId={currentPlayer?.id ?? ""}
+              draftId={draft.id}
+              currentPickIndex={draft.currentPickIndex}
+              picks={picks}
+              pickingMode={draft.pickingMode}
+            />
+          )}
         </div>
 
         {/* Rosters — center hero */}
