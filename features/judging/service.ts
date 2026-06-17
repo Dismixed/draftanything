@@ -56,14 +56,12 @@ export async function persistJudgment(judgment: JudgmentRecord): Promise<void> {
   const { error } = await db.from("judgments").insert({
     draft_id: judgment.draftId,
     source: judgment.source,
-    player_scores: JSON.stringify(
-      Object.fromEntries(
-        Object.entries(judgment.playerScores).map(([pid, s]) => [pid, s.overall]),
-      ),
-    ) as unknown as Record<string, number>,
-    ranking: JSON.stringify(judgment.ranking),
-    winner_player_ids: JSON.stringify(judgment.winnerPlayerIds),
-    awards: JSON.stringify(judgment.awards),
+    player_scores: Object.fromEntries(
+      Object.entries(judgment.playerScores).map(([pid, s]) => [pid, s.overall]),
+    ),
+    ranking: judgment.ranking,
+    winner_player_ids: judgment.winnerPlayerIds,
+    awards: judgment.awards,
     explanation: judgment.explanation,
     model: judgment.model,
     prompt_version: judgment.promptVersion,
@@ -80,6 +78,7 @@ export async function judgeDraft(
   topic: string,
   judgingMode: "ai" | "community" | "hybrid",
   personality: string,
+  customJudgePrompt: string | null,
   rubric: RubricCategory[],
   players: SafePlayer[],
   picks: SafePick[],
@@ -87,7 +86,16 @@ export async function judgeDraft(
   voteRecords: Vote[],
 ): Promise<JudgmentRecord> {
   if (judgingMode === "ai") {
-    return await judgeAiMode(draftId, topic, personality, rubric, players, picks, rosters);
+    return await judgeAiMode(
+      draftId,
+      topic,
+      personality,
+      customJudgePrompt,
+      rubric,
+      players,
+      picks,
+      rosters,
+    );
   }
 
   if (judgingMode === "community") {
@@ -98,6 +106,7 @@ export async function judgeDraft(
     draftId,
     topic,
     personality,
+    customJudgePrompt,
     rubric,
     players,
     picks,
@@ -112,6 +121,7 @@ export interface JudgingData {
   topic: string;
   judgingMode: "ai" | "community" | "hybrid";
   aiPersonality: string;
+  customJudgePrompt: string | null;
   rubric: RubricCategory[];
   safePlayers: SafePlayer[];
   safePicks: SafePick[];
@@ -170,10 +180,12 @@ export async function getJudgingData(draftId: string): Promise<JudgingData> {
     id: p.id as string,
     playerId: p.player_id as string,
     itemId: p.item_id as string,
+    itemName: null,
     overallPick: p.overall_pick as number,
     round: 1,
     pickInRound: 1,
     isAutoPick: false,
+    forfeited: false,
   }));
 
   const rosters: RosterInfo[] = players.map((p) => {
@@ -199,6 +211,7 @@ export async function getJudgingData(draftId: string): Promise<JudgingData> {
     topic: draft.topic as string,
     judgingMode: draft.judging_mode as "ai" | "community" | "hybrid",
     aiPersonality: (draft.ai_personality as string) ?? "",
+    customJudgePrompt: (draft.custom_judge_prompt as string | null) ?? null,
     rubric,
     safePlayers,
     safePicks,
@@ -211,12 +224,22 @@ async function judgeAiMode(
   draftId: string,
   topic: string,
   personality: string,
+  customJudgePrompt: string | null,
   rubric: RubricCategory[],
   players: SafePlayer[],
   picks: SafePick[],
   rosters: RosterInfo[],
 ): Promise<JudgmentRecord> {
-  const judgeInput = await buildJudgeInput(draftId, topic, personality, rubric, players, picks, rosters);
+  const judgeInput = await buildJudgeInput(
+    draftId,
+    topic,
+    personality,
+    customJudgePrompt,
+    rubric,
+    players,
+    picks,
+    rosters,
+  );
   const result = await judgeRosters(judgeInput);
 
   return {
@@ -267,6 +290,7 @@ async function judgeHybridMode(
   draftId: string,
   topic: string,
   personality: string,
+  customJudgePrompt: string | null,
   rubric: RubricCategory[],
   players: SafePlayer[],
   picks: SafePick[],
@@ -275,8 +299,16 @@ async function judgeHybridMode(
 ): Promise<JudgmentRecord> {
   const playerIds = players.map((p) => p.id);
 
-  // Get AI scores
-  const judgeInput = await buildJudgeInput(draftId, topic, personality, rubric, players, picks, rosters);
+  const judgeInput = await buildJudgeInput(
+    draftId,
+    topic,
+    personality,
+    customJudgePrompt,
+    rubric,
+    players,
+    picks,
+    rosters,
+  );
   const aiResult = await judgeRosters(judgeInput);
 
   const aiScores = Object.fromEntries(
@@ -368,6 +400,7 @@ async function buildJudgeInput(
   draftId: string,
   topic: string,
   personality: string,
+  customJudgePrompt: string | null,
   rubric: RubricCategory[],
   players: SafePlayer[],
   picks: SafePick[],
@@ -399,6 +432,8 @@ async function buildJudgeInput(
       playerId: r.playerId,
       displayName: r.displayName,
       picks: playerPicks.map((p) => ({
+        pickId: p.pickId,
+        itemId: p.itemId,
         itemName: p.itemName,
         metadata: p.metadata,
         overallPick: p.overallPick,
@@ -409,6 +444,7 @@ async function buildJudgeInput(
   return {
     topic,
     personality,
+    customJudgePrompt,
     rubric,
     rosters: rosterInputs,
     defenses,

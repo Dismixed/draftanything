@@ -1,5 +1,7 @@
 export type DraftType = "standard" | "snake" | "random";
 
+export type PickingMode = "pool" | "off_the_dome";
+
 export type JudgingMode = "ai" | "community" | "hybrid";
 
 export type DraftPhase =
@@ -27,8 +29,10 @@ export interface SafeDraft {
   maxPlayers: number;
   rounds: number;
   draftType: DraftType;
+  pickingMode: PickingMode;
   judgingMode: JudgingMode;
   aiPersonality: string;
+  customJudgePrompt: string | null;
   timerSeconds: number | null;
   completedAt: string | null;
   pickOrder: PickSlot[];
@@ -55,10 +59,12 @@ export interface SafePick {
   id: string;
   playerId: string;
   itemId: string;
+  itemName: string | null;
   overallPick: number;
   round: number;
   pickInRound: number;
   isAutoPick: boolean;
+  forfeited: boolean;
 }
 
 export interface SafeCommentary {

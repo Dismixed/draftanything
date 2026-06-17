@@ -11,6 +11,7 @@ vi.mock("@/features/ai/judge", () => ({
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { judgeRosters } from "@/features/ai/judge";
+import type { SafePick } from "@/features/draft/types";
 
 const mockQueryChain = {
   select: vi.fn(),
@@ -59,7 +60,22 @@ describe("judging service", () => {
       });
 
       expect(mockDb.from).toHaveBeenCalledWith("judgments");
-      expect(insert).toHaveBeenCalledTimes(1);
+      expect(insert).toHaveBeenCalledWith({
+        draft_id: "draft-1",
+        source: "ai",
+        player_scores: { p1: 8, p2: 6 },
+        ranking: ["p1", "p2"],
+        winner_player_ids: ["p1"],
+        awards: {
+          bestPick: { pickId: "pk1", itemId: "it1", playerId: "p1" },
+          worstPick: { pickId: "pk2", itemId: "it2", playerId: "p2" },
+          biggestSteal: { pickId: "pk3", itemId: "it3", playerId: "p1" },
+        },
+        explanation: "Test judgment.",
+        model: "gpt-4o",
+        prompt_version: "1.0.0",
+        idempotency_key: "test-key",
+      });
     });
   });
 
@@ -73,7 +89,7 @@ describe("judging service", () => {
         { id: "p3", displayName: "Charlie", seat: 3, isReady: false, isHost: false },
       ];
 
-      const picks: Array<{ id: string; playerId: string; itemId: string; overallPick: number; round: number; pickInRound: number; isAutoPick: boolean }> = [];
+      const picks: SafePick[] = [];
 
       const rosters = [
         { pickIds: [], playerId: "p1", itemIds: [], displayName: "Alice" },
@@ -92,6 +108,7 @@ describe("judging service", () => {
         "Test",
         "community",
         "analyst",
+        null,
         [],
         players,
         picks,
@@ -134,7 +151,7 @@ describe("judging service", () => {
       mockDb.from.mockReturnValue(mockQueryChain);
 
       const players = [{ id: "p1", displayName: "Alice", seat: 1, isReady: false, isHost: true }];
-      const picks: Array<{ id: string; playerId: string; itemId: string; overallPick: number; round: number; pickInRound: number; isAutoPick: boolean }> = [];
+      const picks: SafePick[] = [];
       const rosters = [{ pickIds: [], playerId: "p1", itemIds: [], displayName: "Alice" }];
 
       const result = await judgeDraft(
@@ -142,6 +159,7 @@ describe("judging service", () => {
         "Test",
         "ai",
         "analyst",
+        null,
         [],
         players,
         picks,
@@ -186,7 +204,7 @@ describe("judging service", () => {
         { id: "p2", displayName: "Bob", seat: 2, isReady: false, isHost: false },
       ];
 
-      const picks: Array<{ id: string; playerId: string; itemId: string; overallPick: number; round: number; pickInRound: number; isAutoPick: boolean }> = [];
+      const picks: SafePick[] = [];
       const rosters = [
         { pickIds: [], playerId: "p1", itemIds: [], displayName: "Alice" },
         { pickIds: [], playerId: "p2", itemIds: [], displayName: "Bob" },
@@ -201,6 +219,7 @@ describe("judging service", () => {
         "Test",
         "hybrid",
         "analyst",
+        null,
         [],
         players,
         picks,

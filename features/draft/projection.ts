@@ -41,8 +41,10 @@ export function buildProjection(
     maxPlayers: draft.max_players as number,
     rounds: draft.rounds as number,
     draftType: draft.draft_type as SafeDraft["draftType"],
+    pickingMode: (draft.picking_mode as SafeDraft["pickingMode"]) ?? "pool",
     judgingMode: draft.judging_mode as SafeDraft["judgingMode"],
     aiPersonality: draft.ai_personality as string,
+    customJudgePrompt: (draft.custom_judge_prompt as string | null) ?? null,
     timerSeconds: (draft.timer_seconds as number | null) ?? null,
     completedAt: (draft.completed_at as string | null) ?? null,
     pickOrder: pickOrder.map((s) => {
@@ -77,10 +79,12 @@ export function buildProjection(
     id: p.id as string,
     playerId: p.player_id as string,
     itemId: p.item_id as string,
+    itemName: (p.item_name as string | null) ?? null,
     overallPick: p.overall_pick as number,
     round: p.round as number,
     pickInRound: p.pick_in_round as number,
     isAutoPick: p.is_auto_pick as boolean,
+    forfeited: (p.forfeited as boolean) ?? false,
   }));
 
   const safeCommentary: SafeCommentary[] = (commentary ?? []).map((c) => ({
@@ -137,6 +141,10 @@ export async function getDraftRoomProjection(
   draftId: string,
 ): Promise<DraftRoomProjection> {
   const db = createAdminClient();
+
+  // Self-heal drafts stuck in DEFENSE when every player already responded.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (db.rpc as any)("maybe_advance_from_defense", { p_draft_id: draftId });
 
   const [
     { data: draft, error: draftError },

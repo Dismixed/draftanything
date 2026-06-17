@@ -13,8 +13,10 @@ function makeProjection(overrides?: Partial<DraftRoomProjection>): DraftRoomProj
       maxPlayers: 4,
       rounds: 3,
       draftType: "snake",
+      pickingMode: "pool",
       judgingMode: "ai",
       aiPersonality: "analyst",
+      customJudgePrompt: null,
       timerSeconds: null,
       completedAt: "2026-06-15T13:30:00Z",
       pickOrder: [],
@@ -30,8 +32,8 @@ function makeProjection(overrides?: Partial<DraftRoomProjection>): DraftRoomProj
       { id: "item-2", name: "The Wire", source: "ai", isAvailable: false },
     ],
     picks: [
-      { id: "pick-1", playerId: "player-1", itemId: "item-1", overallPick: 1, round: 1, pickInRound: 1, isAutoPick: false },
-      { id: "pick-2", playerId: "player-2", itemId: "item-2", overallPick: 2, round: 1, pickInRound: 2, isAutoPick: false },
+      { id: "pick-1", playerId: "player-1", itemId: "item-1", itemName: null, overallPick: 1, round: 1, pickInRound: 1, isAutoPick: false, forfeited: false },
+      { id: "pick-2", playerId: "player-2", itemId: "item-2", itemName: null, overallPick: 2, round: 1, pickInRound: 2, isAutoPick: false, forfeited: false },
     ],
     commentary: [],
     defenses: [

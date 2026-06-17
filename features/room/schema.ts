@@ -36,8 +36,32 @@ export const createRoomSchema = z.object({
     ])
     .nullable(),
   draftType: z.enum(["standard", "snake", "random"]),
+  pickingMode: z.enum(["pool", "off_the_dome"]).default("pool"),
   judgingMode: z.enum(["ai", "community", "hybrid"]),
-  aiPersonality: z.enum(["analyst", "hype", "roast"]),
+  aiPersonality: z.enum(["analyst", "hype", "roast", "custom"]),
+  customJudgePrompt: z
+    .string()
+    .trim()
+    .min(10, "Custom judge instructions must be at least 10 characters")
+    .max(500, "Custom judge instructions must be at most 500 characters")
+    .optional()
+    .nullable(),
+}).superRefine((data, ctx) => {
+  if (data.aiPersonality === "custom" && !data.customJudgePrompt) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Custom judge instructions are required when using a custom judge",
+      path: ["customJudgePrompt"],
+    });
+  }
+
+  if (data.aiPersonality !== "custom" && data.customJudgePrompt) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Custom judge instructions are only allowed for the custom judge",
+      path: ["customJudgePrompt"],
+    });
+  }
 });
 
 export type CreateRoomInput = z.infer<typeof createRoomSchema>;
@@ -69,7 +93,8 @@ export interface RoomProjection {
   timerSeconds: number | null;
   draftType: "standard" | "snake" | "random";
   judgingMode: "ai" | "community" | "hybrid";
-  aiPersonality: "analyst" | "hype" | "roast";
+  aiPersonality: "analyst" | "hype" | "roast" | "custom";
+  customJudgePrompt: string | null;
   phase: string;
   players: RoomPlayer[];
   hostPlayerId: string;
