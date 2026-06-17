@@ -31,11 +31,12 @@ export async function POST(
 ) {
   const requestId = generateRequestId();
   const start = performance.now();
-  let draftId: string | undefined;
+  let logDraftId: string | undefined;
 
   try {
     const { guestId } = await requireGuestSession();
-    draftId = (await params).draftId;
+    const { draftId } = await params;
+    logDraftId = draftId;
 
     const rateResult = checkRateLimit(
       `pick:${draftId}:${guestId}`,
@@ -143,13 +144,13 @@ export async function POST(
       const status = e.code === "UNAUTHORIZED" ? 401 : 400;
       const res = Response.json({ error: e.code, message: e.message }, { status });
       setRequestIdHeader(res, requestId);
-      logRoute({ requestId, action: "submit_pick", draftId, result: e.code, durationMs: performance.now() - start });
+      logRoute({ requestId, action: "submit_pick", draftId: logDraftId, result: e.code, durationMs: performance.now() - start });
       return res;
     }
     console.error("[POST /api/drafts/:draftId/pick]", e);
     const res = Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
     setRequestIdHeader(res, requestId);
-    logRoute({ requestId, action: "submit_pick", draftId, result: "INTERNAL_ERROR", durationMs: performance.now() - start });
+    logRoute({ requestId, action: "submit_pick", draftId: logDraftId, result: "INTERNAL_ERROR", durationMs: performance.now() - start });
     return res;
   }
 }
