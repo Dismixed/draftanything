@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { TopicSuggestions } from "./topic-suggestions";
 
 interface CreateRoomFormProps {
   onSuccess?: (draftId: string, roomCode: string) => void;
@@ -13,9 +14,27 @@ const DEFAULT_VALUES = {
   maxPlayers: 4,
   rounds: 5,
   timerSeconds: 60 as number | null,
+  pickingMode: "pool" as "pool" | "off_the_dome",
   draftType: "standard" as "standard" | "snake" | "random",
   judgingMode: "ai" as "ai" | "community" | "hybrid",
-  aiPersonality: "analyst" as "analyst" | "hype" | "roast",
+  aiPersonality: "analyst" as "analyst" | "hype" | "roast" | "custom",
+  customJudgePrompt: "",
+};
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: '9px',
+  fontWeight: 600,
+  letterSpacing: '0.22em',
+  textTransform: 'uppercase',
+  color: 'var(--text-dim)',
+  marginBottom: '5px',
+};
+
+const fieldStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '5px',
 };
 
 export function CreateRoomForm({ onSuccess }: CreateRoomFormProps) {
@@ -44,7 +63,11 @@ export function CreateRoomForm({ onSuccess }: CreateRoomFormProps) {
       const res = await fetch("/api/drafts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          customJudgePrompt:
+            form.aiPersonality === "custom" ? form.customJudgePrompt.trim() : null,
+        }),
       });
 
       const data = await res.json();
@@ -69,11 +92,11 @@ export function CreateRoomForm({ onSuccess }: CreateRoomFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-4 w-full max-w-md"
+      style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}
       aria-label="Create a room"
     >
-      <div className="flex flex-col gap-1">
-        <label htmlFor="create-display-name" className="text-sm font-medium">
+      <div style={fieldStyle}>
+        <label htmlFor="create-display-name" style={labelStyle}>
           Your display name
         </label>
         <input
@@ -85,14 +108,17 @@ export function CreateRoomForm({ onSuccess }: CreateRoomFormProps) {
           placeholder="e.g. Alice"
           value={form.displayName}
           onChange={(e) => handleChange("displayName", e.target.value)}
-          className="border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="da-input"
         />
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="create-topic" className="text-sm font-medium">
-          Draft topic
-        </label>
+      <div style={fieldStyle}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "5px" }}>
+          <label htmlFor="create-topic" style={{ ...labelStyle, marginBottom: 0 }}>
+            Draft topic
+          </label>
+          <TopicSuggestions onSelect={(topic) => handleChange("topic", topic)} />
+        </div>
         <input
           id="create-topic"
           type="text"
@@ -102,13 +128,13 @@ export function CreateRoomForm({ onSuccess }: CreateRoomFormProps) {
           placeholder="e.g. Best TV Shows of the 90s"
           value={form.topic}
           onChange={(e) => handleChange("topic", e.target.value)}
-          className="border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="da-input"
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="create-max-players" className="text-sm font-medium">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        <div style={fieldStyle}>
+          <label htmlFor="create-max-players" style={labelStyle}>
             Players (2–6)
           </label>
           <input
@@ -119,12 +145,12 @@ export function CreateRoomForm({ onSuccess }: CreateRoomFormProps) {
             max={6}
             value={form.maxPlayers}
             onChange={(e) => handleChange("maxPlayers", Number(e.target.value))}
-            className="border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="da-input"
           />
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="create-rounds" className="text-sm font-medium">
+        <div style={fieldStyle}>
+          <label htmlFor="create-rounds" style={labelStyle}>
             Rounds (1–10)
           </label>
           <input
@@ -135,13 +161,39 @@ export function CreateRoomForm({ onSuccess }: CreateRoomFormProps) {
             max={10}
             value={form.rounds}
             onChange={(e) => handleChange("rounds", Number(e.target.value))}
-            className="border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="da-input"
           />
         </div>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="create-draft-type" className="text-sm font-medium">
+      <div style={fieldStyle}>
+        <span style={labelStyle}>Draft mode</span>
+        <div style={{ display: 'flex', borderRadius: '6px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+          {(["pool", "off_the_dome"] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => handleChange("pickingMode", mode)}
+              style={{
+                flex: 1,
+                padding: '8px 12px',
+                fontSize: '12px',
+                fontWeight: 500,
+                border: 'none',
+                cursor: 'pointer',
+                background: form.pickingMode === mode ? 'var(--gold)' : 'var(--bg-secondary)',
+                color: form.pickingMode === mode ? '#000' : 'var(--text-dim)',
+                transition: 'background 0.15s, color 0.15s',
+              }}
+            >
+              {mode === "pool" ? "From a Pool" : "Off the Dome"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={fieldStyle}>
+        <label htmlFor="create-draft-type" style={labelStyle}>
           Draft type
         </label>
         <select
@@ -150,7 +202,7 @@ export function CreateRoomForm({ onSuccess }: CreateRoomFormProps) {
           onChange={(e) =>
             handleChange("draftType", e.target.value as "standard" | "snake" | "random")
           }
-          className="border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="da-select"
         >
           <option value="standard">Standard (linear order)</option>
           <option value="snake">Snake (reverses each round)</option>
@@ -158,8 +210,8 @@ export function CreateRoomForm({ onSuccess }: CreateRoomFormProps) {
         </select>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="create-judging-mode" className="text-sm font-medium">
+      <div style={fieldStyle}>
+        <label htmlFor="create-judging-mode" style={labelStyle}>
           Judging mode
         </label>
         <select
@@ -171,7 +223,7 @@ export function CreateRoomForm({ onSuccess }: CreateRoomFormProps) {
               e.target.value as "ai" | "community" | "hybrid",
             )
           }
-          className="border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="da-select"
         >
           <option value="ai">AI judge</option>
           <option value="community">Community vote</option>
@@ -179,45 +231,78 @@ export function CreateRoomForm({ onSuccess }: CreateRoomFormProps) {
         </select>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="create-personality" className="text-sm font-medium">
+      <div style={fieldStyle}>
+        <label htmlFor="create-personality" style={labelStyle}>
           AI personality
         </label>
         <select
           id="create-personality"
           value={form.aiPersonality}
-          onChange={(e) =>
-            handleChange(
-              "aiPersonality",
-              e.target.value as "analyst" | "hype" | "roast",
-            )
-          }
-          className="border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          onChange={(e) => {
+            const aiPersonality = e.target.value as
+              | "analyst"
+              | "hype"
+              | "roast"
+              | "custom";
+            setForm((prev) => ({
+              ...prev,
+              aiPersonality,
+              customJudgePrompt: aiPersonality === "custom" ? prev.customJudgePrompt : "",
+            }));
+            setError(null);
+          }}
+          className="da-select"
         >
           <option value="analyst">Analyst (thoughtful, data-driven)</option>
           <option value="hype">Hype (energetic, enthusiastic)</option>
           <option value="roast">Roast (playful trash talk)</option>
+          <option value="custom">Custom judge</option>
         </select>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium">Turn timer</label>
-        <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 text-sm">
+      {form.aiPersonality === "custom" && (
+        <div style={fieldStyle}>
+          <label htmlFor="create-custom-judge" style={labelStyle}>
+            Custom judge instructions
+          </label>
+          <textarea
+            id="create-custom-judge"
+            required
+            minLength={10}
+            maxLength={500}
+            rows={4}
+            placeholder="e.g. Judge like a skeptical food critic who rewards originality and punishes safe picks."
+            value={form.customJudgePrompt}
+            onChange={(e) => handleChange("customJudgePrompt", e.target.value)}
+            className="da-input"
+            style={{ resize: "vertical", minHeight: "96px" }}
+          />
+          <p style={{ margin: 0, fontSize: "11px", color: "var(--text-dim)" }}>
+            Describe how the AI should evaluate rosters. 10–500 characters.
+          </p>
+        </div>
+      )}
+
+      <div style={fieldStyle}>
+        <span style={labelStyle}>Turn timer</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: form.timerSeconds === null ? 'var(--gold)' : 'var(--text-dim)', cursor: 'pointer' }}>
             <input
               type="radio"
               name="timer"
               checked={form.timerSeconds === null}
               onChange={() => handleChange("timerSeconds", null)}
+              style={{ accentColor: 'var(--gold)' }}
             />
             Off
           </label>
-          <label className="flex items-center gap-2 text-sm">
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: form.timerSeconds !== null ? 'var(--gold)' : 'var(--text-dim)', cursor: 'pointer' }}>
             <input
               type="radio"
               name="timer"
               checked={form.timerSeconds !== null}
               onChange={() => handleChange("timerSeconds", 60)}
+              style={{ accentColor: 'var(--gold)' }}
             />
             On
           </label>
@@ -228,18 +313,19 @@ export function CreateRoomForm({ onSuccess }: CreateRoomFormProps) {
               max={180}
               value={form.timerSeconds}
               onChange={(e) => handleChange("timerSeconds", Number(e.target.value))}
-              className="border rounded px-2 py-1 text-sm w-20 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="da-input"
+              style={{ width: '72px' }}
               aria-label="Timer seconds"
             />
           )}
           {form.timerSeconds !== null && (
-            <span className="text-sm text-gray-500">seconds</span>
+            <span style={{ fontSize: '12px', color: 'var(--text-dim)' }}>seconds</span>
           )}
         </div>
       </div>
 
       {error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" style={{ color: '#ff4d4d', fontSize: '12px', margin: 0 }}>
           {error}
         </p>
       )}
@@ -247,9 +333,10 @@ export function CreateRoomForm({ onSuccess }: CreateRoomFormProps) {
       <button
         type="submit"
         disabled={submitting}
-        className="bg-blue-600 text-white rounded px-4 py-2 font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="btn-gold"
+        style={{ marginTop: '4px' }}
       >
-        {submitting ? "Creating room…" : "Create room"}
+        {submitting ? "Establishing…" : "— Establish Room —"}
       </button>
     </form>
   );
