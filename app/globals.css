@@ -350,3 +350,9 @@ body {
   background: var(--gold);
   color: #000;
 }
+
+/* Stim Games hero card hover */
+.stim-hero-card:hover {
+  border-color: rgba(201,168,76,0.5);
+  box-shadow: 0 0 40px rgba(201,168,76,0.1), 0 0 80px rgba(124,58,255,0.05);
+}

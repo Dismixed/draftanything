@@ -1,110 +1,378 @@
-"use client";
-import { useState } from "react";
-import { CreateRoomForm } from "@/components/lobby/create-room-form";
-import { JoinRoomForm } from "@/components/lobby/join-room-form";
+import Link from "next/link";
 
-type ActiveTab = "create" | "join";
+const GAMES = [
+  {
+    name: "Trivia",
+    description: "Test your knowledge head-to-head.",
+    icon: "?",
+    status: "coming-soon" as const,
+  },
+  {
+    name: "Would You Rather",
+    description: "Pick a side. Defend your choice.",
+    icon: "VS",
+    status: "coming-soon" as const,
+  },
+  {
+    name: "Budget Manager",
+    description: "Allocate wisely. Outlast the rest.",
+    icon: "$",
+    status: "coming-soon" as const,
+  },
+];
 
-export default function Home() {
-  const [activeTab, setActiveTab] = useState<ActiveTab>("create");
-
+export default function StimGames() {
   return (
-    <main style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', position: 'relative', overflow: 'hidden' }}>
-      {/* Atmospheric background */}
-      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 100% 55% at 50% -5%, rgba(201,168,76,0.07) 0%, transparent 55%), radial-gradient(ellipse 60% 45% at 10% 90%, rgba(124,58,255,0.06) 0%, transparent 55%)', pointerEvents: 'none' }} />
+    <main
+      style={{
+        minHeight: "100vh",
+        background: "var(--bg)",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        padding: "48px 24px 64px",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      {/* Atmospheric gradients */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "radial-gradient(ellipse 80% 40% at 50% -10%, rgba(124,58,255,0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 35% at 80% 85%, rgba(201,168,76,0.06) 0%, transparent 55%)",
+          pointerEvents: "none",
+        }}
+      />
 
-      <div style={{ width: '100%', maxWidth: activeTab === "create" ? '680px' : '440px', position: 'relative', zIndex: 1, transition: 'max-width 0.25s ease' }}>
-        {/* Crest */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '28px' }}>
-          <div style={{ width: '44px', height: '44px', borderRadius: '50%', border: '1px solid rgba(201,168,76,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px', position: 'relative' }}>
-            <span style={{ color: 'var(--gold)', fontSize: '14px' }}>&#9670;</span>
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "960px",
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
+        {/* Header */}
+        <header
+          style={{
+            textAlign: "center",
+            marginBottom: "48px",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "9px",
+              fontWeight: 600,
+              letterSpacing: "0.42em",
+              textTransform: "uppercase",
+              color: "var(--gold)",
+              opacity: 0.7,
+              marginBottom: "10px",
+            }}
+          >
+            Party games for any crowd
           </div>
-          <div style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.38em', textTransform: 'uppercase', color: 'var(--gold)', opacity: 0.8, marginBottom: '12px' }}>
-            Private Draft Room
-          </div>
-          <h1 style={{ fontFamily: '"Playfair Display", serif', fontSize: 'clamp(44px, 12vw, 58px)', fontWeight: 900, lineHeight: 0.92, textAlign: 'center', color: 'var(--text)', margin: 0, letterSpacing: '-0.01em' }}>
-            Draft<br />
-            <em style={{ fontStyle: 'italic', color: 'var(--gold-hi)', textShadow: '0 0 40px rgba(240,200,96,0.2)' }}>Anything</em>
+          <h1
+            style={{
+              fontFamily: '"Playfair Display", serif',
+              fontSize: "clamp(36px, 8vw, 52px)",
+              fontWeight: 900,
+              lineHeight: 1,
+              color: "var(--text)",
+              margin: 0,
+              letterSpacing: "-0.01em",
+            }}
+          >
+            Stim{" "}
+            <em
+              style={{
+                fontStyle: "italic",
+                color: "var(--gold-hi)",
+                textShadow: "0 0 40px rgba(240,200,96,0.2)",
+              }}
+            >
+              Games
+            </em>
           </h1>
-          {/* Divider */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', margin: '14px 0 10px' }}>
-            <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, transparent, var(--border-hi))' }} />
-            <span style={{ color: 'var(--gold)', fontSize: '7px', opacity: 0.45 }}>&#9670;</span>
-            <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, var(--border-hi), transparent)' }} />
-          </div>
-          <p style={{ fontSize: '12px', color: 'var(--text-dim)', textAlign: 'center', lineHeight: 1.65, margin: 0, fontWeight: 300 }}>
-            Assemble your roster. Defend every pick.<br />Let the jury decide.
-          </p>
-        </div>
-
-        {/* Card */}
-        <div className="panel-card">
-          {/* Tabs */}
-          <div role="tablist" aria-label="Room options" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1px solid var(--border)' }}>
-            <button
-              role="tab"
-              id="tab-create"
-              aria-selected={activeTab === "create"}
-              aria-controls="panel-create"
-              onClick={() => setActiveTab("create")}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              width: "100%",
+              maxWidth: "200px",
+              margin: "14px auto 0",
+            }}
+          >
+            <div
               style={{
-                padding: '13px',
-                textAlign: 'center',
-                fontSize: '11px',
-                fontWeight: 500,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                fontFamily: 'Outfit, sans-serif',
-                background: activeTab === "create" ? 'rgba(201,168,76,0.04)' : 'transparent',
-                color: activeTab === "create" ? 'var(--gold)' : 'var(--text-dim)',
-                border: 'none',
-                borderBottom: activeTab === "create" ? '1px solid var(--gold)' : '1px solid transparent',
-                marginBottom: '-1px',
-                cursor: 'pointer',
-                transition: 'color 0.2s',
+                flex: 1,
+                height: "1px",
+                background:
+                  "linear-gradient(90deg, transparent, var(--border-hi))",
+              }}
+            />
+            <span
+              style={{ color: "var(--gold)", fontSize: "7px", opacity: 0.45 }}
+            >
+              &#9670;
+            </span>
+            <div
+              style={{
+                flex: 1,
+                height: "1px",
+                background:
+                  "linear-gradient(90deg, var(--border-hi), transparent)",
+              }}
+            />
+          </div>
+        </header>
+
+        {/* Draft Anything — Hero Card */}
+        <Link
+          href="/draft-anything"
+          style={{
+            display: "block",
+            textDecoration: "none",
+            marginBottom: "32px",
+          }}
+        >
+          <div
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(201,168,76,0.1) 0%, rgba(124,58,255,0.08) 100%)",
+              border: "1px solid rgba(201,168,76,0.28)",
+              padding: "40px 36px",
+              position: "relative",
+              overflow: "hidden",
+              cursor: "pointer",
+              transition: "border-color 0.25s, box-shadow 0.25s",
+            }}
+            className="stim-hero-card"
+          >
+            {/* Top gold hairline */}
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: "10%",
+                right: "10%",
+                height: "1px",
+                background:
+                  "linear-gradient(90deg, transparent, rgba(201,168,76,0.5), transparent)",
+              }}
+            />
+
+            {/* Glow blob */}
+            <div
+              style={{
+                position: "absolute",
+                top: "-40%",
+                right: "-10%",
+                width: "300px",
+                height: "300px",
+                borderRadius: "50%",
+                background:
+                  "radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%)",
+                pointerEvents: "none",
+              }}
+            />
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "24px",
+                flexWrap: "wrap",
               }}
             >
-              Create Room
-            </button>
-            <button
-              role="tab"
-              id="tab-join"
-              aria-selected={activeTab === "join"}
-              aria-controls="panel-join"
-              onClick={() => setActiveTab("join")}
-              style={{
-                padding: '13px',
-                textAlign: 'center',
-                fontSize: '11px',
-                fontWeight: 500,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                fontFamily: 'Outfit, sans-serif',
-                background: activeTab === "join" ? 'rgba(201,168,76,0.04)' : 'transparent',
-                color: activeTab === "join" ? 'var(--gold)' : 'var(--text-dim)',
-                border: 'none',
-                borderBottom: activeTab === "join" ? '1px solid var(--gold)' : '1px solid transparent',
-                marginBottom: '-1px',
-                cursor: 'pointer',
-                transition: 'color 0.2s',
-              }}
-            >
-              Join Room
-            </button>
-          </div>
+              <div style={{ flex: 1, minWidth: "220px" }}>
+                <div
+                  style={{
+                    fontSize: "9px",
+                    fontWeight: 600,
+                    letterSpacing: "0.32em",
+                    textTransform: "uppercase",
+                    color: "var(--gold)",
+                    opacity: 0.8,
+                    marginBottom: "8px",
+                  }}
+                >
+                  Fire
+                </div>
+                <h2
+                  style={{
+                    fontFamily: '"Playfair Display", serif',
+                    fontSize: "clamp(32px, 6vw, 44px)",
+                    fontWeight: 900,
+                    lineHeight: 0.95,
+                    color: "var(--text)",
+                    margin: "0 0 12px",
+                  }}
+                >
+                  Draft{" "}
+                  <em
+                    style={{
+                      fontStyle: "italic",
+                      color: "var(--gold-hi)",
+                      textShadow: "0 0 30px rgba(240,200,96,0.15)",
+                    }}
+                  >
+                    Anything
+                  </em>
+                </h2>
+                <p
+                  style={{
+                    fontSize: "13px",
+                    color: "var(--text-dim)",
+                    lineHeight: 1.6,
+                    margin: 0,
+                    fontWeight: 300,
+                    maxWidth: "380px",
+                  }}
+                >
+                  Assemble your roster. Defend every pick. Let the jury decide
+                  who built the best lineup.
+                </p>
+              </div>
 
-          <div style={{ padding: activeTab === "create" ? '20px 24px' : '20px' }}>
-            <div id="panel-create" role="tabpanel" aria-labelledby="tab-create" hidden={activeTab !== "create"}>
-              <CreateRoomForm />
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  background: "rgba(201,168,76,0.12)",
+                  border: "1px solid rgba(201,168,76,0.35)",
+                  padding: "12px 24px",
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  letterSpacing: "0.2em",
+                  textTransform: "uppercase",
+                  color: "var(--gold-hi)",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
+                }}
+              >
+                Play Now
+                <span style={{ fontSize: "14px" }}>&#8594;</span>
+              </div>
             </div>
-            <div id="panel-join" role="tabpanel" aria-labelledby="tab-join" hidden={activeTab !== "join"}>
-              <JoinRoomForm />
-            </div>
+          </div>
+        </Link>
+
+        {/* Coming Soon section */}
+        <div style={{ marginBottom: "16px" }}>
+          <h3
+            style={{
+              fontSize: "9px",
+              fontWeight: 600,
+              letterSpacing: "0.32em",
+              textTransform: "uppercase",
+              color: "var(--text-dim)",
+              opacity: 0.6,
+              margin: "0 0 16px",
+            }}
+          >
+            Coming Soon
+          </h3>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+              gap: "12px",
+            }}
+          >
+            {GAMES.map((game) => (
+              <div
+                key={game.name}
+                style={{
+                  background: "var(--panel)",
+                  border: "1px solid var(--border)",
+                  padding: "24px",
+                  position: "relative",
+                  opacity: 0.55,
+                }}
+              >
+                {/* Icon */}
+                <div
+                  style={{
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "8px",
+                    background: "rgba(124,58,255,0.08)",
+                    border: "1px solid var(--border-hi)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "13px",
+                    fontWeight: 700,
+                    color: "var(--purple)",
+                    marginBottom: "14px",
+                    fontFamily: "monospace",
+                  }}
+                >
+                  {game.icon}
+                </div>
+                <h4
+                  style={{
+                    fontFamily: '"Playfair Display", serif',
+                    fontSize: "18px",
+                    fontWeight: 700,
+                    color: "var(--text)",
+                    margin: "0 0 6px",
+                  }}
+                >
+                  {game.name}
+                </h4>
+                <p
+                  style={{
+                    fontSize: "12px",
+                    color: "var(--text-dim)",
+                    margin: 0,
+                    lineHeight: 1.5,
+                    fontWeight: 300,
+                  }}
+                >
+                  {game.description}
+                </p>
+                {/* Coming Soon badge */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "12px",
+                    right: "12px",
+                    fontSize: "8px",
+                    fontWeight: 600,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    color: "var(--text-dim)",
+                    background: "rgba(0,0,0,0.3)",
+                    border: "1px solid var(--border)",
+                    padding: "4px 8px",
+                  }}
+                >
+                  Soon
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        <p style={{ textAlign: 'center', fontSize: '11px', color: 'var(--text-dim)', marginTop: '20px', opacity: 0.6 }}>
-          No account needed — just pick a name and go.
+        {/* Footer */}
+        <p
+          style={{
+            textAlign: "center",
+            fontSize: "10px",
+            color: "var(--text-dim)",
+            marginTop: "48px",
+            opacity: 0.4,
+            letterSpacing: "0.08em",
+          }}
+        >
+          Built by Stim Labs
         </p>
       </div>
     </main>
