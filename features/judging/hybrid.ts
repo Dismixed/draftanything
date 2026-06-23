@@ -46,6 +46,33 @@ export const normalizeAiScore = (score: number): number => {
   return score;
 };
 
+/** Map arbitrary roster totals onto the 0..10 judging scale (preserves rank order). */
+export const scaleToJudgingRange = (scores: PlayerScores): PlayerScores => {
+  const entries = Object.entries(scores);
+  if (entries.length === 0) {
+    return scores;
+  }
+
+  const values = entries.map(([, score]) => score);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+
+  if (!values.every((score) => Number.isFinite(score))) {
+    throw new RangeError("scores must be finite numbers");
+  }
+
+  if (max === min) {
+    return Object.fromEntries(entries.map(([playerId]) => [playerId, 10]));
+  }
+
+  return Object.fromEntries(
+    entries.map(([playerId, score]) => [
+      playerId,
+      ((score - min) / (max - min)) * 10,
+    ]),
+  );
+};
+
 export const communityVoteShares = (
   playerIds: readonly string[],
   votes: readonly Vote[],

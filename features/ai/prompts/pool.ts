@@ -16,6 +16,7 @@ export function buildPoolPrompt(input: BuildPoolPromptInput): { system: string; 
       "Each item must have a name (max 60 chars) and a scores array with a value (0-10) for every rubric category.",
       "The rubric must be an array of 3-6 categories, each with a category name and weight, summing to exactly 100.",
       "Generate unique, interesting, and thematically appropriate items.",
+      "Every item name must be distinct — no duplicates, even with different capitalization or punctuation.",
     ].join(" "),
     user: [
       `Generate a pool for the topic: "${input.topic}".`,

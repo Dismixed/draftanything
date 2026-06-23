@@ -23,7 +23,7 @@ export function PhasePanel({ projection, myPlayerId }: PhasePanelProps) {
     case "JUDGING":
       return <JudgingPanel projection={projection} myPlayerId={myPlayerId} />;
     case "COMPLETE":
-      return <CompletePanel projection={projection} />;
+      return <CompletePanel projection={projection} myPlayerId={myPlayerId} />;
     default:
       return null;
   }

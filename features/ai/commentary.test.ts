@@ -58,7 +58,6 @@ describe("commentaryOutputSchema", () => {
   it("accepts valid commentary output", () => {
     const result = commentaryOutputSchema.safeParse({
       text: "This is a risky pick, Alice!",
-      tags: ["reach"],
     });
     expect(result.success).toBe(true);
   });
@@ -66,7 +65,6 @@ describe("commentaryOutputSchema", () => {
   it("rejects empty text", () => {
     const result = commentaryOutputSchema.safeParse({
       text: "",
-      tags: ["reach"],
     });
     expect(result.success).toBe(false);
   });
@@ -74,41 +72,8 @@ describe("commentaryOutputSchema", () => {
   it("rejects text exceeding 240 characters", () => {
     const result = commentaryOutputSchema.safeParse({
       text: "X".repeat(241),
-      tags: ["reach"],
     });
     expect(result.success).toBe(false);
-  });
-
-  it("rejects invalid tags", () => {
-    const result = commentaryOutputSchema.safeParse({
-      text: "A comment",
-      tags: ["invalid_tag"],
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects more than 3 tags", () => {
-    const result = commentaryOutputSchema.safeParse({
-      text: "A comment",
-      tags: ["reach", "steal", "run", "trend"],
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("accepts 0 tags", () => {
-    const result = commentaryOutputSchema.safeParse({
-      text: "A comment",
-      tags: [],
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("accepts all valid tag values", () => {
-    const result = commentaryOutputSchema.safeParse({
-      text: "Interesting pick!",
-      tags: ["reach", "steal", "run"],
-    });
-    expect(result.success).toBe(true);
   });
 });
 

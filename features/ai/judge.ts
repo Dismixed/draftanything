@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 import { zodTextFormat } from "openai/helpers/zod";
 import OpenAI from "openai";
 
+import { scaleToJudgingRange } from "@/features/judging/hybrid";
 import { buildJudgePrompt, JUDGE_PROMPT_VERSION } from "./prompts/judge";
 import { fallbackJudge, offTheDomeFallbackJudge } from "./fallback";
 import type {
@@ -300,16 +301,21 @@ export async function judgeRosters(input: JudgeInput): Promise<JudgeResult> {
       ? offTheDomeFallbackJudge(input.playerIds, input.picks)
       : fallbackJudge(input.playerIds, input.picks, input.rubric);
 
+  const rosterScores =
+    input.rubric.length === 0
+      ? scaleToJudgingRange(fallbackResult.rosterScores)
+      : fallbackResult.rosterScores;
+
   const fallbackScores: Record<string, { overall: number; categories: Record<string, number> }> = {};
   for (const pid of input.playerIds) {
     fallbackScores[pid] = {
-      overall: fallbackResult.rosterScores[pid],
+      overall: rosterScores[pid],
       categories: {},
     };
   }
 
   const ranking = [...input.playerIds].sort(
-    (a, b) => (fallbackResult.rosterScores[b] ?? 0) - (fallbackResult.rosterScores[a] ?? 0),
+    (a, b) => (rosterScores[b] ?? 0) - (rosterScores[a] ?? 0),
   );
 
   return {

@@ -95,7 +95,6 @@ export default async function ResultsPage({ params }: Props) {
         <ResultsBody
           result={result}
           draftId={draftId}
-          maxPlayers={projection.draft.maxPlayers}
         />
 
         {/* Footer */}

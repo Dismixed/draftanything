@@ -1,8 +1,5 @@
 import "server-only";
 
-import OpenAI from "openai";
-import { zodTextFormat } from "openai/helpers/zod";
-
 import {
   generatePoolInputSchema,
   normalizePoolAiOutput,
@@ -10,78 +7,72 @@ import {
   poolOutputSchema,
   topicsOutputSchema,
   type GeneratePoolInput,
+  type PoolOutputAi,
 } from "./schemas";
+import { dedupeItemNames } from "../pool/normalize";
 import { buildPoolPrompt } from "./prompts/pool";
 import { buildTopicsPrompt } from "./prompts/topics";
 import { generateJson } from "./gemini";
 
-const MODEL = process.env.OPENAI_MODEL || "gpt-4o";
-const TIMEOUT_MS = 60_000;
-
-let _client: OpenAI | null = null;
-
-function getClient(): OpenAI {
-  if (!_client) {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error("OPENAI_API_KEY is not configured");
-    }
-    _client = new OpenAI({ apiKey });
-  }
-  return _client;
-}
+const MAX_RETRIES = 2;
 
 export interface PoolGenerationResult {
   items: Array<{ name: string; metadata: Record<string, number> }>;
   rubric: Record<string, number>;
 }
 
+function poolOutputTokens(targetCount: number): number {
+  return Math.min(16384, 1024 + targetCount * 200);
+}
+
+function finalizePoolOutput(
+  ai: PoolOutputAi,
+  existingItems: string[],
+): PoolGenerationResult {
+  const normalized = normalizePoolAiOutput(ai);
+  const deduped = {
+    ...normalized,
+    items: dedupeItemNames(normalized.items, { exclude: existingItems }),
+  };
+
+  const validation = poolOutputSchema.safeParse(deduped);
+  if (!validation.success) {
+    throw new Error(`AI response failed validation: ${validation.error.message}`);
+  }
+
+  return validation.data;
+}
+
 export async function generatePool(input: GeneratePoolInput): Promise<PoolGenerationResult> {
   const parsed = generatePoolInputSchema.parse(input);
-  const client = getClient();
   const prompt = buildPoolPrompt({
     topic: parsed.topic,
     targetCount: parsed.targetCount,
     existingItems: parsed.existingItems,
   });
 
-  const response = await client.responses.create(
-    {
-      model: MODEL,
-      input: [
-        { role: "system", content: [{ type: "input_text", text: prompt.system }] },
-        { role: "user", content: [{ type: "input_text", text: prompt.user }] },
-      ],
-      text: { format: zodTextFormat(poolOutputAiSchema, "pool_output") },
-      reasoning: { effort: "low" },
-      max_output_tokens: 4096,
-    },
-    { signal: AbortSignal.timeout(TIMEOUT_MS) },
-  );
+  let lastError: Error | null = null;
 
-  const raw = response.output_text;
-  if (!raw) {
-    throw new Error("AI returned empty response");
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const aiResult = await generateJson({
+        systemPrompt: prompt.system,
+        userPrompt: prompt.user,
+        schema: poolOutputAiSchema,
+        schemaName: "pool_output",
+        maxOutputTokens: poolOutputTokens(parsed.targetCount),
+      });
+
+      return finalizePoolOutput(aiResult, parsed.existingItems);
+    } catch (e) {
+      lastError = e instanceof Error ? e : new Error(String(e));
+      if (attempt < MAX_RETRIES) {
+        continue;
+      }
+    }
   }
 
-  let parsedResult: unknown;
-  try {
-    parsedResult = JSON.parse(raw);
-  } catch {
-    throw new Error("AI returned invalid JSON");
-  }
-
-  const aiValidation = poolOutputAiSchema.safeParse(parsedResult);
-  if (!aiValidation.success) {
-    throw new Error(`AI response failed validation: ${aiValidation.error.message}`);
-  }
-
-  const validation = poolOutputSchema.safeParse(normalizePoolAiOutput(aiValidation.data));
-  if (!validation.success) {
-    throw new Error(`AI response failed validation: ${validation.error.message}`);
-  }
-
-  return validation.data;
+  throw lastError ?? new Error("Pool generation failed");
 }
 
 export async function suggestTopics(options?: {

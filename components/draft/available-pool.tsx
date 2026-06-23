@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState, type DragEvent } from "react";
 import type { PickingMode, SafeItem, SafePick } from "@/features/draft/types";
+import { WATCHLIST_DRAG_MIME } from "@/features/draft/watchlist";
 
 interface AvailablePoolProps {
   items: SafeItem[];
@@ -11,6 +12,8 @@ interface AvailablePoolProps {
   currentPickIndex: number;
   picks: SafePick[];
   pickingMode?: PickingMode;
+  watchlistItemIds?: Set<string>;
+  onAddToWatchlist?: (itemId: string, name: string) => void;
 }
 
 export function AvailablePool({
@@ -21,16 +24,16 @@ export function AvailablePool({
   currentPickIndex,
   picks,
   pickingMode,
+  watchlistItemIds,
+  onAddToWatchlist,
 }: AvailablePoolProps) {
-  if (pickingMode === "off_the_dome") return null;
+  const [search, setSearch] = useState("");
   const [pickingItemId, setPickingItemId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const dragStartedRef = useRef(false);
 
   const pickedItemIds = new Set(picks.map((p) => p.itemId));
   const isMyTurn = myPlayerId === currentPlayerId;
-  const availableItems = items.filter(
-    (item) => item.isAvailable && !pickedItemIds.has(item.id),
-  );
 
   const handlePick = useCallback(
     async (itemId: string) => {
@@ -61,6 +64,33 @@ export function AvailablePool({
     [isMyTurn, pickingItemId, draftId, currentPickIndex],
   );
 
+  const handleDragStart = useCallback((item: SafeItem, e: DragEvent<HTMLButtonElement>) => {
+    dragStartedRef.current = true;
+    e.dataTransfer.effectAllowed = "copy";
+    e.dataTransfer.setData(
+      WATCHLIST_DRAG_MIME,
+      JSON.stringify({ itemId: item.id, name: item.name }),
+    );
+    e.dataTransfer.setData("text/plain", item.name);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    window.setTimeout(() => {
+      dragStartedRef.current = false;
+    }, 0);
+  }, []);
+
+  if (pickingMode === "off_the_dome") return null;
+
+  const availableItems = items.filter(
+    (item) => item.isAvailable && !pickedItemIds.has(item.id),
+  );
+  const filteredItems = search
+    ? availableItems.filter((item) =>
+        item.name.toLowerCase().includes(search.toLowerCase()),
+      )
+    : availableItems;
+
   return (
     <section
       aria-label="Available items to pick"
@@ -90,6 +120,16 @@ export function AvailablePool({
         </p>
       )}
 
+      <input
+        type="search"
+        placeholder="Search items…"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="da-input"
+        style={{ width: '100%', marginBottom: '12px' }}
+        aria-label="Search pool items"
+      />
+
       <ul
         style={{
           display: 'grid',
@@ -100,38 +140,98 @@ export function AvailablePool({
           margin: 0,
         }}
       >
-        {availableItems.map((item) => {
+        {filteredItems.map((item) => {
           const isPicking = pickingItemId === item.id;
+          const isOnWatchlist = watchlistItemIds?.has(item.id) ?? false;
           return (
             <li key={item.id}>
-              <button
-                type="button"
-                onClick={() => handlePick(item.id)}
-                disabled={!isMyTurn || isPicking}
-                className={`pick-card${isPicking ? ' active' : ''}${!isMyTurn ? ' disabled' : ''}`}
-                style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                aria-busy={isPicking}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'stretch',
+                  gap: '4px',
+                }}
               >
-                <span>{item.name}</span>
-                {isPicking && (
-                  <span
+                <button
+                  type="button"
+                  draggable
+                  onDragStart={(e) => handleDragStart(item, e)}
+                  onDragEnd={handleDragEnd}
+                  onClick={() => {
+                    if (dragStartedRef.current) return;
+                    void handlePick(item.id);
+                  }}
+                  disabled={!isMyTurn || isPicking}
+                  className={`pick-card${isPicking ? ' active' : ''}${!isMyTurn ? ' disabled' : ''}`}
+                  style={{
+                    flex: 1,
+                    textAlign: 'left',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '6px',
+                  }}
+                  aria-busy={isPicking}
+                  aria-label={
+                    isOnWatchlist
+                      ? `${item.name} (on watchlist)`
+                      : `${item.name}. Drag to watchlist or click to draft.`
+                  }
+                >
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {item.name}
+                  </span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                    {isOnWatchlist && (
+                      <span
+                        aria-hidden
+                        style={{
+                          fontSize: '10px',
+                          color: 'var(--gold)',
+                          letterSpacing: '0.08em',
+                        }}
+                      >
+                        ★
+                      </span>
+                    )}
+                    {isPicking && (
+                      <span
+                        style={{
+                          width: '6px',
+                          height: '6px',
+                          borderRadius: '50%',
+                          background: 'var(--gold)',
+                        }}
+                      />
+                    )}
+                  </span>
+                </button>
+                {onAddToWatchlist && (
+                  <button
+                    type="button"
+                    aria-label={`Add ${item.name} to watchlist`}
+                    onClick={() => onAddToWatchlist(item.id, item.name)}
                     style={{
-                      width: '6px',
-                      height: '6px',
-                      borderRadius: '50%',
-                      background: 'var(--gold)',
+                      fontSize: '11px',
+                      color: 'var(--text-dim)',
+                      border: '1px solid var(--border-hi)',
+                      borderRadius: '4px',
+                      padding: '0 8px',
+                      background: 'var(--panel)',
+                      cursor: 'pointer',
                       flexShrink: 0,
-                      marginLeft: '6px',
                     }}
-                  />
+                  >
+                    +
+                  </button>
                 )}
-              </button>
+              </div>
             </li>
           );
         })}
       </ul>
 
-      {availableItems.length === 0 && (
+      {filteredItems.length === 0 && (
         <p
           style={{
             color: 'var(--text-dim)',
@@ -140,7 +240,7 @@ export function AvailablePool({
             padding: '16px 0',
           }}
         >
-          No items available
+          {search ? "No items match your search." : "No items available"}
         </p>
       )}
     </section>

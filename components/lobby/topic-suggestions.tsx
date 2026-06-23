@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { ButtonLoadingLabel, ButtonSpinner } from "@/components/ui/button-spinner";
 
 interface TopicSuggestionsProps {
   onSelect: (topic: string) => void;
@@ -216,23 +217,40 @@ export function TopicSuggestions({ onSelect, initialInterests }: TopicSuggestion
                   fontSize: "12px",
                   padding: "8px 16px",
                 }}
+                aria-busy={loading}
               >
-                {loading ? "Generating\u2026" : topics.length > 0 ? "Generate Ideas" : "Generate Ideas"}
+                <ButtonLoadingLabel
+                  loading={loading}
+                  label="Generate Ideas"
+                  loadingLabel="Generating…"
+                />
               </button>
             </div>
 
-            {loading && topics.length === 0 && (
-              <p
+            {loading && topics.length === 0 && !error && (
+              <div
+                role="status"
+                aria-live="polite"
                 style={{
-                  fontSize: "12px",
-                  color: "var(--text-dim)",
-                  margin: 0,
-                  textAlign: "center",
-                  padding: "16px 0",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "24px 0",
                 }}
               >
-                Generating ideas{"\u2026"}
-              </p>
+                <ButtonSpinner size={22} />
+                <p
+                  style={{
+                    fontSize: "12px",
+                    color: "var(--text-dim)",
+                    margin: 0,
+                    letterSpacing: "0.06em",
+                  }}
+                >
+                  Generating ideas…
+                </p>
+              </div>
             )}
 
             {error && (
@@ -257,8 +275,17 @@ export function TopicSuggestions({ onSelect, initialInterests }: TopicSuggestion
               </div>
             )}
 
-            {!loading && !error && topics.length > 0 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {topics.length > 0 && (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                  position: "relative",
+                  opacity: loading ? 0.55 : 1,
+                  transition: "opacity 0.2s",
+                }}
+              >
                 <p
                   style={{
                     fontSize: "10px",
@@ -276,6 +303,7 @@ export function TopicSuggestions({ onSelect, initialInterests }: TopicSuggestion
                       key={topic}
                       type="button"
                       onClick={() => select(topic)}
+                      disabled={loading}
                       style={{
                         background: "rgba(201,168,76,0.08)",
                         border: "1px solid rgba(201,168,76,0.25)",
@@ -283,12 +311,13 @@ export function TopicSuggestions({ onSelect, initialInterests }: TopicSuggestion
                         fontFamily: "Outfit, sans-serif",
                         fontSize: "12px",
                         padding: "6px 12px",
-                        cursor: "pointer",
+                        cursor: loading ? "wait" : "pointer",
                         borderRadius: "0",
                         transition:
                           "border-color 0.2s, background 0.2s, color 0.2s",
                       }}
                       onMouseEnter={(e) => {
+                        if (loading) return;
                         e.currentTarget.style.borderColor =
                           "rgba(201,168,76,0.6)";
                         e.currentTarget.style.background =
@@ -316,8 +345,13 @@ export function TopicSuggestions({ onSelect, initialInterests }: TopicSuggestion
                     width: "auto",
                     alignSelf: "flex-start",
                   }}
+                  aria-busy={loading}
                 >
-                  {loading ? "Loading\u2026" : "Suggest more"}
+                  <ButtonLoadingLabel
+                    loading={loading}
+                    label="Suggest more"
+                    loadingLabel="Generating…"
+                  />
                 </button>
               </div>
             )}

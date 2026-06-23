@@ -6,7 +6,7 @@ import type { RoomProjection } from "@/features/room/schema";
 import { PoolEditor } from "./pool-editor";
 import { SuggestionQueue } from "./suggestion-queue";
 import type { PoolProjection, PoolSuggestion } from "@/features/pool/service";
-import { ButtonLoadingLabel } from "@/components/ui/button-spinner";
+import { ButtonLoadingLabel, ButtonSpinner } from "@/components/ui/button-spinner";
 
 interface PoolReviewProps {
   draftId: string;
@@ -178,8 +178,9 @@ export function PoolReview({ draftId, myPlayerId, hostPlayerId, room }: PoolRevi
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: 'var(--text-dim)' }}>Loading pool…</p>
+      <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+        <ButtonSpinner size={22} />
+        <p style={{ color: 'var(--text-dim)', margin: 0 }}>Loading pool…</p>
       </div>
     );
   }
@@ -235,17 +236,21 @@ export function PoolReview({ draftId, myPlayerId, hostPlayerId, room }: PoolRevi
             {generating && (
               <div
                 aria-live="polite"
+                role="status"
                 style={{
                   position: "absolute",
                   inset: 0,
                   zIndex: 10,
                   display: "flex",
+                  flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
+                  gap: "12px",
                   background: "rgba(8,8,12,0.72)",
                   border: "1px solid var(--border-hi)",
                 }}
               >
+                <ButtonSpinner size={22} />
                 <p style={{ color: "var(--gold)", fontSize: "13px", margin: 0, letterSpacing: "0.08em" }}>
                   Generating pool items…
                 </p>

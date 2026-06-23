@@ -1,6 +1,6 @@
-# Draft Anything
+# Stim Labs
 
-A live multiplayer draft room for any topic. Friends create private rooms, build a pool of items, draft in rounds, and get AI-powered judging with commentary.
+Party games for any crowd. Stim Labs builds Stim Games — starting with **Draft Anything**, a live multiplayer draft room where friends create private rooms, build a pool of items, draft in rounds, and get AI-powered judging with commentary.
 
 ---
 

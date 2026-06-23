@@ -10,14 +10,12 @@ import { ResultsConfetti } from "./results-confetti";
 interface ResultsBodyProps {
   result: PublicDraftResult;
   draftId: string;
-  maxPlayers: number;
   showShare?: boolean;
 }
 
 export function ResultsBody({
   result,
   draftId,
-  maxPlayers,
   showShare = true,
 }: ResultsBodyProps) {
   return (
@@ -62,14 +60,7 @@ export function ResultsBody({
       )}
 
       {showShare && (
-        <ShareActions
-          draftId={draftId}
-          topic={result.topic}
-          rounds={result.rounds}
-          draftType={result.draftType}
-          judgingMode={result.judgingMode}
-          maxPlayers={maxPlayers}
-        />
+        <ShareActions draftId={draftId} topic={result.topic} />
       )}
     </div>
   );

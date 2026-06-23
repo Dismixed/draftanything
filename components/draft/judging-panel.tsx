@@ -210,7 +210,6 @@ export function JudgingPanel({ projection, myPlayerId }: JudgingPanelProps) {
           <ResultsBody
             result={result}
             draftId={draft.id}
-            maxPlayers={draft.maxPlayers}
             showShare={false}
           />
         ) : (

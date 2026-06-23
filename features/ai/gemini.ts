@@ -65,7 +65,7 @@ export async function generateJson<T extends z.ZodType>(
 
   let parsed: unknown;
   try {
-    parsed = JSON.parse(raw);
+    parsed = parseModelJson(raw);
   } catch {
     throw new Error("Gemini returned invalid JSON");
   }
@@ -82,4 +82,25 @@ export async function generateJson<T extends z.ZodType>(
 
 export function getGeminiModel(): string {
   return MODEL;
+}
+
+function parseModelJson(raw: string): unknown {
+  const trimmed = raw.trim();
+
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    if (fenced) {
+      return JSON.parse(fenced[1].trim());
+    }
+
+    const start = trimmed.indexOf("{");
+    const end = trimmed.lastIndexOf("}");
+    if (start !== -1 && end > start) {
+      return JSON.parse(trimmed.slice(start, end + 1));
+    }
+
+    throw new Error("invalid JSON");
+  }
 }

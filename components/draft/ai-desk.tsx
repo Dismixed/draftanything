@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { SafeCommentary, SafePick, SafePlayer } from "@/features/draft/types";
 
 interface AiDeskProps {
+  draftId: string;
   commentary: SafeCommentary[];
   picks: SafePick[];
   players: SafePlayer[];
@@ -101,7 +102,7 @@ function CommentaryTags({ tags }: { tags: string[] }) {
   );
 }
 
-export function AiDesk({ commentary, picks, players }: AiDeskProps) {
+export function AiDesk({ draftId, commentary, picks, players }: AiDeskProps) {
   const [collapsed, setCollapsed] = useState(false);
   const sorted = [...commentary].sort(
     (a, b) => b.createdAt.localeCompare(a.createdAt),
@@ -132,10 +133,34 @@ export function AiDesk({ commentary, picks, players }: AiDeskProps) {
     ? resolvePickContext(latestCompletedPick!.id)
     : null;
 
+  useEffect(() => {
+    if (!awaitingCommentary || !latestCompletedPick) return;
+
+    const pickId = latestCompletedPick.id;
+    const requestCommentary = () => {
+      void fetch("/api/ai/commentary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ draftId, pickId }),
+      });
+    };
+
+    const initialTimer = setTimeout(requestCommentary, 300);
+    const retryTimer = setTimeout(requestCommentary, 6000);
+
+    return () => {
+      clearTimeout(initialTimer);
+      clearTimeout(retryTimer);
+    };
+  }, [awaitingCommentary, draftId, latestCompletedPick?.id]);
+
   const hasContent = awaitingCommentary || sorted.length > 0;
 
   return (
-    <section aria-label="AI Commissioner Commentary">
+    <section
+      aria-label="AI Commissioner Commentary"
+      className="flex min-h-0 flex-col max-h-[calc(100dvh-11rem)] lg:h-full lg:max-h-full"
+    >
       <button
         type="button"
         onClick={() => setCollapsed((c) => !c)}
@@ -151,6 +176,7 @@ export function AiDesk({ commentary, picks, players }: AiDeskProps) {
           border: 'none',
           cursor: 'pointer',
           padding: '4px 2px 8px',
+          flexShrink: 0,
           transition: 'color 0.15s',
         }}
         onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
@@ -161,12 +187,11 @@ export function AiDesk({ commentary, picks, players }: AiDeskProps) {
 
       {!collapsed && (
         <div
+          className="min-h-0 flex-1 overflow-y-auto"
           style={{
             display: 'flex',
             flexDirection: 'column',
             gap: '8px',
-            maxHeight: '420px',
-            overflowY: 'auto',
           }}
         >
           <div

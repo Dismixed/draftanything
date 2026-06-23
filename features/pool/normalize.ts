@@ -50,6 +50,27 @@ export const assertUniqueItems = (names: readonly string[]): void => {
   }
 };
 
+/** Keep the first occurrence of each normalized name; optionally skip names already in the pool. */
+export function dedupeItemNames<T extends { name: string }>(
+  items: readonly T[],
+  options?: { exclude?: readonly string[] },
+): T[] {
+  const seen = new Set<string>();
+
+  for (const name of options?.exclude ?? []) {
+    seen.add(normalizeItemName(name));
+  }
+
+  const result: T[] = [];
+  for (const item of items) {
+    const normalized = normalizeItemName(item.name);
+    if (seen.has(normalized)) continue;
+    seen.add(normalized);
+    result.push(item);
+  }
+  return result;
+}
+
 export const poolTargetSize = (players: number, rounds: number): number => {
   validateRange(players, 2, 6, "players");
   validateRange(rounds, 1, 10, "rounds");

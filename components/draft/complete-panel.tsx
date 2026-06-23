@@ -1,17 +1,25 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { DraftRoomProjection } from "@/features/draft/types";
 import { buildPublicResult } from "@/features/results/build-public-result";
 import { ResultsBody } from "@/components/results/results-body";
+import { ButtonLoadingLabel } from "@/components/ui/button-spinner";
 
 interface CompletePanelProps {
   projection: DraftRoomProjection;
+  myPlayerId: string;
 }
 
-export function CompletePanel({ projection }: CompletePanelProps) {
+export function CompletePanel({ projection, myPlayerId }: CompletePanelProps) {
+  const router = useRouter();
   const { draft, judgment } = projection;
   const result = useMemo(() => buildPublicResult(projection), [projection]);
+  const isHost = draft.hostPlayerId === myPlayerId;
+
+  const [rematchLoading, setRematchLoading] = useState(false);
+  const [rematchError, setRematchError] = useState<string | null>(null);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -19,6 +27,27 @@ export function CompletePanel({ projection }: CompletePanelProps) {
       document.body.style.overflow = "";
     };
   }, []);
+
+  async function handleRematch() {
+    if (rematchLoading) return;
+    setRematchLoading(true);
+    setRematchError(null);
+    try {
+      const res = await fetch(`/api/drafts/${draft.id}/rematch`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setRematchError(data.message ?? "Failed to start rematch");
+        return;
+      }
+      router.refresh();
+    } catch {
+      setRematchError("Network error. Please try again.");
+    } finally {
+      setRematchLoading(false);
+    }
+  }
 
   return (
     <div
@@ -81,13 +110,42 @@ export function CompletePanel({ projection }: CompletePanelProps) {
           <ResultsBody
             result={result}
             draftId={draft.id}
-            maxPlayers={draft.maxPlayers}
           />
         ) : (
           <p style={{ color: "var(--text-dim)", fontSize: "13px", margin: 0 }}>
             The draft is complete. Results are being processed.
           </p>
         )}
+
+        {/* Rematch controls */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "center" }}>
+          {isHost ? (
+            <>
+              <button
+                type="button"
+                onClick={handleRematch}
+                disabled={rematchLoading}
+                className="btn-gold"
+                style={{ borderColor: "rgba(0,229,255,0.4)", color: "var(--cyan)" }}
+              >
+                <ButtonLoadingLabel
+                  loading={rematchLoading}
+                  label="— Rematch —"
+                  loadingLabel="Resetting..."
+                />
+              </button>
+              {rematchError && (
+                <p role="alert" style={{ color: "#ff4d4d", fontSize: "12px", margin: 0 }}>
+                  {rematchError}
+                </p>
+              )}
+            </>
+          ) : (
+            <p style={{ textAlign: "center", fontSize: "12px", color: "var(--text-dim)" }}>
+              Waiting for the host to start a rematch…
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

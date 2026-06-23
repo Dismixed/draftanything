@@ -19,9 +19,9 @@ export const commentaryTagSchema = z.enum([
   "opening",
 ]);
 
+/** Gemini only returns the line — tags are chosen server-side. */
 export const commentaryOutputSchema = z.object({
   text: z.string().min(1).max(240),
-  tags: z.array(commentaryTagSchema).max(3),
 });
 
 export type CommentaryOutput = z.infer<typeof commentaryOutputSchema>;
@@ -77,10 +77,13 @@ async function retry<T>(
   return null;
 }
 
+function defaultTags(overallPick: number): string[] {
+  return overallPick === 1 ? ["opening"] : ["roundup"];
+}
+
 /**
- * Evaluates and inserts AI commentary for the latest pick in a draft.
+ * Evaluates and inserts AI commentary for a pick.
  * Designed to be called fire-and-forget after a pick is submitted.
- * Silently handles all errors — the pick response must never wait for this.
  */
 export async function handleCommentaryForPick(
   draftId: string,
@@ -95,7 +98,10 @@ export async function handleCommentaryForPick(
       .eq("id", draftId)
       .single();
 
-    if (draftError || !draft) return;
+    if (draftError || !draft) {
+      console.error("[commentary] draft not found:", draftId, draftError);
+      return;
+    }
 
     const rubric = (draft.rubric as Record<string, number>) ?? {};
     const personality =
@@ -109,12 +115,15 @@ export async function handleCommentaryForPick(
     let latestPick: Record<string, unknown> | null = null;
 
     if (targetPickId) {
-      const { data } = await db
+      const { data, error } = await db
         .from("picks")
         .select(pickSelect)
         .eq("id", targetPickId)
         .eq("draft_id", draftId)
-        .single();
+        .maybeSingle();
+      if (error) {
+        console.error("[commentary] pick lookup failed:", targetPickId, error);
+      }
       latestPick = data as Record<string, unknown> | null;
     } else {
       const { data: picks } = await db
@@ -126,7 +135,11 @@ export async function handleCommentaryForPick(
       latestPick = (picks?.[0] as Record<string, unknown> | undefined) ?? null;
     }
 
-    if (!latestPick) return;
+    if (!latestPick) {
+      console.error("[commentary] no pick found for draft:", draftId, targetPickId);
+      return;
+    }
+
     const pickId = latestPick.id as string;
     const overallPick = latestPick.overall_pick as number;
     const itemId = latestPick.item_id as string | null;
@@ -138,7 +151,7 @@ export async function handleCommentaryForPick(
       .from("commentary")
       .select("id")
       .eq("idempotency_key", idempotencyKey)
-      .single();
+      .maybeSingle();
 
     if (existingCommentary) return;
 
@@ -153,148 +166,129 @@ export async function handleCommentaryForPick(
     );
     const playerName = (pickPlayer?.display_name as string) ?? "Unknown";
 
-    if (!itemId) {
-      const freeformName = pickItemName ?? "Unknown";
-      const tags: string[] = [];
-      if (overallPick === 1) tags.push("opening");
-      if (tags.length === 0) tags.push("solid");
+    let itemName: string;
+    let tags: string[];
 
-      const commentary = await retry(
-        () =>
-          generateCommentary({
-            personality,
-            playerName,
-            itemName: freeformName,
-            tags,
-            overallPick,
-            totalPicks: pickOrder.length,
-            topic,
-          }),
-        2,
+    if (!itemId) {
+      itemName = pickItemName ?? "Unknown";
+      tags = defaultTags(overallPick);
+      if (tags[0] !== "opening") tags = ["solid"];
+    } else {
+      const { data: allItems } = await db
+        .from("draft_items")
+        .select("id, name, hidden_metadata")
+        .eq("draft_id", draftId);
+
+      const pickedItem = allItems?.find(
+        (item: Record<string, unknown>) => item.id === itemId,
       );
 
-      if (!commentary) return;
+      if (!pickedItem) {
+        console.error("[commentary] item not found for pick:", pickId, itemId);
+        return;
+      }
 
-      await db.from("commentary").insert({
-        draft_id: draftId,
-        pick_id: pickId,
-        personality,
-        text: commentary.text,
-        trigger_tags: tags,
-        model: getGeminiModel(),
-        prompt_version: "v1",
-        idempotency_key: idempotencyKey,
-      });
-      return;
-    }
+      itemName = (pickedItem.name as string) ?? "Unknown";
 
-    const { data: allItems } = await db
-      .from("draft_items")
-      .select("id, name, hidden_metadata")
-      .eq("draft_id", draftId);
+      const pickedItemScores =
+        (pickedItem.hidden_metadata as Record<string, number>) ?? {};
+      const allItemScores = (allItems ?? []).map(
+        (item: Record<string, unknown>) =>
+          (item.hidden_metadata as Record<string, number>) ?? {},
+      );
 
-    if (!allItems || allItems.length === 0) return;
+      const { data: recentPicksData } = await db
+        .from("picks")
+        .select("id, item_id, overall_pick, player_id")
+        .eq("draft_id", draftId)
+        .order("overall_pick", { ascending: true });
 
-    const pickedItem = allItems.find(
-      (item: Record<string, unknown>) => item.id === itemId,
-    );
+      const allPicks = (recentPicksData ?? []) as Array<Record<string, unknown>>;
 
-    if (!pickedItem) return;
+      const currentPickIndex = allPicks.findIndex(
+        (p: Record<string, unknown>) => p.id === pickId,
+      );
+      const recentPicks = allPicks.slice(
+        Math.max(0, currentPickIndex - 2),
+        currentPickIndex + 1,
+      );
 
-    const pickedItemScores =
-      (pickedItem.hidden_metadata as Record<string, number>) ?? {};
-    const allItemScores = allItems.map(
-      (item: Record<string, unknown>) =>
-        (item.hidden_metadata as Record<string, number>) ?? {},
-    );
+      const recentPickScores = recentPicks
+        .map((p: Record<string, unknown>) => {
+          const item = allItems?.find(
+            (i: Record<string, unknown>) => i.id === p.item_id,
+          );
+          const pp = players.find(
+            (pl: Record<string, unknown>) => pl.id === p.player_id,
+          );
+          return {
+            scores: (item?.hidden_metadata as Record<string, number>) ?? {},
+            seat: (pp?.seat as number) ?? 0,
+          };
+        })
+        .filter((p) => Object.keys(p.scores).length > 0);
 
-    const { data: recentPicksData } = await db
-      .from("picks")
-      .select("id, item_id, overall_pick, player_id")
-      .eq("draft_id", draftId)
-      .order("overall_pick", { ascending: true });
+      const seatPickScores = allPicks
+        .filter(
+          (p: Record<string, unknown>) =>
+            p.id !== pickId &&
+            (p as Record<string, unknown>).player_id === playerId,
+        )
+        .map((p: Record<string, unknown>) => {
+          const item = allItems?.find(
+            (i: Record<string, unknown>) => i.id === p.item_id,
+          );
+          return (item?.hidden_metadata as Record<string, number>) ?? {};
+        })
+        .filter((s) => Object.keys(s).length > 0);
 
-    const allPicks = (recentPicksData ?? []) as Array<Record<string, unknown>>;
+      const { data: lastCommentary } = await db
+        .from("commentary")
+        .select("pick_id")
+        .eq("draft_id", draftId)
+        .order("created_at", { ascending: false })
+        .limit(1);
 
-    const currentPickIndex = allPicks.findIndex(
-      (p: Record<string, unknown>) => p.id === pickId,
-    );
-    const recentPicks = allPicks.slice(
-      Math.max(0, currentPickIndex - 2),
-      currentPickIndex + 1,
-    );
-
-    const recentPickScores = recentPicks
-      .map((p: Record<string, unknown>) => {
-        const item = allItems.find(
-          (i: Record<string, unknown>) => i.id === p.item_id,
-        );
-        const pp = players.find(
-          (pl: Record<string, unknown>) => pl.id === p.player_id,
-        );
-        return {
-          scores: (item?.hidden_metadata as Record<string, number>) ?? {},
-          seat: (pp?.seat as number) ?? 0,
-        };
-      })
-      .filter((p) => Object.keys(p.scores).length > 0);
-
-    const seatPickScores = allPicks
-      .filter(
-        (p: Record<string, unknown>) =>
-          p.id !== pickId &&
-          (p as Record<string, unknown>).player_id === playerId,
-      )
-      .map((p: Record<string, unknown>) => {
-        const item = allItems.find(
-          (i: Record<string, unknown>) => i.id === p.item_id,
-        );
-        return (item?.hidden_metadata as Record<string, number>) ?? {};
-      })
-      .filter((s) => Object.keys(s).length > 0);
-
-    const { data: lastCommentary } = await db
-      .from("commentary")
-      .select("pick_id")
-      .eq("draft_id", draftId)
-      .order("created_at", { ascending: false })
-      .limit(1);
-
-    let picksSinceLastCommentary = 999;
-    if (lastCommentary && lastCommentary.length > 0) {
-      const lastPickId = lastCommentary[0].pick_id as string | null;
-      if (lastPickId) {
-        const { data: lastPick } = await db
-          .from("picks")
-          .select("overall_pick")
-          .eq("id", lastPickId)
-          .single();
-        if (lastPick) {
-          picksSinceLastCommentary = overallPick - (lastPick.overall_pick as number);
+      let picksSinceLastCommentary = 999;
+      if (lastCommentary && lastCommentary.length > 0) {
+        const lastPickId = lastCommentary[0].pick_id as string | null;
+        if (lastPickId) {
+          const { data: lastPick } = await db
+            .from("picks")
+            .select("overall_pick")
+            .eq("id", lastPickId)
+            .maybeSingle();
+          if (lastPick) {
+            picksSinceLastCommentary =
+              overallPick - (lastPick.overall_pick as number);
+          }
         }
       }
+
+      const triggerResult =
+        Object.keys(pickedItemScores).length > 0
+          ? evaluateCommentaryTrigger({
+              pickedItemScores,
+              allItemScores,
+              overallPick,
+              totalPicks: pickOrder.length,
+              rubricWeights: rubric,
+              recentPickScores,
+              seatPickScores,
+              picksSinceLastCommentary,
+            })
+          : null;
+
+      tags = triggerResult?.tags ?? defaultTags(overallPick);
     }
-
-    const triggerResult = evaluateCommentaryTrigger({
-      pickedItemScores,
-      allItemScores,
-      overallPick,
-      totalPicks: pickOrder.length,
-      rubricWeights: rubric,
-      recentPickScores,
-      seatPickScores,
-      picksSinceLastCommentary,
-    });
-
-    if (!triggerResult) return;
 
     const commentary = await retry(
       () =>
         generateCommentary({
           personality,
           playerName,
-          itemName: (pickedItem.name as string) ?? "Unknown",
-          tags: triggerResult.tags,
+          itemName,
+          tags,
           overallPick,
           totalPicks: pickOrder.length,
           topic,
@@ -302,18 +296,25 @@ export async function handleCommentaryForPick(
       2,
     );
 
-    if (!commentary) return;
+    if (!commentary) {
+      console.error("[commentary] generation failed for pick:", pickId);
+      return;
+    }
 
-    await db.from("commentary").insert({
+    const { error: insertError } = await db.from("commentary").insert({
       draft_id: draftId,
       pick_id: pickId,
       personality,
       text: commentary.text,
-      trigger_tags: triggerResult.tags,
+      trigger_tags: tags,
       model: getGeminiModel(),
-      prompt_version: "v1",
+      prompt_version: COMMENTARY_PROMPT_VERSION,
       idempotency_key: idempotencyKey,
     });
+
+    if (insertError) {
+      console.error("[commentary] insert failed:", insertError);
+    }
   } catch (e) {
     console.error("[handleCommentaryForPick] Error:", e);
   }

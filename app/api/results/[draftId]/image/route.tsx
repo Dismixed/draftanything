@@ -144,7 +144,7 @@ export async function GET(
               color: "#6366f1",
             }}
           >
-            draft-anything.app
+            stim-labs.app
           </div>
         </div>
       ),

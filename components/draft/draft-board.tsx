@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDraftStore } from "@/features/draft/store";
 import { useDraftRoom } from "@/features/draft/use-draft-room";
+import { useWatchlist } from "@/features/draft/use-watchlist";
 import type { DraftRoomProjection } from "@/features/draft/types";
 import { AvailablePool } from "./available-pool";
 import { PickHistory } from "./pick-history";
@@ -12,6 +13,7 @@ import { TurnTimer } from "./turn-timer";
 import { AiDesk } from "./ai-desk";
 import { OffTheDomeInput } from "./off-the-dome-input";
 import { PhasePanel } from "./phase-panel";
+import { DraftWatchlist } from "./draft-watchlist";
 
 interface DraftBoardProps {
   initial: DraftRoomProjection;
@@ -60,6 +62,29 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
     [projection.draft.id, projection.draft.currentPickIndex],
   );
 
+  const handlePoolPick = useCallback(
+    async (itemId: string) => {
+      setIsSubmittingPick(true);
+      try {
+        const res = await fetch(`/api/drafts/${projection.draft.id}/pick`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            itemId,
+            expectedPick: projection.draft.currentPickIndex,
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.message ?? "Pick failed");
+        }
+      } finally {
+        setIsSubmittingPick(false);
+      }
+    },
+    [projection.draft.id, projection.draft.currentPickIndex],
+  );
+
   useDraftRoom({
     draftId: projection.draft.id,
     roomCode: projection.draft.roomCode,
@@ -89,6 +114,28 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
     : undefined;
   const isMyTurn = isDrafting && currentPlayer?.id === myPlayerId;
 
+  const {
+    entries: watchlistEntries,
+    addEntry: addWatchlistEntry,
+    removeEntry: removeWatchlistEntry,
+    moveEntry: moveWatchlistEntry,
+  } = useWatchlist({
+    draftId: draft.id,
+    playerId: myPlayerId,
+    picks,
+    availableItems,
+  });
+
+  const watchlistItemIds = useMemo(
+    () =>
+      new Set(
+        watchlistEntries
+          .filter((entry) => entry.kind === "pool")
+          .map((entry) => entry.itemId),
+      ),
+    [watchlistEntries],
+  );
+
   const connectionDotColor =
     connectionStatus === "connected"
       ? "#00ff87"
@@ -100,10 +147,8 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       {/* Header */}
       <header
+        className="sticky top-0 z-10 md:static"
         style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
           background: 'rgba(11,14,28,0.95)',
           backdropFilter: 'blur(12px)',
           borderBottom: '1px solid var(--border-hi)',
@@ -208,7 +253,11 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
             {isMyTurn ? "Your turn" : `${currentPlayer.displayName} on the clock`}
           </span>
           {" · Pick "}{currentSlot.overallPick}
-          {isMyTurn && " — tap Pool to select"}
+          {isMyTurn && draft.pickingMode === "off_the_dome"
+            ? " — type your pick below"
+            : isMyTurn
+              ? " — tap Pool to select"
+              : null}
         </div>
       )}
 
@@ -259,11 +308,17 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
       {/* Main layout: pool | rosters (hero) | sidebar */}
       <div
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[minmax(200px,1fr)_minmax(0,2.5fr)_minmax(200px,1fr)] gap-4 px-4 pt-6 pb-4 md:pt-8"
-        style={{ alignItems: 'start' }}
+        style={{
+          alignItems: "start",
+          paddingBottom:
+            isDrafting && draft.pickingMode === "off_the_dome"
+              ? "max(120px, calc(88px + env(safe-area-inset-bottom)))"
+              : undefined,
+        }}
       >
         {/* Available pool / Pick history */}
         <div
-          className={`md:col-span-1 lg:col-span-1 order-2 md:order-1 ${mobileTab !== "pool" ? "hidden md:block" : ""}`}
+          className={`md:col-span-1 lg:col-span-1 order-2 md:order-1 flex flex-col gap-4 ${mobileTab !== "pool" ? "hidden md:flex" : ""}`}
         >
           {draft.pickingMode === "off_the_dome" ? (
             <PickHistory
@@ -281,6 +336,29 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
               currentPickIndex={draft.currentPickIndex}
               picks={picks}
               pickingMode={draft.pickingMode}
+              watchlistItemIds={watchlistItemIds}
+              onAddToWatchlist={(itemId, name) =>
+                addWatchlistEntry({ kind: "pool", itemId, name })
+              }
+            />
+          )}
+
+          {isDrafting && (
+            <DraftWatchlist
+              entries={watchlistEntries}
+              pickingMode={draft.pickingMode}
+              isMyTurn={!!isMyTurn}
+              isSubmittingPick={isSubmittingPick}
+              onAddText={(name) => addWatchlistEntry({ kind: "text", name })}
+              onAddPoolItem={(itemId, name) =>
+                addWatchlistEntry({ kind: "pool", itemId, name })
+              }
+              onRemove={removeWatchlistEntry}
+              onMove={moveWatchlistEntry}
+              onPickPoolItem={draft.pickingMode === "pool" ? handlePoolPick : undefined}
+              onPickTextItem={
+                draft.pickingMode === "off_the_dome" ? handleOffTheDomePick : undefined
+              }
             />
           )}
         </div>
@@ -306,10 +384,11 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
             "order-3",
             mobileTab === "ai" ? "block" : "hidden",
             "md:block md:col-span-2 lg:col-span-1",
-            "lg:col-span-1",
+            "lg:col-span-1 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2rem)] lg:flex lg:min-h-0 lg:flex-col",
           ].join(" ")}
         >
           <AiDesk
+            draftId={draft.id}
             commentary={projection.commentary}
             picks={picks}
             players={players}

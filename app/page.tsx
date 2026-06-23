@@ -130,6 +130,139 @@ export default function StimGames() {
           </div>
         </header>
 
+        {/* Chainlink — Hero Card */}
+        <Link
+          href="/chainlink"
+          style={{
+            display: "block",
+            textDecoration: "none",
+            marginBottom: "32px",
+          }}
+        >
+          <div
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(0,229,255,0.08) 0%, rgba(124,58,255,0.08) 100%)",
+              border: "1px solid rgba(0,229,255,0.22)",
+              padding: "40px 36px",
+              position: "relative",
+              overflow: "hidden",
+              cursor: "pointer",
+              transition: "border-color 0.25s, box-shadow 0.25s",
+            }}
+            className="stim-hero-card"
+          >
+            {/* Top gold hairline */}
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: "10%",
+                right: "10%",
+                height: "1px",
+                background:
+                  "linear-gradient(90deg, transparent, rgba(0,229,255,0.4), transparent)",
+              }}
+            />
+
+            {/* Glow blob */}
+            <div
+              style={{
+                position: "absolute",
+                top: "-40%",
+                right: "-10%",
+                width: "300px",
+                height: "300px",
+                borderRadius: "50%",
+                background:
+                  "radial-gradient(circle, rgba(0,229,255,0.06) 0%, transparent 70%)",
+                pointerEvents: "none",
+              }}
+            />
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "24px",
+                flexWrap: "wrap",
+              }}
+            >
+              <div style={{ flex: 1, minWidth: "220px" }}>
+                <div
+                  style={{
+                    fontSize: "9px",
+                    fontWeight: 600,
+                    letterSpacing: "0.32em",
+                    textTransform: "uppercase",
+                    color: "var(--cyan)",
+                    opacity: 0.8,
+                    marginBottom: "8px",
+                  }}
+                >
+                  New
+                </div>
+                <h2
+                  style={{
+                    fontFamily: '"Playfair Display", serif',
+                    fontSize: "clamp(32px, 6vw, 44px)",
+                    fontWeight: 900,
+                    lineHeight: 0.95,
+                    color: "var(--text)",
+                    margin: "0 0 12px",
+                  }}
+                >
+                  Chain
+                  <em
+                    style={{
+                      fontStyle: "italic",
+                      color: "var(--cyan)",
+                      textShadow: "0 0 30px rgba(0,229,255,0.15)",
+                    }}
+                  >
+                    link
+                  </em>
+                </h2>
+                <p
+                  style={{
+                    fontSize: "13px",
+                    color: "var(--text-dim)",
+                    lineHeight: 1.6,
+                    margin: 0,
+                    fontWeight: 300,
+                    maxWidth: "380px",
+                  }}
+                >
+                  Guess the word chain. Solve the theme. A daily puzzle where
+                  every answer unlocks the next.
+                </p>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  background: "rgba(0,229,255,0.1)",
+                  border: "1px solid rgba(0,229,255,0.3)",
+                  padding: "12px 24px",
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  letterSpacing: "0.2em",
+                  textTransform: "uppercase",
+                  color: "var(--cyan)",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
+                }}
+              >
+                Play Now
+                <span style={{ fontSize: "14px" }}>&#8594;</span>
+              </div>
+            </div>
+          </div>
+        </Link>
+
         {/* Draft Anything — Hero Card */}
         <Link
           href="/draft-anything"

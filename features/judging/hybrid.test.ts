@@ -5,6 +5,7 @@ import {
   hybridScores,
   normalizeAiScore,
   resolveWinners,
+  scaleToJudgingRange,
 } from "./hybrid";
 
 describe("normalizeAiScore", () => {
@@ -18,6 +19,27 @@ describe("normalizeAiScore", () => {
       expect(() => normalizeAiScore(score)).toThrow();
     },
   );
+});
+
+describe("scaleToJudgingRange", () => {
+  it("maps min and max scores to 0 and 10", () => {
+    expect(scaleToJudgingRange({ p1: 12, p2: 24, p3: 18 })).toEqual({
+      p1: 0,
+      p2: 10,
+      p3: 5,
+    });
+  });
+
+  it("assigns 10 to every player when all scores tie", () => {
+    expect(scaleToJudgingRange({ p1: 42, p2: 42 })).toEqual({
+      p1: 10,
+      p2: 10,
+    });
+  });
+
+  it("leaves already-valid scores unchanged when in range", () => {
+    expect(scaleToJudgingRange({ p1: 6, p2: 8 })).toEqual({ p1: 0, p2: 10 });
+  });
 });
 
 describe("communityVoteShares", () => {

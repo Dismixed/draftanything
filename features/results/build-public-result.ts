@@ -34,18 +34,28 @@ function resolvePlayerName(
   return players.find((p) => p.id === playerId)?.displayName ?? "Unknown";
 }
 
-function resolveItemName(
-  itemId: string,
+function resolveAwardItemName(
+  award: { pickId?: string; itemId?: string },
   picks: DraftRoomProjection["picks"],
   items: DraftRoomProjection["availableItems"],
 ): string {
-  const pick = picks.find((p) => p.itemId === itemId);
-  if (pick) {
-    const item = items.find((i) => i.id === pick.itemId);
+  if (award.pickId) {
+    const pick = picks.find((p) => p.id === award.pickId);
+    if (pick?.itemName) return pick.itemName;
+    if (pick?.itemId) {
+      const item = items.find((i) => i.id === pick.itemId);
+      if (item) return item.name;
+    }
+  }
+
+  if (award.itemId) {
+    const pick = picks.find((p) => p.itemId === award.itemId);
+    if (pick?.itemName) return pick.itemName;
+    const item = items.find((i) => i.id === award.itemId);
     if (item) return item.name;
   }
-  const item = items.find((i) => i.id === itemId);
-  return item?.name ?? "Unknown";
+
+  return "Unknown";
 }
 
 export function buildPublicResult(
@@ -104,9 +114,7 @@ export function buildPublicResult(
         playerName: award.playerId
           ? resolvePlayerName(award.playerId, players)
           : "Unknown",
-        itemName: award.itemId
-          ? resolveItemName(award.itemId, picks, availableItems)
-          : "Unknown",
+        itemName: resolveAwardItemName(award, picks, availableItems),
         pickNumber: award.pickId
           ? (picks.find((p) => p.id === award.pickId)?.overallPick ?? 0)
           : 0,

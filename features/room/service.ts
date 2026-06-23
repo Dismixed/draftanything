@@ -7,6 +7,7 @@ import {
   ROOM_CODE_LENGTH,
   type CreateRoomInput,
   type RoomProjection,
+  type UpdateConfigInput,
 } from "./schema";
 
 /**
@@ -246,4 +247,80 @@ export async function getRoomByCode(roomCode: string): Promise<RoomProjection> {
   }
 
   return buildProjection(draft, players ?? []);
+}
+
+/**
+ * Resets a completed draft back to LOBBY for a rematch.
+ * Only the host can trigger this. Clears all draft data but keeps players.
+ */
+export async function resetForRematch(
+  draftId: string,
+  guestId: string,
+): Promise<RoomProjection> {
+  const db = createAdminClient();
+
+  const { error } = await db.rpc("reset_draft_for_rematch", {
+    p_draft_id: draftId,
+    p_host_guest_id: guestId,
+  });
+
+  if (error) {
+    const msg = error.message ?? "";
+    if (msg.includes("ROOM_NOT_FOUND")) {
+      throw new AppError("ROOM_NOT_FOUND", `Draft ${draftId} not found`);
+    }
+    if (msg.includes("NOT_HOST")) {
+      throw new AppError("NOT_HOST", "Only the host can start a rematch");
+    }
+    if (msg.includes("INVALID_PHASE")) {
+      throw new AppError("INVALID_PHASE", "Room must be in COMPLETE phase to rematch");
+    }
+    throw new AppError("INVALID_INPUT", error.message);
+  }
+
+  return getRoom(draftId);
+}
+
+/**
+ * Updates draft configuration while in LOBBY. Host-only.
+ */
+export async function updateRoomConfig(
+  draftId: string,
+  guestId: string,
+  config: UpdateConfigInput,
+): Promise<RoomProjection> {
+  const db = createAdminClient();
+
+  const { error } = await db.rpc("update_draft_config", {
+    p_draft_id: draftId,
+    p_host_guest_id: guestId,
+    p_topic: config.topic,
+    p_max_players: config.maxPlayers,
+    p_rounds: config.rounds,
+    p_timer_seconds: config.timerSeconds ?? null,
+    p_draft_type: config.draftType,
+    p_picking_mode: config.pickingMode,
+    p_judging_mode: config.judgingMode,
+    p_ai_personality: config.aiPersonality,
+    p_custom_judge_prompt: config.customJudgePrompt ?? null,
+  });
+
+  if (error) {
+    const msg = error.message ?? "";
+    if (msg.includes("ROOM_NOT_FOUND")) {
+      throw new AppError("ROOM_NOT_FOUND", `Draft ${draftId} not found`);
+    }
+    if (msg.includes("NOT_HOST")) {
+      throw new AppError("NOT_HOST", "Only the host can edit configuration");
+    }
+    if (msg.includes("INVALID_PHASE")) {
+      throw new AppError("INVALID_PHASE", "Room must be in LOBBY phase to edit configuration");
+    }
+    if (msg.includes("ROOM_FULL")) {
+      throw new AppError("ROOM_FULL", "Cannot reduce max players below current player count");
+    }
+    throw new AppError("INVALID_INPUT", error.message);
+  }
+
+  return getRoom(draftId);
 }

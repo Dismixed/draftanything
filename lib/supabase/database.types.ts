@@ -1263,6 +1263,10 @@ export type Database = {
         Args: { p_draft_id: string }
         Returns: boolean
       }
+      reset_draft_for_rematch: {
+        Args: { p_draft_id: string; p_host_guest_id: string }
+        Returns: undefined
+      }
       start_draft: {
         Args: { p_draft_id: string; p_guest_id: string; p_pick_order: Json }
         Returns: undefined
@@ -1303,6 +1307,22 @@ export type Database = {
           p_draft_id: string
           p_guest_id: string
           p_selected_player_id: string
+        }
+        Returns: undefined
+      }
+      update_draft_config: {
+        Args: {
+          p_ai_personality: string
+          p_custom_judge_prompt: string | null
+          p_draft_id: string
+          p_draft_type: string
+          p_host_guest_id: string
+          p_judging_mode: string
+          p_max_players: number
+          p_picking_mode: string
+          p_rounds: number
+          p_timer_seconds: number | null
+          p_topic: string
         }
         Returns: undefined
       }

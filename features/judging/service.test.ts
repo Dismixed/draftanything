@@ -234,5 +234,62 @@ describe("judging service", () => {
       // p2: 6*0.7 + 10*0.3 = 7.2
       expect(result.winnerPlayerIds).toEqual(["p2"]);
     });
+
+    it("accepts off-the-dome fallback scores scaled to 0..10", async () => {
+      const { judgeDraft } = await import("./service");
+
+      const aiResult = {
+        source: "fallback" as const,
+        playerScores: {
+          p1: { overall: 0, categories: {} },
+          p2: { overall: 10, categories: {} },
+        },
+        ranking: ["p2", "p1"],
+        winnerPlayerIds: ["p2"],
+        awards: {
+          bestPick: { pickId: "pk1", itemId: "it1", playerId: "p2" },
+          worstPick: { pickId: "pk2", itemId: "it2", playerId: "p1" },
+          biggestSteal: { pickId: "pk3", itemId: "it3", playerId: "p2" },
+        },
+        explanation: "Fallback judgment.",
+        model: null,
+        promptVersion: "1.0.0",
+        idempotencyKey: "fallback-key",
+      };
+
+      vi.mocked(judgeRosters).mockResolvedValue(aiResult);
+
+      mockDb.from.mockReturnValue(mockQueryChain);
+
+      const players = [
+        { id: "p1", displayName: "Alice", seat: 1, isReady: false, isHost: true },
+        { id: "p2", displayName: "Bob", seat: 2, isReady: false, isHost: false },
+      ];
+
+      const picks: SafePick[] = [];
+      const rosters = [
+        { pickIds: [], playerId: "p1", itemIds: [], displayName: "Alice" },
+        { pickIds: [], playerId: "p2", itemIds: [], displayName: "Bob" },
+      ];
+
+      const votes = [{ voterPlayerId: "p1", selectedPlayerId: "p2" }];
+
+      const result = await judgeDraft(
+        "draft-1",
+        "Test",
+        "hybrid",
+        "analyst",
+        null,
+        [],
+        players,
+        picks,
+        rosters,
+        votes,
+      );
+
+      expect(result.winnerPlayerIds).toEqual(["p2"]);
+      expect(result.playerScores.p1.overall).toBeCloseTo(0, 5);
+      expect(result.playerScores.p2.overall).toBeCloseTo(10, 5);
+    });
   });
 });

@@ -130,4 +130,47 @@ describe("buildPublicResult", () => {
     expect(result.awards[0].playerName).toBe("Unknown");
     expect(result.awards[0].itemName).toBe("Unknown");
   });
+
+  it("resolves award item names from pickId when itemId is empty (off-the-dome)", () => {
+    const proj = makeProjection({
+      draft: {
+        ...makeProjection().draft,
+        pickingMode: "off_the_dome",
+      },
+      availableItems: [],
+      picks: [
+        {
+          id: "pick-1",
+          playerId: "player-1",
+          itemId: "",
+          itemName: "LeBron James",
+          overallPick: 1,
+          round: 1,
+          pickInRound: 1,
+          isAutoPick: false,
+          forfeited: false,
+        },
+      ],
+      judgment: {
+        ...makeProjection().judgment!,
+        awards: {
+          bestPick: { pickId: "pick-1", itemId: "", playerId: "player-1" },
+          worstPick: { pickId: "pick-1", itemId: "", playerId: "player-1" },
+          biggestSteal: { pickId: "pick-1", itemId: "", playerId: "player-1" },
+        },
+      },
+    });
+
+    const result = buildPublicResult(proj);
+    expect(result.awards.every((a) => a.itemName === "LeBron James")).toBe(true);
+  });
+
+  it("resolves award item names from pickId when itemId is wrong", () => {
+    const proj = makeProjection();
+    proj.judgment!.awards = {
+      bestPick: { pickId: "pick-1", itemId: "wrong-id", playerId: "player-1" },
+    };
+    const result = buildPublicResult(proj);
+    expect(result.awards[0].itemName).toBe("Breaking Bad");
+  });
 });

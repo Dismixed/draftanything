@@ -6,6 +6,7 @@ import { handleCommentaryForPick } from "@/features/ai/commentary";
 
 const commentaryRequestSchema = z.object({
   draftId: z.string().uuid(),
+  pickId: z.string().uuid().optional(),
 });
 
 /**
@@ -42,10 +43,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const { draftId } = parseResult.data;
+    const { draftId, pickId } = parseResult.data;
 
-    // Fire-and-forget the commentary generation — don't await
-    void handleCommentaryForPick(draftId);
+    void handleCommentaryForPick(draftId, pickId);
 
     return Response.json({ accepted: true });
   } catch (e) {

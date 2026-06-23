@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   assertUniqueItems,
+  dedupeItemNames,
   normalizeItemName,
   poolTargetSize,
 } from "./normalize";
@@ -38,6 +39,33 @@ describe("normalizeItemName", () => {
 
   it("strips controls, formats, and isolated marks around visible text", () => {
     expect(normalizeItemName("\u0301\u200bAlien\u0007\u0327")).toBe("alien");
+  });
+});
+
+describe("dedupeItemNames", () => {
+  it("keeps the first occurrence of normalized duplicates", () => {
+    const items = [
+      { name: "Inception", score: 9 },
+      { name: "inception", score: 7 },
+      { name: "The Matrix", score: 8 },
+      { name: "The Matrix", score: 6 },
+    ];
+
+    expect(dedupeItemNames(items)).toEqual([
+      { name: "Inception", score: 9 },
+      { name: "The Matrix", score: 8 },
+    ]);
+  });
+
+  it("excludes names already in the pool", () => {
+    const items = [
+      { name: "Alien", score: 9 },
+      { name: "Blade Runner", score: 8 },
+    ];
+
+    expect(dedupeItemNames(items, { exclude: ["alien"] })).toEqual([
+      { name: "Blade Runner", score: 8 },
+    ]);
   });
 });
 

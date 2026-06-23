@@ -5,19 +5,11 @@ import { useEffect, useState } from "react";
 interface ShareActionsProps {
   draftId: string;
   topic: string;
-  rounds: number;
-  draftType: string;
-  judgingMode: string;
-  maxPlayers: number;
 }
 
 export function ShareActions({
   draftId,
   topic,
-  rounds,
-  draftType,
-  judgingMode,
-  maxPlayers,
 }: ShareActionsProps) {
   const [copied, setCopied] = useState(false);
   const [canShare, setCanShare] = useState(false);
@@ -31,15 +23,6 @@ export function ShareActions({
   function getResultUrl() {
     return `${window.location.origin}/results/${draftId}`;
   }
-
-  const rematchParams = new URLSearchParams({
-    topic,
-    rounds: String(rounds),
-    draftType,
-    judgingMode,
-    maxPlayers: String(maxPlayers),
-  });
-  const rematchUrl = `/?${rematchParams.toString()}`;
 
   async function copyLink() {
     const resultUrl = getResultUrl();
@@ -124,17 +107,6 @@ export function ShareActions({
           <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
         </svg>
         Download PNG
-      </a>
-
-      <a
-        href={rematchUrl}
-        className="btn-gold"
-        style={{ width: 'auto', padding: '10px 16px', display: 'inline-flex', alignItems: 'center', gap: '6px', borderColor: 'rgba(0,229,255,0.4)', color: 'var(--cyan)' }}
-      >
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="var(--cyan)" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-        </svg>
-        Rematch
       </a>
     </div>
   );

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { zodTextFormat } from "openai/helpers/zod";
 
 import {
@@ -7,28 +7,24 @@ import {
   poolOutputAiSchema,
   poolOutputSchema,
 } from "./schemas";
+import { dedupeItemNames } from "../pool/normalize";
 import {
   validPoolResult,
   poolWithDuplicates,
   invalidRubricResult,
 } from "../../tests/fixtures/ai";
 
-vi.mock("openai", () => {
-  const MockOpenAI = vi.fn(() => ({
-    responses: {
-      create: vi.fn(),
-    },
-  }));
-  return { default: MockOpenAI };
-});
-
 vi.mock("openai/helpers/zod", () => ({
   zodTextFormat: vi.fn(() => ({ type: "json_schema" as const, name: "test", schema: {} })),
 }));
 
-vi.mock("./pool", () => ({
-  generatePool: vi.fn(),
+vi.mock("./gemini", () => ({
+  generateJson: vi.fn(),
 }));
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 describe("generatePoolInputSchema", () => {
   it("accepts valid input", () => {
@@ -100,6 +96,47 @@ describe("poolOutputSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("accepts duplicate AI output after deduplication", () => {
+    const ai = {
+      items: [
+        {
+          name: "Inception",
+          scores: [
+            { category: "quality", value: 9 },
+            { category: "rewatchability", value: 8 },
+          ],
+        },
+        {
+          name: "inception",
+          scores: [
+            { category: "quality", value: 7 },
+            { category: "rewatchability", value: 6 },
+          ],
+        },
+        {
+          name: "The Matrix",
+          scores: [
+            { category: "quality", value: 9 },
+            { category: "rewatchability", value: 9 },
+          ],
+        },
+      ],
+      rubric: [
+        { category: "quality", weight: 50 },
+        { category: "rewatchability", weight: 50 },
+      ],
+    };
+
+    const normalized = normalizePoolAiOutput(ai);
+    const deduped = {
+      ...normalized,
+      items: dedupeItemNames(normalized.items),
+    };
+    const result = poolOutputSchema.safeParse(deduped);
+    expect(result.success).toBe(true);
+    expect(result.data?.items).toHaveLength(2);
+  });
+
   it("rejects rubric weights that do not sum to 100", () => {
     const result = poolOutputSchema.safeParse(invalidRubricResult);
     expect(result.success).toBe(false);
@@ -164,22 +201,105 @@ describe("duplicate detection in schema", () => {
   });
 });
 
-describe("generatePool contract tests", () => {
-  it("propagates timeout errors to callers", async () => {
-    const { generatePool } = await import("./pool");
-    vi.mocked(generatePool).mockRejectedValue(
-      new DOMException("The operation was aborted", "AbortError"),
+describe("generatePool", () => {
+  it("uses Gemini structured JSON and dedupes the result", async () => {
+    const { generateJson } = await import("./gemini");
+    const { generatePool } = await import("./client");
+
+    vi.mocked(generateJson).mockResolvedValue({
+      items: [
+        {
+          name: "Inception",
+          scores: [
+            { category: "quality", value: 9 },
+            { category: "rewatchability", value: 8 },
+          ],
+        },
+        {
+          name: "inception",
+          scores: [
+            { category: "quality", value: 7 },
+            { category: "rewatchability", value: 6 },
+          ],
+        },
+      ],
+      rubric: [
+        { category: "quality", weight: 50 },
+        { category: "rewatchability", weight: 50 },
+      ],
+    });
+
+    const result = await generatePool({
+      topic: "Sci-Fi Movies",
+      targetCount: 10,
+      existingItems: [],
+    });
+
+    expect(generateJson).toHaveBeenCalledWith(
+      expect.objectContaining({
+        schemaName: "pool_output",
+        maxOutputTokens: 1024 + 10 * 200,
+      }),
     );
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]?.name).toBe("Inception");
+  });
+
+  it("retries when Gemini returns invalid JSON", async () => {
+    const { generateJson } = await import("./gemini");
+    const { generatePool } = await import("./client");
+
+    vi.mocked(generateJson)
+      .mockRejectedValueOnce(new Error("Gemini returned invalid JSON"))
+      .mockResolvedValueOnce({
+        items: [
+          {
+            name: "Alien",
+            scores: [
+              { category: "quality", value: 9 },
+              { category: "impact", value: 8 },
+              { category: "originality", value: 9 },
+            ],
+          },
+        ],
+        rubric: [
+          { category: "quality", weight: 40 },
+          { category: "impact", weight: 30 },
+          { category: "originality", weight: 30 },
+        ],
+      });
+
+    const result = await generatePool({
+      topic: "Sci-Fi Movies",
+      targetCount: 5,
+      existingItems: [],
+    });
+
+    expect(generateJson).toHaveBeenCalledTimes(2);
+    expect(result.items[0]?.name).toBe("Alien");
+  });
+
+  it("propagates errors after retries are exhausted", async () => {
+    const { generateJson } = await import("./gemini");
+    const { generatePool } = await import("./client");
+
+    vi.mocked(generateJson).mockRejectedValue(new Error("Gemini returned invalid JSON"));
+
     await expect(
       generatePool({ topic: "test", targetCount: 5, existingItems: [] }),
-    ).rejects.toThrow(/aborted/i);
+    ).rejects.toThrow(/invalid JSON/i);
+    expect(generateJson).toHaveBeenCalledTimes(3);
   });
 
   it("propagates schema validation errors when AI returns invalid data", async () => {
-    const { generatePool } = await import("./pool");
-    vi.mocked(generatePool).mockRejectedValue(
-      new Error("AI response failed validation"),
-    );
+    const { generateJson } = await import("./gemini");
+    const { generatePool } = await import("./client");
+
+    vi.mocked(generateJson).mockResolvedValue({
+      items: [{ name: "Test", scores: [{ category: "quality", value: 9 }] }],
+      rubric: [{ category: "quality", weight: 50 }],
+    });
+
     await expect(
       generatePool({ topic: "test", targetCount: 5, existingItems: [] }),
     ).rejects.toThrow(/validation/i);

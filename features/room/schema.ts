@@ -66,6 +66,55 @@ export const createRoomSchema = z.object({
 
 export type CreateRoomInput = z.infer<typeof createRoomSchema>;
 
+export const updateConfigSchema = z.object({
+  topic: z
+    .string()
+    .min(2, "Topic must be at least 2 characters")
+    .max(80, "Topic must be at most 80 characters"),
+  maxPlayers: z
+    .number()
+    .int()
+    .min(2, "Room must allow at least 2 players")
+    .max(6, "Room can have at most 6 players"),
+  rounds: z
+    .number()
+    .int()
+    .min(1, "Must have at least 1 round")
+    .max(10, "Cannot have more than 10 rounds"),
+  timerSeconds: z
+    .union([z.literal(null), z.number().int().min(15).max(180)])
+    .nullable(),
+  draftType: z.enum(["standard", "snake", "random"]),
+  pickingMode: z.enum(["pool", "off_the_dome"]),
+  judgingMode: z.enum(["ai", "community", "hybrid"]),
+  aiPersonality: z.enum(["analyst", "hype", "roast", "custom"]),
+  customJudgePrompt: z
+    .string()
+    .trim()
+    .min(10, "Custom judge instructions must be at least 10 characters")
+    .max(500, "Custom judge instructions must be at most 500 characters")
+    .optional()
+    .nullable(),
+}).superRefine((data, ctx) => {
+  if (data.aiPersonality === "custom" && !data.customJudgePrompt) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Custom judge instructions are required when using a custom judge",
+      path: ["customJudgePrompt"],
+    });
+  }
+
+  if (data.aiPersonality !== "custom" && data.customJudgePrompt) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Custom judge instructions are only allowed for the custom judge",
+      path: ["customJudgePrompt"],
+    });
+  }
+});
+
+export type UpdateConfigInput = z.infer<typeof updateConfigSchema>;
+
 export const joinRoomSchema = z.object({
   displayName: displayNameSchema,
   roomCode: z
