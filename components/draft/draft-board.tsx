@@ -8,6 +8,8 @@ import { useWatchlist } from "@/features/draft/use-watchlist";
 import type { DraftRoomProjection } from "@/features/draft/types";
 import { useSound } from "@/lib/audio/sound-context";
 import { createSoundGate } from "@/lib/audio/debounce";
+import { preloadSamples } from "@/lib/audio/samples";
+import { DRAFT_SAMPLE_SRCS } from "@/lib/audio/sounds";
 import { SoundToggle } from "@/components/ui/sound-toggle";
 import { AvailablePool } from "./available-pool";
 import { PickHistory } from "./pick-history";
@@ -38,7 +40,7 @@ const PHASE_LABELS: Partial<Record<DraftRoomProjection["draft"]["phase"], string
 
 export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
   const router = useRouter();
-  const { play } = useSound();
+  const { play, unlocked } = useSound();
   const initialPhaseRef = useRef(initial.draft.phase);
   const prevPhaseRef = useRef(initial.draft.phase);
   const prevPicksLengthRef = useRef(initial.picks.length);
@@ -119,6 +121,10 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
   });
 
   useEffect(() => {
+    if (unlocked) preloadSamples(DRAFT_SAMPLE_SRCS);
+  }, [unlocked]);
+
+  useEffect(() => {
     if (projection.draft.phase !== initialPhaseRef.current) {
       setProjection(null);
       initialPhaseRef.current = projection.draft.phase;
@@ -181,7 +187,7 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
 
   useEffect(() => {
     if (isMyTurn && !prevIsMyTurnRef.current && isDrafting) {
-      play("turn", { profile: "restrained" });
+      play("draft.on-clock", { profile: "restrained" });
       turnStripRef.current?.classList.add("anim-glow-pulse");
       const t = window.setTimeout(() => {
         turnStripRef.current?.classList.remove("anim-glow-pulse");

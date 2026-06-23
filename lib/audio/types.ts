@@ -3,7 +3,7 @@ export type SoundId =
   | "ui.tick"
   | "ui.whoosh"
   | "ui.error"
-  | "turn"
+  | "draft.on-clock"
   | "phase"
   | "correct"
   | "wrong"
@@ -16,7 +16,7 @@ export type SoundId =
 
 export type SoundProfile = "arcade" | "restrained";
 
-export type SynthKey = "tap" | "tick" | "whoosh" | "error" | "turn" | "phase" | "hint";
+export type SynthKey = "tap" | "tick" | "whoosh" | "error" | "phase" | "hint";
 
 export type SoundDefinition =
   | {
@@ -32,6 +32,8 @@ export type SoundDefinition =
       volume: number;
       profile: SoundProfile;
       celebratory?: boolean;
+      /** Loaded only inside Draft Anything rooms, not on the global hub. */
+      draftOnly?: boolean;
     };
 
 export type PlayOptions = {

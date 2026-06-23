@@ -43,7 +43,6 @@ export function playSynth(key: SynthKey, volume = 0.3): void {
     tick: { freq: 800, duration: 0.06, attack: 0.002, release: 0.05 },
     whoosh: { freq: 320, duration: 0.12, attack: 0.01, release: 0.1 },
     error: { freq: 140, duration: 0.15, attack: 0.005, release: 0.12, type: "sawtooth" },
-    turn: { freq: 520, duration: 0.18, attack: 0.01, release: 0.14 },
     phase: { freq: 440, duration: 0.2, attack: 0.01, release: 0.16 },
     hint: { freq: 740, duration: 0.14, attack: 0.005, release: 0.12 },
   };

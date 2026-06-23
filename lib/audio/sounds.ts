@@ -5,19 +5,25 @@ export const SOUND_REGISTRY: Record<SoundId, SoundDefinition> = {
   "ui.tick": { type: "synth", synthKey: "tick", volume: 0.25, profile: "arcade" },
   "ui.whoosh": { type: "synth", synthKey: "whoosh", volume: 0.28, profile: "arcade" },
   "ui.error": { type: "synth", synthKey: "error", volume: 0.22, profile: "restrained" },
-  turn: { type: "synth", synthKey: "turn", volume: 0.32, profile: "restrained" },
+  "draft.on-clock": {
+    type: "sample",
+    src: "/sounds/nfl-draft-chime.mp3",
+    volume: 0.85,
+    profile: "restrained",
+    draftOnly: true,
+  },
   phase: { type: "synth", synthKey: "phase", volume: 0.28, profile: "restrained" },
   hint: { type: "synth", synthKey: "hint", volume: 0.35, profile: "arcade" },
   correct: {
     type: "sample",
-    src: "/sounds/correct.mp3",
+    src: "/sounds/correct.wav",
     volume: 0.7,
     profile: "arcade",
     celebratory: true,
   },
   wrong: {
     type: "sample",
-    src: "/sounds/wrong.mp3",
+    src: "/sounds/wrong.wav",
     volume: 0.65,
     profile: "arcade",
     celebratory: true,
@@ -31,33 +37,47 @@ export const SOUND_REGISTRY: Record<SoundId, SoundDefinition> = {
   },
   streak: {
     type: "sample",
-    src: "/sounds/streak.mp3",
+    src: "/sounds/streak.wav",
     volume: 0.6,
     profile: "arcade",
     celebratory: true,
   },
   pick: {
     type: "sample",
-    src: "/sounds/pick.mp3",
+    src: "/sounds/pick.wav",
     volume: 0.5,
     profile: "restrained",
   },
   veto: {
     type: "sample",
-    src: "/sounds/veto.mp3",
+    src: "/sounds/veto.wav",
     volume: 0.4,
     profile: "restrained",
   },
   "veto-success": {
     type: "sample",
-    src: "/sounds/veto-success.mp3",
+    src: "/sounds/veto-success.wav",
     volume: 0.4,
     profile: "restrained",
   },
 };
 
+function isSample(
+  def: SoundDefinition,
+): def is Extract<SoundDefinition, { type: "sample" }> {
+  return def.type === "sample";
+}
+
+/** Preloaded globally (hub, Chainlink, Brain Dead, etc.). */
 export const SAMPLE_SRCS = Object.values(SOUND_REGISTRY)
-  .filter((def): def is Extract<SoundDefinition, { type: "sample" }> => def.type === "sample")
+  .filter(isSample)
+  .filter((def) => !def.draftOnly)
+  .map((def) => def.src);
+
+/** Preloaded when entering a Draft Anything room. */
+export const DRAFT_SAMPLE_SRCS = Object.values(SOUND_REGISTRY)
+  .filter(isSample)
+  .filter((def) => def.draftOnly)
   .map((def) => def.src);
 
 const PROFILE_SCALE: Record<SoundDefinition["profile"], number> = {
