@@ -1,7 +1,9 @@
+type OgFontWeight = 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900;
+
 type OgFont = {
   name: string;
   data: ArrayBuffer;
-  weight: number;
+  weight: OgFontWeight;
   style: "normal" | "italic";
 };
 
