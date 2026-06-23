@@ -55,7 +55,7 @@ body {
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  transition: color 0.2s, border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  transition: color 0.2s, border-color 0.2s, box-shadow 0.2s, background 0.2s, transform 0.15s ease;
   text-align: left;
   width: 100%;
   display: block;
@@ -71,7 +71,12 @@ body {
 .pick-card:hover {
   color: #fff;
   border-color: rgba(124,58,255,0.55);
-  box-shadow: 0 0 16px rgba(124,58,255,0.2), 0 0 40px rgba(124,58,255,0.08) inset;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(124,58,255,0.22), 0 0 40px rgba(124,58,255,0.08) inset;
+}
+.pick-card:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+  transition-duration: 0.06s;
 }
 .pick-card:hover::before {
   animation: shimmer 0.55s ease forwards;
@@ -99,15 +104,40 @@ body {
   letter-spacing: 0.22em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: border-color 0.2s, color 0.2s, box-shadow 0.25s;
+  position: relative;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 0.18s ease,
+    border-color 0.2s,
+    color 0.2s,
+    box-shadow 0.25s,
+    background 0.2s;
   padding: 12px 16px;
   width: 100%;
   text-align: center;
 }
+.btn-gold::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(124,58,255,0.14) 50%, transparent 100%);
+  transform: translateX(-100%);
+  pointer-events: none;
+}
 .btn-gold:hover:not(:disabled) {
   border-color: var(--purple);
   color: #fff;
-  box-shadow: 0 0 20px rgba(124,58,255,0.45), 0 0 60px rgba(124,58,255,0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(124,58,255,0.35), 0 0 48px rgba(124,58,255,0.1);
+}
+.btn-gold:hover:not(:disabled)::before {
+  animation: shimmer 0.55s ease forwards;
+}
+.btn-gold:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
+  box-shadow: 0 1px 8px rgba(124,58,255,0.25);
+  transition-duration: 0.06s;
 }
 .btn-gold:disabled {
   opacity: 0.35;
@@ -125,18 +155,91 @@ body {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
+  position: relative;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 0.18s ease,
+    border-color 0.2s,
+    color 0.2s,
+    box-shadow 0.2s,
+    background 0.15s;
   padding: 10px 16px;
   width: 100%;
   text-align: center;
 }
 .btn-ghost:hover:not(:disabled) {
-  border-color: rgba(201,168,76,0.3);
+  border-color: rgba(201,168,76,0.45);
   color: var(--text);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 12px rgba(201,168,76,0.08);
+  background: rgba(201,168,76,0.04);
+}
+.btn-ghost:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+  box-shadow: none;
+  transition-duration: 0.06s;
 }
 .btn-ghost:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+}
+
+/* Icon / compact control buttons */
+.btn-icon {
+  background: transparent;
+  border: 1px solid var(--border-hi);
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  color: var(--gold);
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 0.15s ease,
+    border-color 0.2s,
+    color 0.2s,
+    box-shadow 0.2s,
+    background 0.15s;
+}
+.btn-icon:hover:not(:disabled) {
+  border-color: rgba(201,168,76,0.45);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 10px rgba(201,168,76,0.12);
+}
+.btn-icon:active:not(:disabled) {
+  transform: scale(0.92);
+  transition-duration: 0.05s;
+}
+.btn-icon[aria-pressed="true"] {
+  color: var(--text-dim);
+}
+
+/* Hub / card text links */
+.stim-text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+.stim-text-link:hover {
+  transform: translateX(3px);
+}
+.stim-text-link:active {
+  transform: translateX(1px) scale(0.98);
+  transition-duration: 0.05s;
+}
+.stim-text-link span:last-child {
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+.stim-text-link:hover span:last-child {
+  transform: translateX(2px);
 }
 
 /* Dark input */
@@ -269,12 +372,18 @@ body {
   background: rgba(0,0,0,0.25);
   border: 1px solid var(--border-hi);
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s, box-shadow 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.15s, color 0.15s, background 0.15s, box-shadow 0.15s, transform 0.15s ease;
   white-space: nowrap;
 }
 .create-room-hot-chip:hover {
   border-color: rgba(201,168,76,0.4);
   color: var(--text);
+  transform: translateY(-1px);
+}
+.create-room-hot-chip:active {
+  transform: scale(0.96);
+  transition-duration: 0.05s;
 }
 .create-room-hot-chip.active {
   border-color: rgba(201,168,76,0.55);
@@ -340,8 +449,17 @@ body {
   cursor: pointer;
   background: var(--panel-alt);
   color: var(--text-dim);
-  transition: background 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, color 0.15s, transform 0.12s ease;
   font-family: 'Outfit', sans-serif;
+}
+.create-room-segmented button:hover:not(.active) {
+  color: var(--text);
+  background: rgba(201,168,76,0.06);
+}
+.create-room-segmented button:active:not(:disabled) {
+  transform: scale(0.97);
+  transition-duration: 0.05s;
 }
 .create-room-segmented button:last-child {
   border-right: none;
@@ -352,9 +470,75 @@ body {
 }
 
 /* Stim Games hero card hover */
+.stim-hero-card {
+  transition: border-color 0.25s, box-shadow 0.25s, transform 0.2s ease;
+}
 .stim-hero-card:hover {
   border-color: rgba(201,168,76,0.5);
-  box-shadow: 0 0 40px rgba(201,168,76,0.1), 0 0 80px rgba(124,58,255,0.05);
+  box-shadow: 0 8px 40px rgba(201,168,76,0.12), 0 0 80px rgba(124,58,255,0.06);
+  transform: translateY(-3px);
+}
+.stim-hero-card:active {
+  transform: translateY(-1px) scale(0.995);
+  transition-duration: 0.08s;
+}
+
+/* Brain Dead answer buttons */
+.bd-answer-btn {
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 0.14s ease,
+    border-color 0.1s,
+    background 0.1s,
+    box-shadow 0.15s ease !important;
+}
+.bd-answer-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+}
+.bd-answer-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
+  transition-duration: 0.05s;
+}
+
+/* Brain Dead primary CTA (red buttons) */
+.bd-btn-primary {
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease, opacity 0.15s, box-shadow 0.2s ease !important;
+}
+.bd-btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255,60,60,0.35);
+}
+.bd-btn-primary:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
+  transition-duration: 0.05s;
+}
+
+/* Draft mobile tab buttons */
+.draft-tab-btn {
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s, border-color 0.15s, transform 0.12s ease !important;
+}
+.draft-tab-btn:active {
+  transform: scale(0.96);
+  transition-duration: 0.05s;
+}
+
+/* Veto vote buttons */
+.btn-veto-danger,
+.btn-veto-keep {
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.14s ease, opacity 0.15s, box-shadow 0.15s ease !important;
+}
+.btn-veto-danger:hover:not(:disabled),
+.btn-veto-keep:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.btn-veto-danger:active:not(:disabled),
+.btn-veto-keep:active:not(:disabled) {
+  transform: scale(0.97);
+  transition-duration: 0.05s;
 }
 
 /* Mobile game layouts */

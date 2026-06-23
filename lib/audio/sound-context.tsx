@@ -9,6 +9,10 @@ import {
   useState,
 } from "react";
 import { useReducedMotion } from "@/lib/motion/use-reduced-motion";
+import {
+  INTERACTIVE_BUTTON_SELECTOR,
+  SELF_SOUNDCING_SELECTOR,
+} from "./interactive-buttons";
 import { playSound } from "./play";
 import { preloadSamples } from "./samples";
 import { SAMPLE_SRCS } from "./sounds";
@@ -61,6 +65,30 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener("keydown", unlock);
     };
   }, [unlocked]);
+
+  useEffect(() => {
+    if (!unlocked || muted) return;
+
+    const onClick = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+
+      if (target.closest(SELF_SOUNDCING_SELECTOR)) return;
+
+      const el = target.closest(INTERACTIVE_BUTTON_SELECTOR);
+      if (!el || el instanceof HTMLButtonElement && el.disabled) return;
+      if (el.getAttribute("aria-disabled") === "true") return;
+
+      playSound(
+        "ui.tap",
+        { unlocked, muted, reducedMotion },
+        { volumeScale: 0.75 },
+      );
+    };
+
+    document.addEventListener("click", onClick);
+    return () => document.removeEventListener("click", onClick);
+  }, [unlocked, muted, reducedMotion]);
 
   const toggleMute = useCallback(() => {
     setMuted((prev) => {

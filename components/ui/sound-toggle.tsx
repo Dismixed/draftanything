@@ -9,20 +9,11 @@ export function SoundToggle({ className }: { className?: string }) {
     <button
       type="button"
       onClick={toggleMute}
-      className={className}
+      className={["btn-icon", className].filter(Boolean).join(" ")}
       aria-label={muted ? "Unmute sounds" : "Mute sounds"}
       aria-pressed={muted}
       style={{
-        background: "transparent",
-        border: "1px solid var(--border-hi)",
         color: muted ? "var(--text-dim)" : "var(--gold)",
-        borderRadius: "8px",
-        padding: "6px 10px",
-        cursor: "pointer",
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        lineHeight: 0,
       }}
     >
       {muted ? (

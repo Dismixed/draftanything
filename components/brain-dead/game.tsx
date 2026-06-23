@@ -435,6 +435,7 @@ export default function BrainDeadGame({
               type="button"
               onClick={handleSubmitScore}
               disabled={submitting}
+              className="bd-btn-primary"
               style={{
                 background: ACCENT,
                 color: "#fff",
@@ -492,6 +493,7 @@ export default function BrainDeadGame({
               <button
                 type="button"
                 onClick={() => beginGame(getProgressiveQuestions(category))}
+                className="bd-btn-primary"
                 style={{
                   background: ACCENT,
                   color: "#fff",
@@ -722,7 +724,10 @@ export default function BrainDeadGame({
               disabled={disabled}
               onClick={() => handleAnswer(i)}
               className={
-                showCorrect ? "anim-pop-in" : showWrong ? "anim-shake" : undefined
+                [
+                  "bd-answer-btn",
+                  showCorrect ? "anim-pop-in" : showWrong ? "anim-shake" : "",
+                ].filter(Boolean).join(" ") || undefined
               }
               style={{
                 background: showCorrect

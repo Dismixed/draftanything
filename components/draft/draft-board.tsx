@@ -357,6 +357,7 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
           <button
             key={tab}
             type="button"
+            className="draft-tab-btn"
             onClick={() => setMobileTab(tab)}
             style={{
               flex: 1,

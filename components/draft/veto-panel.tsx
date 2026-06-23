@@ -175,6 +175,7 @@ export function VetoPanel({ projection, myPlayerId }: VetoPanelProps) {
                 type="button"
                 disabled={submitting !== null}
                 onClick={() => void submitVote(true)}
+                className="btn-veto-danger"
                 style={{
                   background: "rgba(255,68,68,0.12)",
                   color: "#ff6b6b",
@@ -200,6 +201,7 @@ export function VetoPanel({ projection, myPlayerId }: VetoPanelProps) {
                 type="button"
                 disabled={submitting !== null}
                 onClick={() => void submitVote(false)}
+                className="btn-veto-keep"
                 style={{
                   background: "var(--panel)",
                   color: "var(--text)",

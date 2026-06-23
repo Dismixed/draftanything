@@ -415,16 +415,13 @@ export default function StimGames() {
               >
                 <Link
                   href="/chainlink"
+                  className="stim-text-link"
                   style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
                     fontSize: "10px",
                     fontWeight: 600,
                     letterSpacing: "0.18em",
                     textTransform: "uppercase",
                     color: "var(--cyan)",
-                    textDecoration: "none",
                   }}
                 >
                   All modes
@@ -432,16 +429,13 @@ export default function StimGames() {
                 </Link>
                 <Link
                   href="/chainlink/daily"
+                  className="stim-text-link"
                   style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
                     fontSize: "10px",
                     fontWeight: 600,
                     letterSpacing: "0.14em",
                     textTransform: "uppercase",
                     color: "var(--text-dim)",
-                    textDecoration: "none",
                     opacity: 0.85,
                   }}
                 >
@@ -543,16 +537,13 @@ export default function StimGames() {
               >
                 <Link
                   href="/brain-dead"
+                  className="stim-text-link"
                   style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
                     fontSize: "10px",
                     fontWeight: 600,
                     letterSpacing: "0.18em",
                     textTransform: "uppercase",
                     color: "#ff6b6b",
-                    textDecoration: "none",
                   }}
                 >
                   All modes
@@ -560,16 +551,13 @@ export default function StimGames() {
                 </Link>
                 <Link
                   href="/brain-dead/daily"
+                  className="stim-text-link"
                   style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
                     fontSize: "10px",
                     fontWeight: 600,
                     letterSpacing: "0.14em",
                     textTransform: "uppercase",
                     color: "var(--text-dim)",
-                    textDecoration: "none",
                     opacity: 0.85,
                   }}
                 >
