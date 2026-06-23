@@ -9,6 +9,7 @@ import { ButtonLoadingLabel } from "@/components/ui/button-spinner";
 interface VotingPanelProps {
   projection: DraftRoomProjection;
   myPlayerId: string;
+  onVoteSubmitted?: () => Promise<void>;
 }
 
 interface VoteState {
@@ -16,7 +17,7 @@ interface VoteState {
   submitted: boolean;
 }
 
-export function VotingPanel({ projection, myPlayerId }: VotingPanelProps) {
+export function VotingPanel({ projection, myPlayerId, onVoteSubmitted }: VotingPanelProps) {
   const router = useRouter();
   const [vote, setVote] = useState<VoteState>({ selectedPlayerId: null, submitted: false });
   const [submitting, setSubmitting] = useState(false);
@@ -34,8 +35,9 @@ export function VotingPanel({ projection, myPlayerId }: VotingPanelProps) {
     }
   }, [myVote]);
 
-  const { draft, players, picks, availableItems } = projection;
+  const { draft, players, picks, availableItems, votes } = projection;
   const isHost = players.find((p) => p.id === myPlayerId)?.isHost ?? false;
+  const allVotesIn = votes.length >= players.length;
 
   const itemMap = useMemo(
     () => new Map(availableItems.map((item) => [item.id, item])),
@@ -77,6 +79,7 @@ export function VotingPanel({ projection, myPlayerId }: VotingPanelProps) {
       }
 
       setVote((prev) => ({ ...prev, submitted: true }));
+      await onVoteSubmitted?.();
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "An error occurred");
@@ -129,6 +132,11 @@ export function VotingPanel({ projection, myPlayerId }: VotingPanelProps) {
         </h2>
         <p style={{ color: 'var(--cyan)', fontSize: '13px' }}>
           Your vote has been recorded.
+        </p>
+        <p style={{ color: 'var(--text-dim)', fontSize: '11px', marginTop: '8px' }}>
+          {allVotesIn
+            ? "Everyone has voted — moving to judging..."
+            : `${votes.length} of ${players.length} votes in`}
         </p>
         {isHost && (
           <button

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { DraftRoomProjection } from "@/features/draft/types";
 import { buildPublicResult } from "@/features/results/build-public-result";
@@ -11,9 +11,10 @@ import { RosterColumn } from "./player-rosters";
 interface JudgingPanelProps {
   projection: DraftRoomProjection;
   myPlayerId: string;
+  onJudgingComplete?: () => Promise<void>;
 }
 
-export function JudgingPanel({ projection, myPlayerId }: JudgingPanelProps) {
+export function JudgingPanel({ projection, myPlayerId, onJudgingComplete }: JudgingPanelProps) {
   const router = useRouter();
   const [judging, setJudging] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,11 +35,11 @@ export function JudgingPanel({ projection, myPlayerId }: JudgingPanelProps) {
     };
   }, []);
 
+  const autoJudgeTriggeredRef = useRef(false);
+
   useEffect(() => {
-    if (judgment) {
-      setShowResults(true);
-    }
-  }, [judgment]);
+    autoJudgeTriggeredRef.current = false;
+  }, [draft.id]);
 
   const itemMap = useMemo(
     () => new Map(availableItems.map((item) => [item.id, item])),
@@ -85,13 +86,35 @@ export function JudgingPanel({ projection, myPlayerId }: JudgingPanelProps) {
       }
 
       setShowResults(true);
+      await onJudgingComplete?.();
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "An error occurred");
     } finally {
       setJudging(false);
     }
-  }, [draft.id, router]);
+  }, [draft.id, router, onJudgingComplete]);
+
+  useEffect(() => {
+    if (judgment) {
+      setShowResults(true);
+    }
+  }, [judgment]);
+
+  useEffect(() => {
+    if (
+      !isHost ||
+      alreadyJudged ||
+      isEvaluating ||
+      draft.phase !== "JUDGING" ||
+      autoJudgeTriggeredRef.current
+    ) {
+      return;
+    }
+
+    autoJudgeTriggeredRef.current = true;
+    void handleRunJudging();
+  }, [isHost, alreadyJudged, isEvaluating, draft.phase, handleRunJudging]);
 
   const handleAdvance = useCallback(async () => {
     setJudging(true);

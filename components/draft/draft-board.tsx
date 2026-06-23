@@ -156,6 +156,17 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
   }, [unlocked]);
 
   useEffect(() => {
+    if (projection.draft.phase !== "VOTING") return;
+    if (projection.votes.length < projection.players.length) return;
+    void refreshProjection();
+  }, [
+    projection.draft.phase,
+    projection.players.length,
+    projection.votes.length,
+    refreshProjection,
+  ]);
+
+  useEffect(() => {
     if (projection.draft.phase !== initialPhaseRef.current) {
       initialPhaseRef.current = projection.draft.phase;
       router.refresh();
@@ -425,7 +436,11 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
 
       {draft.phase === "VOTING" && (
         <div style={{ padding: '20px 16px 0', maxWidth: '960px', margin: '0 auto' }}>
-          <PhasePanel projection={projection} myPlayerId={myPlayerId} />
+          <PhasePanel
+            projection={projection}
+            myPlayerId={myPlayerId}
+            onVoteSubmitted={refreshProjection}
+          />
         </div>
       )}
 
@@ -528,7 +543,11 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
         draft.phase === "DEFENSE" ||
         draft.phase === "JUDGING" ||
         draft.phase === "COMPLETE") && (
-        <PhasePanel projection={projection} myPlayerId={myPlayerId} />
+        <PhasePanel
+          projection={projection}
+          myPlayerId={myPlayerId}
+          onJudgingComplete={refreshProjection}
+        />
       )}
 
       {isDrafting && draft.pickingMode === "off_the_dome" && currentPlayer && (

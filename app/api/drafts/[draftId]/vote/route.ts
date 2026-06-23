@@ -68,7 +68,17 @@ export async function POST(
       return Response.json({ error: "INVALID_INPUT", message: msg }, { status: 400 });
     }
 
-    return Response.json({ success: true });
+    const { data: draft, error: phaseError } = await db
+      .from("drafts")
+      .select("phase")
+      .eq("id", draftId)
+      .single();
+
+    if (phaseError) {
+      return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    }
+
+    return Response.json({ success: true, phase: draft.phase });
   } catch (e) {
     if (e instanceof AppError) {
       const status = e.code === "UNAUTHORIZED" ? 401 : 400;

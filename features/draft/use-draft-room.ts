@@ -69,9 +69,16 @@ export function useDraftRoom({
 
   useEffect(() => {
     setProjection(initialProjection);
-    // Seed store when entering this draft; SSR initial is authoritative on mount.
+    // Re-seed when SSR refreshes phase/votes so we don't show stale Zustand state.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draftId, setProjection]);
+  }, [
+    draftId,
+    initialProjection.draft.phase,
+    initialProjection.votes.length,
+    initialProjection.judgment?.createdAt ?? null,
+    initialProjection.draft.judgingStartedAt,
+    setProjection,
+  ]);
 
   useEffect(() => {
     let channel: ReturnType<
