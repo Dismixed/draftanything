@@ -377,17 +377,16 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
         </div>
       )}
 
-      {/* Mobile tabs */}
+      {/* Mobile tabs — layout via Tailwind so md:hidden isn't overridden by inline display */}
       <nav
+        className={[
+          "flex md:hidden sticky z-10",
+          isDrafting && currentPlayer && currentSlot ? "top-[89px]" : "top-[53px]",
+        ].join(" ")}
         style={{
-          display: 'flex',
           borderBottom: '1px solid var(--border-hi)',
           background: 'rgba(11,14,28,0.98)',
-          position: 'sticky',
-          top: isDrafting && currentPlayer && currentSlot ? '89px' : '53px',
-          zIndex: 10,
         }}
-        className="md:hidden"
         aria-label="Draft view tabs"
       >
         {(["rosters", "pool", "ai"] as const).map((tab) => (

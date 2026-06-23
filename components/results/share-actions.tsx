@@ -13,6 +13,7 @@ export function ShareActions({
 }: ShareActionsProps) {
   const [copied, setCopied] = useState(false);
   const [canShare, setCanShare] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     setCanShare(typeof navigator.share === "function");
@@ -40,6 +41,29 @@ export function ShareActions({
       document.body.removeChild(input);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  }
+
+  async function handleDownload() {
+    setDownloading(true);
+    try {
+      const response = await fetch(imageDownloadUrl);
+      if (!response.ok) {
+        throw new Error("Failed to generate image");
+      }
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = objectUrl;
+      anchor.download = `draft-result-${draftId}.png`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      window.open(imageDownloadUrl, "_blank", "noopener,noreferrer");
+    } finally {
+      setDownloading(false);
     }
   }
 
@@ -97,17 +121,18 @@ export function ShareActions({
         </button>
       )}
 
-      <a
-        href={imageDownloadUrl}
-        download
+      <button
+        type="button"
+        onClick={handleDownload}
+        disabled={downloading}
         className="btn-ghost"
         style={{ width: 'auto', padding: '10px 16px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
       >
         <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
         </svg>
-        Download PNG
-      </a>
+        {downloading ? "Downloading…" : "Download PNG"}
+      </button>
     </div>
   );
 }

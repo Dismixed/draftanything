@@ -23,18 +23,18 @@ export async function GET(
         ? result.winner.score.toFixed(1)
         : "—";
 
-    const rankLines = result.ranking
-      .slice(0, 6)
-      .map(
-        (p, i) =>
-          `${i + 1}. ${p.displayName}${p.score !== null ? ` — ${p.score.toFixed(1)}` : ""}`,
-      )
-      .join("\n");
+    const rankingLines = result.ranking.slice(0, 6).map((p, i) =>
+      `${i + 1}. ${p.displayName}${p.score !== null ? ` — ${p.score.toFixed(1)}` : ""}`,
+    );
 
     const url = new URL(_request.url);
     const isDownload = url.searchParams.get("download") === "1";
     const bestPick = result.awards.find((a) => a.type === "bestPick");
     const topUndrafted = result.topUndraftedPick;
+    const footerLines = [
+      bestPick ? `Best pick: ${bestPick.itemName}` : null,
+      topUndrafted ? `Top undrafted: ${topUndrafted}` : null,
+    ].filter((line): line is string => line != null);
 
     const res = new ImageResponse(
       (
@@ -102,7 +102,7 @@ export async function GET(
               color: "#fde68a",
             }}
           >
-            Score: {winnerScore}/10
+            {`Score: ${winnerScore}/10`}
           </div>
 
           {/* Rankings */}
@@ -114,14 +114,17 @@ export async function GET(
               fontSize: 18,
               color: "#c7d2fe",
               textAlign: "left",
-              whiteSpace: "pre-line",
             }}
           >
-            {rankLines}
+            {rankingLines.map((line) => (
+              <div key={line} style={{ display: "flex" }}>
+                {line}
+              </div>
+            ))}
           </div>
 
           {/* Best Pick / Top Undrafted */}
-          {(bestPick || topUndrafted) && (
+          {footerLines.length > 0 && (
             <div
               style={{
                 position: "absolute",
@@ -134,8 +137,11 @@ export async function GET(
                 color: "#a5b4fc",
               }}
             >
-              {bestPick && <div>Best pick: {bestPick.itemName}</div>}
-              {topUndrafted && <div>Top undrafted: {topUndrafted}</div>}
+              {footerLines.map((line) => (
+                <div key={line} style={{ display: "flex" }}>
+                  {line}
+                </div>
+              ))}
             </div>
           )}
 

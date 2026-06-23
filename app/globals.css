@@ -93,6 +93,10 @@ body {
   pointer-events: none;
 }
 
+.watchlist-panel .pick-card {
+  color: var(--text);
+}
+
 /* Gold outline button */
 .btn-gold {
   background: transparent;

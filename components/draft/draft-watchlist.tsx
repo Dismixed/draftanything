@@ -153,7 +153,7 @@ export function DraftWatchlist({
   return (
     <section
       aria-label="Draft watchlist"
-      className="panel-card"
+      className="panel-card watchlist-panel"
       style={{ padding: "16px" }}
     >
       <h2
@@ -171,9 +171,10 @@ export function DraftWatchlist({
       <p
         style={{
           fontSize: "12px",
-          color: "var(--text-dim)",
+          color: "var(--text)",
           margin: "0 0 12px 0",
           lineHeight: 1.4,
+          opacity: 0.85,
         }}
       >
         {pickingMode === "pool"
@@ -200,11 +201,12 @@ export function DraftWatchlist({
         {entries.length === 0 ? (
           <p
             style={{
-              color: "var(--text-dim)",
+              color: "var(--text)",
               fontSize: "12px",
               textAlign: "center",
               padding: "20px 12px",
               margin: 0,
+              opacity: 0.75,
             }}
           >
             {pickingMode === "pool" ? "Drop options here" : "Add options below"}
