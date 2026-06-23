@@ -125,7 +125,42 @@ describe("buildProjection", () => {
     expect(result).toHaveProperty("defenses");
     expect(result).toHaveProperty("votes");
     expect(result).toHaveProperty("judgment");
+    expect(result).toHaveProperty("topUndraftedPick");
     expect(result).toHaveProperty("serverNow");
+  });
+
+  it("computes top undrafted pick from available pool items", () => {
+    const result = buildProjection(
+      {
+        ...draftRow,
+        rubric: { quality: 100 },
+        picking_mode: "pool",
+      } as unknown as Record<string, unknown>,
+      playerRows as unknown as Record<string, unknown>[],
+      [
+        {
+          ...itemRows[0],
+          name: "Lower Score",
+          hidden_metadata: { quality: 6 },
+          is_available: true,
+        },
+        {
+          ...itemRows[1],
+          name: "Top Undrafted",
+          hidden_metadata: { quality: 9 },
+          is_available: true,
+        },
+      ] as unknown as Record<string, unknown>[],
+      [],
+      [],
+      [],
+      [],
+      [],
+      null,
+      serverNow,
+    );
+
+    expect(result.topUndraftedPick).toBe("Top Undrafted");
   });
 
   it("maps draft correctly", () => {

@@ -233,6 +233,11 @@ describe("judging service", () => {
       // p1: 8*0.7 + 0*0.3 = 5.6
       // p2: 6*0.7 + 10*0.3 = 7.2
       expect(result.winnerPlayerIds).toEqual(["p2"]);
+      expect(result.explanation).toContain("Hybrid evaluation.");
+      expect(result.explanation).toContain("Bob — AI 6.0, Community 10.0, Total 7.2");
+      expect(result.explanation).toContain("Alice — AI 8.0, Community 0.0, Total 5.6");
+      expect(result.explanation).not.toContain("p1");
+      expect(result.explanation).not.toContain("p2");
     });
 
     it("accepts off-the-dome fallback scores scaled to 0..10", async () => {

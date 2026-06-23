@@ -4,6 +4,7 @@ import type { PublicDraftResult } from "@/features/results/build-public-result";
 import { WinnerReveal } from "./winner-reveal";
 import { Rankings } from "./rankings";
 import { Awards } from "./awards";
+import { TopUndraftedPick } from "./top-undrafted-pick";
 import { ShareActions } from "./share-actions";
 import { ResultsConfetti } from "./results-confetti";
 
@@ -30,6 +31,10 @@ export function ResultsBody({
       <Rankings ranking={result.ranking} />
 
       {result.awards.length > 0 && <Awards awards={result.awards} />}
+
+      {result.topUndraftedPick && (
+        <TopUndraftedPick itemName={result.topUndraftedPick} />
+      )}
 
       {result.explanation && (
         <div className="panel-card" style={{ padding: "16px" }}>

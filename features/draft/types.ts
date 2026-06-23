@@ -124,5 +124,7 @@ export interface DraftRoomProjection {
   votes: SafeVote[];
   vetoVotes: SafeVetoVote[];
   judgment: SafeJudgment | null;
+  /** Best remaining pool item by rubric score; null for off-the-dome or when the board is clear. */
+  topUndraftedPick: string | null;
   serverNow: string;
 }

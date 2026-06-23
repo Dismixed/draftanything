@@ -1349,6 +1349,10 @@ export type Database = {
         Args: { p_draft_id: string }
         Returns: boolean
       }
+      maybe_advance_from_voting: {
+        Args: { p_draft_id: string }
+        Returns: boolean
+      }
       reset_draft_for_rematch: {
         Args: { p_draft_id: string; p_host_guest_id: string }
         Returns: undefined

@@ -34,6 +34,7 @@ export async function GET(
     const url = new URL(_request.url);
     const isDownload = url.searchParams.get("download") === "1";
     const bestPick = result.awards.find((a) => a.type === "bestPick");
+    const topUndrafted = result.topUndraftedPick;
 
     const res = new ImageResponse(
       (
@@ -119,18 +120,22 @@ export async function GET(
             {rankLines}
           </div>
 
-          {/* Best Pick */}
-          {bestPick && (
+          {/* Best Pick / Top Undrafted */}
+          {(bestPick || topUndrafted) && (
             <div
               style={{
                 position: "absolute",
                 bottom: 48,
                 left: 48,
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
                 fontSize: 14,
                 color: "#a5b4fc",
               }}
             >
-              Best pick: {bestPick.itemName}
+              {bestPick && <div>Best pick: {bestPick.itemName}</div>}
+              {topUndrafted && <div>Top undrafted: {topUndrafted}</div>}
             </div>
           )}
 

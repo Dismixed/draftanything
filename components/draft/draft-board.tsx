@@ -60,6 +60,10 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
     initialProjection: initial,
   });
 
+  const refreshProjection = useCallback(async () => {
+    await refetchProjection();
+  }, [refetchProjection]);
+
   const handleOffTheDomePick = useCallback(
     async (itemName: string) => {
       if (projection.draft.phase !== "DRAFTING") {
@@ -329,7 +333,7 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
               isMyTurn={isMyTurn}
               myPlayerId={myPlayerId}
               serverNow={projection.serverNow}
-              onAutoPickTriggered={refetchProjection}
+              onAutoPickTriggered={refreshProjection}
             />
           )}
           <SoundToggle />
@@ -416,7 +420,7 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
         <VetoPanel
           projection={projection}
           myPlayerId={myPlayerId}
-          onVoteSubmitted={refetchProjection}
+          onVoteSubmitted={refreshProjection}
         />
       )}
 

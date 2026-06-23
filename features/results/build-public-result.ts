@@ -28,6 +28,7 @@ export interface PublicDraftResult {
   winner: PublicPlayerResult | null;
   ranking: PublicPlayerResult[];
   awards: PublicAward[];
+  topUndraftedPick: string | null;
   explanation: string | null;
   communityTotals: Record<string, number>;
 }
@@ -122,6 +123,7 @@ export function buildPublicResult(
     winner,
     ranking,
     awards,
+    topUndraftedPick: projection.topUndraftedPick,
     explanation: judgment?.explanation ?? null,
     communityTotals,
   };

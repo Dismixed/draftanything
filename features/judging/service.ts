@@ -43,6 +43,32 @@ function toRosterPicks(picks: SafePick[]): RosterPick[] {
   }));
 }
 
+function formatScore(score: number): string {
+  return score.toFixed(1);
+}
+
+function formatHybridExplanation(
+  aiExplanation: string,
+  players: SafePlayer[],
+  aiScores: Record<string, number>,
+  communityScores: Record<string, number>,
+  combined: Record<string, number>,
+  voteCount: number,
+): string {
+  const voteLabel = voteCount === 1 ? "1 vote" : `${voteCount} votes`;
+  const breakdown = [...players]
+    .sort((a, b) => combined[b.id] - combined[a.id])
+    .map((player) => {
+      const ai = formatScore(aiScores[player.id] ?? 0);
+      const community = formatScore(communityScores[player.id] ?? 0);
+      const total = formatScore(combined[player.id] ?? 0);
+      return `${player.displayName} — AI ${ai}, Community ${community}, Total ${total}`;
+    })
+    .join("\n");
+
+  return `${aiExplanation}\n\nFinal scores combine 70% AI judgment and 30% community votes (${voteLabel} cast):\n${breakdown}`;
+}
+
 function computeFallbackAwards(
   _rubric: RubricCategory[],
   playerIds: string[],
@@ -408,7 +434,14 @@ async function judgeHybridMode(
     ranking,
     winnerPlayerIds: winners,
     awards: aiResult.awards,
-    explanation: `Hybrid judgment: 70% AI score, 30% community vote share.\nAI: ${JSON.stringify(aiScores)}\nCommunity: ${JSON.stringify(communityScores)}\nCombined: ${JSON.stringify(combined)}`,
+    explanation: formatHybridExplanation(
+      aiResult.explanation,
+      players,
+      aiScores,
+      communityScores,
+      combined,
+      voteRecords.length,
+    ),
     model: aiResult.model,
     promptVersion: aiResult.promptVersion,
     idempotencyKey,

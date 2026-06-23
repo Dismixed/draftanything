@@ -2,6 +2,10 @@ import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { AppError } from "@/lib/errors";
+import {
+  computeTopUndraftedPick,
+  rubricFromDraftRecord,
+} from "@/features/results/top-undrafted-pick";
 import type {
   DraftRoomProjection,
   SafeDraft,
@@ -15,6 +19,7 @@ import type {
   SafeJudgment,
   DraftPhase,
   PickSlot,
+  PickingMode,
 } from "./types";
 
 export function buildProjection(
@@ -151,6 +156,18 @@ export function buildProjection(
       }
     : null;
 
+  const pickingMode = (draft.picking_mode as PickingMode) ?? "pool";
+  const topUndraftedPick = computeTopUndraftedPick(
+    (items ?? []).map((item) => ({
+      id: item.id as string,
+      name: item.name as string,
+      is_available: item.is_available as boolean,
+      hidden_metadata: (item.hidden_metadata as Record<string, number>) ?? {},
+    })),
+    rubricFromDraftRecord(draft.rubric as Record<string, number> | null),
+    pickingMode,
+  );
+
   return {
     draft: safeDraft,
     players: safePlayers,
@@ -161,6 +178,7 @@ export function buildProjection(
     votes: safeVotes,
     vetoVotes: safeVetoVotes,
     judgment: safeJudgment,
+    topUndraftedPick,
     serverNow,
   };
 }
@@ -173,6 +191,9 @@ export async function getDraftRoomProjection(
   // Self-heal drafts stuck in DEFENSE when every player already responded.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (db.rpc as any)("maybe_advance_from_defense", { p_draft_id: draftId });
+  // Self-heal drafts stuck in VOTING when every player already voted.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (db.rpc as any)("maybe_advance_from_voting", { p_draft_id: draftId });
   // Self-heal off-the-dome drafts stuck in VETO_VOTING (solo play, etc.).
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (db.rpc as any)("maybe_resolve_veto_voting", { p_draft_id: draftId });

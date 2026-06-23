@@ -77,6 +77,7 @@ export function VotingPanel({ projection, myPlayerId }: VotingPanelProps) {
       }
 
       setVote((prev) => ({ ...prev, submitted: true }));
+      router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "An error occurred");
     } finally {

@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(53);
+select plan(58);
 
 -- =============================================================================
 -- Fixture setup
@@ -42,6 +42,7 @@ select has_function('public', 'submit_defense', 'submit_defense exists');
 select has_function('public', 'advance_phase', 'advance_phase exists');
 select has_function('public', 'submit_vote', 'submit_vote exists');
 select has_function('public', 'maybe_advance_from_defense', 'maybe_advance_from_defense exists');
+select has_function('public', 'maybe_advance_from_voting', 'maybe_advance_from_voting exists');
 
 -- =============================================================================
 -- submit_defense tests
@@ -308,6 +309,12 @@ select lives_ok(
   'Player2 votes for Player3'
 );
 
+select is(
+  (select phase::text from public.drafts where id = '10000000-0000-0000-0000-000000000001'),
+  'VOTING',
+  'still VOTING after two of three votes'
+);
+
 select lives_ok(
   $$
     select public.submit_vote(
@@ -326,25 +333,13 @@ select is(
 );
 
 -- =============================================================================
--- advance_phase tests (VOTING → JUDGING)
+-- submit_vote auto-advance when all players voted
 -- =============================================================================
-
--- Host advances from VOTING to JUDGING (all votes in)
-select results_eq(
-  $$
-    select o_phase from public.advance_phase(
-      '10000000-0000-0000-0000-000000000001',
-      '00000000-0000-0000-0000-000000000001'
-    );
-  $$,
-  $$ values ('JUDGING') $$,
-  'VOTING → JUDGING when all votes are in'
-);
 
 select is(
   (select phase::text from public.drafts where id = '10000000-0000-0000-0000-000000000001'),
   'JUDGING',
-  'phase is now JUDGING'
+  'auto-advances to JUDGING when every player has voted'
 );
 
 -- =============================================================================
@@ -608,6 +603,52 @@ select is(
   public.maybe_advance_from_defense('10000000-0000-0000-0000-000000000003'),
   false,
   'repair no-ops when draft is not in DEFENSE'
+);
+
+-- =============================================================================
+-- maybe_advance_from_voting repair tests
+-- =============================================================================
+
+insert into public.drafts (
+  id, room_code, topic, host_guest_id, max_players, rounds,
+  draft_type, judging_mode, ai_personality, timer_seconds, phase
+)
+values (
+  '10000000-0000-0000-0000-000000000006',
+  'JUDGE06',
+  'Stuck Voting Repair',
+  '00000000-0000-0000-0000-000000000001',
+  2, 1,
+  'standard', 'hybrid', 'analyst',
+  null, 'VOTING'
+);
+
+insert into public.draft_players (id, draft_id, guest_id, display_name, seat)
+values
+  ('20000000-0000-0000-0000-000000000012', '10000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000001', 'VoteRepairHost', 1),
+  ('20000000-0000-0000-0000-000000000013', '10000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000002', 'VoteRepairGuest', 2);
+
+insert into public.votes (draft_id, voter_player_id, selected_player_id)
+values
+  ('10000000-0000-0000-0000-000000000006', '20000000-0000-0000-0000-000000000012', '20000000-0000-0000-0000-000000000013'),
+  ('10000000-0000-0000-0000-000000000006', '20000000-0000-0000-0000-000000000013', '20000000-0000-0000-0000-000000000012');
+
+select is(
+  public.maybe_advance_from_voting('10000000-0000-0000-0000-000000000006'),
+  true,
+  'repair advances stuck hybrid draft when all votes are in'
+);
+
+select is(
+  (select phase::text from public.drafts where id = '10000000-0000-0000-0000-000000000006'),
+  'JUDGING',
+  'repaired voting draft phase is JUDGING'
+);
+
+select is(
+  public.maybe_advance_from_voting('10000000-0000-0000-0000-000000000006'),
+  false,
+  'voting repair is idempotent after phase already advanced'
 );
 
 select * from finish();

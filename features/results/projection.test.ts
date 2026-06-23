@@ -63,6 +63,7 @@ function makeProjection(overrides?: Partial<DraftRoomProjection>): DraftRoomProj
       createdAt: "2026-06-15T13:30:00Z",
     },
     serverNow: "2026-06-15T13:30:01Z",
+    topUndraftedPick: null,
     ...overrides,
   };
 }
@@ -83,6 +84,13 @@ describe("buildPublicResult", () => {
     expect(result.rounds).toBe(3);
     expect(result.draftType).toBe("snake");
     expect(result.judgingMode).toBe("ai");
+  });
+
+  it("includes top undrafted pick when present on projection", () => {
+    const result = buildPublicResult(
+      makeProjection({ topUndraftedPick: "The Sopranos" }),
+    );
+    expect(result.topUndraftedPick).toBe("The Sopranos");
   });
 
   it("excludes guest IDs, tokens, raw metadata, internal prompts, and rate-limit keys", () => {
