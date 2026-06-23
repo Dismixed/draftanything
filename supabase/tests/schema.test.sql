@@ -280,9 +280,9 @@ select ok(
       and schemaname = 'public'
       and tablename = any(array[
         'drafts', 'draft_players', 'draft_items', 'picks', 'pool_suggestions',
-        'commentary', 'arguments', 'votes', 'judgments'
+        'commentary', 'arguments', 'votes', 'judgments', 'pick_veto_votes'
       ])
-  ) = 9,
+  ) = 10,
   'all authoritative live tables are in the realtime publication'
 );
 

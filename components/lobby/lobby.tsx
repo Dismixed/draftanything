@@ -8,6 +8,7 @@ import { ButtonLoadingLabel } from "@/components/ui/button-spinner";
 import { LobbyConfigForm } from "./lobby-config-form";
 import { LobbyConfigSummary } from "./lobby-config-summary";
 import { RoomChat } from "@/components/chat/room-chat";
+import { useLeaveLobbyOnExit } from "@/features/room/use-leave-lobby";
 
 interface PresenceState {
   [key: string]: Array<{ playerId: string; displayName: string }>;
@@ -35,6 +36,8 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
   const isHost = room.hostPlayerId === myPlayerId;
   const playerCount = room.players.length;
   const canStart = isHost && playerCount >= 2;
+
+  useLeaveLobbyOnExit(room.draftId, room.phase);
 
   // Phase is chosen by the server page; refresh when it advances (host action or realtime).
   useEffect(() => {

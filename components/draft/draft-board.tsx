@@ -48,11 +48,17 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
   const prevIsMyTurnRef = useRef(false);
   const opponentPickGateRef = useRef(createSoundGate(500));
   const turnStripRef = useRef<HTMLDivElement>(null);
-  const setProjection = useDraftStore((s) => s.setProjection);
   const projection = useDraftStore((s) => s.projection) ?? initial;
   const connectionStatus = useDraftStore((s) => s.connectionStatus);
   const [mobileTab, setMobileTab] = useState<MobileTab>("rosters");
   const [isSubmittingPick, setIsSubmittingPick] = useState(false);
+
+  const { refetch: refetchProjection } = useDraftRoom({
+    draftId: initial.draft.id,
+    roomCode: initial.draft.roomCode,
+    myPlayerId,
+    initialProjection: initial,
+  });
 
   const handleOffTheDomePick = useCallback(
     async (itemName: string) => {
@@ -77,10 +83,7 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
         }
         play("pick", { profile: "restrained" });
 
-        const projRes = await fetch(`/api/drafts/${projection.draft.id}/projection`);
-        if (projRes.ok) {
-          setProjection((await projRes.json()) as DraftRoomProjection);
-        }
+        await refetchProjection();
 
         void fetch("/api/ai/commentary", {
           method: "POST",
@@ -96,7 +99,7 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
       projection.draft.phase,
       projection.draft.currentPickIndex,
       play,
-      setProjection,
+      refetchProjection,
     ],
   );
 
@@ -110,12 +113,8 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
       throw new Error(err.message ?? "Failed to initiate veto");
     }
     play("veto", { profile: "restrained" });
-
-    const projRes = await fetch(`/api/drafts/${projection.draft.id}/projection`);
-    if (projRes.ok) {
-      setProjection((await projRes.json()) as DraftRoomProjection);
-    }
-  }, [projection.draft.id, play, setProjection]);
+    await refetchProjection();
+  }, [projection.draft.id, play, refetchProjection]);
 
   const handlePoolPick = useCallback(
     async (itemId: string) => {
@@ -135,6 +134,7 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
           throw new Error(err.message ?? "Pick failed");
         }
         play("pick", { profile: "restrained" });
+        await refetchProjection();
         void fetch("/api/ai/commentary", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -144,14 +144,8 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
         setIsSubmittingPick(false);
       }
     },
-    [projection.draft.id, projection.draft.currentPickIndex, play],
+    [projection.draft.id, projection.draft.currentPickIndex, play, refetchProjection],
   );
-
-  useDraftRoom({
-    draftId: projection.draft.id,
-    roomCode: projection.draft.roomCode,
-    myPlayerId,
-  });
 
   useEffect(() => {
     if (unlocked) preloadSamples(DRAFT_SAMPLE_SRCS);
@@ -335,6 +329,7 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
               isMyTurn={isMyTurn}
               myPlayerId={myPlayerId}
               serverNow={projection.serverNow}
+              onAutoPickTriggered={refetchProjection}
             />
           )}
           <SoundToggle />
@@ -418,7 +413,11 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
       </nav>
 
       {isVetoVoting && draft.pickingMode === "off_the_dome" && (
-        <VetoPanel projection={projection} myPlayerId={myPlayerId} />
+        <VetoPanel
+          projection={projection}
+          myPlayerId={myPlayerId}
+          onVoteSubmitted={refetchProjection}
+        />
       )}
 
       {draft.phase === "VOTING" && (

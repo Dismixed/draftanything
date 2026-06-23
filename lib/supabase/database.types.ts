@@ -1337,6 +1337,10 @@ export type Database = {
           seat: number
         }[]
       }
+      leave_draft: {
+        Args: { p_draft_id: string; p_guest_id: string }
+        Returns: undefined
+      }
       lock_pool: {
         Args: { p_draft_id: string; p_guest_id: string }
         Returns: undefined

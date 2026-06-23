@@ -7,9 +7,10 @@ import { ButtonLoadingLabel } from "@/components/ui/button-spinner";
 interface VetoPanelProps {
   projection: DraftRoomProjection;
   myPlayerId: string;
+  onVoteSubmitted?: () => Promise<void>;
 }
 
-export function VetoPanel({ projection, myPlayerId }: VetoPanelProps) {
+export function VetoPanel({ projection, myPlayerId, onVoteSubmitted }: VetoPanelProps) {
   const [submitting, setSubmitting] = useState<"veto" | "keep" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,6 +63,8 @@ export function VetoPanel({ projection, myPlayerId }: VetoPanelProps) {
         const data = await res.json();
         throw new Error(data.message ?? "Failed to submit vote");
       }
+
+      await onVoteSubmitted?.();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to submit vote");
     } finally {

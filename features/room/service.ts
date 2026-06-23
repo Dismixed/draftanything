@@ -282,6 +282,33 @@ export async function resetForRematch(
 }
 
 /**
+ * Soft-removes the current player from a LOBBY-phase draft.
+ * Idempotent when the player is already gone.
+ */
+export async function leaveRoom(
+  draftId: string,
+  guestId: string,
+): Promise<void> {
+  const db = createAdminClient();
+
+  const { error } = await db.rpc("leave_draft", {
+    p_draft_id: draftId,
+    p_guest_id: guestId,
+  });
+
+  if (error) {
+    const msg = error.message ?? "";
+    if (msg.includes("ROOM_NOT_FOUND")) {
+      throw new AppError("ROOM_NOT_FOUND", `Draft ${draftId} not found`);
+    }
+    if (msg.includes("INVALID_PHASE")) {
+      throw new AppError("INVALID_PHASE", "Room is no longer in the lobby phase");
+    }
+    throw new AppError("INVALID_INPUT", error.message);
+  }
+}
+
+/**
  * Updates draft configuration while in LOBBY. Host-only.
  */
 export async function updateRoomConfig(

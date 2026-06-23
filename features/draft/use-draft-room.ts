@@ -9,7 +9,11 @@ interface UseDraftRoomOptions {
   roomCode: string;
   /** The current player's draft_players.id */
   myPlayerId: string;
+  /** SSR projection — seeds the store and resets when the draft changes. */
+  initialProjection: DraftRoomProjection;
 }
+
+const POLL_MS = 5_000;
 
 /**
  * Subscribes to Supabase Realtime for draft table changes, debounces a
@@ -22,6 +26,7 @@ export function useDraftRoom({
   draftId,
   roomCode,
   myPlayerId,
+  initialProjection,
 }: UseDraftRoomOptions) {
   const setProjection = useDraftStore((s) => s.setProjection);
   const setConnectionStatus = useDraftStore((s) => s.setConnectionStatus);
@@ -43,24 +48,30 @@ export function useDraftRoom({
     return null;
   }, [draftId]);
 
-  const refetch = useCallback(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(async () => {
-      const projection = await fetchProjection();
-      if (projection) {
-        setProjection(projection);
-      }
-    }, 200);
+  const refetchNow = useCallback(async () => {
+    const projection = await fetchProjection();
+    if (projection) {
+      setProjection(projection);
+    }
+    return projection;
   }, [fetchProjection, setProjection]);
 
+  const refetch = useCallback(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      void refetchNow();
+    }, 200);
+  }, [refetchNow]);
+
   const refetchCommentary = useCallback(() => {
-    void (async () => {
-      const projection = await fetchProjection();
-      if (projection) {
-        setProjection(projection);
-      }
-    })();
-  }, [fetchProjection, setProjection]);
+    void refetchNow();
+  }, [refetchNow]);
+
+  useEffect(() => {
+    setProjection(initialProjection);
+    // Seed store when entering this draft; SSR initial is authoritative on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftId, setProjection]);
 
   useEffect(() => {
     let channel: ReturnType<
@@ -174,11 +185,7 @@ export function useDraftRoom({
           .subscribe(async (status) => {
             if (status === "SUBSCRIBED") {
               setConnectionStatus("connected");
-              // Fetch on initial subscription
-              const projection = await fetchProjection();
-              if (projection) {
-                setProjection(projection);
-              }
+              await refetchNow();
             } else if (status === "CLOSED" || status === "CHANNEL_ERROR") {
               setConnectionStatus("disconnected");
             }
@@ -192,12 +199,35 @@ export function useDraftRoom({
 
     void setup();
 
+    const pollInterval = setInterval(() => {
+      void refetchNow();
+    }, POLL_MS);
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        void refetchNow();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
+      clearInterval(pollInterval);
+      document.removeEventListener("visibilitychange", onVisibility);
       if (channelRef.current) {
         void channelRef.current.unsubscribe();
         channelRef.current = null;
       }
     };
-  }, [draftId, roomCode, myPlayerId, setProjection, setConnectionStatus, refetch, refetchCommentary, fetchProjection]);
+  }, [
+    draftId,
+    roomCode,
+    myPlayerId,
+    setConnectionStatus,
+    refetch,
+    refetchCommentary,
+    refetchNow,
+  ]);
+
+  return { refetch: refetchNow };
 }

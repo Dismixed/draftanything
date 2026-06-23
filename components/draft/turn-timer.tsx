@@ -10,6 +10,7 @@ interface TurnTimerProps {
   isMyTurn: boolean;
   myPlayerId: string;
   serverNow: string;
+  onAutoPickTriggered?: () => Promise<void>;
 }
 
 export function TurnTimer({
@@ -19,6 +20,7 @@ export function TurnTimer({
   isMyTurn,
   myPlayerId,
   serverNow,
+  onAutoPickTriggered,
 }: TurnTimerProps) {
   const { play } = useSound();
   const [expired, setExpired] = useState(false);
@@ -77,9 +79,9 @@ export function TurnTimer({
     const adjustedNow = Date.now() - clockOffset;
     if (adjustedNow >= deadlineMs && !autoPickTriggeredRef.current && isMyTurn) {
       autoPickTriggeredRef.current = true;
-      void triggerAutoPick(draftId);
+      void triggerAutoPick(draftId, onAutoPickTriggered);
     }
-  }, [deadline, timerSeconds, serverNow, draftId, isMyTurn, myPlayerId]);
+  }, [deadline, timerSeconds, serverNow, draftId, isMyTurn, myPlayerId, onAutoPickTriggered]);
 
   if (!timerSeconds || display === null) {
     return null;
@@ -109,13 +111,17 @@ export function TurnTimer({
   );
 }
 
-async function triggerAutoPick(draftId: string) {
+async function triggerAutoPick(
+  draftId: string,
+  onAutoPickTriggered?: () => Promise<void>,
+) {
   try {
     await fetch(`/api/drafts/${draftId}/auto-pick`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({}),
     });
+    await onAutoPickTriggered?.();
   } catch {
     // auto-pick errors are non-fatal (the RPC is idempotent)
   }
