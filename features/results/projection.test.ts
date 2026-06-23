@@ -34,8 +34,8 @@ function makeProjection(overrides?: Partial<DraftRoomProjection>): DraftRoomProj
       { id: "item-2", name: "The Wire", source: "ai", isAvailable: false },
     ],
     picks: [
-      { id: "pick-1", playerId: "player-1", itemId: "item-1", itemName: null, overallPick: 1, round: 1, pickInRound: 1, isAutoPick: false, forfeited: false },
-      { id: "pick-2", playerId: "player-2", itemId: "item-2", itemName: null, overallPick: 2, round: 1, pickInRound: 2, isAutoPick: false, forfeited: false },
+      { id: "pick-1", playerId: "player-1", itemId: "item-1", itemName: null, overallPick: 1, round: 1, pickInRound: 1, isAutoPick: false, forfeited: false, vetoChallengeResolved: false },
+      { id: "pick-2", playerId: "player-2", itemId: "item-2", itemName: null, overallPick: 2, round: 1, pickInRound: 2, isAutoPick: false, forfeited: false, vetoChallengeResolved: false },
     ],
     commentary: [],
     defenses: [
@@ -151,6 +151,7 @@ describe("buildPublicResult", () => {
           pickInRound: 1,
           isAutoPick: false,
           forfeited: false,
+          vetoChallengeResolved: false,
         },
       ],
       judgment: {
@@ -185,6 +186,7 @@ describe("buildPublicResult", () => {
           pickInRound: 1,
           isAutoPick: false,
           forfeited: false,
+          vetoChallengeResolved: false,
         },
       ],
       judgment: {

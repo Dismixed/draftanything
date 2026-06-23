@@ -37,19 +37,17 @@ function ChainLink({ active, animated }: { active: boolean; animated: boolean })
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        height: "32px",
+        height: "28px",
         opacity: active ? 1 : 0.15,
         transition: "opacity 0.5s ease",
         animation: animated ? "cl-chain-grow 0.4s ease forwards" : undefined,
         transformOrigin: "center top",
       }}
     >
-      <svg width="20" height="24" viewBox="0 0 20 24" fill="none" style={{ display: "block" }}>
-        <circle cx="10" cy="4" r="3.5" stroke={active ? "#c9a84c" : "#6a7090"} strokeWidth="1.5" fill={active ? "rgba(201,168,76,0.12)" : "none"} />
-        <circle cx="10" cy="20" r="3.5" stroke={active ? "#c9a84c" : "#6a7090"} strokeWidth="1.5" fill={active ? "rgba(201,168,76,0.12)" : "none"} />
-        <rect x="8.5" y="7" width="3" height="10" rx="1.5" fill={active ? "#c9a84c" : "#6a7090"} opacity={active ? 0.6 : 0.3} />
-        <path d="M6 8 Q10 12 14 8" stroke={active ? "#c9a84c" : "#6a7090"} strokeWidth="1.2" fill="none" opacity={active ? 0.5 : 0.2} />
-        <path d="M6 16 Q10 12 14 16" stroke={active ? "#c9a84c" : "#6a7090"} strokeWidth="1.2" fill="none" opacity={active ? 0.5 : 0.2} />
+      <svg width="14" height="18" viewBox="0 0 12 16" fill="none" style={{ display: "block" }}>
+        <circle cx="6" cy="3" r="2.5" stroke={active ? "#565758" : "#3a3a3c"} strokeWidth="1.5" fill="none" />
+        <circle cx="6" cy="13" r="2.5" stroke={active ? "#565758" : "#3a3a3c"} strokeWidth="1.5" fill="none" />
+        <line x1="6" y1="5.5" x2="6" y2="10.5" stroke={active ? "#565758" : "#3a3a3c"} strokeWidth="1.5" />
       </svg>
     </div>
   );
@@ -82,7 +80,6 @@ function WordRow({
 }) {
   const chars = word.split("");
   const attemptsCount = wordAttempts.length;
-  const hasHintReveals = revealedLetters.some(Boolean);
   const unrevealedCount = (word.length - 1) - revealedLetters.filter(Boolean).length;
 
   const [localGuess, setLocalGuess] = useState("");
@@ -158,7 +155,7 @@ function WordRow({
             fontSize: "10px",
             fontWeight: 500,
             letterSpacing: "0.04em",
-            color: status === "active" ? "var(--purple)" : "var(--text-dim)",
+            color: status === "active" ? "#c9b458" : "#787c7e",
             opacity: status === "active" ? 0.85 : 0.55,
             marginLeft: "2px",
             marginBottom: "2px",
@@ -170,12 +167,12 @@ function WordRow({
 
       <div
         style={{
-          fontSize: "9px",
+          fontSize: "10px",
           fontWeight: 600,
-          letterSpacing: "0.2em",
+          letterSpacing: "0.06em",
           textTransform: "uppercase",
-          color: status === "locked" ? "var(--text-dim)" : status === "active" ? "var(--gold)" : "var(--gold-hi)",
-          opacity: status === "locked" ? 0.35 : 0.8,
+          color: status === "locked" ? "#3a3a3c" : status === "active" ? "#c9b458" : "#6aaa64",
+          opacity: status === "locked" ? 1 : 0.9,
           marginLeft: "2px",
         }}
       >
@@ -192,44 +189,22 @@ function WordRow({
           padding: "14px 18px",
           background:
             status === "active"
-              ? "linear-gradient(135deg, rgba(201,168,76,0.08) 0%, rgba(124,58,255,0.04) 100%)"
+              ? "#1a1a1b"
               : status === "solved"
-                ? "linear-gradient(135deg, rgba(201,168,76,0.12) 0%, rgba(201,168,76,0.04) 100%)"
-                : "var(--panel)",
-          border: `1px solid ${
+                ? "#6aaa64"
+                : "#3a3a3c",
+          border: `2px solid ${
             status === "active"
-              ? "rgba(201,168,76,0.4)"
+              ? "#c9b458"
               : status === "solved"
-                ? "rgba(201,168,76,0.25)"
-                : "var(--border)"
+                ? "#6aaa64"
+                : "#3a3a3c"
           }`,
-          boxShadow:
-            status === "active"
-              ? hasHintReveals
-                ? "0 0 20px rgba(201,168,76,0.12), inset 0 0 30px rgba(201,168,76,0.05)"
-                : "0 0 20px rgba(201,168,76,0.08), inset 0 0 30px rgba(201,168,76,0.03)"
-              : status === "solved"
-                ? "0 0 12px rgba(201,168,76,0.06)"
-                : "none",
-          transition: "border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease",
+          borderRadius: "6px",
+          transition: "border-color 0.3s ease, background 0.3s ease",
           position: "relative",
-          overflow: "hidden",
         }}
       >
-        {status === "active" && (
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              left: "15%",
-              right: "15%",
-              height: "1px",
-              background: "linear-gradient(90deg, transparent, rgba(201,168,76,0.5), transparent)",
-              pointerEvents: "none",
-            }}
-          />
-        )}
-
         <div
           className="cl-word-letters"
           style={{
@@ -244,11 +219,10 @@ function WordRow({
           {status === "solved" ? (
             <span
               style={{
-                fontFamily: '"Playfair Display", serif',
                 fontSize: "clamp(20px, 4vw, 28px)",
                 fontWeight: 700,
-                letterSpacing: "0.08em",
-                color: "var(--gold-hi)",
+                letterSpacing: "0.06em",
+                color: "#ffffff",
               }}
             >
               {chars.map((ch, i) => (
@@ -268,11 +242,10 @@ function WordRow({
               {/* First letter */}
               <span
                 style={{
-                  fontFamily: '"Playfair Display", serif',
                   fontSize: "clamp(20px, 4vw, 28px)",
                   fontWeight: 700,
-                  letterSpacing: "0.08em",
-                  color: "var(--gold)",
+                  letterSpacing: "0.06em",
+                  color: "#ffffff",
                   flexShrink: 0,
                 }}
               >
@@ -287,12 +260,10 @@ function WordRow({
                     <span
                       key={pos}
                       style={{
-                        fontFamily: '"Playfair Display", serif',
                         fontSize: "clamp(20px, 4vw, 28px)",
                         fontWeight: 700,
-                        letterSpacing: "0.08em",
-                        color: "var(--gold)",
-                        opacity: 0.7,
+                        letterSpacing: "0.06em",
+                        color: "#c9b458",
                       }}
                     >
                       {ch}
@@ -313,11 +284,10 @@ function WordRow({
                 spellCheck={false}
                 placeholder={"_ ".repeat(Math.max(0, unrevealedCount)).trim()}
                 style={{
-                  fontFamily: '"Playfair Display", serif',
                   fontSize: "clamp(20px, 4vw, 28px)",
                   fontWeight: 700,
-                  letterSpacing: "0.08em",
-                  color: "var(--text)",
+                  letterSpacing: "0.06em",
+                  color: "#ffffff",
                   background: "transparent",
                   border: "none",
                   outline: "none",
@@ -325,19 +295,17 @@ function WordRow({
                   margin: 0,
                   flex: 1,
                   minWidth: "60px",
-                  caretColor: "var(--gold)",
+                  caretColor: "#c9b458",
                 }}
               />
             </div>
           ) : (
             <span
               style={{
-                fontFamily: '"Playfair Display", serif',
                 fontSize: "clamp(20px, 4vw, 28px)",
                 fontWeight: 700,
-                letterSpacing: "0.08em",
-                color: "var(--text-dim)",
-                opacity: status === "locked" ? 0.3 : 1,
+                letterSpacing: "0.06em",
+                color: "#565758",
               }}
             >
               {chars.map((ch, i) => {
@@ -346,9 +314,9 @@ function WordRow({
                   <span
                     key={i}
                     style={{
-                      opacity: show ? 1 : 0.35,
+                      opacity: show ? 1 : 0.5,
                       transition: "opacity 0.3s ease, color 0.3s ease",
-                      color: show && i !== 0 ? "var(--gold)" : undefined,
+                      color: show && i !== 0 ? "#c9b458" : undefined,
                     }}
                   >
                     {show ? displayChar(ch, i) : "_"}
@@ -365,8 +333,8 @@ function WordRow({
             style={{
               marginLeft: "auto",
               fontSize: "10px",
-              color: "var(--text-dim)",
-              opacity: 0.5,
+              color: "#787c7e",
+              opacity: 0.7,
               whiteSpace: "nowrap",
               flexShrink: 0,
             }}
@@ -466,7 +434,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
 
   if (!puzzle) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "300px", color: "var(--text-dim)" }}>
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "300px", color: "#787c7e" }}>
         Loading puzzle...
       </div>
     );
@@ -477,43 +445,37 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
       <TutorialModal />
       <div className="game-shell" style={{ width: "100%", maxWidth: "520px", margin: "0 auto" }}>
         {/* ---- Header ---- */}
-        <header style={{ textAlign: "center", marginBottom: "36px", position: "relative" }}>
+        <header style={{ textAlign: "center", marginBottom: "32px", position: "relative" }}>
           <div style={{ position: "absolute", top: 0, right: 0 }}>
             <SoundToggle />
           </div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", marginBottom: "6px" }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="6" r="4" stroke="#c9a84c" strokeWidth="1.5" fill="rgba(201,168,76,0.15)" />
-              <circle cx="12" cy="18" r="4" stroke="#c9a84c" strokeWidth="1.5" fill="rgba(201,168,76,0.15)" />
-              <rect x="11" y="9" width="2" height="6" rx="1" fill="#c9a84c" opacity="0.5" />
+              <circle cx="12" cy="6" r="4" stroke="#ffffff" strokeWidth="2" fill="none" />
+              <circle cx="12" cy="18" r="4" stroke="#ffffff" strokeWidth="2" fill="none" />
+              <rect x="11" y="9" width="2" height="6" rx="1" fill="#ffffff" />
             </svg>
-            <h1 style={{ fontFamily: '"Playfair Display", serif', fontSize: "clamp(24px, 5vw, 32px)", fontWeight: 900, color: "var(--text)", margin: 0, letterSpacing: "-0.01em" }}>
+            <h1 style={{ fontSize: "clamp(24px, 5vw, 32px)", fontWeight: 700, color: "#ffffff", margin: 0, letterSpacing: "-0.02em" }}>
               Chainlink
             </h1>
           </div>
 
-          <div style={{ fontSize: "9px", fontWeight: 600, letterSpacing: "0.28em", textTransform: "uppercase", color: "var(--text-dim)", opacity: 0.6, marginBottom: "4px" }}>
+          <div style={{ fontSize: "11px", fontWeight: 500, color: "#565758", marginBottom: "4px" }}>
             {isUnlimited ? "Unlimited Mode" : `Daily Puzzle · ${formatDate(date || getDateString())}`}
           </div>
 
           {/* Score + Hints row */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", marginTop: "8px" }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.2)", padding: "6px 14px" }}>
-              <span style={{ fontSize: "9px", fontWeight: 600, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--text-dim)" }}>
-                Score
-              </span>
-              <span style={{ fontFamily: '"Playfair Display", serif', fontSize: "18px", fontWeight: 700, color: "var(--gold-hi)" }}>
-                {score}
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 14px" }}>
+              <span style={{ fontSize: "13px", fontWeight: 700, color: "#6aaa64" }}>
+                Score: {score}
               </span>
             </div>
 
             {gameStatus === "playing" && (
-              <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(124,58,255,0.08)", border: "1px solid rgba(124,58,255,0.2)", padding: "6px 14px" }}>
-                <span style={{ fontSize: "9px", fontWeight: 600, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--text-dim)" }}>
-                  Hints
-                </span>
-                <span style={{ fontFamily: '"Outfit", sans-serif', fontSize: "14px", fontWeight: 600, color: "var(--purple)" }}>
-                  {hintsRemaining}
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 14px" }}>
+                <span style={{ fontSize: "13px", fontWeight: 700, color: "#c9b458" }}>
+                  Hints: {hintsRemaining}
                 </span>
               </div>
             )}
@@ -522,10 +484,10 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
         </header>
 
         {!isComplete && (
-          <div className="cl-hint-banner" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginBottom: "24px", padding: "10px 16px", background: "rgba(124,58,255,0.06)", border: "1px solid rgba(124,58,255,0.15)" }}>
-            <span style={{ fontSize: "14px", color: "var(--purple)", opacity: 0.7 }}>&#9670;</span>
-            <span style={{ fontSize: "10px", color: "var(--text-dim)", letterSpacing: "0.06em" }}>
-              Each word pairs with the one before it — like <em style={{ color: "var(--text)", fontStyle: "normal" }}>apple juice</em>, then <em style={{ color: "var(--text)", fontStyle: "normal" }}>juice box</em>.
+          <div className="cl-hint-banner" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginBottom: "24px", padding: "10px 16px", background: "rgba(106,170,100,0.08)", border: "1px solid rgba(106,170,100,0.2)", borderRadius: "6px" }}>
+            <span style={{ fontSize: "14px", color: "#6aaa64", opacity: 0.7 }}>&#9670;</span>
+            <span style={{ fontSize: "11px", color: "#787c7e", letterSpacing: "0.04em" }}>
+              Each word pairs with the one before it — like <em style={{ color: "#ffffff", fontStyle: "normal" }}>apple juice</em>, then <em style={{ color: "#ffffff", fontStyle: "normal" }}>juice box</em>.
             </span>
           </div>
         )}
@@ -554,14 +516,20 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
             <button
               onClick={handleHint}
               disabled={hintsRemaining <= 0}
-              className="btn-ghost"
               style={{
                 width: "auto",
-                padding: "8px 18px",
-                fontSize: "10px",
+                padding: "10px 20px",
+                fontSize: "13px",
+                fontWeight: 600,
                 display: "flex",
                 alignItems: "center",
                 gap: "6px",
+                background: "#565758",
+                color: "#ffffff",
+                border: "none",
+                borderRadius: "6px",
+                cursor: hintsRemaining > 0 ? "pointer" : "not-allowed",
+                opacity: hintsRemaining > 0 ? 1 : 0.4,
                 animation: hintAnim ? "cl-hint-pulse 0.4s ease" : undefined,
               }}
             >
@@ -584,11 +552,12 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
               textAlign: "center",
               padding: "10px 16px",
               marginBottom: "16px",
-              fontSize: "12px",
-              fontWeight: 500,
-              color: feedback.type === "correct" ? "var(--gold-hi)" : "#ff6b6b",
-              background: feedback.type === "correct" ? "rgba(201,168,76,0.08)" : "rgba(255,107,107,0.06)",
-              border: `1px solid ${feedback.type === "correct" ? "rgba(201,168,76,0.2)" : "rgba(255,107,107,0.2)"}`,
+              fontSize: "13px",
+              fontWeight: 600,
+              color: feedback.type === "correct" ? "#6aaa64" : "#ff6b6b",
+              background: feedback.type === "correct" ? "rgba(106,170,100,0.1)" : "rgba(255,107,107,0.08)",
+              border: `1px solid ${feedback.type === "correct" ? "rgba(106,170,100,0.25)" : "rgba(255,107,107,0.2)"}`,
+              borderRadius: "6px",
               transition: "opacity 0.3s ease",
             }}
           >
@@ -598,15 +567,14 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
 
         {/* ---- Completed ---- */}
         {isComplete && (
-          <div className="anim-fade-slide-up" style={{ marginTop: "8px", padding: "28px 24px", textAlign: "center", border: "1px solid rgba(201,168,76,0.3)", background: "linear-gradient(135deg, rgba(201,168,76,0.1) 0%, rgba(124,58,255,0.06) 100%)", position: "relative" }}>
-            <div style={{ position: "absolute", top: 0, left: "10%", right: "10%", height: "1px", background: "linear-gradient(90deg, transparent, rgba(201,168,76,0.5), transparent)", pointerEvents: "none" }} />
+          <div className="anim-fade-slide-up" style={{ marginTop: "8px", padding: "28px 24px", textAlign: "center", border: "2px solid #6aaa64", background: "#1a1a1b", borderRadius: "6px", position: "relative" }}>
             <div style={{ fontSize: "32px", marginBottom: "8px" }}>&#9670;</div>
-            <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: "22px", fontWeight: 700, color: "var(--gold-hi)", margin: "0 0 6px", textShadow: "0 0 30px rgba(240,200,96,0.15)" }}>
+            <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#6aaa64", margin: "0 0 6px" }}>
               Chain Complete!
             </h2>
-            <p style={{ fontSize: "13px", color: "var(--text)", margin: "0 0 20px" }}>
+            <p style={{ fontSize: "13px", color: "#ffffff", margin: "0 0 20px" }}>
               Final score:{" "}
-              <strong style={{ fontFamily: '"Playfair Display", serif', fontSize: "28px", fontWeight: 700, color: "var(--gold-hi)" }}>
+              <strong style={{ fontSize: "28px", fontWeight: 700, color: "#6aaa64" }}>
                 {displayScore}
               </strong>
             </p>
@@ -616,12 +584,12 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                 <span
                   key={i}
                   style={{
-                    fontFamily: '"Playfair Display", serif',
                     fontSize: "13px",
                     padding: "6px 14px",
-                    background: "rgba(201,168,76,0.06)",
-                    border: "1px solid rgba(201,168,76,0.2)",
-                    color: "var(--gold-hi)",
+                    background: "#3a3a3c",
+                    borderRadius: "6px",
+                    color: "#6aaa64",
+                    fontWeight: 600,
                   }}
                 >
                   {formatPair(puzzle.words[i], w)}
@@ -629,7 +597,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
               ))}
             </div>
 
-            <div style={{ fontSize: "10px", color: "var(--text-dim)", opacity: 0.5, marginBottom: "16px" }}>
+            <div style={{ fontSize: "11px", color: "#787c7e", marginBottom: "16px" }}>
               {isUnlimited ? "Play another round!" : "Come back tomorrow for a new puzzle!"}
             </div>
 
@@ -638,8 +606,20 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                 play("ui.tap");
                 resetGame();
               }}
-              className="btn-gold"
-              style={{ maxWidth: "220px", margin: "0 auto" }}
+              style={{
+                maxWidth: "220px",
+                margin: "0 auto",
+                width: "100%",
+                padding: "12px 16px",
+                background: "#6aaa64",
+                color: "#ffffff",
+                fontSize: "13px",
+                fontWeight: 700,
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+                letterSpacing: "0.04em",
+              }}
             >
               {isUnlimited ? "New Puzzle" : "Start Fresh"}
             </button>
@@ -654,8 +634,18 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                 play("ui.tap");
                 resetGame();
               }}
-              className="btn-ghost"
-              style={{ maxWidth: "180px", margin: "0 auto", fontSize: "9px" }}
+              style={{
+                maxWidth: "180px",
+                margin: "0 auto",
+                fontSize: "11px",
+                color: "#787c7e",
+                background: "transparent",
+                border: "1px solid #3a3a3c",
+                padding: "10px 16px",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontWeight: 600,
+              }}
             >
               New Puzzle
             </button>

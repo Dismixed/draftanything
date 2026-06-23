@@ -1,11 +1,25 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import type { SafeRoomMessage } from "./types";
+
+const CHAT_BROADCAST_EVENT = "room_message";
+const POLL_INTERVAL_MS = 5000;
 
 interface UseRoomChatOptions {
   draftId: string;
   roomCode: string;
+}
+
+function mergeMessage(
+  prev: SafeRoomMessage[],
+  message: SafeRoomMessage,
+): SafeRoomMessage[] {
+  if (prev.some((m) => m.id === message.id)) return prev;
+  return [...prev, message].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  );
 }
 
 export function useRoomChat({ draftId, roomCode }: UseRoomChatOptions) {
@@ -14,6 +28,7 @@ export function useRoomChat({ draftId, roomCode }: UseRoomChatOptions) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   const fetchMessages = useCallback(async () => {
     try {
@@ -22,9 +37,14 @@ export function useRoomChat({ draftId, roomCode }: UseRoomChatOptions) {
         const data = (await res.json()) as SafeRoomMessage[];
         setMessages(data);
         setError(null);
+      } else if (res.status !== 429) {
+        const err = (await res.json().catch(() => ({}))) as {
+          message?: string;
+        };
+        setError(err.message ?? "Could not load chat");
       }
     } catch {
-      // non-fatal
+      setError("Could not load chat");
     } finally {
       setLoading(false);
     }
@@ -37,23 +57,34 @@ export function useRoomChat({ draftId, roomCode }: UseRoomChatOptions) {
     }, 150);
   }, [fetchMessages]);
 
+  const addMessage = useCallback((message: SafeRoomMessage) => {
+    setMessages((prev) => mergeMessage(prev, message));
+  }, []);
+
   useEffect(() => {
     void fetchMessages();
   }, [fetchMessages]);
 
   useEffect(() => {
-    let channel: ReturnType<
-      import("@supabase/supabase-js").SupabaseClient["channel"]
-    > | null = null;
+    let cancelled = false;
 
     async function setup() {
       try {
         const { createClient } = await import("@/lib/supabase/browser");
         const supabase = createClient();
 
-        channel = supabase.channel(`chat:${roomCode}`);
+        const channel = supabase.channel(`chat:${roomCode}`, {
+          config: { broadcast: { ack: false, self: false } },
+        });
 
         channel
+          .on("broadcast", { event: CHAT_BROADCAST_EVENT }, ({ payload }) => {
+            if (cancelled) return;
+            const message = payload as SafeRoomMessage;
+            if (message?.id) {
+              addMessage(message);
+            }
+          })
           .on(
             "postgres_changes",
             {
@@ -66,21 +97,35 @@ export function useRoomChat({ draftId, roomCode }: UseRoomChatOptions) {
               refetch();
             },
           )
-          .subscribe();
+          .subscribe((status) => {
+            if (cancelled) return;
+            if (status === "SUBSCRIBED") {
+              void fetchMessages();
+            }
+          });
+
+        channelRef.current = channel;
       } catch {
-        // non-fatal — polling via manual refetch on send still works
+        // non-fatal — polling fallback still works
       }
     }
 
     void setup();
 
+    const pollInterval = setInterval(() => {
+      void fetchMessages();
+    }, POLL_INTERVAL_MS);
+
     return () => {
+      cancelled = true;
+      clearInterval(pollInterval);
       if (debounceRef.current) clearTimeout(debounceRef.current);
-      if (channel) {
-        void channel.unsubscribe();
+      if (channelRef.current) {
+        void channelRef.current.unsubscribe();
+        channelRef.current = null;
       }
     };
-  }, [draftId, roomCode, refetch]);
+  }, [draftId, roomCode, refetch, fetchMessages, addMessage]);
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -103,10 +148,14 @@ export function useRoomChat({ draftId, roomCode }: UseRoomChatOptions) {
         }
 
         const message = (await res.json()) as SafeRoomMessage;
-        setMessages((prev) => {
-          if (prev.some((m) => m.id === message.id)) return prev;
-          return [...prev, message];
+        addMessage(message);
+
+        channelRef.current?.send({
+          type: "broadcast",
+          event: CHAT_BROADCAST_EVENT,
+          payload: message,
         });
+
         return true;
       } catch {
         setError("Failed to send message");
@@ -115,7 +164,7 @@ export function useRoomChat({ draftId, roomCode }: UseRoomChatOptions) {
         setSending(false);
       }
     },
-    [draftId, sending],
+    [draftId, sending, addMessage],
   );
 
   return {
@@ -124,5 +173,6 @@ export function useRoomChat({ draftId, roomCode }: UseRoomChatOptions) {
     sending,
     error,
     sendMessage,
+    refreshMessages: fetchMessages,
   };
 }

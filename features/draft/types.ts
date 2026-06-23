@@ -69,6 +69,7 @@ export interface SafePick {
   pickInRound: number;
   isAutoPick: boolean;
   forfeited: boolean;
+  vetoChallengeResolved: boolean;
 }
 
 export interface SafeCommentary {

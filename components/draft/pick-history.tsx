@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useRef, useEffect, useState } from "react";
+import { useCallback, useMemo, useRef, useEffect, useState } from "react";
 import type { SafePick, SafePlayer, PickSlot } from "@/features/draft/types";
+import { ButtonLoadingLabel } from "@/components/ui/button-spinner";
 
 interface PickHistoryProps {
   picks: SafePick[];
@@ -9,6 +10,9 @@ interface PickHistoryProps {
   currentPickIndex: number;
   pickOrder: PickSlot[];
   pendingPickId?: string | null;
+  myPlayerId: string;
+  canInitiateVeto: boolean;
+  onInitiateVeto?: () => Promise<void>;
 }
 
 export function PickHistory({
@@ -17,8 +21,13 @@ export function PickHistory({
   currentPickIndex,
   pickOrder,
   pendingPickId,
+  myPlayerId,
+  canInitiateVeto,
+  onInitiateVeto,
 }: PickHistoryProps) {
   const listRef = useRef<HTMLUListElement>(null);
+  const [initiatingVeto, setInitiatingVeto] = useState(false);
+  const [vetoError, setVetoError] = useState<string | null>(null);
 
   const playerMap = useMemo(
     () => new Map(players.map((p) => [p.id, p])),
@@ -30,7 +39,9 @@ export function PickHistory({
     [picks],
   );
 
-  const nextSlot = pickOrder[currentPickIndex];
+  const latestPick = sortedPicks[0] ?? null;
+
+  const nextSlot = currentPickIndex >= 0 ? pickOrder[currentPickIndex] : undefined;
   const [animatedPickId, setAnimatedPickId] = useState<string | null>(null);
   const prevLengthRef = useRef(picks.length);
 
@@ -48,25 +59,96 @@ export function PickHistory({
     prevLengthRef.current = picks.length;
   }, [picks]);
 
+  const handleInitiateVeto = useCallback(async () => {
+    if (!onInitiateVeto || initiatingVeto) return;
+    setVetoError(null);
+    setInitiatingVeto(true);
+    try {
+      await onInitiateVeto();
+    } catch (e) {
+      setVetoError(e instanceof Error ? e.message : "Failed to initiate veto");
+    } finally {
+      setInitiatingVeto(false);
+    }
+  }, [onInitiateVeto, initiatingVeto]);
+
+  const showVetoButton =
+    canInitiateVeto &&
+    latestPick &&
+    !latestPick.forfeited &&
+    !latestPick.vetoChallengeResolved &&
+    latestPick.playerId !== myPlayerId &&
+    players.length > 1;
+
   return (
     <section
       aria-label="Pick history"
       className="panel-card"
       style={{ padding: '16px' }}
     >
-      <h2
+      <div
         style={{
-          fontSize: '9px',
-          fontWeight: 600,
-          letterSpacing: '0.22em',
-          textTransform: 'uppercase',
-          color: 'var(--text-dim)',
-          marginBottom: '12px',
-          margin: '0 0 12px 0',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "8px",
+          marginBottom: "12px",
         }}
       >
-        Pick History
-      </h2>
+        <h2
+          style={{
+            fontSize: '9px',
+            fontWeight: 600,
+            letterSpacing: '0.22em',
+            textTransform: 'uppercase',
+            color: 'var(--text-dim)',
+            margin: 0,
+          }}
+        >
+          Pick History
+        </h2>
+        {showVetoButton && (
+          <button
+            type="button"
+            className="btn-veto-danger"
+            disabled={initiatingVeto}
+            onClick={() => void handleInitiateVeto()}
+            style={{
+              background: "rgba(255,68,68,0.12)",
+              color: "#ff6b6b",
+              border: "1px solid rgba(255,68,68,0.45)",
+              borderRadius: "6px",
+              padding: "6px 10px",
+              fontSize: "8px",
+              fontWeight: 600,
+              letterSpacing: "0.16em",
+              textTransform: "uppercase",
+              cursor: initiatingVeto ? "not-allowed" : "pointer",
+              opacity: initiatingVeto ? 0.6 : 1,
+              flexShrink: 0,
+            }}
+          >
+            {initiatingVeto ? (
+              <ButtonLoadingLabel loading loadingLabel="..." label="Veto last pick" />
+            ) : (
+              "Veto last pick"
+            )}
+          </button>
+        )}
+      </div>
+
+      {vetoError && (
+        <p
+          role="alert"
+          style={{
+            color: "#ff4d4d",
+            fontSize: "11px",
+            margin: "0 0 8px 0",
+          }}
+        >
+          {vetoError}
+        </p>
+      )}
 
       <ul
         ref={listRef}
@@ -123,7 +205,7 @@ export function PickHistory({
               <span style={{ color: 'var(--text-dim)', fontSize: '11px', fontVariantNumeric: 'tabular-nums', minWidth: '24px' }}>
                 {pick.overallPick}.
               </span>
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                 {player?.displayName ?? "?"}
                 {" — "}
                 {pick.forfeited ? (

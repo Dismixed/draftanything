@@ -103,6 +103,7 @@ export function buildProjection(
       pickInRound: p.pick_in_round as number,
       isAutoPick: p.is_auto_pick as boolean,
       forfeited: (p.forfeited as boolean) ?? false,
+      vetoChallengeResolved: (p.veto_challenge_resolved as boolean) ?? false,
     };
   });
 
@@ -172,6 +173,9 @@ export async function getDraftRoomProjection(
   // Self-heal drafts stuck in DEFENSE when every player already responded.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (db.rpc as any)("maybe_advance_from_defense", { p_draft_id: draftId });
+  // Self-heal off-the-dome drafts stuck in VETO_VOTING (solo play, etc.).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (db.rpc as any)("maybe_resolve_veto_voting", { p_draft_id: draftId });
 
   const [
     { data: draft, error: draftError },

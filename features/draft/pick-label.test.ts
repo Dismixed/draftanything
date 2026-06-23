@@ -12,6 +12,7 @@ const basePick: SafePick = {
   pickInRound: 1,
   isAutoPick: false,
   forfeited: false,
+  vetoChallengeResolved: false,
 };
 
 describe("getPickItemLabel", () => {

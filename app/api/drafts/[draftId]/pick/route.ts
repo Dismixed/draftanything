@@ -128,7 +128,6 @@ export async function POST(
         void handleCommentaryForPick(draftId);
       });
     }
-
     const res = Response.json(result ?? { success: true });
     setRequestIdHeader(res, requestId);
     logRoute({ requestId, action: "submit_pick", draftId, result: "success", durationMs: performance.now() - start });

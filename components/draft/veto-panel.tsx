@@ -94,7 +94,18 @@ export function VetoPanel({ projection, myPlayerId }: VetoPanelProps) {
             textAlign: "center",
           }}
         >
-          Veto vote
+          Veto challenge
+        </p>
+
+        <p
+          style={{
+            textAlign: "center",
+            fontSize: "12px",
+            color: "var(--text-dim)",
+            margin: "0 0 12px 0",
+          }}
+        >
+          A player challenged the last pick. Vote to veto or let it stand.
         </p>
 
         <p

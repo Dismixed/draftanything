@@ -32,10 +32,11 @@ function formatTime(iso: string): string {
 }
 
 export function RoomChat({ draftId, roomCode, myPlayerId }: RoomChatProps) {
-  const { messages, loading, sending, error, sendMessage } = useRoomChat({
-    draftId,
-    roomCode,
-  });
+  const { messages, loading, sending, error, sendMessage, refreshMessages } =
+    useRoomChat({
+      draftId,
+      roomCode,
+    });
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [unread, setUnread] = useState(0);
@@ -46,10 +47,11 @@ export function RoomChat({ draftId, roomCode, myPlayerId }: RoomChatProps) {
     if (open) {
       setUnread(0);
       lastSeenCountRef.current = messages.length;
+      void refreshMessages();
     } else if (messages.length > lastSeenCountRef.current) {
       setUnread(messages.length - lastSeenCountRef.current);
     }
-  }, [messages.length, open]);
+  }, [messages.length, open, refreshMessages]);
 
   useEffect(() => {
     if (!open || !listRef.current) return;

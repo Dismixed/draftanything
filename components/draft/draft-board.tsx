@@ -56,6 +56,10 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
 
   const handleOffTheDomePick = useCallback(
     async (itemName: string) => {
+      if (projection.draft.phase !== "DRAFTING") {
+        throw new Error("This action isn't available in the current phase.");
+      }
+
       setIsSubmittingPick(true);
       try {
         const res = await fetch(`/api/drafts/${projection.draft.id}/pick`, {
@@ -72,6 +76,12 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
           throw new Error(err.message ?? "Pick failed");
         }
         play("pick", { profile: "restrained" });
+
+        const projRes = await fetch(`/api/drafts/${projection.draft.id}/projection`);
+        if (projRes.ok) {
+          setProjection((await projRes.json()) as DraftRoomProjection);
+        }
+
         void fetch("/api/ai/commentary", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -81,8 +91,31 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
         setIsSubmittingPick(false);
       }
     },
-    [projection.draft.id, projection.draft.currentPickIndex, play],
+    [
+      projection.draft.id,
+      projection.draft.phase,
+      projection.draft.currentPickIndex,
+      play,
+      setProjection,
+    ],
   );
+
+  const handleInitiateVeto = useCallback(async () => {
+    const res = await fetch(`/api/drafts/${projection.draft.id}/veto/initiate`, {
+      method: "POST",
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      play("ui.error", { profile: "restrained" });
+      throw new Error(err.message ?? "Failed to initiate veto");
+    }
+    play("veto", { profile: "restrained" });
+
+    const projRes = await fetch(`/api/drafts/${projection.draft.id}/projection`);
+    if (projRes.ok) {
+      setProjection((await projRes.json()) as DraftRoomProjection);
+    }
+  }, [projection.draft.id, play, setProjection]);
 
   const handlePoolPick = useCallback(
     async (itemId: string) => {
@@ -126,11 +159,10 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
 
   useEffect(() => {
     if (projection.draft.phase !== initialPhaseRef.current) {
-      setProjection(null);
       initialPhaseRef.current = projection.draft.phase;
       router.refresh();
     }
-  }, [projection.draft.phase, router, setProjection]);
+  }, [projection.draft.phase, router]);
 
   useEffect(() => {
     const phase = projection.draft.phase;
@@ -417,6 +449,9 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
               currentPickIndex={isVetoVoting ? -1 : draft.currentPickIndex}
               pickOrder={draft.pickOrder}
               pendingPickId={draft.pendingPickId}
+              myPlayerId={myPlayerId}
+              canInitiateVeto={isDrafting}
+              onInitiateVeto={handleInitiateVeto}
             />
           ) : (
             <AvailablePool
