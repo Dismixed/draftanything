@@ -18,8 +18,6 @@ interface PersistedData {
   wordAttempts: string[][];
   revealedLetters: boolean[][];
   hintsRemaining: number;
-  themeGuessed: boolean;
-  themeAttempts: string[];
   score: number;
   gameStatus: "playing" | "completed";
   startTime: number;
@@ -38,18 +36,15 @@ interface ChainlinkStore {
   wordAttempts: string[][];
   revealedLetters: boolean[][];
   hintsRemaining: number;
-  themeGuessed: boolean;
-  themeAttempts: string[];
   score: number;
   gameStatus: "playing" | "completed";
   startTime: number;
 
-  feedback: { type: "correct" | "incorrect" | "theme-correct" | "theme-incorrect" | null; message: string } | null;
+  feedback: { type: "correct" | "incorrect" | null; message: string } | null;
   justSolvedIndex: number | null;
 
   initPuzzle: (mode?: GameMode) => void;
   submitGuess: (guess: string) => "correct" | "incorrect" | "already-solved";
-  submitThemeGuess: (guess: string) => boolean;
   useHint: () => { letter: string; position: number } | null;
   clearFeedback: () => void;
   clearJustSolved: () => void;
@@ -65,18 +60,20 @@ const HINT_PENALTY = 25;
 
 function buildInitialState(mode: GameMode = "daily"): PersistedData {
   const puzzle = mode === "daily" ? getDailyPuzzle() : getRandomPuzzle();
-  const wordStatuses: WordStatus[] = ["active", ...Array(4).fill("locked") as WordStatus[]];
+  const wordStatuses: WordStatus[] = [
+    "solved",
+    "active",
+    ...Array(3).fill("locked") as WordStatus[],
+  ];
   return {
     mode,
     puzzle,
     date: getDateString(),
-    currentWordIndex: 0,
+    currentWordIndex: 1,
     wordStatuses,
     wordAttempts: puzzle.words.map(() => []),
     revealedLetters: puzzle.words.map(() => []),
     hintsRemaining: MAX_HINTS,
-    themeGuessed: false,
-    themeAttempts: [],
     score: 0,
     gameStatus: "playing",
     startTime: Date.now(),
@@ -97,13 +94,11 @@ export const useChainlinkStore = create<ChainlinkStore>()(
       puzzle: null,
       mode: "daily" as GameMode,
       date: "",
-      currentWordIndex: 0,
+      currentWordIndex: 1,
       wordStatuses: [] as WordStatus[],
       wordAttempts: [] as string[][],
       revealedLetters: [] as boolean[][],
       hintsRemaining: MAX_HINTS,
-      themeGuessed: false,
-      themeAttempts: [],
       score: 0,
       gameStatus: "playing",
       startTime: 0,
@@ -112,15 +107,14 @@ export const useChainlinkStore = create<ChainlinkStore>()(
       justSolvedIndex: null,
 
       initPuzzle: (mode?: GameMode) => {
-        const { date, mode: currentMode } = get();
+        const { date, mode: currentMode, puzzle } = get();
         const targetMode = mode ?? currentMode ?? "daily";
 
         if (targetMode === "daily") {
-          if (!date || !isToday(date)) {
+          if (!puzzle || !date || !isToday(date)) {
             set({ ...buildInitialState("daily"), feedback: null, justSolvedIndex: null });
           }
         } else {
-          // Unlimited mode — always start fresh
           set({ ...buildInitialState("unlimited"), feedback: null, justSolvedIndex: null });
         }
       },
@@ -162,7 +156,6 @@ export const useChainlinkStore = create<ChainlinkStore>()(
           });
           return "correct";
         } else {
-          // Reveal the next unrevealed letter (sequential left-to-right, skip first)
           const currentRevealed = [...(state.revealedLetters[idx] ?? [])];
           const unrevealed: number[] = [];
           for (let i = 1; i < word.length; i++) {
@@ -177,7 +170,6 @@ export const useChainlinkStore = create<ChainlinkStore>()(
             newRevealed[idx] = currentRevealed;
             autoLetter = word[pick];
 
-            // If all letters now revealed, auto-solve
             const allRevealed = word.split("").every((_, i) => i === 0 || currentRevealed[i]);
             if (allRevealed) {
               const newStatuses = [...state.wordStatuses];
@@ -218,43 +210,6 @@ export const useChainlinkStore = create<ChainlinkStore>()(
         }
       },
 
-      submitThemeGuess: (guess: string) => {
-        const state = get();
-        if (!state.puzzle || state.themeGuessed) return false;
-
-        const normalizedGuess = guess.trim().toLowerCase();
-        const normalizedTheme = state.puzzle.theme.toLowerCase();
-        const newThemeAttempts = [...state.themeAttempts, guess.trim()];
-
-        const THEME_ALIASES: Record<string, string[]> = {
-          animals: ["animals", "animal", "creatures", "wildlife", "fauna", "beasts"],
-          countries: ["countries", "country", "nations", "nation", "lands"],
-          foods: ["foods", "food", "cuisine", "dishes", "meals", "eating", "cooking"],
-          space: ["space", "astronomy", "cosmos", "universe", "solar system", "outer space", "stars"],
-          sports: ["sports", "sport", "athletics", "games", "athletic"],
-          music: ["music", "musical", "instruments", "instrumental", "songs"],
-          nature: ["nature", "natural", "outdoors", "landscape", "wilderness", "geography", "earth"],
-        };
-
-        const aliases = THEME_ALIASES[normalizedTheme] ?? [normalizedTheme];
-        const isCorrect = aliases.includes(normalizedGuess);
-
-        if (isCorrect) {
-          set({
-            themeGuessed: true,
-            themeAttempts: newThemeAttempts,
-            score: state.score + 200,
-            feedback: { type: "theme-correct", message: "Theme correct! +200 pts" },
-          });
-        } else {
-          set({
-            themeAttempts: newThemeAttempts,
-            feedback: { type: "theme-incorrect", message: "Not the right theme. Try again." },
-          });
-        }
-        return isCorrect;
-      },
-
       useHint: () => {
         const state = get();
         if (state.gameStatus !== "playing" || !state.puzzle) return null;
@@ -266,14 +221,12 @@ export const useChainlinkStore = create<ChainlinkStore>()(
         const word = state.puzzle.words[idx];
         const revealed = state.revealedLetters[idx] ?? [];
 
-        // Find all unrevealed positions (skip index 0 — first letter already shown)
         const unrevealed: number[] = [];
         for (let i = 1; i < word.length; i++) {
           if (!revealed[i]) unrevealed.push(i);
         }
         if (unrevealed.length === 0) return null;
 
-        // Pick the first unrevealed position (sequential left-to-right)
         const pick = unrevealed[0];
 
         const newRevealed = [...state.revealedLetters];
@@ -281,7 +234,6 @@ export const useChainlinkStore = create<ChainlinkStore>()(
         wordRevealed[pick] = true;
         newRevealed[idx] = wordRevealed;
 
-        // Check if all letters are now revealed — if so, auto-solve
         const allRevealed = word.split("").every((_, i) => i === 0 || wordRevealed[i]);
 
         if (allRevealed) {
@@ -328,7 +280,7 @@ export const useChainlinkStore = create<ChainlinkStore>()(
       },
     }),
     {
-      name: "chainlink-daily",
+      name: "chainlink-v2",
       partialize: (state): PersistedData => ({
         mode: state.mode,
         puzzle: state.puzzle,
@@ -338,8 +290,6 @@ export const useChainlinkStore = create<ChainlinkStore>()(
         wordAttempts: state.wordAttempts,
         revealedLetters: state.revealedLetters,
         hintsRemaining: state.hintsRemaining,
-        themeGuessed: state.themeGuessed,
-        themeAttempts: state.themeAttempts,
         score: state.score,
         gameStatus: state.gameStatus,
         startTime: state.startTime,

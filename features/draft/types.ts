@@ -8,6 +8,7 @@ export type DraftPhase =
   | "LOBBY"
   | "POOL_REVIEW"
   | "DRAFTING"
+  | "VETO_VOTING"
   | "DRAFT_COMPLETE"
   | "DEFENSE"
   | "VOTING"
@@ -40,6 +41,7 @@ export interface SafeDraft {
   currentPickIndex: number;
   turnDeadline: string | null;
   judgingStartedAt: string | null;
+  pendingPickId: string | null;
 }
 
 export interface SafePlayer {
@@ -92,6 +94,13 @@ export interface SafeVote {
   selectedPlayerId: string;
 }
 
+export interface SafeVetoVote {
+  id: string;
+  pickId: string;
+  voterPlayerId: string;
+  wantsVeto: boolean;
+}
+
 export interface SafeJudgment {
   id: string;
   source: "ai" | "fallback";
@@ -112,6 +121,7 @@ export interface DraftRoomProjection {
   commentary: SafeCommentary[];
   defenses: SafeDefense[];
   votes: SafeVote[];
+  vetoVotes: SafeVetoVote[];
   judgment: SafeJudgment | null;
   serverNow: string;
 }

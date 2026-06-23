@@ -23,6 +23,7 @@ function makeProjection(overrides?: Partial<DraftRoomProjection>): DraftRoomProj
       pickOrder: [],
       currentPickIndex: 0,
       turnDeadline: null,
+      pendingPickId: null,
     },
     players: [
       { id: "player-1", displayName: "Alice", seat: 1, isReady: true, isHost: true },
@@ -45,6 +46,7 @@ function makeProjection(overrides?: Partial<DraftRoomProjection>): DraftRoomProj
       { id: "vote-1", voterPlayerId: "player-1", selectedPlayerId: "player-1" },
       { id: "vote-2", voterPlayerId: "player-2", selectedPlayerId: "player-1" },
     ],
+    vetoVotes: [],
     judgment: {
       id: "judgment-1",
       source: "ai",

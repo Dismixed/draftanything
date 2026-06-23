@@ -112,6 +112,7 @@ describe("buildProjection", () => {
       commentaryRows as unknown as Record<string, unknown>[],
       [],
       [],
+      [],
       null,
       serverNow,
     );
@@ -131,6 +132,7 @@ describe("buildProjection", () => {
     const result = buildProjection(
       draftRow as unknown as Record<string, unknown>,
       playerRows as unknown as Record<string, unknown>[],
+      [],
       [],
       [],
       [],
@@ -160,6 +162,7 @@ describe("buildProjection", () => {
       [],
       [],
       [],
+      [],
       null,
       serverNow,
     );
@@ -176,6 +179,7 @@ describe("buildProjection", () => {
       draftRow as unknown as Record<string, unknown>,
       playerRows as unknown as Record<string, unknown>[],
       itemRows as unknown as Record<string, unknown>[],
+      [],
       [],
       [],
       [],
@@ -197,6 +201,7 @@ describe("buildProjection", () => {
       playerRows as unknown as Record<string, unknown>[],
       itemRows as unknown as Record<string, unknown>[],
       pickRows as unknown as Record<string, unknown>[],
+      [],
       [],
       [],
       [],
@@ -238,6 +243,7 @@ describe("buildProjection", () => {
       [],
       [],
       [],
+      [],
       null,
       serverNow,
     );
@@ -256,6 +262,7 @@ describe("buildProjection", () => {
       commentaryRows as unknown as Record<string, unknown>[],
       [],
       [],
+      [],
       null,
       serverNow,
     );
@@ -269,6 +276,7 @@ describe("buildProjection", () => {
     const result = buildProjection(
       draftRow as unknown as Record<string, unknown>,
       playerRows as unknown as Record<string, unknown>[],
+      [],
       [],
       [],
       [],
@@ -291,6 +299,7 @@ describe("buildProjection", () => {
     const result = buildProjection(
       noTimerDraft as unknown as Record<string, unknown>,
       playerRows as unknown as Record<string, unknown>[],
+      [],
       [],
       [],
       [],
@@ -326,6 +335,7 @@ describe("buildProjection", () => {
       [],
       [],
       [],
+      [],
       null,
       serverNow,
     );
@@ -338,6 +348,7 @@ describe("buildProjection", () => {
     const result = buildProjection(
       draftRow as unknown as Record<string, unknown>,
       playerRows as unknown as Record<string, unknown>[],
+      [],
       [],
       [],
       [],

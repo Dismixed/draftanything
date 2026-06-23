@@ -53,6 +53,15 @@ export function useDraftRoom({
     }, 200);
   }, [fetchProjection, setProjection]);
 
+  const refetchCommentary = useCallback(() => {
+    void (async () => {
+      const projection = await fetchProjection();
+      if (projection) {
+        setProjection(projection);
+      }
+    })();
+  }, [fetchProjection, setProjection]);
+
   useEffect(() => {
     let channel: ReturnType<
       import("@supabase/supabase-js").SupabaseClient["channel"]
@@ -111,7 +120,7 @@ export function useDraftRoom({
               filter: `draft_id=eq.${draftId}`,
             },
             () => {
-              refetch();
+              refetchCommentary();
             },
           )
           .on(
@@ -132,6 +141,18 @@ export function useDraftRoom({
               event: "*",
               schema: "public",
               table: "votes",
+              filter: `draft_id=eq.${draftId}`,
+            },
+            () => {
+              refetch();
+            },
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "pick_veto_votes",
               filter: `draft_id=eq.${draftId}`,
             },
             () => {
@@ -178,5 +199,5 @@ export function useDraftRoom({
         channelRef.current = null;
       }
     };
-  }, [draftId, roomCode, myPlayerId, setProjection, setConnectionStatus, refetch, fetchProjection]);
+  }, [draftId, roomCode, myPlayerId, setProjection, setConnectionStatus, refetch, refetchCommentary, fetchProjection]);
 }

@@ -1,127 +1,44 @@
 import type { Puzzle } from "./types";
 
 /* ------------------------------------------------------------------ */
-/*  Themed word database                                               */
+/*  Word chains — each pair forms a common compound or phrase          */
+/*  e.g. apple + juice → "apple juice", juice + box → "juice box"     */
 /* ------------------------------------------------------------------ */
 
-interface ThemedList {
-  theme: string;
-  words: readonly string[];
-}
-
-const THEMES: readonly ThemedList[] = [
-  {
-    theme: "Animals",
-    words: [
-      "alligator", "ant", "ape", "bat", "bear", "beaver", "bird",
-      "buffalo", "camel", "cat", "chicken", "cow", "crab", "deer",
-      "dog", "dolphin", "donkey", "duck", "eagle", "eel", "elephant",
-      "emu", "falcon", "ferret", "fish", "fox", "frog", "giraffe",
-      "goat", "goose", "gorilla", "hamster", "hare", "hawk", "horse",
-      "iguana", "jaguar", "jellyfish", "kangaroo", "koala", "lemur",
-      "leopard", "lion", "lizard", "llama", "lobster", "lynx",
-      "monkey", "moose", "mouse", "otter", "owl", "panda", "panther",
-      "parrot", "penguin", "pig", "pigeon", "rabbit", "raccoon",
-      "rat", "raven", "rhino", "rooster", "seal", "shark", "sheep",
-      "shrimp", "skunk", "snake", "sparrow", "spider", "squid",
-      "squirrel", "swan", "tiger", "toad", "trout", "turkey",
-      "turtle", "walrus", "whale", "wolf", "zebra",
-    ],
-  },
-  {
-    theme: "Countries",
-    words: [
-      "albania", "algeria", "argentina", "australia", "austria",
-      "bahrain", "bangladesh", "belgium", "brazil", "cambodia",
-      "canada", "chad", "china", "colombia", "croatia", "cuba",
-      "denmark", "ecuador", "egypt", "estonia", "ethiopia", "fiji",
-      "finland", "france", "georgia", "germany", "ghana", "greece",
-      "hungary", "iceland", "india", "indonesia", "iran", "iraq",
-      "ireland", "israel", "italy", "jamaica", "japan", "jordan",
-      "kenya", "laos", "latvia", "lebanon", "libya", "lithuania",
-      "malaysia", "mali", "malta", "mexico", "monaco", "mongolia",
-      "morocco", "nepal", "netherlands", "nigeria", "norway",
-      "oman", "pakistan", "panama", "peru", "poland", "portugal",
-      "qatar", "romania", "russia", "rwanda", "senegal", "serbia",
-      "singapore", "slovakia", "spain", "sudan", "sweden", "syria",
-      "taiwan", "tanzania", "thailand", "tunisia", "turkey",
-      "uganda", "ukraine", "uruguay", "uzbekistan", "vietnam",
-      "yemen", "zambia", "zimbabwe",
-    ],
-  },
-  {
-    theme: "Foods",
-    words: [
-      "apple", "apricot", "avocado", "bacon", "bagel", "banana",
-      "beans", "beef", "bread", "broccoli", "burger", "butter",
-      "cake", "candy", "cheese", "cherry", "chicken", "chili",
-      "chocolate", "cookie", "corn", "cream", "croissant", "curry",
-      "donut", "dumpling", "egg", "enchilada", "fish", "fondue",
-      "garlic", "gelatin", "ginger", "granola", "grape", "honey",
-      "jam", "jelly", "ketchup", "kiwi", "lamb", "lemon", "lentil",
-      "lettuce", "lime", "lobster", "macaroni", "mango", "meatball",
-      "melon", "milk", "muffin", "mushroom", "noodle", "oatmeal",
-      "olive", "onion", "orange", "oyster", "pancake", "pasta",
-      "pastry", "peach", "peanut", "pear", "pepper", "pickle",
-      "pie", "pineapple", "pizza", "plantain", "plum", "popcorn",
-      "pork", "potato", "pretzel", "pudding", "pumpkin", "quiche",
-      "radish", "raisin", "raspberry", "rice", "salmon", "sandwich",
-      "sausage", "shrimp", "soup", "spaghetti", "spinach", "squash",
-      "steak", "stew", "strawberry", "sushi", "syrup", "taco",
-      "tamale", "toast", "tomato", "tortilla", "tuna", "vanilla",
-      "waffle", "walnut", "watermelon", "yogurt", "zucchini",
-    ],
-  },
-  {
-    theme: "Space",
-    words: [
-      "andromeda", "asteroid", "astronaut", "astronomer", "atmosphere",
-      "aurora", "comet", "constellation", "cosmos", "eclipse",
-      "galaxy", "jupiter", "mars", "mercury", "meteor", "milkyway",
-      "moon", "nebula", "neptune", "orbit", "planet", "pluto",
-      "pulsar", "rocket", "satellite", "saturn", "solar", "spacecraft",
-      "spaceship", "star", "sun", "telescope", "universe", "uranus",
-      "venus",
-    ],
-  },
-  {
-    theme: "Sports",
-    words: [
-      "archery", "badminton", "baseball", "basketball", "bowling",
-      "boxing", "cricket", "cycling", "diving", "fencing", "football",
-      "golf", "gymnastics", "hockey", "jogging", "judo", "karate",
-      "kickboxing", "lacrosse", "marathon", "polo", "racing",
-      "racquetball", "rugby", "running", "sailing", "skating",
-      "skiing", "soccer", "softball", "squash", "surfing", "swimming",
-      "tennis", "track", "triathlon", "volleyball", "walking",
-      "wrestling", "yoga",
-    ],
-  },
-  {
-    theme: "Music",
-    words: [
-      "accordion", "banjo", "bass", "cello", "clarinet", "drum",
-      "fiddle", "flute", "guitar", "harmonica", "harp", "harpsichord",
-      "keyboard", "lute", "lyre", "mandolin", "marimba", "oboe",
-      "organ", "piano", "piccolo", "recorder", "saxophone",
-      "tambourine", "trumpet", "tuba", "ukulele", "vibraphone",
-      "viola", "violin", "xylophone",
-    ],
-  },
-  {
-    theme: "Nature",
-    words: [
-      "alpine", "arctic", "beach", "canyon", "cave", "cliff", "cloud",
-      "coast", "coral", "desert", "dune", "earth", "field", "flower",
-      "forest", "glacier", "grassland", "hill", "island", "jungle",
-      "lake", "landscape", "meadow", "mountain", "ocean", "prairie",
-      "rainforest", "reef", "river", "rock", "savanna", "sea",
-      "sky", "snow", "stone", "storm", "stream", "sun", "swamp",
-      "thunder", "trail", "tree", "valley", "volcano", "waterfall",
-      "wave", "wetland", "wilderness", "wind",
-    ],
-  },
+const CHAINS: readonly (readonly string[])[] = [
+  ["apple", "juice", "box", "spring", "break"],
+  ["book", "mark", "down", "town", "hall"],
+  ["snow", "ball", "park", "bench", "mark"],
+  ["tooth", "brush", "fire", "place", "mat"],
+  ["news", "paper", "weight", "loss", "leader"],
+  ["butter", "fly", "wheel", "chair", "lift"],
+  ["foot", "ball", "room", "mate", "ship"],
+  ["rain", "bow", "tie", "dye", "job"],
+  ["eye", "lash", "out", "door", "bell"],
+  ["head", "light", "house", "hold", "up"],
+  ["sea", "shell", "shock", "wave", "pool"],
+  ["life", "guard", "dog", "house", "cat"],
+  ["back", "pack", "rat", "race", "car"],
+  ["moon", "light", "year", "book", "store"],
+  ["hot", "dog", "days", "off", "ramp"],
+  ["cup", "cake", "walk", "way", "side"],
+  ["arm", "chair", "man", "hole", "punch"],
+  ["foot", "print", "shop", "lift", "gate"],
+  ["sun", "flower", "pot", "luck", "charm"],
+  ["water", "fall", "out", "field", "goal"],
+  ["fire", "fly", "paper", "trail", "mix"],
+  ["key", "board", "game", "plan", "book"],
+  ["star", "fish", "bowl", "cut", "off"],
+  ["horse", "power", "plant", "food", "truck"],
+  ["air", "port", "side", "walk", "through"],
+  ["night", "fall", "back", "bone", "yard"],
+  ["cross", "walk", "out", "look", "out"],
+  ["hand", "shake", "down", "pour", "over"],
+  ["brain", "storm", "cloud", "burst", "pipe"],
+  ["love", "bird", "bath", "robe", "hook"],
 ];
+
+const WORDS_PER_PUZZLE = 5;
 
 /* ------------------------------------------------------------------ */
 /*  Seeded PRNG (mulberry32)                                           */
@@ -137,33 +54,16 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-function seededShuffle<T>(arr: readonly T[], rng: () => number): T[] {
-  const result = [...arr];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
-}
-
 /* ------------------------------------------------------------------ */
-/*  Puzzle generator — picks 5 random words from a theme               */
+/*  Puzzle generator — picks a word chain                              */
 /* ------------------------------------------------------------------ */
-
-const WORDS_PER_PUZZLE = 5;
 
 function generatePuzzle(seed: number): Puzzle {
   const rng = mulberry32(seed);
-
-  // Pick a theme deterministically
-  const themeIndex = Math.floor(rng() * THEMES.length);
-  const chosen = THEMES[themeIndex];
-
-  // Pick 5 random distinct words from the theme
-  const shuffled = seededShuffle(chosen.words, rng);
-  const words = shuffled.slice(0, WORDS_PER_PUZZLE);
-
-  return { theme: chosen.theme, words };
+  const chainIndex = Math.floor(rng() * CHAINS.length);
+  const chain = CHAINS[chainIndex];
+  const words = chain.slice(0, WORDS_PER_PUZZLE);
+  return { words };
 }
 
 /* ------------------------------------------------------------------ */
@@ -186,4 +86,10 @@ export function getDateString(date?: Date): string {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+
+/** Display helper: "apple" + "juice" → "Apple Juice" */
+export function formatPair(left: string, right: string): string {
+  const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+  return `${cap(left)} ${cap(right)}`;
 }

@@ -86,15 +86,7 @@ export async function GET(request: Request) {
           continue;
         }
 
-        const { data: newPick } = await db
-          .from("picks")
-          .select("id")
-          .eq("draft_id", draft.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        void handleCommentaryForPick(draft.id, newPick?.id);
+        void handleCommentaryForPick(draft.id);
 
         processed++;
       } catch (e) {

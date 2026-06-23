@@ -39,7 +39,6 @@ export default function TutorialModal() {
           overflowY: "auto",
         }}
       >
-        {/* Gold hairline */}
         <div
           style={{
             position: "absolute",
@@ -53,7 +52,6 @@ export default function TutorialModal() {
           }}
         />
 
-        {/* Header */}
         <div style={{ textAlign: "center", marginBottom: "24px" }}>
           <svg
             width="36"
@@ -79,9 +77,7 @@ export default function TutorialModal() {
           </h2>
         </div>
 
-        {/* Steps */}
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-          {/* Step 1 */}
           <div style={{ display: "flex", gap: "14px", alignItems: "flex-start" }}>
             <div
               style={{
@@ -110,16 +106,16 @@ export default function TutorialModal() {
                   marginBottom: "4px",
                 }}
               >
-                Category Guessing
+                Build the Chain
               </div>
               <p style={{ fontSize: "12px", color: "var(--text-dim)", margin: 0, lineHeight: 1.6 }}>
-                All 5 words share a common category. You see only the first letter of each
-                word — type the full word to reveal it and continue.
+                Each word pairs with the one before it to form a common phrase — like{" "}
+                <strong style={{ color: "var(--gold)" }}>apple juice</strong>, then{" "}
+                <strong style={{ color: "var(--gold)" }}>juice box</strong>.
               </p>
             </div>
           </div>
 
-          {/* Step 2 */}
           <div style={{ display: "flex", gap: "14px", alignItems: "flex-start" }}>
             <div
               style={{
@@ -148,16 +144,15 @@ export default function TutorialModal() {
                   marginBottom: "4px",
                 }}
               >
-                Guess One at a Time
+                Start With the First Word
               </div>
               <p style={{ fontSize: "12px", color: "var(--text-dim)", margin: 0, lineHeight: 1.6 }}>
-                You see only the first letter of each word. Type the full word to reveal it and
-                unlock the next link in the chain.
+                The first word is given to you. Guess each next word one at a time — you only see
+                the first letter until you solve it.
               </p>
             </div>
           </div>
 
-          {/* Step 3 */}
           <div style={{ display: "flex", gap: "14px", alignItems: "flex-start" }}>
             <div
               style={{
@@ -186,44 +181,6 @@ export default function TutorialModal() {
                   marginBottom: "4px",
                 }}
               >
-                Bonus Theme Round
-              </div>
-              <p style={{ fontSize: "12px", color: "var(--text-dim)", margin: 0, lineHeight: 1.6 }}>
-                Solve all 5 words, then guess the shared category for{" "}
-                <strong style={{ color: "var(--gold)" }}>+200 bonus points</strong>.
-              </p>
-            </div>
-          </div>
-
-          {/* Step 4 */}
-          <div style={{ display: "flex", gap: "14px", alignItems: "flex-start" }}>
-            <div
-              style={{
-                width: "28px",
-                height: "28px",
-                borderRadius: "50%",
-                background: "rgba(201,168,76,0.12)",
-                border: "1px solid rgba(201,168,76,0.3)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "12px",
-                fontWeight: 700,
-                color: "var(--gold-hi)",
-                flexShrink: 0,
-              }}
-            >
-              4
-            </div>
-            <div>
-              <div
-                style={{
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  color: "var(--text)",
-                  marginBottom: "4px",
-                }}
-              >
                 Stuck? Use a Hint
               </div>
               <p style={{ fontSize: "12px", color: "var(--text-dim)", margin: 0, lineHeight: 1.6 }}>
@@ -234,7 +191,6 @@ export default function TutorialModal() {
           </div>
         </div>
 
-        {/* Start button */}
         <button
           onClick={handleDismiss}
           className="btn-gold"

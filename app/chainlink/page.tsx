@@ -3,6 +3,7 @@ import Link from "next/link";
 export default function ChainlinkSelectPage() {
   return (
     <main
+      className="game-page"
       style={{
         minHeight: "100vh",
         background: "var(--bg)",
@@ -70,7 +71,7 @@ export default function ChainlinkSelectPage() {
               marginRight: "auto",
             }}
           >
-            Guess the word chain. Solve the theme. Each word&apos;s last letter links to the next.
+            Guess the word chain. Each word pairs with the one before it — like apple juice, then juice box.
           </p>
         </header>
 
@@ -100,7 +101,7 @@ export default function ChainlinkSelectPage() {
                   pointerEvents: "none",
                 }}
               />
-              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              <div className="stim-mode-card-row">
                 <div
                   style={{
                     width: "44px",
@@ -117,7 +118,7 @@ export default function ChainlinkSelectPage() {
                 >
                   &#9716;
                 </div>
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <h2
                     style={{
                       fontFamily: '"Playfair Display", serif',
@@ -142,6 +143,7 @@ export default function ChainlinkSelectPage() {
                   </p>
                 </div>
                 <div
+                  className="stim-mode-card-cta"
                   style={{
                     fontSize: "11px",
                     fontWeight: 600,
@@ -182,7 +184,7 @@ export default function ChainlinkSelectPage() {
                   pointerEvents: "none",
                 }}
               />
-              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              <div className="stim-mode-card-row">
                 <div
                   style={{
                     width: "44px",
@@ -199,7 +201,7 @@ export default function ChainlinkSelectPage() {
                 >
                   &#8734;
                 </div>
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <h2
                     style={{
                       fontFamily: '"Playfair Display", serif',
@@ -224,6 +226,7 @@ export default function ChainlinkSelectPage() {
                   </p>
                 </div>
                 <div
+                  className="stim-mode-card-cta"
                   style={{
                     fontSize: "11px",
                     fontWeight: 600,

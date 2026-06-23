@@ -65,16 +65,8 @@ export async function POST(
 
     const result = Array.isArray(data) ? data[0] : data;
 
-    const { data: newPick } = await db
-      .from("picks")
-      .select("id")
-      .eq("draft_id", draftId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
     after(() => {
-      void handleCommentaryForPick(draftId, newPick?.id);
+      void handleCommentaryForPick(draftId);
     });
 
     return Response.json(result ?? { success: true });

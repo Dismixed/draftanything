@@ -1,10 +1,13 @@
+import Image from "next/image";
 import Link from "next/link";
+import { SoundToggle } from "@/components/ui/sound-toggle";
 
 const GAMES = [
   {
-    name: "Trivia",
-    description: "Test your knowledge head-to-head.",
-    icon: "?",
+    name: "Frames",
+    description:
+      "See a single frame from a movie, show, or book — guess what it's from.",
+    icon: "▣",
     status: "coming-soon" as const,
   },
   {
@@ -21,9 +24,19 @@ const GAMES = [
   },
 ];
 
+const modeHintStyle = {
+  fontSize: "10px",
+  fontWeight: 500,
+  letterSpacing: "0.06em",
+  color: "var(--text-dim)",
+  opacity: 0.75,
+  margin: "0 0 10px",
+} as const;
+
 export default function StimGames() {
   return (
     <main
+      className="game-page"
       style={{
         minHeight: "100vh",
         background: "var(--bg)",
@@ -54,6 +67,16 @@ export default function StimGames() {
           zIndex: 1,
         }}
       >
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            zIndex: 2,
+          }}
+        >
+          <SoundToggle />
+        </div>
         {/* Header */}
         <header
           style={{
@@ -61,6 +84,19 @@ export default function StimGames() {
             marginBottom: "48px",
           }}
         >
+          <Image
+            src="/stim-labs-logo.png"
+            alt="Stim Labs"
+            width={100}
+            height={100}
+            priority
+            style={{
+              width: "clamp(80px, 20vw, 108px)",
+              height: "auto",
+              margin: "0 auto 16px",
+              display: "block",
+            }}
+          />
           <div
             style={{
               fontSize: "9px",
@@ -128,140 +164,20 @@ export default function StimGames() {
               }}
             />
           </div>
-        </header>
-
-        {/* Chainlink — Hero Card */}
-        <Link
-          href="/chainlink"
-          style={{
-            display: "block",
-            textDecoration: "none",
-            marginBottom: "32px",
-          }}
-        >
-          <div
+          <p
             style={{
-              background:
-                "linear-gradient(135deg, rgba(0,229,255,0.08) 0%, rgba(124,58,255,0.08) 100%)",
-              border: "1px solid rgba(0,229,255,0.22)",
-              padding: "40px 36px",
-              position: "relative",
-              overflow: "hidden",
-              cursor: "pointer",
-              transition: "border-color 0.25s, box-shadow 0.25s",
+              fontSize: "13px",
+              color: "var(--text-dim)",
+              lineHeight: 1.65,
+              margin: "18px auto 0",
+              fontWeight: 300,
+              maxWidth: "420px",
             }}
-            className="stim-hero-card"
           >
-            {/* Top gold hairline */}
-            <div
-              style={{
-                position: "absolute",
-                top: 0,
-                left: "10%",
-                right: "10%",
-                height: "1px",
-                background:
-                  "linear-gradient(90deg, transparent, rgba(0,229,255,0.4), transparent)",
-              }}
-            />
-
-            {/* Glow blob */}
-            <div
-              style={{
-                position: "absolute",
-                top: "-40%",
-                right: "-10%",
-                width: "300px",
-                height: "300px",
-                borderRadius: "50%",
-                background:
-                  "radial-gradient(circle, rgba(0,229,255,0.06) 0%, transparent 70%)",
-                pointerEvents: "none",
-              }}
-            />
-
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "24px",
-                flexWrap: "wrap",
-              }}
-            >
-              <div style={{ flex: 1, minWidth: "220px" }}>
-                <div
-                  style={{
-                    fontSize: "9px",
-                    fontWeight: 600,
-                    letterSpacing: "0.32em",
-                    textTransform: "uppercase",
-                    color: "var(--cyan)",
-                    opacity: 0.8,
-                    marginBottom: "8px",
-                  }}
-                >
-                  New
-                </div>
-                <h2
-                  style={{
-                    fontFamily: '"Playfair Display", serif',
-                    fontSize: "clamp(32px, 6vw, 44px)",
-                    fontWeight: 900,
-                    lineHeight: 0.95,
-                    color: "var(--text)",
-                    margin: "0 0 12px",
-                  }}
-                >
-                  Chain
-                  <em
-                    style={{
-                      fontStyle: "italic",
-                      color: "var(--cyan)",
-                      textShadow: "0 0 30px rgba(0,229,255,0.15)",
-                    }}
-                  >
-                    link
-                  </em>
-                </h2>
-                <p
-                  style={{
-                    fontSize: "13px",
-                    color: "var(--text-dim)",
-                    lineHeight: 1.6,
-                    margin: 0,
-                    fontWeight: 300,
-                    maxWidth: "380px",
-                  }}
-                >
-                  Guess the word chain. Solve the theme. A daily puzzle where
-                  every answer unlocks the next.
-                </p>
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  background: "rgba(0,229,255,0.1)",
-                  border: "1px solid rgba(0,229,255,0.3)",
-                  padding: "12px 24px",
-                  fontSize: "11px",
-                  fontWeight: 600,
-                  letterSpacing: "0.2em",
-                  textTransform: "uppercase",
-                  color: "var(--cyan)",
-                  whiteSpace: "nowrap",
-                  flexShrink: 0,
-                }}
-              >
-                Play Now
-                <span style={{ fontSize: "14px" }}>&#8594;</span>
-              </div>
-            </div>
-          </div>
-        </Link>
+            Draft with friends, solve the daily word puzzle, or see how long your
+            trivia run lasts.
+          </p>
+        </header>
 
         {/* Draft Anything — Hero Card */}
         <Link
@@ -269,7 +185,7 @@ export default function StimGames() {
           style={{
             display: "block",
             textDecoration: "none",
-            marginBottom: "32px",
+            marginBottom: "20px",
           }}
         >
           <div
@@ -334,7 +250,7 @@ export default function StimGames() {
                     marginBottom: "8px",
                   }}
                 >
-                  Fire
+                  Party Game
                 </div>
                 <h2
                   style={{
@@ -343,7 +259,7 @@ export default function StimGames() {
                     fontWeight: 900,
                     lineHeight: 0.95,
                     color: "var(--text)",
-                    margin: "0 0 12px",
+                    margin: "0 0 6px",
                   }}
                 >
                   Draft{" "}
@@ -357,6 +273,9 @@ export default function StimGames() {
                     Anything
                   </em>
                 </h2>
+                <p style={{ ...modeHintStyle, margin: "0 0 10px" }}>
+                  Multiplayer · 2+ players
+                </p>
                 <p
                   style={{
                     fontSize: "13px",
@@ -395,6 +314,272 @@ export default function StimGames() {
             </div>
           </div>
         </Link>
+
+        {/* Chainlink & Brain Dead — Side by side */}
+        <div
+          style={{
+            display: "flex",
+            gap: "16px",
+            flexWrap: "wrap",
+            marginBottom: "32px",
+          }}
+        >
+          <div
+            style={{
+              flex: "1 1 280px",
+              display: "block",
+            }}
+          >
+            <div
+              style={{
+                height: "100%",
+                background:
+                  "linear-gradient(135deg, rgba(0,229,255,0.08) 0%, rgba(124,58,255,0.08) 100%)",
+                border: "1px solid rgba(0,229,255,0.22)",
+                padding: "28px 24px",
+                position: "relative",
+                overflow: "hidden",
+                transition: "border-color 0.25s, box-shadow 0.25s",
+                display: "flex",
+                flexDirection: "column",
+              }}
+              className="stim-hero-card"
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: "10%",
+                  right: "10%",
+                  height: "1px",
+                  background:
+                    "linear-gradient(90deg, transparent, rgba(0,229,255,0.4), transparent)",
+                }}
+              />
+              <div
+                style={{
+                  fontSize: "9px",
+                  fontWeight: 600,
+                  letterSpacing: "0.32em",
+                  textTransform: "uppercase",
+                  color: "var(--cyan)",
+                  opacity: 0.8,
+                  marginBottom: "8px",
+                }}
+              >
+                Word Game
+              </div>
+              <h2
+                style={{
+                  fontFamily: '"Playfair Display", serif',
+                  fontSize: "clamp(24px, 4vw, 32px)",
+                  fontWeight: 900,
+                  lineHeight: 0.95,
+                  color: "var(--text)",
+                  margin: "0 0 6px",
+                }}
+              >
+                Chain
+                <em
+                  style={{
+                    fontStyle: "italic",
+                    color: "var(--cyan)",
+                    textShadow: "0 0 30px rgba(0,229,255,0.15)",
+                  }}
+                >
+                  link
+                </em>
+              </h2>
+              <p style={{ ...modeHintStyle, margin: "0 0 10px" }}>
+                Solo · Daily puzzle
+              </p>
+              <p
+                style={{
+                  fontSize: "12px",
+                  color: "var(--text-dim)",
+                  lineHeight: 1.55,
+                  margin: "0 0 20px",
+                  fontWeight: 300,
+                  flex: 1,
+                }}
+              >
+                Link five words in a chain — each pairs with the one before it.
+              </p>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "16px",
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                }}
+              >
+                <Link
+                  href="/chainlink"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    color: "var(--cyan)",
+                    textDecoration: "none",
+                  }}
+                >
+                  All modes
+                  <span style={{ fontSize: "12px" }}>&#8594;</span>
+                </Link>
+                <Link
+                  href="/chainlink/daily"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    color: "var(--text-dim)",
+                    textDecoration: "none",
+                    opacity: 0.85,
+                  }}
+                >
+                  Today&apos;s puzzle
+                  <span style={{ fontSize: "12px" }}>&#8594;</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div
+            style={{
+              flex: "1 1 280px",
+              display: "block",
+            }}
+          >
+            <div
+              style={{
+                height: "100%",
+                background:
+                  "linear-gradient(135deg, rgba(255,60,60,0.1) 0%, rgba(124,58,255,0.06) 100%)",
+                border: "1px solid rgba(255,60,60,0.28)",
+                padding: "28px 24px",
+                position: "relative",
+                overflow: "hidden",
+                transition: "border-color 0.25s, box-shadow 0.25s",
+                display: "flex",
+                flexDirection: "column",
+              }}
+              className="stim-hero-card"
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: "10%",
+                  right: "10%",
+                  height: "1px",
+                  background:
+                    "linear-gradient(90deg, transparent, rgba(255,60,60,0.5), transparent)",
+                }}
+              />
+              <div
+                style={{
+                  fontSize: "9px",
+                  fontWeight: 600,
+                  letterSpacing: "0.32em",
+                  textTransform: "uppercase",
+                  color: "#ff6b6b",
+                  opacity: 0.8,
+                  marginBottom: "8px",
+                }}
+              >
+                Trivia
+              </div>
+              <h2
+                style={{
+                  fontFamily: '"Playfair Display", serif',
+                  fontSize: "clamp(24px, 4vw, 32px)",
+                  fontWeight: 900,
+                  lineHeight: 0.95,
+                  color: "var(--text)",
+                  margin: "0 0 6px",
+                }}
+              >
+                Brain{" "}
+                <em
+                  style={{
+                    fontStyle: "italic",
+                    color: "#ff3c3c",
+                    textShadow: "0 0 30px rgba(255,60,60,0.15)",
+                  }}
+                >
+                  Dead
+                </em>
+              </h2>
+              <p style={{ ...modeHintStyle, margin: "0 0 10px" }}>
+                Solo · Daily + freeplay
+              </p>
+              <p
+                style={{
+                  fontSize: "12px",
+                  color: "var(--text-dim)",
+                  lineHeight: 1.55,
+                  margin: "0 0 20px",
+                  fontWeight: 300,
+                  flex: 1,
+                }}
+              >
+                Answer until you can&apos;t. One wrong answer ends the run.
+              </p>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "16px",
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                }}
+              >
+                <Link
+                  href="/brain-dead"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    color: "#ff6b6b",
+                    textDecoration: "none",
+                  }}
+                >
+                  All modes
+                  <span style={{ fontSize: "12px" }}>&#8594;</span>
+                </Link>
+                <Link
+                  href="/brain-dead/daily"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    color: "var(--text-dim)",
+                    textDecoration: "none",
+                    opacity: 0.85,
+                  }}
+                >
+                  Today&apos;s run
+                  <span style={{ fontSize: "12px" }}>&#8594;</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Coming Soon section */}
         <div style={{ marginBottom: "16px" }}>

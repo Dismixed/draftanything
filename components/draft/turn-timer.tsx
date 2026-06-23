@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSound } from "@/lib/audio/sound-context";
 
 interface TurnTimerProps {
   deadline: string | null;
@@ -19,13 +20,16 @@ export function TurnTimer({
   myPlayerId,
   serverNow,
 }: TurnTimerProps) {
+  const { play } = useSound();
   const [expired, setExpired] = useState(false);
   const [display, setDisplay] = useState<number | null>(null);
   const autoPickTriggeredRef = useRef(false);
+  const lastTickSecondRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!deadline || !timerSeconds) {
       autoPickTriggeredRef.current = false;
+      lastTickSecondRef.current = null;
       return;
     }
 
@@ -42,6 +46,10 @@ export function TurnTimer({
       const remaining = Math.max(0, Math.floor((deadlineMs - adjustedNow) / 1000));
 
       setDisplay(remaining);
+      if (isMyTurn && remaining <= 10 && remaining > 0 && lastTickSecondRef.current !== remaining) {
+        lastTickSecondRef.current = remaining;
+        play("ui.tick", { profile: "restrained", volumeScale: 0.4 });
+      }
       if (remaining <= 0) {
         setExpired(true);
       }
@@ -54,11 +62,12 @@ export function TurnTimer({
       mounted = false;
       clearInterval(interval);
     };
-  }, [deadline, timerSeconds, serverNow]);
+  }, [deadline, timerSeconds, serverNow, isMyTurn, play]);
 
   useEffect(() => {
     if (!deadline || !timerSeconds) {
       autoPickTriggeredRef.current = false;
+      lastTickSecondRef.current = null;
       return;
     }
 
@@ -83,6 +92,7 @@ export function TurnTimer({
 
   return (
     <span
+      className={isLow && !expired ? "anim-glow-pulse" : undefined}
       style={{
         fontFamily: 'monospace',
         fontWeight: 700,

@@ -121,19 +121,13 @@ export async function POST(
     }
 
     const result = Array.isArray(data) ? data[0] : data;
+    const phase = (result as { o_phase?: string } | null)?.o_phase;
 
-    const { data: newPick } = await db
-      .from("picks")
-      .select("id")
-      .eq("draft_id", draftId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    // Run commentary after the response — tied to this pick, not "latest" at runtime
-    after(() => {
-      void handleCommentaryForPick(draftId, newPick?.id);
-    });
+    if (phase !== "VETO_VOTING") {
+      after(() => {
+        void handleCommentaryForPick(draftId);
+      });
+    }
 
     const res = Response.json(result ?? { success: true });
     setRequestIdHeader(res, requestId);

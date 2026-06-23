@@ -9,7 +9,7 @@ export default function DraftAnythingLobby() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("create");
 
   return (
-    <main style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', position: 'relative', overflow: 'hidden' }}>
+    <main className="game-page" style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', position: 'relative', overflow: 'hidden' }}>
       {/* Atmospheric background */}
       <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 100% 55% at 50% -5%, rgba(201,168,76,0.07) 0%, transparent 55%), radial-gradient(ellipse 60% 45% at 10% 90%, rgba(124,58,255,0.06) 0%, transparent 55%)', pointerEvents: 'none' }} />
 

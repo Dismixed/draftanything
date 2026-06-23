@@ -7,6 +7,7 @@ import { SeatList } from "./player-seat";
 import { ButtonLoadingLabel } from "@/components/ui/button-spinner";
 import { LobbyConfigForm } from "./lobby-config-form";
 import { LobbyConfigSummary } from "./lobby-config-summary";
+import { RoomChat } from "@/components/chat/room-chat";
 
 interface PresenceState {
   [key: string]: Array<{ playerId: string; displayName: string }>;
@@ -331,6 +332,12 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
         )}
 
       </div>
+
+      <RoomChat
+        draftId={room.draftId}
+        roomCode={room.roomCode}
+        myPlayerId={myPlayerId}
+      />
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { PoolEditor } from "./pool-editor";
 import { SuggestionQueue } from "./suggestion-queue";
 import type { PoolProjection, PoolSuggestion } from "@/features/pool/service";
 import { ButtonLoadingLabel, ButtonSpinner } from "@/components/ui/button-spinner";
+import { RoomChat } from "@/components/chat/room-chat";
 
 interface PoolReviewProps {
   draftId: string;
@@ -369,6 +370,12 @@ export function PoolReview({ draftId, myPlayerId, hostPlayerId, room }: PoolRevi
           </section>
         )}
       </div>
+
+      <RoomChat
+        draftId={draftId}
+        roomCode={room.roomCode}
+        myPlayerId={myPlayerId}
+      />
     </div>
   );
 }

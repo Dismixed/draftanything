@@ -11,6 +11,7 @@ import type {
   SafeCommentary,
   SafeDefense,
   SafeVote,
+  SafeVetoVote,
   SafeJudgment,
   DraftPhase,
   PickSlot,
@@ -24,6 +25,7 @@ export function buildProjection(
   commentary: Record<string, unknown>[],
   defenses: Record<string, unknown>[],
   votes: Record<string, unknown>[],
+  vetoVotes: Record<string, unknown>[],
   judgment: Record<string, unknown> | null,
   serverNow: string,
 ): DraftRoomProjection {
@@ -59,6 +61,7 @@ export function buildProjection(
     currentPickIndex: draft.current_pick_index as number,
     turnDeadline: (draft.turn_deadline as string | null) ?? null,
     judgingStartedAt: (draft.judging_started_at as string | null) ?? null,
+    pendingPickId: (draft.pending_pick_id as string | null) ?? null,
   };
 
   const safePlayers: SafePlayer[] = (players ?? []).map((p) => ({
@@ -126,6 +129,13 @@ export function buildProjection(
     selectedPlayerId: v.selected_player_id as string,
   }));
 
+  const safeVetoVotes: SafeVetoVote[] = (vetoVotes ?? []).map((v) => ({
+    id: v.id as string,
+    pickId: v.pick_id as string,
+    voterPlayerId: v.voter_player_id as string,
+    wantsVeto: v.wants_veto as boolean,
+  }));
+
   const safeJudgment: SafeJudgment | null = judgment
     ? {
         id: judgment.id as string,
@@ -148,6 +158,7 @@ export function buildProjection(
     commentary: safeCommentary,
     defenses: safeDefenses,
     votes: safeVotes,
+    vetoVotes: safeVetoVotes,
     judgment: safeJudgment,
     serverNow,
   };
@@ -170,6 +181,7 @@ export async function getDraftRoomProjection(
     { data: commentary, error: commentaryError },
     { data: defenses, error: defensesError },
     { data: votes, error: votesError },
+    { data: vetoVotes, error: vetoVotesError },
     { data: judgment, error: judgmentError },
     { data: nowResult },
   ] = await Promise.all([
@@ -184,6 +196,7 @@ export async function getDraftRoomProjection(
     db.from("commentary").select("*").eq("draft_id", draftId).order("created_at", { ascending: true }),
     db.from("arguments").select("*").eq("draft_id", draftId),
     db.from("votes").select("*").eq("draft_id", draftId),
+    db.from("pick_veto_votes").select("*").eq("draft_id", draftId),
     db.from("judgments").select("*").eq("draft_id", draftId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     db.rpc("get_server_time"),
   ]);
@@ -197,6 +210,7 @@ export async function getDraftRoomProjection(
   if (commentaryError) throw new Error("Failed to fetch draft commentary");
   if (defensesError) throw new Error("Failed to fetch draft defenses");
   if (votesError) throw new Error("Failed to fetch draft votes");
+  if (vetoVotesError) throw new Error("Failed to fetch draft veto votes");
   if (judgmentError) throw new Error("Failed to fetch draft judgment");
 
   const serverNowRaw = nowResult as unknown;
@@ -212,6 +226,7 @@ export async function getDraftRoomProjection(
     commentary ?? [],
     defenses ?? [],
     votes ?? [],
+    vetoVotes ?? [],
     (judgment as Record<string, unknown> | null) ?? null,
     serverNow,
   );

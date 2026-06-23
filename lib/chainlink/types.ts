@@ -1,7 +1,6 @@
 export type GameMode = "daily" | "unlimited";
 
 export interface Puzzle {
-  theme: string;
   words: readonly string[];
 }
 
@@ -16,8 +15,6 @@ export interface GameState {
   wordAttempts: string[][];
   revealedLetters: boolean[][];
   hintsRemaining: number;
-  themeGuessed: boolean;
-  themeAttempts: string[];
   score: number;
   gameStatus: "playing" | "completed";
   startTime: number;

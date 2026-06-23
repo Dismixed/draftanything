@@ -3,6 +3,7 @@ import ChainlinkGame from "@/components/chainlink/game";
 export default function UnlimitedPuzzlePage() {
   return (
     <main
+      className="game-page"
       style={{
         minHeight: "100vh",
         background: "var(--bg)",

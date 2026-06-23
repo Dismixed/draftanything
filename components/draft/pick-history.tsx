@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useEffect } from "react";
+import { useMemo, useRef, useEffect, useState } from "react";
 import type { SafePick, SafePlayer, PickSlot } from "@/features/draft/types";
 
 interface PickHistoryProps {
@@ -8,6 +8,7 @@ interface PickHistoryProps {
   players: SafePlayer[];
   currentPickIndex: number;
   pickOrder: PickSlot[];
+  pendingPickId?: string | null;
 }
 
 export function PickHistory({
@@ -15,6 +16,7 @@ export function PickHistory({
   players,
   currentPickIndex,
   pickOrder,
+  pendingPickId,
 }: PickHistoryProps) {
   const listRef = useRef<HTMLUListElement>(null);
 
@@ -29,12 +31,22 @@ export function PickHistory({
   );
 
   const nextSlot = pickOrder[currentPickIndex];
+  const [animatedPickId, setAnimatedPickId] = useState<string | null>(null);
+  const prevLengthRef = useRef(picks.length);
 
   useEffect(() => {
-    if (listRef.current) {
-      listRef.current.scrollTop = 0;
+    if (picks.length > prevLengthRef.current) {
+      const newest = [...picks].sort((a, b) => b.overallPick - a.overallPick)[0];
+      if (newest) {
+        setAnimatedPickId(newest.id);
+        const t = window.setTimeout(() => setAnimatedPickId(null), 400);
+        prevLengthRef.current = picks.length;
+        if (listRef.current) listRef.current.scrollTop = 0;
+        return () => window.clearTimeout(t);
+      }
     }
-  }, [picks.length]);
+    prevLengthRef.current = picks.length;
+  }, [picks]);
 
   return (
     <section
@@ -92,16 +104,18 @@ export function PickHistory({
 
         {sortedPicks.map((pick) => {
           const player = playerMap.get(pick.playerId);
+          const isPending = pick.id === pendingPickId;
           return (
             <li
               key={pick.id}
+              className={pick.id === animatedPickId ? "anim-slide-in-top" : undefined}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
                 padding: '6px 8px',
-                background: 'var(--panel)',
-                border: '1px solid var(--border-hi)',
+                background: isPending ? 'rgba(201,168,76,0.08)' : 'var(--panel)',
+                border: `1px solid ${isPending ? 'rgba(201,168,76,0.45)' : 'var(--border-hi)'}`,
                 fontSize: '13px',
                 color: 'var(--text)',
               }}
@@ -116,6 +130,11 @@ export function PickHistory({
                   <span style={{ color: 'var(--text-dim)' }}>Forfeited</span>
                 ) : (
                   pick.itemName ?? "?"
+                )}
+                {isPending && (
+                  <span style={{ color: 'var(--gold)', fontSize: '11px', marginLeft: '6px' }}>
+                    (veto vote)
+                  </span>
                 )}
               </span>
             </li>

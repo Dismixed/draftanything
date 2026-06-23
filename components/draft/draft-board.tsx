@@ -6,14 +6,19 @@ import { useDraftStore } from "@/features/draft/store";
 import { useDraftRoom } from "@/features/draft/use-draft-room";
 import { useWatchlist } from "@/features/draft/use-watchlist";
 import type { DraftRoomProjection } from "@/features/draft/types";
+import { useSound } from "@/lib/audio/sound-context";
+import { createSoundGate } from "@/lib/audio/debounce";
+import { SoundToggle } from "@/components/ui/sound-toggle";
 import { AvailablePool } from "./available-pool";
 import { PickHistory } from "./pick-history";
 import { PlayerRosters } from "./player-rosters";
 import { TurnTimer } from "./turn-timer";
 import { AiDesk } from "./ai-desk";
 import { OffTheDomeInput } from "./off-the-dome-input";
+import { VetoPanel } from "./veto-panel";
 import { PhasePanel } from "./phase-panel";
 import { DraftWatchlist } from "./draft-watchlist";
+import { RoomChat } from "@/components/chat/room-chat";
 
 interface DraftBoardProps {
   initial: DraftRoomProjection;
@@ -23,6 +28,7 @@ interface DraftBoardProps {
 type MobileTab = "rosters" | "pool" | "ai";
 
 const PHASE_LABELS: Partial<Record<DraftRoomProjection["draft"]["phase"], string>> = {
+  VETO_VOTING: "Veto Vote",
   DRAFT_COMPLETE: "Review",
   DEFENSE: "Defense",
   VOTING: "Voting",
@@ -32,7 +38,14 @@ const PHASE_LABELS: Partial<Record<DraftRoomProjection["draft"]["phase"], string
 
 export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
   const router = useRouter();
+  const { play } = useSound();
   const initialPhaseRef = useRef(initial.draft.phase);
+  const prevPhaseRef = useRef(initial.draft.phase);
+  const prevPicksLengthRef = useRef(initial.picks.length);
+  const prevPendingPickIdRef = useRef(initial.draft.pendingPickId);
+  const prevIsMyTurnRef = useRef(false);
+  const opponentPickGateRef = useRef(createSoundGate(500));
+  const turnStripRef = useRef<HTMLDivElement>(null);
   const setProjection = useDraftStore((s) => s.setProjection);
   const projection = useDraftStore((s) => s.projection) ?? initial;
   const connectionStatus = useDraftStore((s) => s.connectionStatus);
@@ -53,13 +66,20 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
         });
         if (!res.ok) {
           const err = await res.json();
+          play("ui.error", { profile: "restrained" });
           throw new Error(err.message ?? "Pick failed");
         }
+        play("pick", { profile: "restrained" });
+        void fetch("/api/ai/commentary", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ draftId: projection.draft.id }),
+        });
       } finally {
         setIsSubmittingPick(false);
       }
     },
-    [projection.draft.id, projection.draft.currentPickIndex],
+    [projection.draft.id, projection.draft.currentPickIndex, play],
   );
 
   const handlePoolPick = useCallback(
@@ -76,13 +96,20 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
         });
         if (!res.ok) {
           const err = await res.json();
+          play("ui.error", { profile: "restrained" });
           throw new Error(err.message ?? "Pick failed");
         }
+        play("pick", { profile: "restrained" });
+        void fetch("/api/ai/commentary", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ draftId: projection.draft.id }),
+        });
       } finally {
         setIsSubmittingPick(false);
       }
     },
-    [projection.draft.id, projection.draft.currentPickIndex],
+    [projection.draft.id, projection.draft.currentPickIndex, play],
   );
 
   useDraftRoom({
@@ -99,8 +126,46 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
     }
   }, [projection.draft.phase, router, setProjection]);
 
+  useEffect(() => {
+    const phase = projection.draft.phase;
+    const prev = prevPhaseRef.current;
+    if (phase !== prev) {
+      if (phase === "VETO_VOTING") {
+        play("veto", { profile: "restrained" });
+      } else if (prev === "VETO_VOTING") {
+        const pendingId = prevPendingPickIdRef.current;
+        const stillPending = projection.picks.some((p) => p.id === pendingId);
+        if (pendingId && !stillPending) {
+          play("veto-success", { profile: "restrained" });
+        } else {
+          play("phase", { profile: "restrained" });
+        }
+      } else {
+        play("phase", { profile: "restrained" });
+      }
+      prevPhaseRef.current = phase;
+    }
+    prevPendingPickIdRef.current = projection.draft.pendingPickId;
+  }, [projection.draft.phase, projection.draft.pendingPickId, projection.picks, play]);
+
   const { draft, players, availableItems, picks } = projection;
+
+  useEffect(() => {
+    const len = picks.length;
+    if (len > prevPicksLengthRef.current) {
+      const latest = picks.reduce((a, b) =>
+        a.overallPick > b.overallPick ? a : b,
+      );
+      if (latest.playerId !== myPlayerId && opponentPickGateRef.current()) {
+        play("pick", { profile: "restrained", volumeScale: 0.7 });
+      }
+    }
+    prevPicksLengthRef.current = len;
+  }, [picks, myPlayerId, play]);
+
   const isDrafting = draft.phase === "DRAFTING";
+  const isVetoVoting = draft.phase === "VETO_VOTING";
+  const isActiveDraft = isDrafting || isVetoVoting;
   const isEvaluatingJudgment =
     draft.phase === "JUDGING" &&
     draft.judgingStartedAt != null &&
@@ -108,11 +173,23 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
   const phaseLabel = isEvaluatingJudgment
     ? "Evaluating"
     : PHASE_LABELS[draft.phase];
-  const currentSlot = isDrafting ? draft.pickOrder[draft.currentPickIndex] : undefined;
+  const currentSlot = isActiveDraft ? draft.pickOrder[draft.currentPickIndex] : undefined;
   const currentPlayer = currentSlot
     ? players.find((p) => p.seat === currentSlot.seat)
     : undefined;
   const isMyTurn = isDrafting && currentPlayer?.id === myPlayerId;
+
+  useEffect(() => {
+    if (isMyTurn && !prevIsMyTurnRef.current && isDrafting) {
+      play("turn", { profile: "restrained" });
+      turnStripRef.current?.classList.add("anim-glow-pulse");
+      const t = window.setTimeout(() => {
+        turnStripRef.current?.classList.remove("anim-glow-pulse");
+      }, 2400);
+      return () => window.clearTimeout(t);
+    }
+    prevIsMyTurnRef.current = !!isMyTurn;
+  }, [isMyTurn, isDrafting, play]);
 
   const {
     entries: watchlistEntries,
@@ -222,6 +299,7 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
               serverNow={projection.serverNow}
             />
           )}
+          <SoundToggle />
           <span
             style={{
               width: '8px',
@@ -239,6 +317,7 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
       {/* Mobile turn strip */}
       {isDrafting && currentPlayer && currentSlot && (
         <div
+          ref={turnStripRef}
           className="sm:hidden"
           style={{
             padding: '8px 16px',
@@ -299,6 +378,10 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
         ))}
       </nav>
 
+      {isVetoVoting && draft.pickingMode === "off_the_dome" && (
+        <VetoPanel projection={projection} myPlayerId={myPlayerId} />
+      )}
+
       {draft.phase === "VOTING" && (
         <div style={{ padding: '20px 16px 0', maxWidth: '960px', margin: '0 auto' }}>
           <PhasePanel projection={projection} myPlayerId={myPlayerId} />
@@ -324,8 +407,9 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
             <PickHistory
               picks={picks}
               players={players}
-              currentPickIndex={draft.currentPickIndex}
+              currentPickIndex={isVetoVoting ? -1 : draft.currentPickIndex}
               pickOrder={draft.pickOrder}
+              pendingPickId={draft.pendingPickId}
             />
           ) : (
             <AvailablePool
@@ -373,7 +457,7 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
             items={availableItems}
             draftId={draft.id}
             myPlayerId={myPlayerId}
-            currentPlayerId={currentPlayer?.id}
+            currentPlayerId={isVetoVoting ? undefined : currentPlayer?.id}
             rounds={draft.rounds}
           />
         </div>
@@ -411,6 +495,12 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
           isSubmitting={isSubmittingPick}
         />
       )}
+
+      <RoomChat
+        draftId={draft.id}
+        roomCode={draft.roomCode}
+        myPlayerId={myPlayerId}
+      />
     </div>
   );
 }

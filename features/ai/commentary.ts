@@ -53,7 +53,8 @@ export async function generateCommentary(
     userPrompt: prompt.user,
     schema: commentaryOutputSchema,
     schemaName: "commentary_output",
-    maxOutputTokens: 512,
+    maxOutputTokens: 128,
+    timeoutMs: 20_000,
   });
 }
 
@@ -70,7 +71,7 @@ async function retry<T>(
         return null;
       }
       await new Promise((resolve) =>
-        setTimeout(resolve, 1000 * Math.pow(2, attempt)),
+        setTimeout(resolve, 400 * Math.pow(2, attempt)),
       );
     }
   }
@@ -147,18 +148,43 @@ export async function handleCommentaryForPick(
     const playerId = latestPick.player_id as string;
 
     const idempotencyKey = makeIdempotencyKey(draftId, pickId);
-    const { data: existingCommentary } = await db
-      .from("commentary")
-      .select("id")
-      .eq("idempotency_key", idempotencyKey)
-      .maybeSingle();
+
+    const [
+      { data: existingCommentary },
+      { data: playerData },
+      { data: allItems },
+      { data: recentPicksData },
+      { data: lastCommentary },
+    ] = await Promise.all([
+      db
+        .from("commentary")
+        .select("id")
+        .eq("idempotency_key", idempotencyKey)
+        .maybeSingle(),
+      db
+        .from("draft_players")
+        .select("id, display_name, seat")
+        .eq("draft_id", draftId),
+      itemId
+        ? db
+            .from("draft_items")
+            .select("id, name, hidden_metadata")
+            .eq("draft_id", draftId)
+        : Promise.resolve({ data: null, error: null }),
+      db
+        .from("picks")
+        .select("id, item_id, overall_pick, player_id")
+        .eq("draft_id", draftId)
+        .order("overall_pick", { ascending: true }),
+      db
+        .from("commentary")
+        .select("pick_id")
+        .eq("draft_id", draftId)
+        .order("created_at", { ascending: false })
+        .limit(1),
+    ]);
 
     if (existingCommentary) return;
-
-    const { data: playerData } = await db
-      .from("draft_players")
-      .select("id, display_name, seat")
-      .eq("draft_id", draftId);
 
     const players = (playerData ?? []) as Array<Record<string, unknown>>;
     const pickPlayer = players.find(
@@ -174,11 +200,6 @@ export async function handleCommentaryForPick(
       tags = defaultTags(overallPick);
       if (tags[0] !== "opening") tags = ["solid"];
     } else {
-      const { data: allItems } = await db
-        .from("draft_items")
-        .select("id, name, hidden_metadata")
-        .eq("draft_id", draftId);
-
       const pickedItem = allItems?.find(
         (item: Record<string, unknown>) => item.id === itemId,
       );
@@ -196,12 +217,6 @@ export async function handleCommentaryForPick(
         (item: Record<string, unknown>) =>
           (item.hidden_metadata as Record<string, number>) ?? {},
       );
-
-      const { data: recentPicksData } = await db
-        .from("picks")
-        .select("id, item_id, overall_pick, player_id")
-        .eq("draft_id", draftId)
-        .order("overall_pick", { ascending: true });
 
       const allPicks = (recentPicksData ?? []) as Array<Record<string, unknown>>;
 
@@ -242,22 +257,13 @@ export async function handleCommentaryForPick(
         })
         .filter((s) => Object.keys(s).length > 0);
 
-      const { data: lastCommentary } = await db
-        .from("commentary")
-        .select("pick_id")
-        .eq("draft_id", draftId)
-        .order("created_at", { ascending: false })
-        .limit(1);
-
       let picksSinceLastCommentary = 999;
       if (lastCommentary && lastCommentary.length > 0) {
         const lastPickId = lastCommentary[0].pick_id as string | null;
         if (lastPickId) {
-          const { data: lastPick } = await db
-            .from("picks")
-            .select("overall_pick")
-            .eq("id", lastPickId)
-            .maybeSingle();
+          const lastPick = allPicks.find(
+            (p: Record<string, unknown>) => p.id === lastPickId,
+          );
           if (lastPick) {
             picksSinceLastCommentary =
               overallPick - (lastPick.overall_pick as number);

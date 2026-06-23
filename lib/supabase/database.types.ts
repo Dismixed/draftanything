@@ -90,6 +90,36 @@ export type Database = {
           },
         ]
       }
+      brain_dead_leaderboard: {
+        Row: {
+          correct: number
+          created_at: string
+          display_name: string
+          id: string
+          play_date: string
+          player_token: string
+          score: number
+        }
+        Insert: {
+          correct: number
+          created_at?: string
+          display_name: string
+          id?: string
+          play_date: string
+          player_token: string
+          score: number
+        }
+        Update: {
+          correct?: number
+          created_at?: string
+          display_name?: string
+          id?: string
+          play_date?: string
+          player_token?: string
+          score?: number
+        }
+        Relationships: []
+      }
       commentary: {
         Row: {
           created_at: string
@@ -274,6 +304,7 @@ export type Database = {
           judging_mode: Database["public"]["Enums"]["judging_mode"]
           judging_started_at: string | null
           max_players: number
+          pending_pick_id: string | null
           phase: Database["public"]["Enums"]["draft_phase"]
           pick_order: Json
           picking_mode: Database["public"]["Enums"]["picking_mode"]
@@ -296,6 +327,7 @@ export type Database = {
           judging_mode: Database["public"]["Enums"]["judging_mode"]
           judging_started_at?: string | null
           max_players: number
+          pending_pick_id?: string | null
           phase?: Database["public"]["Enums"]["draft_phase"]
           pick_order?: Json
           picking_mode?: Database["public"]["Enums"]["picking_mode"]
@@ -318,6 +350,7 @@ export type Database = {
           judging_mode?: Database["public"]["Enums"]["judging_mode"]
           judging_started_at?: string | null
           max_players?: number
+          pending_pick_id?: string | null
           phase?: Database["public"]["Enums"]["draft_phase"]
           pick_order?: Json
           picking_mode?: Database["public"]["Enums"]["picking_mode"]
@@ -576,6 +609,55 @@ export type Database = {
             columns: ["target_item_id"]
             isOneToOne: false
             referencedRelation: "safe_draft_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pick_veto_votes: {
+        Row: {
+          created_at: string
+          draft_id: string
+          id: string
+          pick_id: string
+          voter_player_id: string
+          wants_veto: boolean
+        }
+        Insert: {
+          created_at?: string
+          draft_id: string
+          id?: string
+          pick_id: string
+          voter_player_id: string
+          wants_veto: boolean
+        }
+        Update: {
+          created_at?: string
+          draft_id?: string
+          id?: string
+          pick_id?: string
+          voter_player_id?: string
+          wants_veto?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pick_veto_votes_draft_id_fkey"
+            columns: ["draft_id"]
+            isOneToOne: false
+            referencedRelation: "drafts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pick_veto_votes_pick_id_fkey"
+            columns: ["pick_id"]
+            isOneToOne: false
+            referencedRelation: "picks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pick_veto_votes_voter_player_id_fkey"
+            columns: ["voter_player_id"]
+            isOneToOne: false
+            referencedRelation: "draft_players"
             referencedColumns: ["id"]
           },
         ]
@@ -1300,6 +1382,21 @@ export type Database = {
           o_current_pick_index: number
           o_phase: string
           o_turn_deadline: string
+          o_pending_pick_id: string | null
+        }[]
+      }
+      submit_veto_vote: {
+        Args: {
+          p_draft_id: string
+          p_guest_id: string
+          p_wants_veto: boolean
+        }
+        Returns: {
+          o_confirmed_pick_id: string | null
+          o_current_pick_index: number
+          o_phase: string
+          o_turn_deadline: string | null
+          o_vetoed: boolean
         }[]
       }
       submit_vote: {
@@ -1333,6 +1430,7 @@ export type Database = {
         | "LOBBY"
         | "POOL_REVIEW"
         | "DRAFTING"
+        | "VETO_VOTING"
         | "DRAFT_COMPLETE"
         | "DEFENSE"
         | "VOTING"
@@ -1480,6 +1578,7 @@ export const Constants = {
         "LOBBY",
         "POOL_REVIEW",
         "DRAFTING",
+        "VETO_VOTING",
         "DRAFT_COMPLETE",
         "DEFENSE",
         "VOTING",

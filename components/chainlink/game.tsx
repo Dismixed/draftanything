@@ -2,36 +2,14 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useChainlinkStore } from "@/lib/chainlink/store";
-import { getDateString } from "@/lib/chainlink/puzzles";
+import { formatPair, getDateString } from "@/lib/chainlink/puzzles";
 import type { GameMode } from "@/lib/chainlink/types";
+import { useSound } from "@/lib/audio/sound-context";
+import { fireConfetti } from "@/lib/motion/confetti";
+import { useCountUp } from "@/lib/motion/count-up";
+import { triggerAnimation } from "@/lib/motion/trigger-class";
+import { SoundToggle } from "@/components/ui/sound-toggle";
 import TutorialModal from "./tutorial-modal";
-
-/* ------------------------------------------------------------------ */
-/*  Keyframes (injected once)                                         */
-/* ------------------------------------------------------------------ */
-
-const REVEAL_KEYFRAMES = `
-@keyframes cl-letter-in {
-  0%   { opacity: 0; transform: translateY(8px) scale(0.8); }
-  60%  { opacity: 1; transform: translateY(-2px) scale(1.04); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
-}
-@keyframes cl-chain-grow {
-  0%   { transform: scaleY(0); opacity: 0; }
-  100% { transform: scaleY(1); opacity: 1; }
-}
-@keyframes cl-shake {
-  0%, 100% { transform: translateX(0); }
-  20%      { transform: translateX(-6px); }
-  40%      { transform: translateX(6px); }
-  60%      { transform: translateX(-4px); }
-  80%      { transform: translateX(4px); }
-}
-@keyframes cl-hint-pulse {
-  0%, 100% { box-shadow: 0 0 0 rgba(201,168,76,0); }
-  50%      { box-shadow: 0 0 12px rgba(201,168,76,0.25); }
-}
-`;
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -42,10 +20,6 @@ function formatDate(dateStr: string): string {
   return d.toLocaleDateString("en-US", {
     month: "long", day: "numeric", year: "numeric",
   });
-}
-
-function displayWord(word: string): string {
-  return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
 function displayChar(ch: string, i: number): string {
@@ -89,6 +63,7 @@ function WordRow({
   word,
   index,
   status,
+  previousWord,
   wordAttempts,
   revealedLetters,
   revealTrigger,
@@ -98,6 +73,7 @@ function WordRow({
   word: string;
   index: number;
   status: "locked" | "active" | "solved";
+  previousWord?: string;
   wordAttempts: string[];
   revealedLetters: boolean[];
   revealTrigger: number;
@@ -112,6 +88,8 @@ function WordRow({
   const [localGuess, setLocalGuess] = useState("");
   const [shake, setShake] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const { play } = useSound();
 
   useEffect(() => {
     if (status === "active") {
@@ -141,10 +119,15 @@ function WordRow({
       }
       const result = onSubmitGuess(fullGuess);
       if (result === "correct") {
+        play("correct");
         setLocalGuess("");
       } else if (result === "incorrect") {
+        play("wrong");
         setShake(true);
+        triggerAnimation(rowRef.current, "anim-flash-red", 450);
         setTimeout(() => setShake(false), 500);
+      } else if (result === "already-solved") {
+        play("ui.tap");
       }
     }
   };
@@ -160,8 +143,31 @@ function WordRow({
     return {};
   };
 
+  const linkHint =
+    previousWord && status === "active"
+      ? formatPair(previousWord, "?")
+      : previousWord && status === "solved" && index > 0
+        ? formatPair(previousWord, word)
+        : null;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+      {linkHint && (
+        <div
+          style={{
+            fontSize: "10px",
+            fontWeight: 500,
+            letterSpacing: "0.04em",
+            color: status === "active" ? "var(--purple)" : "var(--text-dim)",
+            opacity: status === "active" ? 0.85 : 0.55,
+            marginLeft: "2px",
+            marginBottom: "2px",
+          }}
+        >
+          {linkHint}
+        </div>
+      )}
+
       <div
         style={{
           fontSize: "9px",
@@ -173,10 +179,12 @@ function WordRow({
           marginLeft: "2px",
         }}
       >
-        {index + 1} of {totalWords}
+        {index === 0 ? "Starting word" : `${index + 1} of ${totalWords}`}
       </div>
 
       <div
+        ref={rowRef}
+        className="cl-word-row"
         style={{
           display: "flex",
           alignItems: "center",
@@ -223,12 +231,14 @@ function WordRow({
         )}
 
         <div
+          className="cl-word-letters"
           style={{
             flex: 1,
             display: "flex",
             alignItems: "center",
             gap: "4px",
             minHeight: "1.4em",
+            minWidth: 0,
           }}
         >
           {status === "solved" ? (
@@ -379,22 +389,20 @@ function WordRow({
 
 export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
   const store = useChainlinkStore();
+  const { play } = useSound();
+  const completeCelebratedRef = useRef(false);
   const {
     puzzle,
     date,
-    currentWordIndex,
     wordStatuses,
     wordAttempts,
     revealedLetters,
     hintsRemaining,
-    themeGuessed,
-    themeAttempts,
     score,
     gameStatus,
     feedback,
     justSolvedIndex,
     submitGuess,
-    submitThemeGuess,
     useHint: storeUseHint,
     clearFeedback,
     clearJustSolved,
@@ -402,24 +410,38 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
     resetGame,
   } = store;
 
-  const [themeGuess, setThemeGuess] = useState("");
-  const themeInputRef = useRef<HTMLInputElement>(null);
   const [hintAnim, setHintAnim] = useState(false);
 
-  // Initialize
+  const isUnlimited = mode === "unlimited";
+  const isComplete = gameStatus === "completed";
+  const displayScore = useCountUp(score, isComplete);
+
+  // Initialize after persist rehydration so puzzle is not stuck loading.
   useEffect(() => {
-    initPuzzle(mode);
-    if (typeof document !== "undefined" && !document.getElementById("cl-keyframes")) {
-      const style = document.createElement("style");
-      style.id = "cl-keyframes";
-      style.textContent = REVEAL_KEYFRAMES;
-      document.head.appendChild(style);
+    const hydrate = () => initPuzzle(mode);
+    if (useChainlinkStore.persist.hasHydrated()) {
+      hydrate();
+    } else {
+      return useChainlinkStore.persist.onFinishHydration(hydrate);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mode, initPuzzle]);
+
+  useEffect(() => {
+    if (!isComplete || completeCelebratedRef.current) return;
+    completeCelebratedRef.current = true;
+    play("win");
+    void fireConfetti("gold");
+  }, [isComplete, play]);
+
+  useEffect(() => {
+    if (!isComplete) {
+      completeCelebratedRef.current = false;
+    }
+  }, [isComplete]);
 
   useEffect(() => {
     if (feedback) {
-      const delay = feedback.type === "correct" || feedback.type === "theme-correct" ? 1500 : 2000;
+      const delay = feedback.type === "correct" ? 1500 : 2000;
       const timer = setTimeout(() => clearFeedback(), delay);
       return () => clearTimeout(timer);
     }
@@ -432,23 +454,15 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
     }
   }, [justSolvedIndex, clearJustSolved]);
 
-  const handleSubmitThemeGuess = useCallback(() => {
-    if (!themeGuess.trim() || themeGuessed) return;
-    submitThemeGuess(themeGuess.trim());
-  }, [themeGuess, themeGuessed, submitThemeGuess]);
-
-  const handleThemeKeyDown = useCallback(
-    (e: React.KeyboardEvent) => { if (e.key === "Enter") handleSubmitThemeGuess(); },
-    [handleSubmitThemeGuess],
-  );
-
   const handleHint = useCallback(() => {
+    play("ui.tap");
     const result = storeUseHint();
     if (result) {
+      play("hint");
       setHintAnim(true);
       setTimeout(() => setHintAnim(false), 600);
     }
-  }, [storeUseHint]);
+  }, [storeUseHint, play]);
 
   if (!puzzle) {
     return (
@@ -458,16 +472,15 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
     );
   }
 
-  const allWordsSolved = wordStatuses.every((s) => s === "solved");
-  const showThemeInput = allWordsSolved && !themeGuessed;
-  const isUnlimited = mode === "unlimited";
-
   return (
     <>
       <TutorialModal />
-      <div style={{ width: "100%", maxWidth: "520px", margin: "0 auto" }}>
+      <div className="game-shell" style={{ width: "100%", maxWidth: "520px", margin: "0 auto" }}>
         {/* ---- Header ---- */}
-        <header style={{ textAlign: "center", marginBottom: "36px" }}>
+        <header style={{ textAlign: "center", marginBottom: "36px", position: "relative" }}>
+          <div style={{ position: "absolute", top: 0, right: 0 }}>
+            <SoundToggle />
+          </div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", marginBottom: "6px" }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="6" r="4" stroke="#c9a84c" strokeWidth="1.5" fill="rgba(201,168,76,0.15)" />
@@ -506,19 +519,13 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
             )}
           </div>
 
-          {puzzle && (
-            <div style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--gold)", opacity: 0.7, marginTop: "10px" }}>
-              {puzzle.theme}
-            </div>
-          )}
         </header>
 
-          {/* Theme hint bar */}
-        {!allWordsSolved && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginBottom: "24px", padding: "10px 16px", background: "rgba(124,58,255,0.06)", border: "1px solid rgba(124,58,255,0.15)" }}>
+        {!isComplete && (
+          <div className="cl-hint-banner" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginBottom: "24px", padding: "10px 16px", background: "rgba(124,58,255,0.06)", border: "1px solid rgba(124,58,255,0.15)" }}>
             <span style={{ fontSize: "14px", color: "var(--purple)", opacity: 0.7 }}>&#9670;</span>
             <span style={{ fontSize: "10px", color: "var(--text-dim)", letterSpacing: "0.06em" }}>
-              All 5 words belong to this category. Solve them all, then confirm the theme for bonus points.
+              Each word pairs with the one before it — like <em style={{ color: "var(--text)", fontStyle: "normal" }}>apple juice</em>, then <em style={{ color: "var(--text)", fontStyle: "normal" }}>juice box</em>.
             </span>
           </div>
         )}
@@ -531,6 +538,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
               word={word}
               index={i}
               status={wordStatuses[i]}
+              previousWord={i > 0 ? puzzle.words[i - 1] : undefined}
               wordAttempts={wordAttempts[i]}
               revealedLetters={revealedLetters[i] ?? []}
               revealTrigger={justSolvedIndex === i ? 1 : 0}
@@ -541,7 +549,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
         </div>
 
         {/* ---- Hint button ---- */}
-        {gameStatus === "playing" && !showThemeInput && (
+        {gameStatus === "playing" && (
           <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
             <button
               onClick={handleHint}
@@ -571,15 +579,16 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
         {feedback && (
           <div
             key={feedback.type + feedback.message}
+            className="anim-pop-in"
             style={{
               textAlign: "center",
               padding: "10px 16px",
               marginBottom: "16px",
               fontSize: "12px",
               fontWeight: 500,
-              color: feedback.type === "correct" || feedback.type === "theme-correct" ? "var(--gold-hi)" : "#ff6b6b",
-              background: feedback.type === "correct" || feedback.type === "theme-correct" ? "rgba(201,168,76,0.08)" : "rgba(255,107,107,0.06)",
-              border: `1px solid ${feedback.type === "correct" || feedback.type === "theme-correct" ? "rgba(201,168,76,0.2)" : "rgba(255,107,107,0.2)"}`,
+              color: feedback.type === "correct" ? "var(--gold-hi)" : "#ff6b6b",
+              background: feedback.type === "correct" ? "rgba(201,168,76,0.08)" : "rgba(255,107,107,0.06)",
+              border: `1px solid ${feedback.type === "correct" ? "rgba(201,168,76,0.2)" : "rgba(255,107,107,0.2)"}`,
               transition: "opacity 0.3s ease",
             }}
           >
@@ -587,80 +596,35 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
           </div>
         )}
 
-        {/* ---- Theme guess ---- */}
-        {showThemeInput && (
-          <div style={{ marginTop: "8px", padding: "20px", border: "1px solid rgba(201,168,76,0.3)", background: "linear-gradient(135deg, rgba(201,168,76,0.08) 0%, rgba(124,58,255,0.04) 100%)", position: "relative" }}>
-            <div style={{ position: "absolute", top: 0, left: "12%", right: "12%", height: "1px", background: "linear-gradient(90deg, transparent, rgba(201,168,76,0.5), transparent)", pointerEvents: "none" }} />
-            <div style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--gold)", marginBottom: "4px" }}>
-              &#9670; Bonus Round
-            </div>
-            <p style={{ fontSize: "13px", color: "var(--text)", margin: "0 0 12px", lineHeight: 1.5 }}>
-              All 5 words share a common theme. What is it?
-            </p>
-
-            {themeAttempts.length > 0 && (
-              <div style={{ marginBottom: "10px" }}>
-                <div style={{ fontSize: "9px", color: "var(--text-dim)", opacity: 0.5, marginBottom: "4px" }}>Your guesses:</div>
-                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                  {themeAttempts.map((attempt, i) => (
-                    <span key={i} style={{ fontSize: "10px", padding: "3px 8px", background: "rgba(255,107,107,0.08)", border: "1px solid rgba(255,107,107,0.2)", color: "#ff6b6b" }}>
-                      {attempt}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div style={{ display: "flex", gap: "8px" }}>
-              <input
-                ref={themeInputRef}
-                type="text"
-                value={themeGuess}
-                onChange={(e) => setThemeGuess(e.target.value)}
-                onKeyDown={handleThemeKeyDown}
-                placeholder='e.g., "Animals", "Foods"...'
-                autoComplete="off"
-                spellCheck={false}
-                className="da-input"
-                style={{ flex: 1, fontSize: "14px", padding: "11px 14px" }}
-              />
-              <button
-                onClick={handleSubmitThemeGuess}
-                disabled={!themeGuess.trim()}
-                className="btn-gold"
-                style={{ width: "auto", padding: "11px 20px", fontSize: "10px", flexShrink: 0 }}
-              >
-                Guess
-              </button>
-            </div>
-            <div style={{ fontSize: "9px", color: "var(--text-dim)", opacity: 0.4, marginTop: "6px" }}>
-              +200 bonus points for the correct theme
-            </div>
-          </div>
-        )}
-
         {/* ---- Completed ---- */}
-        {themeGuessed && gameStatus === "completed" && (
-          <div style={{ marginTop: "8px", padding: "28px 24px", textAlign: "center", border: "1px solid rgba(201,168,76,0.3)", background: "linear-gradient(135deg, rgba(201,168,76,0.1) 0%, rgba(124,58,255,0.06) 100%)", position: "relative" }}>
+        {isComplete && (
+          <div className="anim-fade-slide-up" style={{ marginTop: "8px", padding: "28px 24px", textAlign: "center", border: "1px solid rgba(201,168,76,0.3)", background: "linear-gradient(135deg, rgba(201,168,76,0.1) 0%, rgba(124,58,255,0.06) 100%)", position: "relative" }}>
             <div style={{ position: "absolute", top: 0, left: "10%", right: "10%", height: "1px", background: "linear-gradient(90deg, transparent, rgba(201,168,76,0.5), transparent)", pointerEvents: "none" }} />
             <div style={{ fontSize: "32px", marginBottom: "8px" }}>&#9670;</div>
             <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: "22px", fontWeight: 700, color: "var(--gold-hi)", margin: "0 0 6px", textShadow: "0 0 30px rgba(240,200,96,0.15)" }}>
               Chain Complete!
             </h2>
-            <p style={{ fontSize: "12px", color: "var(--text-dim)", margin: "0 0 6px", lineHeight: 1.5 }}>
-              Theme: <strong style={{ color: "var(--gold)" }}>{puzzle.theme}</strong>
-            </p>
             <p style={{ fontSize: "13px", color: "var(--text)", margin: "0 0 20px" }}>
               Final score:{" "}
               <strong style={{ fontFamily: '"Playfair Display", serif', fontSize: "28px", fontWeight: 700, color: "var(--gold-hi)" }}>
-                {score}
+                {displayScore}
               </strong>
             </p>
 
-            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", justifyContent: "center", marginBottom: "20px" }}>
-              {puzzle.words.map((w, i) => (
-                <span key={i} style={{ fontFamily: '"Playfair Display", serif', fontSize: "12px", padding: "6px 12px", background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.2)", color: "var(--gold-hi)" }}>
-                  {displayWord(w)}
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "center", marginBottom: "20px" }}>
+              {puzzle.words.slice(1).map((w, i) => (
+                <span
+                  key={i}
+                  style={{
+                    fontFamily: '"Playfair Display", serif',
+                    fontSize: "13px",
+                    padding: "6px 14px",
+                    background: "rgba(201,168,76,0.06)",
+                    border: "1px solid rgba(201,168,76,0.2)",
+                    color: "var(--gold-hi)",
+                  }}
+                >
+                  {formatPair(puzzle.words[i], w)}
                 </span>
               ))}
             </div>
@@ -669,7 +633,14 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
               {isUnlimited ? "Play another round!" : "Come back tomorrow for a new puzzle!"}
             </div>
 
-            <button onClick={resetGame} className="btn-gold" style={{ maxWidth: "220px", margin: "0 auto" }}>
+            <button
+              onClick={() => {
+                play("ui.tap");
+                resetGame();
+              }}
+              className="btn-gold"
+              style={{ maxWidth: "220px", margin: "0 auto" }}
+            >
               {isUnlimited ? "New Puzzle" : "Start Fresh"}
             </button>
           </div>
@@ -678,7 +649,14 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
         {/* ---- Unlimited: New Game button (during play) ---- */}
         {isUnlimited && gameStatus === "playing" && (
           <div style={{ marginTop: "20px", textAlign: "center" }}>
-            <button onClick={resetGame} className="btn-ghost" style={{ maxWidth: "180px", margin: "0 auto", fontSize: "9px" }}>
+            <button
+              onClick={() => {
+                play("ui.tap");
+                resetGame();
+              }}
+              className="btn-ghost"
+              style={{ maxWidth: "180px", margin: "0 auto", fontSize: "9px" }}
+            >
               New Puzzle
             </button>
           </div>

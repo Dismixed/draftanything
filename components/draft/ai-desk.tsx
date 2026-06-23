@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { SafeCommentary, SafePick, SafePlayer } from "@/features/draft/types";
 
 interface AiDeskProps {
@@ -104,6 +104,8 @@ function CommentaryTags({ tags }: { tags: string[] }) {
 
 export function AiDesk({ draftId, commentary, picks, players }: AiDeskProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const [newestId, setNewestId] = useState<string | null>(null);
+  const prevCountRef = useRef(commentary.length);
   const sorted = [...commentary].sort(
     (a, b) => b.createdAt.localeCompare(a.createdAt),
   );
@@ -134,6 +136,21 @@ export function AiDesk({ draftId, commentary, picks, players }: AiDeskProps) {
     : null;
 
   useEffect(() => {
+    if (commentary.length > prevCountRef.current) {
+      const newest = [...commentary].sort((a, b) =>
+        b.createdAt.localeCompare(a.createdAt),
+      )[0];
+      if (newest) {
+        setNewestId(newest.id);
+        const t = window.setTimeout(() => setNewestId(null), 500);
+        prevCountRef.current = commentary.length;
+        return () => window.clearTimeout(t);
+      }
+    }
+    prevCountRef.current = commentary.length;
+  }, [commentary]);
+
+  useEffect(() => {
     if (!awaitingCommentary || !latestCompletedPick) return;
 
     const pickId = latestCompletedPick.id;
@@ -145,11 +162,10 @@ export function AiDesk({ draftId, commentary, picks, players }: AiDeskProps) {
       });
     };
 
-    const initialTimer = setTimeout(requestCommentary, 300);
-    const retryTimer = setTimeout(requestCommentary, 6000);
+    requestCommentary();
+    const retryTimer = setTimeout(requestCommentary, 4000);
 
     return () => {
-      clearTimeout(initialTimer);
       clearTimeout(retryTimer);
     };
   }, [awaitingCommentary, draftId, latestCompletedPick?.id]);
@@ -245,7 +261,11 @@ export function AiDesk({ draftId, commentary, picks, players }: AiDeskProps) {
           {sorted.map((entry) => {
             const context = resolvePickContext(entry.pickId);
             return (
-              <div key={entry.id} className="panel-card" style={{ padding: '14px' }}>
+              <div
+                key={entry.id}
+                className={`panel-card${entry.id === newestId ? " anim-fade-slide-up" : ""}`}
+                style={{ padding: '14px' }}
+              >
                 {context && (
                   <p
                     style={{
