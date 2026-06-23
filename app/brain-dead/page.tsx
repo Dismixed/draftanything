@@ -1,165 +1,94 @@
-import Link from "next/link";
+"use client";
 
-const ACCENT = "#ff3c3c";
+import Link from "next/link";
 
 export default function BrainDeadPage() {
   return (
     <main
-      className="game-page"
       style={{
         minHeight: "100vh",
-        background: "var(--bg)",
+        background: "var(--bd-bg)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         padding: "48px 24px 64px",
-        position: "relative",
-        overflow: "hidden",
       }}
     >
       <div
         style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "radial-gradient(ellipse 70% 35% at 50% -8%, rgba(255,60,60,0.06) 0%, transparent 55%), radial-gradient(ellipse 50% 30% at 80% 90%, rgba(124,58,255,0.04) 0%, transparent 50%)",
-          pointerEvents: "none",
-        }}
-      />
-
-      <div
-        style={{
           width: "100%",
-          maxWidth: "540px",
-          position: "relative",
-          zIndex: 1,
+          maxWidth: "400px",
         }}
       >
-        <header style={{ textAlign: "center", marginBottom: "40px" }}>
-          <div
-            style={{
-              fontSize: "9px",
-              fontWeight: 600,
-              letterSpacing: "0.32em",
-              textTransform: "uppercase",
-              color: "var(--text-dim)",
-              opacity: 0.7,
-              marginBottom: "10px",
-            }}
-          >
-            Stim Games Presents
-          </div>
+        <header style={{ textAlign: "center", marginBottom: "32px" }}>
           <h1
             style={{
-              fontFamily: '"Playfair Display", serif',
-              fontSize: "clamp(36px, 8vw, 52px)",
-              fontWeight: 900,
-              color: "var(--text)",
-              margin: "0 0 12px",
-              letterSpacing: "-0.01em",
-              lineHeight: 1,
+              fontSize: "22px",
+              fontWeight: 700,
+              color: "var(--bd-text)",
+              margin: "0 0 4px",
+              letterSpacing: "-0.5px",
             }}
           >
-            Brain{" "}
-            <em style={{ fontStyle: "italic", color: ACCENT }}>Dead</em>
+            Brain Dead
           </h1>
           <p
             style={{
-              fontSize: "13px",
-              color: "var(--text-dim)",
+              fontSize: "11px",
+              color: "var(--bd-text-muted)",
               margin: 0,
-              lineHeight: 1.6,
-              fontWeight: 300,
-              maxWidth: "400px",
-              marginLeft: "auto",
-              marginRight: "auto",
+              letterSpacing: "2px",
+              textTransform: "uppercase",
             }}
           >
-            Answer until you can&apos;t. Get it wrong once — it&apos;s over.
-            Questions get harder the deeper you go.
+            Trivia Challenge
           </p>
         </header>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           <Link href="/brain-dead/daily" style={{ textDecoration: "none", display: "block" }}>
             <div
               style={{
-                background:
-                  "linear-gradient(135deg, rgba(255,60,60,0.1) 0%, rgba(124,58,255,0.06) 100%)",
-                border: "1px solid rgba(255,60,60,0.28)",
-                padding: "28px 24px",
+                background: "var(--bd-surface)",
+                border: "1px solid var(--bd-border)",
+                borderRadius: "10px",
+                padding: "16px",
+                textAlign: "center",
                 position: "relative",
+                overflow: "hidden",
                 cursor: "pointer",
-                transition: "border-color 0.25s, box-shadow 0.25s",
+                transition: "transform 0.2s, border-color 0.2s",
               }}
-              className="stim-hero-card"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.borderColor = "var(--bd-primary)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.borderColor = "var(--bd-border)";
+              }}
             >
               <div
                 style={{
                   position: "absolute",
                   top: 0,
-                  left: "12%",
-                  right: "12%",
-                  height: "1px",
-                  background:
-                    "linear-gradient(90deg, transparent, rgba(255,60,60,0.5), transparent)",
-                  pointerEvents: "none",
+                  left: 0,
+                  right: 0,
+                  height: "3px",
+                  background: "var(--bd-primary)",
                 }}
               />
-              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                <div
-                  style={{
-                    width: "44px",
-                    height: "44px",
-                    borderRadius: "10px",
-                    background: "rgba(255,60,60,0.1)",
-                    border: "1px solid rgba(255,60,60,0.3)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "18px",
-                    flexShrink: 0,
-                  }}
-                >
-                  &#9716;
-                </div>
-                <div style={{ flex: 1 }}>
-                  <h2
-                    style={{
-                      fontFamily: '"Playfair Display", serif',
-                      fontSize: "20px",
-                      fontWeight: 700,
-                      color: "var(--text)",
-                      margin: "0 0 4px",
-                    }}
-                  >
-                    Daily Challenge
-                  </h2>
-                  <p
-                    style={{
-                      fontSize: "12px",
-                      color: "var(--text-dim)",
-                      margin: 0,
-                      lineHeight: 1.5,
-                      fontWeight: 300,
-                    }}
-                  >
-                    One run per day. Same questions for everyone. Climb the board.
-                  </p>
-                </div>
-                <div
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 600,
-                    letterSpacing: "0.2em",
-                    textTransform: "uppercase",
-                    color: ACCENT,
-                    whiteSpace: "nowrap",
-                    flexShrink: 0,
-                  }}
-                >
-                  Play &#8594;
-                </div>
+              <div style={{ marginBottom: "8px" }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--bd-text-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+              </div>
+              <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--bd-text)", marginBottom: "2px" }}>
+                Daily Challenge
+              </div>
+              <div style={{ fontSize: "10px", color: "var(--bd-text-muted)" }}>
+                15 questions. Same for everyone. One shot.
               </div>
             </div>
           </Link>
@@ -167,70 +96,45 @@ export default function BrainDeadPage() {
           <Link href="/brain-dead/freeplay" style={{ textDecoration: "none", display: "block" }}>
             <div
               style={{
-                background:
-                  "linear-gradient(135deg, rgba(124,58,255,0.08) 0%, rgba(255,60,60,0.04) 100%)",
-                border: "1px solid rgba(124,58,255,0.22)",
-                padding: "28px 24px",
+                background: "var(--bd-surface)",
+                border: "1px solid var(--bd-border)",
+                borderRadius: "10px",
+                padding: "16px",
+                textAlign: "center",
                 position: "relative",
+                overflow: "hidden",
                 cursor: "pointer",
-                transition: "border-color 0.25s, box-shadow 0.25s",
+                transition: "transform 0.2s, border-color 0.2s",
               }}
-              className="stim-hero-card"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.borderColor = "var(--bd-secondary)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.borderColor = "var(--bd-border)";
+              }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                <div
-                  style={{
-                    width: "44px",
-                    height: "44px",
-                    borderRadius: "10px",
-                    background: "rgba(124,58,255,0.1)",
-                    border: "1px solid rgba(124,58,255,0.3)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "18px",
-                    flexShrink: 0,
-                  }}
-                >
-                  &#127922;
-                </div>
-                <div style={{ flex: 1 }}>
-                  <h2
-                    style={{
-                      fontFamily: '"Playfair Display", serif',
-                      fontSize: "20px",
-                      fontWeight: 700,
-                      color: "var(--text)",
-                      margin: "0 0 4px",
-                    }}
-                  >
-                    Free Play
-                  </h2>
-                  <p
-                    style={{
-                      fontSize: "12px",
-                      color: "var(--text-dim)",
-                      margin: 0,
-                      lineHeight: 1.5,
-                      fontWeight: 300,
-                    }}
-                  >
-                    Pick a category. Play as much as you want. No limits.
-                  </p>
-                </div>
-                <div
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 600,
-                    letterSpacing: "0.2em",
-                    textTransform: "uppercase",
-                    color: "var(--purple)",
-                    whiteSpace: "nowrap",
-                    flexShrink: 0,
-                  }}
-                >
-                  Play &#8594;
-                </div>
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: "3px",
+                  background: "var(--bd-secondary)",
+                }}
+              />
+              <div style={{ marginBottom: "8px" }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--bd-text-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+              </div>
+              <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--bd-text)", marginBottom: "2px" }}>
+                Free Play
+              </div>
+              <div style={{ fontSize: "10px", color: "var(--bd-text-muted)" }}>
+                Pick your category. Play as many times as you want.
               </div>
             </div>
           </Link>
@@ -238,53 +142,100 @@ export default function BrainDeadPage() {
           <Link href="/brain-dead/leaderboard" style={{ textDecoration: "none", display: "block" }}>
             <div
               style={{
-                background: "var(--panel)",
-                border: "1px solid var(--border-hi)",
-                padding: "20px 24px",
+                background: "var(--bd-surface)",
+                border: "1px solid var(--bd-border)",
+                borderRadius: "10px",
+                padding: "16px",
+                textAlign: "center",
+                position: "relative",
+                overflow: "hidden",
                 cursor: "pointer",
-                transition: "border-color 0.25s",
+                transition: "transform 0.2s, border-color 0.2s",
               }}
-              className="stim-hero-card"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.borderColor = "var(--bd-success)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.borderColor = "var(--bd-border)";
+              }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                <div style={{ flex: 1 }}>
-                  <h2
-                    style={{
-                      fontFamily: '"Playfair Display", serif',
-                      fontSize: "18px",
-                      fontWeight: 700,
-                      color: "var(--text)",
-                      margin: 0,
-                    }}
-                  >
-                    Leaderboard
-                  </h2>
-                </div>
-                <div
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 600,
-                    letterSpacing: "0.2em",
-                    textTransform: "uppercase",
-                    color: "var(--text-dim)",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  View &#8594;
-                </div>
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: "3px",
+                  background: "var(--bd-success)",
+                }}
+              />
+              <div style={{ marginBottom: "8px" }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--bd-text-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                  <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                  <path d="M4 22h16"/>
+                  <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                  <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                  <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                </svg>
+              </div>
+              <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--bd-text)", marginBottom: "2px" }}>
+                Leaderboard
+              </div>
+              <div style={{ fontSize: "10px", color: "var(--bd-text-muted)" }}>
+                See how you stack up against today&apos;s players.
               </div>
             </div>
           </Link>
+        </div>
+
+        <div
+          style={{
+            marginTop: "16px",
+            padding: "12px",
+            background: "var(--bd-surface)",
+            borderRadius: "8px",
+            border: "1px solid var(--bd-border)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              fontSize: "10px",
+              color: "var(--bd-text-muted)",
+            }}
+          >
+            <span>
+              Best:{" "}
+              <span style={{ color: "var(--bd-primary)", fontWeight: 600 }}>
+                1,340
+              </span>
+            </span>
+            <span>
+              Games:{" "}
+              <span style={{ color: "var(--bd-secondary)", fontWeight: 600 }}>
+                23
+              </span>
+            </span>
+            <span>
+              Streak:{" "}
+              <span style={{ color: "var(--bd-success)", fontWeight: 600 }}>
+                5 days
+              </span>
+            </span>
+          </div>
         </div>
 
         <p
           style={{
             textAlign: "center",
             fontSize: "10px",
-            color: "var(--text-dim)",
+            color: "var(--bd-text-muted)",
             marginTop: "48px",
-            opacity: 0.4,
-            letterSpacing: "0.08em",
+            opacity: 0.6,
           }}
         >
           &larr;{" "}

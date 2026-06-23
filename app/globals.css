@@ -14,6 +14,17 @@
   --cyan: #00e5ff;
   --text: #ddd8cc;
   --text-dim: #6a7090;
+
+  --bd-bg: #0f172a;
+  --bd-surface: #1e293b;
+  --bd-border: #334155;
+  --bd-primary: #d97706;
+  --bd-secondary: #0ea5e9;
+  --bd-success: #22c55e;
+  --bd-text: #e2e8f0;
+  --bd-text-secondary: #94a3b8;
+  --bd-text-muted: #64748b;
+  --bd-danger: #ef4444;
 }
 
 * { box-sizing: border-box; }

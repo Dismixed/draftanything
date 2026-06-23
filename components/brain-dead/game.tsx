@@ -6,7 +6,6 @@ import type { CategoryId, GameMode, Question } from "@/lib/brain-dead/types";
 import {
   TIMER_MAX,
   LETTERS,
-  DIFF_LABELS,
   getDailyQuestions,
   getProgressiveQuestions,
   calcScore,
@@ -22,8 +21,6 @@ import { useSound } from "@/lib/audio/sound-context";
 import { fireConfetti } from "@/lib/motion/confetti";
 import { triggerAnimation } from "@/lib/motion/trigger-class";
 import { SoundToggle } from "@/components/ui/sound-toggle";
-
-const ACCENT = "#ff3c3c";
 
 type Screen = "played" | "game" | "result";
 
@@ -56,7 +53,6 @@ export default function BrainDeadGame({
   const [countdown, setCountdown] = useState("");
   const [todayScore, setTodayScore] = useState(0);
   const [scoreFloat, setScoreFloat] = useState<number | null>(null);
-  const [streakPulse, setStreakPulse] = useState(false);
   const [questionAnim, setQuestionAnim] = useState<"in" | "out" | null>(null);
 
   const { play } = useSound();
@@ -194,8 +190,6 @@ export default function BrainDeadGame({
         const next = c + 1;
         if (next === 3 || next === 5 || next === 8) {
           play("streak");
-          setStreakPulse(true);
-          setTimeout(() => setStreakPulse(false), 500);
         }
         return next;
       });
@@ -259,62 +253,68 @@ export default function BrainDeadGame({
       <div style={{ textAlign: "center", padding: "24px 0" }}>
         <div
           style={{
-            background: "var(--panel)",
-            border: "1px solid var(--border-hi)",
-            borderRadius: "14px",
+            background: "var(--bd-surface)",
+            border: "1px solid var(--bd-border)",
+            borderRadius: "12px",
             padding: "40px 32px",
             maxWidth: "380px",
             margin: "0 auto",
           }}
         >
-          <div style={{ fontSize: "2.2rem", marginBottom: "12px" }}>🔒</div>
+          <div style={{ marginBottom: "16px" }}>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--bd-text-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
           <h2
             style={{
-              fontFamily: '"Playfair Display", serif',
-              fontSize: "1.6rem",
+              fontSize: "18px",
+              fontWeight: 700,
               margin: "0 0 16px",
-              color: "var(--text)",
+              color: "var(--bd-text)",
             }}
           >
-            Come back tomorrow.
+            Come back tomorrow
           </h2>
           <div
             style={{
-              fontSize: "3.5rem",
-              fontWeight: 900,
-              color: ACCENT,
+              fontSize: "40px",
+              fontWeight: 700,
+              color: "var(--bd-primary)",
               lineHeight: 1,
             }}
           >
             {todayScore}
           </div>
-          <div style={{ color: "var(--text-dim)", fontSize: "0.85rem", marginTop: "4px" }}>
+          <div style={{ color: "var(--bd-text-muted)", fontSize: "12px", marginTop: "8px" }}>
             your score today
           </div>
           <div
             style={{
               width: "40px",
               height: "2px",
-              background: ACCENT,
+              background: "var(--bd-primary)",
               margin: "16px auto",
             }}
           />
           <div
             style={{
-              fontSize: "0.8rem",
-              color: "var(--text-dim)",
+              fontSize: "10px",
+              color: "var(--bd-text-muted)",
               textTransform: "uppercase",
-              letterSpacing: "0.1em",
+              letterSpacing: "1px",
             }}
           >
             Next challenge
           </div>
           <div
             style={{
-              fontSize: "1.6rem",
+              fontSize: "24px",
               fontWeight: 700,
               marginTop: "4px",
               fontVariantNumeric: "tabular-nums",
+              color: "var(--bd-text)",
             }}
           >
             {countdown}
@@ -322,8 +322,18 @@ export default function BrainDeadGame({
           <div style={{ marginTop: "32px" }}>
             <Link
               href="/brain-dead/freeplay"
-              className="btn-ghost"
-              style={{ display: "block", textDecoration: "none" }}
+              style={{
+                display: "inline-block",
+                textDecoration: "none",
+                background: "transparent",
+                border: "1px solid var(--bd-border)",
+                color: "var(--bd-text-secondary)",
+                padding: "10px 24px",
+                borderRadius: "8px",
+                fontSize: "12px",
+                fontWeight: 600,
+                transition: "border-color 0.2s",
+              }}
             >
               Play Free Mode
             </Link>
@@ -337,33 +347,28 @@ export default function BrainDeadGame({
   if (screen === "result") {
     return (
       <div className="anim-fade-slide-up" style={{ textAlign: "center", padding: "24px 0" }}>
-        <div style={{ fontSize: "3.5rem", marginBottom: "12px" }}>{result.icon}</div>
+        <div style={{ marginBottom: "16px" }}>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--bd-primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="8" r="7"/>
+            <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+          </svg>
+        </div>
         <h2
           style={{
-            fontFamily: '"Playfair Display", serif',
-            fontSize: "clamp(2rem, 5vw, 3rem)",
+            fontSize: "20px",
+            fontWeight: 700,
             margin: "0 0 8px",
-            lineHeight: 1.1,
-            color: "var(--text)",
+            color: "var(--bd-text)",
           }}
         >
-          {result.title.includes(" ") ? (
-            <>
-              {result.title.slice(0, result.title.lastIndexOf(" "))}{" "}
-              <em style={{ fontStyle: "italic", color: ACCENT }}>
-                {result.title.slice(result.title.lastIndexOf(" ") + 1)}
-              </em>
-            </>
-          ) : (
-            <em style={{ fontStyle: "italic", color: ACCENT }}>{result.title}</em>
-          )}
+          {result.title}
         </h2>
         <p
           style={{
-            color: "var(--text-dim)",
-            fontSize: "0.95rem",
+            color: "var(--bd-text-muted)",
+            fontSize: "12px",
             maxWidth: "380px",
-            margin: "0 auto 32px",
+            margin: "0 auto 24px",
             lineHeight: 1.6,
           }}
         >
@@ -372,24 +377,34 @@ export default function BrainDeadGame({
 
         <div
           style={{
-            display: "flex",
-            gap: "40px",
-            justifyContent: "center",
-            flexWrap: "wrap",
-            marginBottom: "32px",
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 1fr",
+            gap: "8px",
+            marginBottom: "24px",
+            maxWidth: "380px",
+            margin: "0 auto 24px",
           }}
         >
           {[
             { val: correct, lbl: "Correct" },
             { val: score, lbl: "Score" },
-            { val: `${avgSpeed}s`, lbl: "Avg Speed" },
+            { val: `${avgSpeed}s`, lbl: "Avg Time" },
           ].map(({ val, lbl }) => (
-            <div key={lbl} style={{ textAlign: "center" }}>
+            <div
+              key={lbl}
+              style={{
+                background: "var(--bd-surface)",
+                border: "1px solid var(--bd-border)",
+                borderRadius: "8px",
+                padding: "12px",
+                textAlign: "center",
+              }}
+            >
               <div
                 style={{
-                  fontSize: "2.5rem",
-                  fontWeight: 900,
-                  color: ACCENT,
+                  fontSize: "20px",
+                  fontWeight: 700,
+                  color: "var(--bd-primary)",
                   lineHeight: 1,
                 }}
               >
@@ -397,11 +412,9 @@ export default function BrainDeadGame({
               </div>
               <div
                 style={{
-                  fontSize: "0.72rem",
-                  color: "var(--text-dim)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.12em",
-                  marginTop: "4px",
+                  fontSize: "10px",
+                  color: "var(--bd-text-muted)",
+                  marginTop: "2px",
                 }}
               >
                 {lbl}
@@ -417,42 +430,52 @@ export default function BrainDeadGame({
               flexDirection: "column",
               alignItems: "center",
               gap: "12px",
-              marginBottom: "24px",
+              marginBottom: "16px",
+              maxWidth: "380px",
+              margin: "0 auto 16px",
             }}
           >
-            <p style={{ color: "var(--text-dim)", fontSize: "0.88rem", margin: 0 }}>
-              Add your name to the daily leaderboard
-            </p>
             <input
-              className="da-input"
-              placeholder="Your name"
+              placeholder="Enter your name"
               maxLength={20}
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
-              style={{ maxWidth: "300px", textAlign: "center" }}
+              style={{
+                width: "100%",
+                background: "var(--bd-surface)",
+                border: "1px solid var(--bd-border)",
+                borderRadius: "8px",
+                padding: "10px 12px",
+                color: "var(--bd-text)",
+                fontSize: "13px",
+                outline: "none",
+                textAlign: "center",
+                fontFamily: "inherit",
+              }}
             />
             <button
               type="button"
               onClick={handleSubmitScore}
               disabled={submitting}
-              className="bd-btn-primary"
               style={{
-                background: ACCENT,
-                color: "#fff",
-                border: "none",
-                padding: "12px 28px",
+                width: "100%",
+                background: "transparent",
+                border: "1px solid var(--bd-primary)",
+                color: "var(--bd-primary)",
+                padding: "12px",
                 fontFamily: "inherit",
-                fontSize: "0.95rem",
-                fontWeight: 700,
+                fontSize: "13px",
+                fontWeight: 600,
                 borderRadius: "8px",
                 cursor: submitting ? "default" : "pointer",
                 opacity: submitting ? 0.7 : 1,
+                letterSpacing: "0.5px",
               }}
             >
-              {submitting ? "Submitting..." : "Submit Score"}
+              {submitting ? "Submitting..." : "RECORD SCORE"}
             </button>
             {submitError && (
-              <p style={{ color: "#ef4444", fontSize: "0.85rem", margin: 0 }}>
+              <p style={{ color: "var(--bd-danger)", fontSize: "12px", margin: 0 }}>
                 Could not save score. Try again.
               </p>
             )}
@@ -464,25 +487,25 @@ export default function BrainDeadGame({
             href="/brain-dead/leaderboard"
             style={{
               display: "inline-block",
-              background: ACCENT,
+              background: "var(--bd-primary)",
               color: "#fff",
               border: "none",
               padding: "12px 28px",
-              fontSize: "0.95rem",
+              fontSize: "13px",
               fontWeight: 700,
               borderRadius: "8px",
               textDecoration: "none",
               marginBottom: "16px",
             }}
           >
-            View Leaderboard →
+            View Leaderboard
           </Link>
         )}
 
         <div
           style={{
             display: "flex",
-            gap: "12px",
+            gap: "8px",
             justifyContent: "center",
             flexWrap: "wrap",
             marginTop: "16px",
@@ -493,15 +516,14 @@ export default function BrainDeadGame({
               <button
                 type="button"
                 onClick={() => beginGame(getProgressiveQuestions(category))}
-                className="bd-btn-primary"
                 style={{
-                  background: ACCENT,
-                  color: "#fff",
-                  border: "none",
-                  padding: "12px 24px",
+                  background: "var(--bd-surface)",
+                  border: "1px solid var(--bd-border)",
+                  color: "var(--bd-text-muted)",
+                  padding: "10px 24px",
                   fontFamily: "inherit",
-                  fontSize: "0.95rem",
-                  fontWeight: 700,
+                  fontSize: "12px",
+                  fontWeight: 600,
                   borderRadius: "8px",
                   cursor: "pointer",
                 }}
@@ -510,8 +532,17 @@ export default function BrainDeadGame({
               </button>
               <Link
                 href="/brain-dead/freeplay"
-                className="btn-ghost"
-                style={{ textDecoration: "none", width: "auto", padding: "12px 24px" }}
+                style={{
+                  textDecoration: "none",
+                  background: "var(--bd-surface)",
+                  border: "1px solid var(--bd-border)",
+                  color: "var(--bd-text-muted)",
+                  padding: "10px 24px",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  borderRadius: "8px",
+                  display: "inline-block",
+                }}
               >
                 Change Category
               </Link>
@@ -519,8 +550,17 @@ export default function BrainDeadGame({
           )}
           <Link
             href="/brain-dead"
-            className="btn-ghost"
-            style={{ textDecoration: "none", width: "auto", padding: "12px 24px" }}
+            style={{
+              textDecoration: "none",
+              background: "var(--bd-surface)",
+              border: "1px solid var(--bd-border)",
+              color: "var(--bd-text-muted)",
+              padding: "10px 24px",
+              fontSize: "12px",
+              fontWeight: 600,
+              borderRadius: "8px",
+              display: "inline-block",
+            }}
           >
             Home
           </Link>
@@ -534,83 +574,46 @@ export default function BrainDeadGame({
 
   const diffClass =
     q.d === 1
-      ? { border: "#22c55e", color: "#22c55e", bg: "rgba(34,197,94,0.08)" }
+      ? { color: "var(--bd-success)", label: "Easy" }
       : q.d === 2
-        ? { border: "#f59e0b", color: "#f59e0b", bg: "rgba(245,158,11,0.08)" }
+        ? { color: "var(--bd-primary)", label: "Medium" }
         : q.d === 3
-          ? { border: "#ef4444", color: "#ef4444", bg: "rgba(239,68,68,0.1)" }
-          : { border: "#a855f7", color: "#a855f7", bg: "rgba(168,85,247,0.1)" };
+          ? { color: "var(--bd-danger)", label: "Hard" }
+          : { color: "var(--bd-secondary)", label: "Brutal" };
 
   return (
-    <div className="game-shell" style={{ width: "100%", maxWidth: "700px", margin: "0 auto", position: "relative" }}>
+    <div style={{ width: "100%", maxWidth: "480px", margin: "0 auto", position: "relative" }}>
       <div style={{ position: "absolute", top: 0, right: 0, zIndex: 2 }}>
         <SoundToggle />
       </div>
-      {/* Header */}
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: "20px",
-          flexWrap: "wrap",
-          gap: "8px",
+          marginBottom: "16px",
         }}
       >
-        <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
-          <div
-            className={streakPulse ? "anim-streak-pulse" : undefined}
-            style={{
-              background: ACCENT,
-              color: "#fff",
-              padding: "5px 14px",
-              borderRadius: "20px",
-              fontSize: "0.85rem",
-              fontWeight: 700,
-            }}
-          >
-            🔥 {correct}
-          </div>
-          <div
-            style={{
-              padding: "5px 14px",
-              borderRadius: "20px",
-              fontSize: "0.78rem",
-              fontWeight: 600,
-              border: `1px solid ${diffClass.border}`,
-              color: diffClass.color,
-              background: diffClass.bg,
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-            }}
-          >
-            {DIFF_LABELS[q.d]}
-          </div>
-          <div
-            style={{
-              background: "var(--panel-alt)",
-              color: "var(--text-dim)",
-              padding: "5px 14px",
-              borderRadius: "20px",
-              fontSize: "0.78rem",
-              border: "1px solid var(--border)",
-            }}
-          >
-            {categoryName}
-          </div>
+        <div style={{ fontSize: "11px", color: "var(--bd-text-muted)", fontWeight: 500 }}>
+          <span style={{ color: "var(--bd-primary)" }}>{qi + 1}</span> / {questions.length}
         </div>
-        <div style={{ fontSize: "0.9rem", color: "var(--text-dim)" }}>
-          Score: <span style={{ color: "var(--text)", fontWeight: 700 }}>{score}</span>
+        <div style={{ fontSize: "11px", color: "var(--bd-text-muted)", fontWeight: 500 }}>
+          Score: <span style={{ color: "var(--bd-primary)", fontWeight: 600 }}>{score}</span>
         </div>
       </div>
 
       {/* Timer */}
-      <div style={{ marginBottom: "16px" }} className={timerSecs <= 3 ? "anim-glow-pulse" : undefined}>
+      <div style={{ marginBottom: "16px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", marginBottom: "4px" }}>
+          <span style={{ color: "var(--bd-text-muted)" }}>{categoryName}</span>
+          <span style={{ color: "var(--bd-primary)" }}>{timerSecs}s</span>
+        </div>
         <div
           style={{
-            background: "var(--panel-alt)",
-            borderRadius: "4px",
-            height: "5px",
+            width: "100%",
+            height: "4px",
+            background: "var(--bd-surface)",
+            borderRadius: "2px",
             overflow: "hidden",
           }}
         >
@@ -619,31 +622,10 @@ export default function BrainDeadGame({
               height: "100%",
               width: `${timerPct}%`,
               background: timerColor,
-              borderRadius: "4px",
+              borderRadius: "2px",
               transition: "width 0.1s linear, background 0.4s",
             }}
           />
-        </div>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            marginTop: "4px",
-            fontSize: "0.78rem",
-            color: "var(--text-dim)",
-          }}
-        >
-          Time:{" "}
-          <span
-            style={{
-              color: "var(--text)",
-              fontWeight: 600,
-              fontVariantNumeric: "tabular-nums",
-              marginLeft: "4px",
-            }}
-          >
-            {timerSecs}s
-          </span>
         </div>
       </div>
 
@@ -656,31 +638,28 @@ export default function BrainDeadGame({
           questionAnim === "in" ? "anim-question-in" : "",
         ].filter(Boolean).join(" ")}
         style={{
-          background: "var(--panel)",
-          border: "1px solid var(--border-hi)",
-          borderRadius: "14px",
-          padding: "32px 28px 24px",
+          background: "var(--bd-surface)",
+          border: "1px solid var(--bd-border)",
+          borderRadius: "12px",
+          padding: "20px",
           marginBottom: "16px",
+          textAlign: "center",
           position: "relative",
         }}
       >
-        <div
-          style={{
-            fontSize: "0.72rem",
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: "var(--text-dim)",
-            marginBottom: "12px",
-          }}
-        >
-          Question {qi + 1} of {questions.length}
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+          <span style={{ fontSize: "10px", color: diffClass.color, fontWeight: 600, textTransform: "uppercase", letterSpacing: "1px" }}>
+            {diffClass.label}
+          </span>
+          <span style={{ fontSize: "10px", color: "var(--bd-border)" }}>|</span>
+          <span style={{ fontSize: "10px", color: "var(--bd-text-muted)" }}>{q.d * 100} pts</span>
         </div>
         <div
           style={{
-            fontFamily: '"Playfair Display", serif',
-            fontSize: "clamp(1.3rem, 2.8vw, 1.75rem)",
-            lineHeight: 1.3,
-            color: "var(--text)",
+            fontSize: "16px",
+            fontWeight: 500,
+            lineHeight: 1.4,
+            color: "var(--bd-text)",
           }}
         >
           {q.q}
@@ -692,9 +671,9 @@ export default function BrainDeadGame({
               position: "absolute",
               top: "12px",
               right: "16px",
-              color: "#22c55e",
+              color: "var(--bd-success)",
               fontWeight: 800,
-              fontSize: "1.1rem",
+              fontSize: "14px",
             }}
           >
             +{scoreFloat}
@@ -704,16 +683,15 @@ export default function BrainDeadGame({
 
       {/* Answers */}
       <div
-        className="bd-answers"
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-          gap: "10px",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "8px",
+          marginBottom: "16px",
         }}
       >
         {q.a.map((ans, i) => {
-          const showCorrect =
-            (answered !== "idle" && i === q.c);
+          const showCorrect = answered !== "idle" && i === q.c;
           const showWrong = answered === "wrong" && i === selectedIdx;
           const disabled = answered !== "idle";
 
@@ -733,52 +711,47 @@ export default function BrainDeadGame({
                 background: showCorrect
                   ? "rgba(34,197,94,0.1)"
                   : showWrong
-                    ? "rgba(255,60,60,0.1)"
-                    : "var(--panel)",
-                border: `1.5px solid ${
-                  showCorrect ? "#22c55e" : showWrong ? ACCENT : "var(--border-hi)"
+                    ? "rgba(239,68,68,0.1)"
+                    : "var(--bd-surface)",
+                border: `1px solid ${
+                  showCorrect ? "var(--bd-success)" : showWrong ? "var(--bd-danger)" : "var(--bd-border)"
                 }`,
-                color: "var(--text)",
-                padding: "16px",
-                borderRadius: "10px",
+                color: "var(--bd-text)",
+                padding: "12px",
+                borderRadius: "8px",
                 cursor: disabled ? "default" : "pointer",
                 fontFamily: "inherit",
-                fontSize: "0.93rem",
+                fontSize: "13px",
                 fontWeight: 500,
-                textAlign: "left",
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-                lineHeight: 1.35,
+                textAlign: "center",
                 opacity: disabled && !showCorrect && !showWrong ? 0.45 : 1,
                 transition: "border-color 0.1s, background 0.1s",
               }}
             >
-              <span
-                style={{
-                  background: showCorrect
-                    ? "#22c55e"
-                    : showWrong
-                      ? ACCENT
-                      : "var(--panel-alt)",
-                  color: showCorrect || showWrong ? "#fff" : "var(--text-dim)",
-                  width: "27px",
-                  height: "27px",
-                  borderRadius: "5px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "0.78rem",
-                  fontWeight: 700,
-                  flexShrink: 0,
-                }}
-              >
+              <div style={{ fontSize: "11px", color: showCorrect || showWrong ? diffClass.color : "var(--bd-text-secondary)", marginBottom: "2px" }}>
                 {LETTERS[i]}
-              </span>
-              {ans}
+              </div>
+              <div>{ans}</div>
             </button>
           );
         })}
+      </div>
+
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontSize: "10px", color: "var(--bd-text-muted)", marginBottom: "4px" }}>Streak</div>
+        <div style={{ display: "flex", justifyContent: "center", gap: "4px" }}>
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              style={{
+                width: "8px",
+                height: "8px",
+                background: i < correct ? "var(--bd-primary)" : "var(--bd-border)",
+                borderRadius: "50%",
+              }}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
