@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { DraftRoomProjection } from "@/features/draft/types";
 import { buildPublicResult } from "@/features/results/build-public-result";
@@ -117,8 +118,16 @@ export function CompletePanel({ projection, myPlayerId }: CompletePanelProps) {
           </p>
         )}
 
-        {/* Rematch controls */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+            alignItems: "center",
+            borderTop: "1px solid var(--border-hi)",
+            paddingTop: "16px",
+          }}
+        >
           {isHost ? (
             <>
               <button
@@ -145,6 +154,13 @@ export function CompletePanel({ projection, myPlayerId }: CompletePanelProps) {
               Waiting for the host to start a rematch…
             </p>
           )}
+          <Link
+            href="/"
+            className="btn-ghost"
+            style={{ textDecoration: "none", width: "auto", padding: "10px 16px" }}
+          >
+            ← Back to Home
+          </Link>
         </div>
       </div>
     </div>

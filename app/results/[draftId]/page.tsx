@@ -1,4 +1,5 @@
 import { getDraftRoomProjection } from "@/features/draft/projection";
+import { getResultImageUrl } from "@/features/results/image-url";
 import { buildPublicResult } from "@/features/results/projection";
 import { ResultsBody } from "@/components/results/results-body";
 import type { Metadata } from "next";
@@ -9,7 +10,6 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { draftId } = await params;
-  const imageUrl = `/api/results/${draftId}/image`;
 
   try {
     const projection = await getDraftRoomProjection(draftId);
@@ -18,6 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
 
     const result = buildPublicResult(projection);
+    const imageUrl = getResultImageUrl(draftId, result.completedAt);
     return {
       title: `Results: ${result.topic} — Draft Anything`,
       description: result.winner

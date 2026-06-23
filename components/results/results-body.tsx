@@ -65,7 +65,11 @@ export function ResultsBody({
       )}
 
       {showShare && (
-        <ShareActions draftId={draftId} topic={result.topic} />
+        <ShareActions
+          draftId={draftId}
+          topic={result.topic}
+          completedAt={result.completedAt}
+        />
       )}
     </div>
   );

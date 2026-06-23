@@ -1,15 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getResultImageUrl } from "@/features/results/image-url";
 
 interface ShareActionsProps {
   draftId: string;
   topic: string;
+  completedAt: string;
 }
 
 export function ShareActions({
   draftId,
   topic,
+  completedAt,
 }: ShareActionsProps) {
   const [copied, setCopied] = useState(false);
   const [canShare, setCanShare] = useState(false);
@@ -19,7 +22,9 @@ export function ShareActions({
     setCanShare(typeof navigator.share === "function");
   }, []);
 
-  const imageDownloadUrl = `/api/results/${draftId}/image?download=1`;
+  const imageDownloadUrl = getResultImageUrl(draftId, completedAt, {
+    download: true,
+  });
 
   function getResultUrl() {
     return `${window.location.origin}/results/${draftId}`;

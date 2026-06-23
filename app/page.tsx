@@ -347,12 +347,23 @@ export default function StimGames() {
                 padding: "28px 24px",
                 position: "relative",
                 overflow: "hidden",
+                cursor: "pointer",
                 transition: "border-color 0.25s, box-shadow 0.25s",
                 display: "flex",
                 flexDirection: "column",
               }}
               className="stim-hero-card"
             >
+              <Link
+                href="/chainlink"
+                aria-label="Chainlink — All modes"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  zIndex: 1,
+                  borderRadius: "6px",
+                }}
+              />
               <div
                 style={{
                   fontSize: "9px",
@@ -398,10 +409,11 @@ export default function StimGames() {
                   gap: "16px",
                   flexWrap: "wrap",
                   alignItems: "center",
+                  position: "relative",
+                  zIndex: 2,
                 }}
               >
-                <Link
-                  href="/chainlink"
+                <span
                   className="stim-text-link"
                   style={{
                     fontSize: "10px",
@@ -413,7 +425,7 @@ export default function StimGames() {
                 >
                   All modes
                   <span style={{ fontSize: "12px" }}>&#8594;</span>
-                </Link>
+                </span>
                 <Link
                   href="/chainlink/daily"
                   className="stim-text-link"
@@ -448,12 +460,22 @@ export default function StimGames() {
                 padding: "28px 24px",
                 position: "relative",
                 overflow: "hidden",
+                cursor: "pointer",
                 transition: "border-color 0.25s, box-shadow 0.25s",
                 display: "flex",
                 flexDirection: "column",
               }}
               className="stim-hero-card"
             >
+              <Link
+                href="/brain-dead"
+                aria-label="Brain Dead — All modes"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  zIndex: 1,
+                }}
+              />
               <div
                 style={{
                   position: "absolute",
@@ -520,10 +542,11 @@ export default function StimGames() {
                   gap: "16px",
                   flexWrap: "wrap",
                   alignItems: "center",
+                  position: "relative",
+                  zIndex: 2,
                 }}
               >
-                <Link
-                  href="/brain-dead"
+                <span
                   className="stim-text-link"
                   style={{
                     fontSize: "10px",
@@ -535,7 +558,7 @@ export default function StimGames() {
                 >
                   All modes
                   <span style={{ fontSize: "12px" }}>&#8594;</span>
-                </Link>
+                </span>
                 <Link
                   href="/brain-dead/daily"
                   className="stim-text-link"
