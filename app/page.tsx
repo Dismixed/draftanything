@@ -17,9 +17,16 @@ const GAMES = [
     status: "coming-soon" as const,
   },
   {
-    name: "Budget Manager",
-    description: "Allocate wisely. Outlast the rest.",
-    icon: "$",
+    name: "AnyGuessr",
+    description:
+      "Guess anything from a clue — food, language, place, and more.",
+    icon: "?",
+    status: "coming-soon" as const,
+  },
+  {
+    name: "Scattergories",
+    description: "A letter, a timer, twelve categories. Unique answers win.",
+    icon: "A",
     status: "coming-soon" as const,
   },
 ];
@@ -85,11 +92,12 @@ export default function StimGames() {
           }}
         >
           <Image
-            src="/stim-labs-logo.png"
+            src="/stimlabs_badge_v5.svg"
             alt="Stim Labs"
-            width={100}
-            height={100}
+            width={108}
+            height={124}
             priority
+            unoptimized
             style={{
               width: "clamp(80px, 20vw, 108px)",
               height: "auto",

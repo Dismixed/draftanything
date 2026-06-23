@@ -12,6 +12,7 @@ import {
 import { judgeRosters } from "@/features/ai/judge";
 import type { JudgeInput } from "@/features/ai/judge";
 import type { RubricCategory, RosterPick } from "@/features/ai/fallback";
+import { offTheDomeFallbackJudge } from "@/features/ai/fallback";
 import type { SafePick, SafePlayer } from "@/features/draft/types";
 
 export interface Vote {
@@ -29,6 +30,34 @@ export interface AwardRef {
   pickId: string;
   itemId: string;
   playerId: string;
+}
+
+function toRosterPicks(picks: SafePick[]): RosterPick[] {
+  return picks.map((pick) => ({
+    pickId: pick.id,
+    playerId: pick.playerId,
+    itemId: pick.itemId,
+    itemName: pick.itemName ?? "",
+    metadata: {},
+    overallPick: pick.overallPick,
+  }));
+}
+
+function computeFallbackAwards(
+  _rubric: RubricCategory[],
+  playerIds: string[],
+  picks: SafePick[],
+): { bestPick: AwardRef; worstPick: AwardRef; biggestSteal: AwardRef } {
+  if (picks.length === 0) {
+    return {
+      bestPick: { pickId: "", itemId: "", playerId: "" },
+      worstPick: { pickId: "", itemId: "", playerId: "" },
+      biggestSteal: { pickId: "", itemId: "", playerId: "" },
+    };
+  }
+
+  const rosterPicks = toRosterPicks(picks);
+  return offTheDomeFallbackJudge(playerIds, rosterPicks).awards;
 }
 
 export interface JudgmentRecord {
@@ -124,7 +153,7 @@ export async function judgeDraft(
   }
 
   if (judgingMode === "community") {
-    return judgeCommunityMode(draftId, players, picks, voteRecords);
+    return judgeCommunityMode(draftId, rubric, players, picks, voteRecords);
   }
 
   return await judgeHybridMode(
@@ -283,6 +312,7 @@ async function judgeAiMode(
 
 function judgeCommunityMode(
   draftId: string,
+  rubric: RubricCategory[],
   players: SafePlayer[],
   picks: SafePick[],
   voteRecords: Vote[],
@@ -303,7 +333,7 @@ function judgeCommunityMode(
     ),
     ranking,
     winnerPlayerIds: winners,
-    awards: { bestPick: { pickId: "", itemId: "", playerId: "" }, worstPick: { pickId: "", itemId: "", playerId: "" }, biggestSteal: { pickId: "", itemId: "", playerId: "" } },
+    awards: computeFallbackAwards(rubric, playerIds, picks),
     explanation: `Community vote results. ${voteRecords.length} vote(s) cast.`,
     model: null,
     promptVersion: "1.0.0",

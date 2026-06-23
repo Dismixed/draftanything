@@ -7,6 +7,12 @@ import OpenAI from "openai";
 import { scaleToJudgingRange } from "@/features/judging/hybrid";
 import { buildJudgePrompt, JUDGE_PROMPT_VERSION } from "./prompts/judge";
 import { fallbackJudge, offTheDomeFallbackJudge } from "./fallback";
+import {
+  normalizeAwardRef,
+  type AwardRef,
+  type PickLike,
+} from "@/features/judging/award-references";
+export type { AwardRef } from "@/features/judging/award-references";
 import type {
   RubricCategory,
   RosterPick,
@@ -122,10 +128,15 @@ export interface JudgeInput {
   playerIds: readonly string[];
 }
 
-export interface AwardRef {
-  pickId: string;
-  itemId: string;
-  playerId: string;
+function normalizeJudgeAwards(
+  awards: { bestPick: AwardRef; worstPick: AwardRef; biggestSteal: AwardRef },
+  picks: readonly PickLike[],
+): { bestPick: AwardRef; worstPick: AwardRef; biggestSteal: AwardRef } {
+  return {
+    bestPick: normalizeAwardRef(awards.bestPick, picks),
+    worstPick: normalizeAwardRef(awards.worstPick, picks),
+    biggestSteal: normalizeAwardRef(awards.biggestSteal, picks),
+  };
 }
 
 export interface JudgeResult {
@@ -272,12 +283,20 @@ export async function judgeRosters(input: JudgeInput): Promise<JudgeResult> {
         input.rubric,
       );
 
+      const pickLikes: PickLike[] = input.picks.map((pick) => ({
+        id: pick.pickId,
+        playerId: pick.playerId,
+        itemId: pick.itemId,
+        itemName: pick.itemName,
+        overallPick: pick.overallPick,
+      }));
+
       return {
         source: "ai",
         playerScores: validated.playerScores,
         ranking: validated.ranking,
         winnerPlayerIds: validated.winnerPlayerIds,
-        awards: validated.awards,
+        awards: normalizeJudgeAwards(validated.awards, pickLikes),
         explanation: validated.explanation,
         model: response.model ?? MODEL,
         promptVersion: JUDGE_PROMPT_VERSION,

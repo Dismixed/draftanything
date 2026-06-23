@@ -6,8 +6,8 @@ let cachedDataUri: string | undefined;
 
 async function getLogoDataUri() {
   if (!cachedDataUri) {
-    const logo = await readFile(join(process.cwd(), "public/stim-labs-logo.png"));
-    cachedDataUri = `data:image/jpeg;base64,${logo.toString("base64")}`;
+    const logo = await readFile(join(process.cwd(), "public/stimlabs_badge_v5.svg"));
+    cachedDataUri = `data:image/svg+xml;base64,${logo.toString("base64")}`;
   }
   return cachedDataUri;
 }
@@ -24,14 +24,13 @@ export async function createStimLabsIcon(size: number) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#000000",
         }}
       >
         <img
           src={src}
           width={size}
           height={size}
-          style={{ objectFit: "cover" }}
+          style={{ objectFit: "contain" }}
         />
       </div>
     ),

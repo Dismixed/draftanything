@@ -1,4 +1,9 @@
 import type { DraftRoomProjection } from "@/features/draft/types";
+import {
+  normalizeAwardRef,
+  readAwardRef,
+  resolveAwardItemName,
+} from "@/features/judging/award-references";
 
 export interface PublicPlayerResult {
   id: string;
@@ -32,30 +37,6 @@ function resolvePlayerName(
   players: DraftRoomProjection["players"],
 ): string {
   return players.find((p) => p.id === playerId)?.displayName ?? "Unknown";
-}
-
-function resolveAwardItemName(
-  award: { pickId?: string; itemId?: string },
-  picks: DraftRoomProjection["picks"],
-  items: DraftRoomProjection["availableItems"],
-): string {
-  if (award.pickId) {
-    const pick = picks.find((p) => p.id === award.pickId);
-    if (pick?.itemName) return pick.itemName;
-    if (pick?.itemId) {
-      const item = items.find((i) => i.id === pick.itemId);
-      if (item) return item.name;
-    }
-  }
-
-  if (award.itemId) {
-    const pick = picks.find((p) => p.itemId === award.itemId);
-    if (pick?.itemName) return pick.itemName;
-    const item = items.find((i) => i.id === award.itemId);
-    if (item) return item.name;
-  }
-
-  return "Unknown";
 }
 
 export function buildPublicResult(
@@ -102,24 +83,28 @@ export function buildPublicResult(
       : null;
 
   const rawAwards = judgment?.awards ?? {};
+  const itemNameById = new Map(
+    availableItems.map((item) => [item.id, item.name]),
+  );
   const awards: PublicAward[] = [];
 
   for (const awardType of ["bestPick", "worstPick", "biggestSteal"] as const) {
-    const award = rawAwards[awardType] as
-      | { pickId?: string; itemId?: string; playerId?: string }
-      | undefined;
-    if (award) {
-      awards.push({
-        type: awardType,
-        playerName: award.playerId
-          ? resolvePlayerName(award.playerId, players)
-          : "Unknown",
-        itemName: resolveAwardItemName(award, picks, availableItems),
-        pickNumber: award.pickId
-          ? (picks.find((p) => p.id === award.pickId)?.overallPick ?? 0)
-          : 0,
-      });
-    }
+    const rawAward = rawAwards[awardType];
+    if (!rawAward) continue;
+
+    const award = normalizeAwardRef(rawAward, picks);
+    const resolved = readAwardRef(rawAward);
+
+    awards.push({
+      type: awardType,
+      playerName: award.playerId
+        ? resolvePlayerName(award.playerId, players)
+        : "Unknown",
+      itemName: resolveAwardItemName(resolved, picks, itemNameById),
+      pickNumber: award.pickId
+        ? (picks.find((pick) => pick.id === award.pickId)?.overallPick ?? 0)
+        : 0,
+    });
   }
 
   const communityTotals: Record<string, number> = {};

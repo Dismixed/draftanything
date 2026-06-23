@@ -167,6 +167,44 @@ describe("buildPublicResult", () => {
     expect(result.awards.every((a) => a.itemName === "LeBron James")).toBe(true);
   });
 
+  it("resolves award item names when AI puts the pick name in itemId", () => {
+    const proj = makeProjection({
+      draft: {
+        ...makeProjection().draft,
+        pickingMode: "off_the_dome",
+      },
+      availableItems: [],
+      picks: [
+        {
+          id: "pick-1",
+          playerId: "player-1",
+          itemId: "",
+          itemName: "LeBron James",
+          overallPick: 1,
+          round: 1,
+          pickInRound: 1,
+          isAutoPick: false,
+          forfeited: false,
+        },
+      ],
+      judgment: {
+        ...makeProjection().judgment!,
+        awards: {
+          bestPick: {
+            pickId: "hallucinated-id",
+            itemId: "LeBron James",
+            playerId: "player-1",
+          },
+        },
+      },
+    });
+
+    const result = buildPublicResult(proj);
+    expect(result.awards[0].itemName).toBe("LeBron James");
+    expect(result.awards[0].playerName).toBe("Alice");
+    expect(result.awards[0].pickNumber).toBe(1);
+  });
+
   it("resolves award item names from pickId when itemId is wrong", () => {
     const proj = makeProjection();
     proj.judgment!.awards = {
