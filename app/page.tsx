@@ -341,9 +341,9 @@ export default function StimGames() {
             <div
               style={{
                 height: "100%",
-                background:
-                  "linear-gradient(135deg, rgba(0,229,255,0.08) 0%, rgba(124,58,255,0.08) 100%)",
-                border: "1px solid rgba(0,229,255,0.22)",
+                background: "#1a1a1b",
+                border: "2px solid #3a3a3c",
+                borderRadius: "6px",
                 padding: "28px 24px",
                 position: "relative",
                 overflow: "hidden",
@@ -355,23 +355,12 @@ export default function StimGames() {
             >
               <div
                 style={{
-                  position: "absolute",
-                  top: 0,
-                  left: "10%",
-                  right: "10%",
-                  height: "1px",
-                  background:
-                    "linear-gradient(90deg, transparent, rgba(0,229,255,0.4), transparent)",
-                }}
-              />
-              <div
-                style={{
                   fontSize: "9px",
                   fontWeight: 600,
                   letterSpacing: "0.32em",
                   textTransform: "uppercase",
-                  color: "var(--cyan)",
-                  opacity: 0.8,
+                  color: "#6aaa64",
+                  opacity: 0.9,
                   marginBottom: "8px",
                 }}
               >
@@ -379,32 +368,22 @@ export default function StimGames() {
               </div>
               <h2
                 style={{
-                  fontFamily: '"Playfair Display", serif',
                   fontSize: "clamp(24px, 4vw, 32px)",
-                  fontWeight: 900,
+                  fontWeight: 700,
                   lineHeight: 0.95,
-                  color: "var(--text)",
+                  color: "#ffffff",
                   margin: "0 0 6px",
                 }}
               >
-                Chain
-                <em
-                  style={{
-                    fontStyle: "italic",
-                    color: "var(--cyan)",
-                    textShadow: "0 0 30px rgba(0,229,255,0.15)",
-                  }}
-                >
-                  link
-                </em>
+                Chainlink
               </h2>
-              <p style={{ ...modeHintStyle, margin: "0 0 10px" }}>
+              <p style={{ ...modeHintStyle, margin: "0 0 10px", color: "#787c7e" }}>
                 Solo · Daily puzzle
               </p>
               <p
                 style={{
                   fontSize: "12px",
-                  color: "var(--text-dim)",
+                  color: "#787c7e",
                   lineHeight: 1.55,
                   margin: "0 0 20px",
                   fontWeight: 300,
@@ -429,7 +408,7 @@ export default function StimGames() {
                     fontWeight: 600,
                     letterSpacing: "0.18em",
                     textTransform: "uppercase",
-                    color: "var(--cyan)",
+                    color: "#c9b458",
                   }}
                 >
                   All modes
@@ -443,7 +422,7 @@ export default function StimGames() {
                     fontWeight: 600,
                     letterSpacing: "0.14em",
                     textTransform: "uppercase",
-                    color: "var(--text-dim)",
+                    color: "#787c7e",
                     opacity: 0.85,
                   }}
                 >

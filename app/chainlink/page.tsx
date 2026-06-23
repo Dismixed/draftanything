@@ -6,7 +6,7 @@ export default function ChainlinkSelectPage() {
       className="game-page"
       style={{
         minHeight: "100vh",
-        background: "var(--bg)",
+        background: "#121213",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -15,17 +15,6 @@ export default function ChainlinkSelectPage() {
         overflow: "hidden",
       }}
     >
-      {/* Atmospheric gradients */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "radial-gradient(ellipse 70% 35% at 50% -8%, rgba(124,58,255,0.06) 0%, transparent 55%), radial-gradient(ellipse 50% 30% at 20% 90%, rgba(201,168,76,0.04) 0%, transparent 50%)",
-          pointerEvents: "none",
-        }}
-      />
-
       <div
         style={{
           width: "100%",
@@ -43,18 +32,17 @@ export default function ChainlinkSelectPage() {
             fill="none"
             style={{ display: "inline-block", marginBottom: "10px" }}
           >
-            <circle cx="12" cy="6" r="4" stroke="#c9a84c" strokeWidth="1.5" fill="rgba(201,168,76,0.15)" />
-            <circle cx="12" cy="18" r="4" stroke="#c9a84c" strokeWidth="1.5" fill="rgba(201,168,76,0.15)" />
-            <rect x="11" y="9" width="2" height="6" rx="1" fill="#c9a84c" opacity="0.5" />
+            <circle cx="12" cy="6" r="4" stroke="#ffffff" strokeWidth="2" fill="none" />
+            <circle cx="12" cy="18" r="4" stroke="#ffffff" strokeWidth="2" fill="none" />
+            <rect x="11" y="9" width="2" height="6" rx="1" fill="#ffffff" />
           </svg>
           <h1
             style={{
-              fontFamily: '"Playfair Display", serif',
               fontSize: "clamp(32px, 7vw, 44px)",
-              fontWeight: 900,
-              color: "var(--text)",
+              fontWeight: 700,
+              color: "#ffffff",
               margin: "0 0 8px",
-              letterSpacing: "-0.01em",
+              letterSpacing: "-0.02em",
             }}
           >
             Chainlink
@@ -62,7 +50,7 @@ export default function ChainlinkSelectPage() {
           <p
             style={{
               fontSize: "13px",
-              color: "var(--text-dim)",
+              color: "#787c7e",
               margin: 0,
               lineHeight: 1.6,
               fontWeight: 300,
@@ -81,8 +69,9 @@ export default function ChainlinkSelectPage() {
           <Link href="/chainlink/daily" style={{ textDecoration: "none", display: "block" }}>
             <div
               style={{
-                background: "linear-gradient(135deg, rgba(201,168,76,0.1) 0%, rgba(124,58,255,0.06) 100%)",
-                border: "1px solid rgba(201,168,76,0.28)",
+                background: "#1a1a1b",
+                border: "2px solid #6aaa64",
+                borderRadius: "6px",
                 padding: "28px 24px",
                 position: "relative",
                 cursor: "pointer",
@@ -90,30 +79,19 @@ export default function ChainlinkSelectPage() {
               }}
               className="stim-hero-card"
             >
-              <div
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: "12%",
-                  right: "12%",
-                  height: "1px",
-                  background: "linear-gradient(90deg, transparent, rgba(201,168,76,0.5), transparent)",
-                  pointerEvents: "none",
-                }}
-              />
               <div className="stim-mode-card-row">
                 <div
                   style={{
                     width: "44px",
                     height: "44px",
-                    borderRadius: "10px",
-                    background: "rgba(201,168,76,0.1)",
-                    border: "1px solid rgba(201,168,76,0.3)",
+                    borderRadius: "6px",
+                    background: "#6aaa64",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: "18px",
                     flexShrink: 0,
+                    color: "#ffffff",
                   }}
                 >
                   &#9716;
@@ -121,10 +99,9 @@ export default function ChainlinkSelectPage() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h2
                     style={{
-                      fontFamily: '"Playfair Display", serif',
                       fontSize: "20px",
                       fontWeight: 700,
-                      color: "var(--text)",
+                      color: "#ffffff",
                       margin: "0 0 4px",
                     }}
                   >
@@ -133,7 +110,7 @@ export default function ChainlinkSelectPage() {
                   <p
                     style={{
                       fontSize: "12px",
-                      color: "var(--text-dim)",
+                      color: "#787c7e",
                       margin: 0,
                       lineHeight: 1.5,
                       fontWeight: 300,
@@ -149,7 +126,7 @@ export default function ChainlinkSelectPage() {
                     fontWeight: 600,
                     letterSpacing: "0.2em",
                     textTransform: "uppercase",
-                    color: "var(--gold)",
+                    color: "#6aaa64",
                     whiteSpace: "nowrap",
                     flexShrink: 0,
                   }}
@@ -164,8 +141,9 @@ export default function ChainlinkSelectPage() {
           <Link href="/chainlink/unlimited" style={{ textDecoration: "none", display: "block" }}>
             <div
               style={{
-                background: "linear-gradient(135deg, rgba(0,229,255,0.08) 0%, rgba(124,58,255,0.06) 100%)",
-                border: "1px solid rgba(0,229,255,0.2)",
+                background: "#1a1a1b",
+                border: "2px solid #c9b458",
+                borderRadius: "6px",
                 padding: "28px 24px",
                 position: "relative",
                 cursor: "pointer",
@@ -173,30 +151,19 @@ export default function ChainlinkSelectPage() {
               }}
               className="stim-hero-card"
             >
-              <div
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: "12%",
-                  right: "12%",
-                  height: "1px",
-                  background: "linear-gradient(90deg, transparent, rgba(0,229,255,0.4), transparent)",
-                  pointerEvents: "none",
-                }}
-              />
               <div className="stim-mode-card-row">
                 <div
                   style={{
                     width: "44px",
                     height: "44px",
-                    borderRadius: "10px",
-                    background: "rgba(0,229,255,0.08)",
-                    border: "1px solid rgba(0,229,255,0.25)",
+                    borderRadius: "6px",
+                    background: "#c9b458",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: "18px",
                     flexShrink: 0,
+                    color: "#121213",
                   }}
                 >
                   &#8734;
@@ -204,10 +171,9 @@ export default function ChainlinkSelectPage() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h2
                     style={{
-                      fontFamily: '"Playfair Display", serif',
                       fontSize: "20px",
                       fontWeight: 700,
-                      color: "var(--text)",
+                      color: "#ffffff",
                       margin: "0 0 4px",
                     }}
                   >
@@ -216,7 +182,7 @@ export default function ChainlinkSelectPage() {
                   <p
                     style={{
                       fontSize: "12px",
-                      color: "var(--text-dim)",
+                      color: "#787c7e",
                       margin: 0,
                       lineHeight: 1.5,
                       fontWeight: 300,
@@ -232,7 +198,7 @@ export default function ChainlinkSelectPage() {
                     fontWeight: 600,
                     letterSpacing: "0.2em",
                     textTransform: "uppercase",
-                    color: "var(--cyan)",
+                    color: "#c9b458",
                     whiteSpace: "nowrap",
                     flexShrink: 0,
                   }}
@@ -249,7 +215,7 @@ export default function ChainlinkSelectPage() {
           style={{
             textAlign: "center",
             fontSize: "10px",
-            color: "var(--text-dim)",
+            color: "#787c7e",
             marginTop: "48px",
             opacity: 0.4,
             letterSpacing: "0.08em",

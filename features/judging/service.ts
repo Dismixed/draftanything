@@ -240,6 +240,7 @@ export async function getJudgingData(draftId: string): Promise<JudgingData> {
     pickInRound: 1,
     isAutoPick: false,
     forfeited: false,
+    vetoChallengeResolved: false,
   }));
 
   const rosters: RosterInfo[] = players.map((p) => {
