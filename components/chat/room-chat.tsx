@@ -7,6 +7,8 @@ interface RoomChatProps {
   draftId: string;
   roomCode: string;
   myPlayerId: string;
+  /** Extra space above the bottom edge (e.g. when a fixed input bar is shown). */
+  bottomInset?: string;
 }
 
 const PLAYER_COLORS = [
@@ -31,7 +33,12 @@ function formatTime(iso: string): string {
   return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
-export function RoomChat({ draftId, roomCode, myPlayerId }: RoomChatProps) {
+export function RoomChat({
+  draftId,
+  roomCode,
+  myPlayerId,
+  bottomInset,
+}: RoomChatProps) {
   const { messages, loading, sending, error, sendMessage, refreshMessages } =
     useRoomChat({
       draftId,
@@ -78,7 +85,8 @@ export function RoomChat({ draftId, roomCode, myPlayerId }: RoomChatProps) {
     <div
       style={{
         position: "fixed",
-        bottom: "max(16px, env(safe-area-inset-bottom))",
+        bottom:
+          bottomInset ?? "max(16px, env(safe-area-inset-bottom))",
         right: "max(16px, env(safe-area-inset-right))",
         zIndex: 50,
         display: "flex",

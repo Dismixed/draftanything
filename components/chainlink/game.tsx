@@ -26,6 +26,14 @@ function displayChar(ch: string, i: number): string {
   return i === 0 ? ch.toUpperCase() : ch;
 }
 
+function unrevealedSlotIndex(revealedLetters: boolean[], position: number): number {
+  let slot = 0;
+  for (let i = 1; i < position; i++) {
+    if (!revealedLetters[i]) slot++;
+  }
+  return slot;
+}
+
 /* ------------------------------------------------------------------ */
 /*  Chain Link SVG                                                     */
 /* ------------------------------------------------------------------ */
@@ -76,7 +84,7 @@ function WordRow({
   revealedLetters: boolean[];
   revealTrigger: number;
   totalWords: number;
-  onSubmitGuess?: (guess: string) => "correct" | "incorrect" | "already-solved";
+  onSubmitGuess?: (guess: string) => "correct" | "incorrect" | "already-solved" | Promise<"correct" | "incorrect" | "already-solved">;
 }) {
   const chars = word.split("");
   const attemptsCount = wordAttempts.length;
@@ -236,8 +244,11 @@ function WordRow({
                 alignItems: "center",
                 gap: "2px",
                 width: "100%",
+                position: "relative",
+                cursor: "text",
                 animation: shake ? "cl-shake 0.4s ease" : undefined,
               }}
+              onClick={() => inputRef.current?.focus()}
             >
               {/* First letter */}
               <span
@@ -252,7 +263,7 @@ function WordRow({
                 {word[0].toUpperCase()}
               </span>
 
-              {/* Hint-revealed letters shown inline */}
+              {/* Remaining letters — hints, typed chars, or underscores */}
               {chars.slice(1).map((ch, idx) => {
                 const pos = idx + 1;
                 if (revealedLetters[pos]) {
@@ -270,32 +281,45 @@ function WordRow({
                     </span>
                   );
                 }
-                return null;
+                const slot = unrevealedSlotIndex(revealedLetters, pos);
+                const typed = localGuess[slot];
+                return (
+                  <span
+                    key={pos}
+                    style={{
+                      fontSize: "clamp(20px, 4vw, 28px)",
+                      fontWeight: 700,
+                      letterSpacing: "0.06em",
+                      color: typed ? "#ffffff" : "#565758",
+                      opacity: typed ? 1 : 0.5,
+                    }}
+                  >
+                    {typed ?? "_"}
+                  </span>
+                );
               })}
 
-              {/* Inline input for the remaining unrevealed part */}
+              {/* Hidden input captures keystrokes; letters render above */}
               <input
                 ref={inputRef}
                 type="text"
                 value={localGuess}
-                onChange={(e) => setLocalGuess(e.target.value)}
+                onChange={(e) => setLocalGuess(e.target.value.slice(0, unrevealedCount))}
                 onKeyDown={handleLocalKeyDown}
                 autoComplete="off"
                 spellCheck={false}
-                placeholder={"_ ".repeat(Math.max(0, unrevealedCount)).trim()}
+                aria-label={`Guess remaining letters for ${word}`}
                 style={{
-                  fontSize: "clamp(20px, 4vw, 28px)",
-                  fontWeight: 700,
-                  letterSpacing: "0.06em",
-                  color: "#ffffff",
+                  position: "absolute",
+                  inset: 0,
+                  opacity: 0,
+                  cursor: "text",
                   background: "transparent",
                   border: "none",
                   outline: "none",
                   padding: 0,
                   margin: 0,
-                  flex: 1,
-                  minWidth: "60px",
-                  caretColor: "#c9b458",
+                  caretColor: "transparent",
                 }}
               />
             </div>
@@ -360,7 +384,8 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
   const { play } = useSound();
   const completeCelebratedRef = useRef(false);
   const {
-    puzzle,
+    puzzleWords,
+    loading,
     date,
     wordStatuses,
     wordAttempts,
@@ -380,7 +405,6 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
 
   const [hintAnim, setHintAnim] = useState(false);
 
-  const isUnlimited = mode === "unlimited";
   const isComplete = gameStatus === "completed";
   const displayScore = useCountUp(score, isComplete);
 
@@ -432,7 +456,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
     }
   }, [storeUseHint, play]);
 
-  if (!puzzle) {
+  if (loading || puzzleWords.length === 0) {
     return (
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "300px", color: "#787c7e" }}>
         Loading puzzle...
@@ -461,7 +485,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
           </div>
 
           <div style={{ fontSize: "11px", fontWeight: 500, color: "#565758", marginBottom: "4px" }}>
-            {isUnlimited ? "Unlimited Mode" : `Daily Puzzle · ${formatDate(date || getDateString())}`}
+            {`Daily Puzzle · ${formatDate(date || getDateString())}`}
           </div>
 
           {/* Score + Hints row */}
@@ -494,17 +518,17 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
 
         {/* ---- Word chain ---- */}
         <div style={{ display: "flex", flexDirection: "column", marginBottom: "16px" }}>
-          {puzzle.words.map((word, i) => (
+          {puzzleWords.map((word, i) => (
             <WordRow
               key={`${word}-${i}`}
               word={word}
               index={i}
               status={wordStatuses[i]}
-              previousWord={i > 0 ? puzzle.words[i - 1] : undefined}
+              previousWord={i > 0 ? puzzleWords[i - 1] : undefined}
               wordAttempts={wordAttempts[i]}
               revealedLetters={revealedLetters[i] ?? []}
               revealTrigger={justSolvedIndex === i ? 1 : 0}
-              totalWords={puzzle.words.length}
+              totalWords={puzzleWords.length}
               onSubmitGuess={wordStatuses[i] === "active" && gameStatus === "playing" ? submitGuess : undefined}
             />
           ))}
@@ -580,7 +604,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
             </p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "center", marginBottom: "20px" }}>
-              {puzzle.words.slice(1).map((w, i) => (
+              {puzzleWords.slice(1).map((w, i) => (
                 <span
                   key={i}
                   style={{
@@ -592,65 +616,18 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                     fontWeight: 600,
                   }}
                 >
-                  {formatPair(puzzle.words[i], w)}
+                  {formatPair(puzzleWords[i], w)}
                 </span>
               ))}
             </div>
 
             <div style={{ fontSize: "11px", color: "#787c7e", marginBottom: "16px" }}>
-              {isUnlimited ? "Play another round!" : "Come back tomorrow for a new puzzle!"}
+              Come back tomorrow for a new puzzle!
             </div>
-
-            <button
-              onClick={() => {
-                play("ui.tap");
-                resetGame();
-              }}
-              style={{
-                maxWidth: "220px",
-                margin: "0 auto",
-                width: "100%",
-                padding: "12px 16px",
-                background: "#6aaa64",
-                color: "#ffffff",
-                fontSize: "13px",
-                fontWeight: 700,
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                letterSpacing: "0.04em",
-              }}
-            >
-              {isUnlimited ? "New Puzzle" : "Start Fresh"}
-            </button>
           </div>
         )}
 
-        {/* ---- Unlimited: New Game button (during play) ---- */}
-        {isUnlimited && gameStatus === "playing" && (
-          <div style={{ marginTop: "20px", textAlign: "center" }}>
-            <button
-              onClick={() => {
-                play("ui.tap");
-                resetGame();
-              }}
-              style={{
-                maxWidth: "180px",
-                margin: "0 auto",
-                fontSize: "11px",
-                color: "#787c7e",
-                background: "transparent",
-                border: "1px solid #3a3a3c",
-                padding: "10px 16px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontWeight: 600,
-              }}
-            >
-              New Puzzle
-            </button>
-          </div>
-        )}
+
       </div>
     </>
   );

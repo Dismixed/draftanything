@@ -563,6 +563,11 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
         draftId={draft.id}
         roomCode={draft.roomCode}
         myPlayerId={myPlayerId}
+        bottomInset={
+          isDrafting && draft.pickingMode === "off_the_dome"
+            ? "max(140px, calc(112px + env(safe-area-inset-bottom)))"
+            : undefined
+        }
       />
     </div>
   );

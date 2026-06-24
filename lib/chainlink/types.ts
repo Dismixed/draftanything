@@ -1,4 +1,4 @@
-export type GameMode = "daily" | "unlimited";
+export type GameMode = "daily";
 
 export interface Puzzle {
   words: readonly string[];

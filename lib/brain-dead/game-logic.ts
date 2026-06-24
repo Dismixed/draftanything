@@ -1,5 +1,4 @@
-import type { Category, CategoryId, Question } from "./types";
-import { ALL_QUESTIONS } from "./questions";
+import type { Category } from "./types";
 
 export const CATEGORIES: Category[] = [
   { id: "general", name: "General", emoji: "🎯" },
@@ -26,60 +25,6 @@ export const DIFF_LABELS: Record<number, string> = {
 
 export function getDateString(): string {
   return new Date().toISOString().slice(0, 10);
-}
-
-function shuffle<T>(arr: T[]): T[] {
-  return [...arr].sort(() => Math.random() - 0.5);
-}
-
-function seededShuffle<T>(arr: T[], seed: string): T[] {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) {
-    h = Math.imul(31, h) + seed.charCodeAt(i) | 0;
-  }
-  function rng() {
-    h ^= h << 13;
-    h ^= h >> 7;
-    h ^= h << 17;
-    return (h >>> 0) / 0xffffffff;
-  }
-  return [...arr].sort(() => rng() - 0.5);
-}
-
-function buildProgressivePool(pool: Question[]): Question[] {
-  const byDiff: Record<number, Question[]> = { 1: [], 2: [], 3: [], 4: [] };
-  pool.forEach((q) => byDiff[q.d].push(q));
-  Object.keys(byDiff).forEach((d) => {
-    byDiff[Number(d)] = shuffle(byDiff[Number(d)]);
-  });
-  return [
-    ...byDiff[1].slice(0, 3),
-    ...byDiff[2].slice(0, 4),
-    ...byDiff[3].slice(0, 4),
-    ...byDiff[4].slice(0, 4),
-  ];
-}
-
-export function getProgressiveQuestions(cat: CategoryId): Question[] {
-  const pool =
-    cat === "random"
-      ? Object.values(ALL_QUESTIONS).flat()
-      : ALL_QUESTIONS[cat] ?? [];
-  return buildProgressivePool(pool);
-}
-
-export function getDailyQuestions(): Question[] {
-  const seed = getDateString();
-  const all = Object.values(ALL_QUESTIONS).flat();
-  const seeded = seededShuffle(all, seed);
-  const byDiff: Record<number, Question[]> = { 1: [], 2: [], 3: [], 4: [] };
-  seeded.forEach((q) => byDiff[q.d].push(q));
-  return [
-    ...byDiff[1].slice(0, 3),
-    ...byDiff[2].slice(0, 4),
-    ...byDiff[3].slice(0, 4),
-    ...byDiff[4].slice(0, 4),
-  ];
 }
 
 export function calcScore(difficulty: number, timeTaken: number): number {

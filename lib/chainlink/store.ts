@@ -2,8 +2,31 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Puzzle, WordStatus, GameMode } from "./types";
-import { getDailyPuzzle, getRandomPuzzle, getDateString } from "./puzzles";
+import type { WordStatus, GameMode } from "./types";
+import { getDateString } from "./puzzles";
+
+/* ------------------------------------------------------------------ */
+/*  Constants                                                          */
+/* ------------------------------------------------------------------ */
+
+const MAX_HINTS = 3;
+const HINT_PENALTY = 25;
+
+/* ------------------------------------------------------------------ */
+/*  API Puzzle type that comes from the server                        */
+/* ------------------------------------------------------------------ */
+
+interface ApiPlayablePuzzle {
+  id: string;
+  date?: string;
+  mode: "daily" | "infinite";
+  startWord: string;
+  wordLengths: number[];
+  firstLetters: string[];
+  maxHints: number;
+  difficulty: string;
+  words: string[];
+}
 
 /* ------------------------------------------------------------------ */
 /*  Persisted slice                                                    */
@@ -11,7 +34,8 @@ import { getDailyPuzzle, getRandomPuzzle, getDateString } from "./puzzles";
 
 interface PersistedData {
   mode: GameMode;
-  puzzle: Puzzle | null;
+  puzzleId: string | null;
+  puzzleWords: string[];
   date: string;
   currentWordIndex: number;
   wordStatuses: WordStatus[];
@@ -28,7 +52,8 @@ interface PersistedData {
 /* ------------------------------------------------------------------ */
 
 interface ChainlinkStore {
-  puzzle: Puzzle | null;
+  puzzleId: string | null;
+  puzzleWords: string[];
   mode: GameMode;
   date: string;
   currentWordIndex: number;
@@ -39,41 +64,57 @@ interface ChainlinkStore {
   score: number;
   gameStatus: "playing" | "completed";
   startTime: number;
+  loading: boolean;
 
   feedback: { type: "correct" | "incorrect" | null; message: string } | null;
   justSolvedIndex: number | null;
 
-  initPuzzle: (mode?: GameMode) => void;
-  submitGuess: (guess: string) => "correct" | "incorrect" | "already-solved";
+  initPuzzle: (mode?: GameMode) => Promise<void>;
+  submitGuess: (guess: string) => Promise<"correct" | "incorrect" | "already-solved">;
   useHint: () => { letter: string; position: number } | null;
   clearFeedback: () => void;
   clearJustSolved: () => void;
-  resetGame: () => void;
+  resetGame: () => Promise<void>;
 }
 
 /* ------------------------------------------------------------------ */
 /*  State factory                                                      */
 /* ------------------------------------------------------------------ */
 
-const MAX_HINTS = 3;
-const HINT_PENALTY = 25;
+function buildInitialState(): PersistedData {
+  return {
+    mode: "daily",
+    puzzleId: null,
+    puzzleWords: [],
+    date: "",
+    currentWordIndex: 1,
+    wordStatuses: [],
+    wordAttempts: [],
+    revealedLetters: [],
+    hintsRemaining: MAX_HINTS,
+    score: 0,
+    gameStatus: "playing",
+    startTime: 0,
+  };
+}
 
-function buildInitialState(mode: GameMode = "daily"): PersistedData {
-  const puzzle = mode === "daily" ? getDailyPuzzle() : getRandomPuzzle();
+function buildStateFromPuzzle(puzzle: ApiPlayablePuzzle, mode: GameMode): PersistedData {
+  const words = puzzle.words;
   const wordStatuses: WordStatus[] = [
     "solved",
     "active",
-    ...Array(3).fill("locked") as WordStatus[],
+    ...Array(Math.max(0, words.length - 2)).fill("locked") as WordStatus[],
   ];
   return {
     mode,
-    puzzle,
-    date: getDateString(),
+    puzzleId: puzzle.id,
+    puzzleWords: words,
+    date: puzzle.date ?? getDateString(),
     currentWordIndex: 1,
     wordStatuses,
-    wordAttempts: puzzle.words.map(() => []),
-    revealedLetters: puzzle.words.map(() => []),
-    hintsRemaining: MAX_HINTS,
+    wordAttempts: words.map(() => []),
+    revealedLetters: words.map(() => []),
+    hintsRemaining: puzzle.maxHints ?? MAX_HINTS,
     score: 0,
     gameStatus: "playing",
     startTime: Date.now(),
@@ -85,13 +126,27 @@ function isToday(dateStr: string): boolean {
 }
 
 /* ------------------------------------------------------------------ */
+/*  API helpers                                                        */
+/* ------------------------------------------------------------------ */
+
+async function fetchDailyPuzzle(): Promise<ApiPlayablePuzzle> {
+  const res = await fetch("/api/chain/daily");
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error ?? "Failed to fetch daily puzzle");
+  }
+  return res.json();
+}
+
+/* ------------------------------------------------------------------ */
 /*  Create store                                                       */
 /* ------------------------------------------------------------------ */
 
 export const useChainlinkStore = create<ChainlinkStore>()(
   persist(
     (set, get) => ({
-      puzzle: null,
+      puzzleId: null,
+      puzzleWords: [],
       mode: "daily" as GameMode,
       date: "",
       currentWordIndex: 1,
@@ -102,29 +157,33 @@ export const useChainlinkStore = create<ChainlinkStore>()(
       score: 0,
       gameStatus: "playing",
       startTime: 0,
+      loading: false,
 
       feedback: null,
       justSolvedIndex: null,
 
-      initPuzzle: (mode?: GameMode) => {
-        const { date, mode: currentMode, puzzle } = get();
-        const targetMode = mode ?? currentMode ?? "daily";
-
-        if (targetMode === "daily") {
-          if (!puzzle || !date || !isToday(date)) {
-            set({ ...buildInitialState("daily"), feedback: null, justSolvedIndex: null });
+      initPuzzle: async (_mode?: GameMode) => {
+        const { date, puzzleId } = get();
+        try {
+          // Skip if we already have today's puzzle
+          if (puzzleId && date && isToday(date)) {
+            return;
           }
-        } else {
-          set({ ...buildInitialState("unlimited"), feedback: null, justSolvedIndex: null });
+          set({ loading: true });
+          const puzzle = await fetchDailyPuzzle();
+          set({ ...buildStateFromPuzzle(puzzle, "daily"), feedback: null, justSolvedIndex: null, loading: false });
+        } catch (err) {
+          console.error("Failed to init puzzle:", err);
+          set({ loading: false });
         }
       },
 
-      submitGuess: (guess: string) => {
+      submitGuess: async (guess: string) => {
         const state = get();
-        if (state.gameStatus !== "playing" || !state.puzzle) return "incorrect";
+        if (state.gameStatus !== "playing" || !state.puzzleWords.length) return "incorrect";
 
         const idx = state.currentWordIndex;
-        const word = state.puzzle.words[idx];
+        const word = state.puzzleWords[idx];
         const normalizedGuess = guess.trim().toLowerCase().replace(/\s+/g, "");
         const normalizedTarget = word.toLowerCase().replace(/\s+/g, "");
 
@@ -139,7 +198,7 @@ export const useChainlinkStore = create<ChainlinkStore>()(
 
           const nextIndex = idx + 1;
           let newGameStatus: "playing" | "completed" = state.gameStatus;
-          if (nextIndex < state.puzzle.words.length) {
+          if (nextIndex < state.puzzleWords.length) {
             newStatuses[nextIndex] = "active";
           } else {
             newGameStatus = "completed";
@@ -148,12 +207,22 @@ export const useChainlinkStore = create<ChainlinkStore>()(
           set({
             wordStatuses: newStatuses,
             wordAttempts: newAttempts,
-            currentWordIndex: Math.min(nextIndex, state.puzzle.words.length - 1),
+            currentWordIndex: Math.min(nextIndex, state.puzzleWords.length - 1),
             score: state.score + 100,
             gameStatus: newGameStatus,
             feedback: { type: "correct", message: "Correct! +100 pts" },
             justSolvedIndex: idx,
           });
+
+          // Fire-and-forget server validation
+          if (state.puzzleId) {
+            fetch("/api/chain/guess", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ puzzleId: state.puzzleId, position: idx, guess }),
+            }).catch(() => {});
+          }
+
           return "correct";
         } else {
           const currentRevealed = [...(state.revealedLetters[idx] ?? [])];
@@ -176,7 +245,7 @@ export const useChainlinkStore = create<ChainlinkStore>()(
               newStatuses[idx] = "solved";
               const nextIndex = idx + 1;
               let newGameStatus: "playing" | "completed" = state.gameStatus;
-              if (nextIndex < state.puzzle.words.length) {
+              if (nextIndex < state.puzzleWords.length) {
                 newStatuses[nextIndex] = "active";
               } else {
                 newGameStatus = "completed";
@@ -186,7 +255,7 @@ export const useChainlinkStore = create<ChainlinkStore>()(
                 wordAttempts: newAttempts,
                 revealedLetters: newRevealed,
                 wordStatuses: newStatuses,
-                currentWordIndex: Math.min(nextIndex, state.puzzle.words.length - 1),
+                currentWordIndex: Math.min(nextIndex, state.puzzleWords.length - 1),
                 score: state.score + 100,
                 gameStatus: newGameStatus,
                 feedback: { type: "correct", message: "All letters revealed! Word solved. +100 pts" },
@@ -212,13 +281,13 @@ export const useChainlinkStore = create<ChainlinkStore>()(
 
       useHint: () => {
         const state = get();
-        if (state.gameStatus !== "playing" || !state.puzzle) return null;
+        if (state.gameStatus !== "playing" || !state.puzzleWords.length) return null;
         if (state.hintsRemaining <= 0) return null;
 
         const idx = state.currentWordIndex;
         if (state.wordStatuses[idx] !== "active") return null;
 
-        const word = state.puzzle.words[idx];
+        const word = state.puzzleWords[idx];
         const revealed = state.revealedLetters[idx] ?? [];
 
         const unrevealed: number[] = [];
@@ -241,7 +310,7 @@ export const useChainlinkStore = create<ChainlinkStore>()(
           newStatuses[idx] = "solved";
           const nextIndex = idx + 1;
           let newGameStatus: "playing" | "completed" = state.gameStatus;
-          if (nextIndex < state.puzzle.words.length) {
+          if (nextIndex < state.puzzleWords.length) {
             newStatuses[nextIndex] = "active";
           } else {
             newGameStatus = "completed";
@@ -251,7 +320,7 @@ export const useChainlinkStore = create<ChainlinkStore>()(
             hintsRemaining: state.hintsRemaining - 1,
             score: Math.max(0, state.score + 100 - HINT_PENALTY),
             wordStatuses: newStatuses,
-            currentWordIndex: Math.min(nextIndex, state.puzzle.words.length - 1),
+            currentWordIndex: Math.min(nextIndex, state.puzzleWords.length - 1),
             gameStatus: newGameStatus,
             feedback: { type: "correct", message: "All letters revealed! Word solved. +100 pts" },
             justSolvedIndex: idx,
@@ -274,16 +343,18 @@ export const useChainlinkStore = create<ChainlinkStore>()(
       clearFeedback: () => set({ feedback: null }),
       clearJustSolved: () => set({ justSolvedIndex: null }),
 
-      resetGame: () => {
-        const { mode } = get();
-        set({ ...buildInitialState(mode), feedback: null, justSolvedIndex: null });
+      resetGame: async () => {
+        set({ ...buildInitialState(), mode: "daily", feedback: null, justSolvedIndex: null });
+        const puzzle = await fetchDailyPuzzle();
+        set({ ...buildStateFromPuzzle(puzzle, "daily") });
       },
     }),
     {
       name: "chainlink-v2",
       partialize: (state): PersistedData => ({
         mode: state.mode,
-        puzzle: state.puzzle,
+        puzzleId: state.puzzleId,
+        puzzleWords: state.puzzleWords,
         date: state.date,
         currentWordIndex: state.currentWordIndex,
         wordStatuses: state.wordStatuses,

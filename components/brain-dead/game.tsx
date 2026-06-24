@@ -6,8 +6,6 @@ import type { CategoryId, GameMode, Question } from "@/lib/brain-dead/types";
 import {
   TIMER_MAX,
   LETTERS,
-  getDailyQuestions,
-  getProgressiveQuestions,
   calcScore,
   getResultCopy,
   getCountdownText,
@@ -55,6 +53,9 @@ export default function BrainDeadGame({
   const [scoreFloat, setScoreFloat] = useState<number | null>(null);
   const [questionAnim, setQuestionAnim] = useState<"in" | "out" | null>(null);
 
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const loadingRef = useRef(false);
+  const tokenRef = useRef("");
   const { play } = useSound();
   const questionCardRef = useRef<HTMLDivElement>(null);
   const lastTickSecondRef = useRef<number | null>(null);
@@ -143,11 +144,66 @@ export default function BrainDeadGame({
       setSubmitError(false);
       setSubmitting(false);
       setNameInput("");
+      setFetchError(null);
     },
     [clearTimers],
   );
 
+  /* ------------------------------------------------------------------ */
+  /*  Fetch questions — freeplay (batched, token-managed)                */
+  /* ------------------------------------------------------------------ */
+
+  const fetchMoreQuestions = useCallback(async () => {
+    if (loadingRef.current) return;
+    if (fetchError) return;
+    loadingRef.current = true;
+    setFetchError(null);
+    try {
+      const params = new URLSearchParams({ count: "20" });
+      if (category !== "random") params.set("category", category);
+      if (tokenRef.current) params.set("token", tokenRef.current);
+
+      const res = await fetch(`/api/brain-dead/questions?${params}`);
+      if (!res.ok) throw new Error("Failed to fetch questions");
+      const data = await res.json();
+
+      if (data.questions?.length) {
+        setQuestions((prev) => [...prev, ...data.questions]);
+        tokenRef.current = data.token ?? tokenRef.current;
+      }
+    } catch {
+      setFetchError("Could not load more questions. Check your connection.");
+    } finally {
+      loadingRef.current = false;
+    }
+  }, [category, fetchError]);
+
+  /* ------------------------------------------------------------------ */
+  /*  Restart freeplay from result screen                                */
+  /* ------------------------------------------------------------------ */
+
+  const handleFreeplayRestart = useCallback(() => {
+    clearTimers();
+    setQuestions([]);
+    setQi(0);
+    setCorrect(0);
+    setScore(0);
+    setTimes([]);
+    setAnswered("idle");
+    setSelectedIdx(null);
+    setScreen("game");
+    setSubmitted(false);
+    setSubmitError(false);
+    setSubmitting(false);
+    setNameInput("");
+    setFetchError(null);
+    tokenRef.current = "";
+    loadingRef.current = false;
+  }, [clearTimers]);
+
   useEffect(() => {
+    let cancelled = false;
+
     if (isDaily) {
       const played = getDailyPlayed();
       if (played) {
@@ -155,14 +211,28 @@ export default function BrainDeadGame({
         setCountdown(getCountdownText());
         setScreen("played");
         const iv = setInterval(() => setCountdown(getCountdownText()), 1000);
-        return () => clearInterval(iv);
+        return () => { cancelled = true; clearInterval(iv); };
       }
-      beginGame(getDailyQuestions());
+      beginGame([]);
+      fetch("/api/brain-dead/daily")
+        .then((r) => (r.ok ? r.json() : Promise.reject()))
+        .then((data) => {
+          if (cancelled) return;
+          if (data.questions?.length) {
+            setQuestions(data.questions);
+          } else {
+            setFetchError("No questions available today. Try again later.");
+          }
+        })
+        .catch(() => {
+          if (!cancelled) setFetchError("Could not load daily questions.");
+        });
     } else {
-      beginGame(getProgressiveQuestions(category));
+      beginGame([]);
     }
-    return clearTimers;
-  }, [isDaily, category, beginGame, clearTimers]);
+
+    return () => { cancelled = true; clearTimers(); };
+  }, [isDaily, beginGame, clearTimers]);
 
   useEffect(() => {
     if (screen === "game" && q && answered === "idle") {
@@ -222,11 +292,24 @@ export default function BrainDeadGame({
     }
   }, [screen, correct, questions.length, play]);
 
+  /* Daily: end game when out of questions (fixed set) */
   useEffect(() => {
-    if (screen === "game" && questions.length > 0 && qi >= questions.length) {
+    if (isDaily && screen === "game" && questions.length > 0 && qi >= questions.length) {
       endGame();
     }
-  }, [screen, qi, questions.length, endGame]);
+  }, [isDaily, screen, qi, questions.length, endGame]);
+
+  /* Freeplay: prefetch questions when buffer drops below threshold */
+  useEffect(() => {
+    if (isDaily) return;
+    if (screen !== "game") return;
+    if (fetchError) return;
+
+    const remaining = questions.length - qi;
+    if (remaining <= 5) {
+      fetchMoreQuestions();
+    }
+  }, [isDaily, screen, qi, questions.length, fetchError, fetchMoreQuestions]);
 
   const handleSubmitScore = async () => {
     const name = nameInput.trim() || "Anonymous";
@@ -515,7 +598,7 @@ export default function BrainDeadGame({
             <>
               <button
                 type="button"
-                onClick={() => beginGame(getProgressiveQuestions(category))}
+                onClick={handleFreeplayRestart}
                 style={{
                   background: "var(--bd-surface)",
                   border: "1px solid var(--bd-border)",

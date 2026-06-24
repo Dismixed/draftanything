@@ -454,19 +454,29 @@ export default function StimGames() {
             <div
               style={{
                 height: "100%",
-                background:
-                  "linear-gradient(135deg, rgba(255,60,60,0.1) 0%, rgba(124,58,255,0.06) 100%)",
-                border: "1px solid rgba(255,60,60,0.28)",
+                background: "var(--bd-surface)",
+                border: "1px solid var(--bd-border)",
+                borderRadius: "10px",
                 padding: "28px 24px",
                 position: "relative",
                 overflow: "hidden",
                 cursor: "pointer",
-                transition: "border-color 0.25s, box-shadow 0.25s",
+                transition: "transform 0.2s, border-color 0.2s",
                 display: "flex",
                 flexDirection: "column",
               }}
               className="stim-hero-card"
             >
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: "3px",
+                  background: "var(--bd-primary)",
+                }}
+              />
               <Link
                 href="/brain-dead"
                 aria-label="Brain Dead — All modes"
@@ -478,23 +488,11 @@ export default function StimGames() {
               />
               <div
                 style={{
-                  position: "absolute",
-                  top: 0,
-                  left: "10%",
-                  right: "10%",
-                  height: "1px",
-                  background:
-                    "linear-gradient(90deg, transparent, rgba(255,60,60,0.5), transparent)",
-                }}
-              />
-              <div
-                style={{
                   fontSize: "9px",
                   fontWeight: 600,
                   letterSpacing: "0.32em",
                   textTransform: "uppercase",
-                  color: "#ff6b6b",
-                  opacity: 0.8,
+                  color: "var(--bd-primary)",
                   marginBottom: "8px",
                 }}
               >
@@ -502,24 +500,18 @@ export default function StimGames() {
               </div>
               <h2
                 style={{
-                  fontFamily: '"Playfair Display", serif',
                   fontSize: "clamp(24px, 4vw, 32px)",
-                  fontWeight: 900,
+                  fontWeight: 700,
                   lineHeight: 0.95,
-                  color: "var(--text)",
+                  color: "var(--bd-text)",
                   margin: "0 0 6px",
+                  letterSpacing: "-0.5px",
                 }}
               >
                 Brain{" "}
-                <em
-                  style={{
-                    fontStyle: "italic",
-                    color: "#ff3c3c",
-                    textShadow: "0 0 30px rgba(255,60,60,0.15)",
-                  }}
-                >
+                <span style={{ color: "var(--bd-primary)" }}>
                   Dead
-                </em>
+                </span>
               </h2>
               <p style={{ ...modeHintStyle, margin: "0 0 10px" }}>
                 Solo · Daily + freeplay
@@ -527,10 +519,9 @@ export default function StimGames() {
               <p
                 style={{
                   fontSize: "12px",
-                  color: "var(--text-dim)",
+                  color: "var(--bd-text-muted)",
                   lineHeight: 1.55,
                   margin: "0 0 20px",
-                  fontWeight: 300,
                   flex: 1,
                 }}
               >
@@ -553,7 +544,7 @@ export default function StimGames() {
                     fontWeight: 600,
                     letterSpacing: "0.18em",
                     textTransform: "uppercase",
-                    color: "#ff6b6b",
+                    color: "var(--bd-primary)",
                   }}
                 >
                   All modes
@@ -567,8 +558,7 @@ export default function StimGames() {
                     fontWeight: 600,
                     letterSpacing: "0.14em",
                     textTransform: "uppercase",
-                    color: "var(--text-dim)",
-                    opacity: 0.85,
+                    color: "var(--bd-text-muted)",
                   }}
                 >
                   Today&apos;s run

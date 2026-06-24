@@ -63,152 +63,77 @@ export default function ChainlinkSelectPage() {
           </p>
         </header>
 
-        {/* Mode cards */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          {/* Daily Puzzle */}
-          <Link href="/chainlink/daily" style={{ textDecoration: "none", display: "block" }}>
-            <div
-              style={{
-                background: "#1a1a1b",
-                border: "2px solid #6aaa64",
-                borderRadius: "6px",
-                padding: "28px 24px",
-                position: "relative",
-                cursor: "pointer",
-                transition: "border-color 0.25s, box-shadow 0.25s",
-              }}
-              className="stim-hero-card"
-            >
-              <div className="stim-mode-card-row">
-                <div
+        {/* Daily Puzzle CTA */}
+        <Link href="/chainlink/daily" style={{ textDecoration: "none", display: "block" }}>
+          <div
+            style={{
+              background: "#1a1a1b",
+              border: "2px solid #6aaa64",
+              borderRadius: "6px",
+              padding: "28px 24px",
+              position: "relative",
+              cursor: "pointer",
+              transition: "border-color 0.25s, box-shadow 0.25s",
+            }}
+            className="stim-hero-card"
+          >
+            <div className="stim-mode-card-row">
+              <div
+                style={{
+                  width: "44px",
+                  height: "44px",
+                  borderRadius: "6px",
+                  background: "#6aaa64",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "18px",
+                  flexShrink: 0,
+                  color: "#ffffff",
+                }}
+              >
+                &#9716;
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h2
                   style={{
-                    width: "44px",
-                    height: "44px",
-                    borderRadius: "6px",
-                    background: "#6aaa64",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "18px",
-                    flexShrink: 0,
+                    fontSize: "20px",
+                    fontWeight: 700,
                     color: "#ffffff",
+                    margin: "0 0 4px",
                   }}
                 >
-                  &#9716;
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h2
-                    style={{
-                      fontSize: "20px",
-                      fontWeight: 700,
-                      color: "#ffffff",
-                      margin: "0 0 4px",
-                    }}
-                  >
-                    Daily Puzzle
-                  </h2>
-                  <p
-                    style={{
-                      fontSize: "12px",
-                      color: "#787c7e",
-                      margin: 0,
-                      lineHeight: 1.5,
-                      fontWeight: 300,
-                    }}
-                  >
-                    One puzzle per day. Share with friends. Same puzzle for everyone.
-                  </p>
-                </div>
-                <div
-                  className="stim-mode-card-cta"
+                  Daily Puzzle
+                </h2>
+                <p
                   style={{
-                    fontSize: "11px",
-                    fontWeight: 600,
-                    letterSpacing: "0.2em",
-                    textTransform: "uppercase",
-                    color: "#6aaa64",
-                    whiteSpace: "nowrap",
-                    flexShrink: 0,
+                    fontSize: "12px",
+                    color: "#787c7e",
+                    margin: 0,
+                    lineHeight: 1.5,
+                    fontWeight: 300,
                   }}
                 >
-                  Play &#8594;
-                </div>
+                  One puzzle per day. Guess the word chain — each word pairs with the one before it.
+                </p>
+              </div>
+              <div
+                className="stim-mode-card-cta"
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  letterSpacing: "0.2em",
+                  textTransform: "uppercase",
+                  color: "#6aaa64",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
+                }}
+              >
+                Play &#8594;
               </div>
             </div>
-          </Link>
-
-          {/* Unlimited Mode */}
-          <Link href="/chainlink/unlimited" style={{ textDecoration: "none", display: "block" }}>
-            <div
-              style={{
-                background: "#1a1a1b",
-                border: "2px solid #c9b458",
-                borderRadius: "6px",
-                padding: "28px 24px",
-                position: "relative",
-                cursor: "pointer",
-                transition: "border-color 0.25s, box-shadow 0.25s",
-              }}
-              className="stim-hero-card"
-            >
-              <div className="stim-mode-card-row">
-                <div
-                  style={{
-                    width: "44px",
-                    height: "44px",
-                    borderRadius: "6px",
-                    background: "#c9b458",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "18px",
-                    flexShrink: 0,
-                    color: "#121213",
-                  }}
-                >
-                  &#8734;
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h2
-                    style={{
-                      fontSize: "20px",
-                      fontWeight: 700,
-                      color: "#ffffff",
-                      margin: "0 0 4px",
-                    }}
-                  >
-                    Unlimited Mode
-                  </h2>
-                  <p
-                    style={{
-                      fontSize: "12px",
-                      color: "#787c7e",
-                      margin: 0,
-                      lineHeight: 1.5,
-                      fontWeight: 300,
-                    }}
-                  >
-                    Play as many puzzles as you want. Random chains, endless replay.
-                  </p>
-                </div>
-                <div
-                  className="stim-mode-card-cta"
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 600,
-                    letterSpacing: "0.2em",
-                    textTransform: "uppercase",
-                    color: "#c9b458",
-                    whiteSpace: "nowrap",
-                    flexShrink: 0,
-                  }}
-                >
-                  Play &#8594;
-                </div>
-              </div>
-            </div>
-          </Link>
-        </div>
+          </div>
+        </Link>
 
         {/* Footer */}
         <p
