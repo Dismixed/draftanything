@@ -100,7 +100,7 @@ export default function ChainlinkStatsPage() {
               }}
             >
               <a
-                href="/login"
+                href="/auth"
                 style={{ color: "#c9b458", textDecoration: "underline" }}
               >
                 Sign in
