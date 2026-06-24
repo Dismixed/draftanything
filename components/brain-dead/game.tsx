@@ -19,6 +19,7 @@ import { useSound } from "@/lib/audio/sound-context";
 import { fireConfetti } from "@/lib/motion/confetti";
 import { triggerAnimation } from "@/lib/motion/trigger-class";
 import { SoundToggle } from "@/components/ui/sound-toggle";
+import { AccountPrompt } from "@/components/auth/account-prompt";
 
 type Screen = "played" | "game" | "result";
 
@@ -584,6 +585,8 @@ export default function BrainDeadGame({
             View Leaderboard
           </Link>
         )}
+
+        {submitted && <AccountPrompt />}
 
         <div
           style={{

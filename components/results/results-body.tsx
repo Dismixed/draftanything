@@ -7,6 +7,7 @@ import { Awards } from "./awards";
 import { TopUndraftedPick } from "./top-undrafted-pick";
 import { ShareActions } from "./share-actions";
 import { ResultsConfetti } from "./results-confetti";
+import { AccountPrompt } from "@/components/auth/account-prompt";
 
 interface ResultsBodyProps {
   result: PublicDraftResult;
@@ -71,6 +72,8 @@ export function ResultsBody({
           completedAt={result.completedAt}
         />
       )}
+
+      <AccountPrompt />
     </div>
   );
 }

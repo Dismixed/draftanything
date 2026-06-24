@@ -10,6 +10,7 @@ import { useCountUp } from "@/lib/motion/count-up";
 import { triggerAnimation } from "@/lib/motion/trigger-class";
 import { SoundToggle } from "@/components/ui/sound-toggle";
 import TutorialModal from "./tutorial-modal";
+import { AccountPrompt } from "@/components/auth/account-prompt";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -624,6 +625,8 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
             <div style={{ fontSize: "11px", color: "#787c7e", marginBottom: "16px" }}>
               Come back tomorrow for a new puzzle!
             </div>
+
+            <AccountPrompt />
           </div>
         )}
 
