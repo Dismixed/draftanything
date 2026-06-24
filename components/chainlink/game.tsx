@@ -384,6 +384,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
   const store = useChainlinkStore();
   const { play } = useSound();
   const completeCelebratedRef = useRef(false);
+  const savedAttemptRef = useRef(false);
   const {
     puzzleWords,
     loading,
@@ -394,6 +395,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
     hintsRemaining,
     score,
     gameStatus,
+    puzzleId,
     feedback,
     justSolvedIndex,
     submitGuess,
@@ -427,8 +429,24 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
   }, [isComplete, play]);
 
   useEffect(() => {
+    if (!isComplete || savedAttemptRef.current) return;
+    savedAttemptRef.current = true;
+    fetch("/api/chain/attempt", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        puzzleId,
+        mode,
+        score,
+        completed: true,
+      }),
+    }).catch(() => {});
+  }, [isComplete, puzzleId, mode, score]);
+
+  useEffect(() => {
     if (!isComplete) {
       completeCelebratedRef.current = false;
+      savedAttemptRef.current = false;
     }
   }, [isComplete]);
 
