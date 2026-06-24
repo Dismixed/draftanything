@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Providers } from "./providers";
+import { ProfileMenuWrapper } from "@/components/auth/profile-menu-wrapper";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -26,7 +27,10 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          <ProfileMenuWrapper />
+          {children}
+        </Providers>
       </body>
     </html>
   );
