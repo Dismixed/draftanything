@@ -42,3 +42,12 @@ export interface DailyPlayed {
   correct: number;
   ts: number;
 }
+
+export interface AllTimeEntry {
+  playerId: string;
+  name: string;
+  avatarUrl: string | null;
+  bestScore: number;
+  bestCorrect: number;
+  gamesPlayed: number;
+}

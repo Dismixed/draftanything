@@ -1,24 +1,16 @@
 import type { DailyPlayed, LeaderboardEntry } from "./types";
 import { getDateString } from "./game-logic";
 
-const PLAYER_TOKEN_KEY = "bd_player_token";
 const ENTRY_ID_KEY = "bd_lb_entry_id";
 
 function getTodayKey(): string {
   return `bd_daily_${getDateString()}`;
 }
 
-export function getPlayerToken(): string {
-  if (typeof window === "undefined") return "";
-  try {
-    const existing = localStorage.getItem(PLAYER_TOKEN_KEY);
-    if (existing) return existing;
-    const token = crypto.randomUUID();
-    localStorage.setItem(PLAYER_TOKEN_KEY, token);
-    return token;
-  } catch {
-    return crypto.randomUUID();
-  }
+function getGuestId(): string | null {
+  if (typeof window === "undefined") return null;
+  const match = document.cookie.match(/(?:^|;\s*)guest_token=([^;]*)/);
+  return match ? match[1] : null;
 }
 
 export function getSubmittedEntryId(): string | null {
@@ -57,7 +49,7 @@ export async function fetchTodayLeaderboard(): Promise<LeaderboardEntry[]> {
   const yourEntryId = getSubmittedEntryId();
 
   try {
-    const res = await fetch(`/api/brain-dead/leaderboard?date=${playDate}`);
+    const res = await fetch(`/api/brain-dead/leaderboard/daily?date=${playDate}`);
     if (!res.ok) return [];
     const data = (await res.json()) as { entries: LeaderboardEntry[] };
     return (data.entries ?? []).map((entry) => ({
@@ -75,11 +67,13 @@ export async function saveLeaderboardEntry(
   correct: number,
 ): Promise<{ ok: true; id: string } | { ok: false }> {
   try {
+    const guestId = getGuestId();
+    if (!guestId) return { ok: false };
     const res = await fetch("/api/brain-dead/leaderboard", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        playerToken: getPlayerToken(),
+        guestId,
         name,
         score,
         correct,
