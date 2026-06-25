@@ -1,5 +1,6 @@
 "use client";
 
+import { recordDailyCompletion } from "@/lib/streak/storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import {
@@ -354,6 +355,9 @@ function postAttempt(state: PersistedData, outcome: "won" | "surrendered"): void
   if (!state.puzzleId) return;
   const completed = outcome === "won";
   const correct = outcome === "won";
+  if (state.mode === "daily" && completed) {
+    recordDailyCompletion("anyguessr", state.date);
+  }
   void fetch("/api/anyguessr/attempt", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

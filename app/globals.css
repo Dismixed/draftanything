@@ -724,3 +724,7 @@ body {
 .anim-question-out { animation: anim-question-out-kf 0.28s ease forwards; }
 .anim-question-in { animation: anim-question-in-kf 0.32s ease both; }
 .anim-streak-pulse { animation: anim-streak-pulse-kf 0.45s ease; }
+
+.streak-badge summary::-webkit-details-marker {
+  display: none;
+}

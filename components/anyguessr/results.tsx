@@ -1,9 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
-import { useSound } from "@/lib/audio/sound-context";
-import { fireConfetti } from "@/lib/motion/confetti";
 import { useCountUp } from "@/lib/motion/count-up";
 import { useAnyGuessrStore } from "@/lib/anyguessr/store";
 
@@ -14,7 +11,13 @@ function getDateString(d: Date = new Date()): string {
   return `${y}-${m}-${day}`;
 }
 
-export default function Results() {
+export default function Results({
+  scoreActive,
+  embedded,
+}: {
+  scoreActive?: boolean;
+  embedded?: boolean;
+}) {
   const {
     status,
     answer,
@@ -27,17 +30,8 @@ export default function Results() {
     mode,
     nextRound,
   } = useAnyGuessrStore();
-  const { play } = useSound();
-  const celebratedRef = useRef(false);
   const isWin = status === "won";
-  const displayScore = useCountUp(isWin ? score : 0, isWin, 900);
-
-  useEffect(() => {
-    if (!isWin || celebratedRef.current) return;
-    celebratedRef.current = true;
-    play("win");
-    void fireConfetti("gold");
-  }, [isWin, play]);
+  const displayScore = useCountUp(isWin ? score : 0, scoreActive ?? isWin, 900);
 
   const nextLabel =
     mode === "daily"
@@ -46,9 +40,9 @@ export default function Results() {
 
   return (
     <div
-      className="anim-fade-slide-up"
+      className={embedded ? undefined : "anim-fade-slide-up"}
       style={{
-        marginTop: "20px",
+        marginTop: embedded ? 0 : "20px",
         padding: "28px 24px",
         textAlign: "center",
         border: `1px solid ${isWin ? "var(--ag-accent)" : "var(--ag-border)"}`,

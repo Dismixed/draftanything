@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { SoundToggle } from "@/components/ui/sound-toggle";
+import { GameCardStreak } from "@/components/streak/streak-notifier";
 
 const GAMES = [
   {
@@ -351,6 +352,7 @@ export default function StimGames() {
                 }}
                 className="stim-hero-card"
               >
+                <GameCardStreak gameId="chainlink" accentColor="#c9b458" />
                 <div
                   style={{
                     fontSize: "9px",
@@ -434,6 +436,7 @@ export default function StimGames() {
               }}
               className="stim-hero-card"
             >
+              <GameCardStreak gameId="brain-dead" accentColor="var(--bd-primary)" />
               <div
                 style={{
                   position: "absolute",
@@ -562,6 +565,7 @@ export default function StimGames() {
                 }}
                 className="stim-hero-card"
               >
+                <GameCardStreak gameId="anyguessr" accentColor="var(--ag-accent)" />
                 <div
                   style={{
                     fontSize: "9px",

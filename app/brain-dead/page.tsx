@@ -1,8 +1,40 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import {
+  formatScore,
+  formatStreak,
+  mergePersonalStats,
+  type PersonalStats,
+} from "@/lib/brain-dead/stats";
+import { getLocalPersonalStats } from "@/lib/brain-dead/storage";
 
 export default function BrainDeadPage() {
+  const [stats, setStats] = useState<PersonalStats | null>(null);
+
+  useEffect(() => {
+    const local = getLocalPersonalStats();
+
+    fetch("/api/brain-dead/stats")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((remote: { bestScore: number; playDates: string[] } | null) => {
+        if (remote) {
+          setStats(
+            mergePersonalStats(local, {
+              bestScore: remote.bestScore,
+              playDates: remote.playDates,
+            }),
+          );
+          return;
+        }
+        setStats(mergePersonalStats(local));
+      })
+      .catch(() => {
+        setStats(mergePersonalStats(local));
+      });
+  }, []);
+
   return (
     <main
       style={{
@@ -211,19 +243,19 @@ export default function BrainDeadPage() {
             <span>
               Best:{" "}
               <span style={{ color: "var(--bd-primary)", fontWeight: 600 }}>
-                1,340
+                {stats ? formatScore(stats.bestScore) : "—"}
               </span>
             </span>
             <span>
               Games:{" "}
               <span style={{ color: "var(--bd-secondary)", fontWeight: 600 }}>
-                23
+                {stats ? stats.gamesPlayed : "—"}
               </span>
             </span>
             <span>
               Streak:{" "}
               <span style={{ color: "var(--bd-success)", fontWeight: 600 }}>
-                5 days
+                {stats ? formatStreak(stats.currentStreak) : "—"}
               </span>
             </span>
           </div>

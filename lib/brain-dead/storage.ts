@@ -1,7 +1,10 @@
+import { recordDailyCompletion } from "@/lib/streak/storage";
 import type { DailyPlayed, LeaderboardEntry } from "./types";
 import { getDateString } from "./game-logic";
+import type { LocalPersonalStats } from "./stats";
 
 const ENTRY_ID_KEY = "bd_lb_entry_id";
+const PERSONAL_STATS_KEY = "bd_personal_stats";
 
 function getTodayKey(): string {
   return `bd_daily_${getDateString()}`;
@@ -36,12 +39,51 @@ export function getDailyPlayed(): DailyPlayed | null {
   }
 }
 
+export function getLocalPersonalStats(): LocalPersonalStats {
+  if (typeof window === "undefined") {
+    return { bestScore: 0, playDates: [] };
+  }
+  try {
+    const raw = localStorage.getItem(PERSONAL_STATS_KEY);
+    if (!raw) return { bestScore: 0, playDates: [] };
+    const parsed = JSON.parse(raw) as Partial<LocalPersonalStats>;
+    return {
+      bestScore:
+        typeof parsed.bestScore === "number" ? parsed.bestScore : 0,
+      playDates: Array.isArray(parsed.playDates)
+        ? parsed.playDates.filter((d): d is string => typeof d === "string")
+        : [],
+    };
+  } catch {
+    return { bestScore: 0, playDates: [] };
+  }
+}
+
+function saveLocalPersonalStats(stats: LocalPersonalStats): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(PERSONAL_STATS_KEY, JSON.stringify(stats));
+}
+
+function recordLocalDailyPlay(score: number, playDate = getDateString()): void {
+  const stats = getLocalPersonalStats();
+  if (score > stats.bestScore) {
+    stats.bestScore = score;
+  }
+  if (!stats.playDates.includes(playDate)) {
+    stats.playDates.push(playDate);
+  }
+  saveLocalPersonalStats(stats);
+}
+
 export function saveDailyPlayed(score: number, correct: number): void {
   if (typeof window === "undefined") return;
+  const playDate = getDateString();
   localStorage.setItem(
     getTodayKey(),
     JSON.stringify({ score, correct, ts: Date.now() }),
   );
+  recordLocalDailyPlay(score, playDate);
+  recordDailyCompletion("brain-dead", playDate);
 }
 
 export async function fetchTodayLeaderboard(): Promise<LeaderboardEntry[]> {

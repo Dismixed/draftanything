@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAnyGuessrStore } from "@/lib/anyguessr/store";
 import type { GameMode } from "@/lib/anyguessr/types";
 import { useSound } from "@/lib/audio/sound-context";
+import { fireConfetti } from "@/lib/motion/confetti";
 import { SoundToggle } from "@/components/ui/sound-toggle";
 import { AccountPrompt } from "@/components/auth/account-prompt";
-import ClueCard from "./clue-card";
-import ProgressDots from "./progress-dots";
+import ClueViewer from "./clue-viewer";
 import Results from "./results";
 import CountryPicker from "./country-picker";
 
@@ -34,8 +34,10 @@ function formatDate(dateStr: string): string {
 export default function AnyGuessrGame({ mode = "daily" }: Props) {
   const store = useAnyGuessrStore();
   const { play } = useSound();
+  const celebratedRef = useRef(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerKey, setPickerKey] = useState(0);
+  const [showResultsOverlay, setShowResultsOverlay] = useState(false);
 
   const {
     loading,
@@ -46,6 +48,7 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
     score,
     status,
     feedback,
+    puzzleId,
     initPuzzle,
     submitGuess,
     revealNextClue,
@@ -55,6 +58,28 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
   } = store;
 
   const isOver = status === "won" || status === "surrendered";
+
+  useEffect(() => {
+    if (!isOver) {
+      setShowResultsOverlay(false);
+      return;
+    }
+    const timer = setTimeout(() => setShowResultsOverlay(true), 1000);
+    return () => clearTimeout(timer);
+  }, [isOver]);
+
+  useEffect(() => {
+    if (status !== "won" || celebratedRef.current) return;
+    celebratedRef.current = true;
+    play("win");
+    void fireConfetti("gold");
+  }, [status, play]);
+
+  useEffect(() => {
+    if (status === "playing") {
+      celebratedRef.current = false;
+    }
+  }, [status]);
 
   // Hydration + initial fetch
   useEffect(() => {
@@ -149,26 +174,55 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
         </div>
       </header>
 
-      {/* Clues */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "12px",
-          marginBottom: "16px",
-        }}
-      >
-        {clues.slice(0, revealedCount).map((clue, idx) => (
-          <ClueCard key={idx} clue={clue} index={idx} revealed />
-        ))}
-      </div>
+      {/* Clues + results overlay */}
+      <div style={{ position: "relative", marginBottom: "16px" }}>
+        <ClueViewer
+          clues={clues}
+          revealedCount={revealedCount}
+          totalClues={totalClues}
+          puzzleId={puzzleId}
+          onNavigate={() => play("ui.tap")}
+        />
 
-      {/* Progress dots */}
-      {totalClues > 0 && (
-        <div style={{ marginBottom: "20px" }}>
-          <ProgressDots current={revealedCount} total={totalClues} />
-        </div>
-      )}
+        {showResultsOverlay && (
+          <div
+            className="anim-fade-slide-up"
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 10,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "16px",
+              background: "rgba(7, 9, 15, 0.92)",
+              borderRadius: "14px",
+              overflowY: "auto",
+            }}
+          >
+            <Results scoreActive embedded />
+            {status === "won" && (
+              <div style={{ marginTop: "18px", opacity: 0.9, width: "100%" }}>
+                <AccountPrompt />
+              </div>
+            )}
+            {mode === "infinite" && status === "won" && (
+              <div style={{ textAlign: "center", marginTop: "12px", width: "100%" }}>
+                <button
+                  onClick={() => {
+                    play("ui.tap");
+                    void nextRound();
+                  }}
+                  style={primaryBtnStyle}
+                >
+                  Next Round
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Feedback banner */}
       {feedback && (
@@ -257,31 +311,6 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
             </button>
           </div>
         </div>
-      )}
-
-      {/* Results */}
-      {isOver && (
-        <>
-          <Results />
-          {status === "won" && (
-            <div style={{ marginTop: "18px", opacity: 0.9 }}>
-              <AccountPrompt />
-            </div>
-          )}
-          {mode === "infinite" && status === "won" && (
-            <div style={{ textAlign: "center", marginTop: "12px" }}>
-              <button
-                onClick={() => {
-                  play("ui.tap");
-                  void nextRound();
-                }}
-                style={primaryBtnStyle}
-              >
-                Next Round
-              </button>
-            </div>
-          )}
-        </>
       )}
 
       <CountryPicker

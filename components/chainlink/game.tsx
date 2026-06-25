@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import Link from "next/link";
 import { useChainlinkStore } from "@/lib/chainlink/store";
 import { formatPair, getDateString } from "@/lib/chainlink/puzzles";
 import type { GameMode } from "@/lib/chainlink/types";
@@ -11,6 +12,7 @@ import { triggerAnimation } from "@/lib/motion/trigger-class";
 import { SoundToggle } from "@/components/ui/sound-toggle";
 import TutorialModal from "./tutorial-modal";
 import { AccountPrompt } from "@/components/auth/account-prompt";
+import { recordDailyCompletion } from "@/lib/streak/storage";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -407,9 +409,10 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
   } = store;
 
   const [hintAnim, setHintAnim] = useState(false);
+  const [showCompleteOverlay, setShowCompleteOverlay] = useState(false);
 
   const isComplete = gameStatus === "completed";
-  const displayScore = useCountUp(score, isComplete);
+  const displayScore = useCountUp(score, showCompleteOverlay);
 
   // Initialize after persist rehydration so puzzle is not stuck loading.
   useEffect(() => {
@@ -431,6 +434,9 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
   useEffect(() => {
     if (!isComplete || savedAttemptRef.current) return;
     savedAttemptRef.current = true;
+    if (mode === "daily") {
+      recordDailyCompletion("chainlink");
+    }
     fetch("/api/chain/attempt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -447,7 +453,11 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
     if (!isComplete) {
       completeCelebratedRef.current = false;
       savedAttemptRef.current = false;
+      setShowCompleteOverlay(false);
+      return;
     }
+    const timer = setTimeout(() => setShowCompleteOverlay(true), 1000);
+    return () => clearTimeout(timer);
   }, [isComplete]);
 
   useEffect(() => {
@@ -489,6 +499,23 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
       <div className="game-shell" style={{ width: "100%", maxWidth: "520px", margin: "0 auto" }}>
         {/* ---- Header ---- */}
         <header style={{ textAlign: "center", marginBottom: "32px", position: "relative" }}>
+          <div style={{ position: "absolute", top: 0, left: 0 }}>
+            <Link
+              href="/"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+                fontSize: "11px",
+                fontWeight: 500,
+                color: "#787c7e",
+                textDecoration: "none",
+                padding: "4px 0",
+              }}
+            >
+              &larr; Back
+            </Link>
+          </div>
           <div style={{ position: "absolute", top: 0, right: 0 }}>
             <SoundToggle />
           </div>
@@ -535,56 +562,121 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
           </div>
         )}
 
-        {/* ---- Word chain ---- */}
-        <div style={{ display: "flex", flexDirection: "column", marginBottom: "16px" }}>
-          {puzzleWords.map((word, i) => (
-            <WordRow
-              key={`${word}-${i}`}
-              word={word}
-              index={i}
-              status={wordStatuses[i]}
-              previousWord={i > 0 ? puzzleWords[i - 1] : undefined}
-              wordAttempts={wordAttempts[i]}
-              revealedLetters={revealedLetters[i] ?? []}
-              revealTrigger={justSolvedIndex === i ? 1 : 0}
-              totalWords={puzzleWords.length}
-              onSubmitGuess={wordStatuses[i] === "active" && gameStatus === "playing" ? submitGuess : undefined}
-            />
-          ))}
-        </div>
+        {/* ---- Word chain + completion overlay ---- */}
+        <div style={{ position: "relative", marginBottom: "16px" }}>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {puzzleWords.map((word, i) => (
+              <WordRow
+                key={`${word}-${i}`}
+                word={word}
+                index={i}
+                status={wordStatuses[i]}
+                previousWord={i > 0 ? puzzleWords[i - 1] : undefined}
+                wordAttempts={wordAttempts[i]}
+                revealedLetters={revealedLetters[i] ?? []}
+                revealTrigger={justSolvedIndex === i ? 1 : 0}
+                totalWords={puzzleWords.length}
+                onSubmitGuess={wordStatuses[i] === "active" && gameStatus === "playing" ? submitGuess : undefined}
+              />
+            ))}
+          </div>
 
-        {/* ---- Hint button ---- */}
-        {gameStatus === "playing" && (
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
-            <button
-              onClick={handleHint}
-              disabled={hintsRemaining <= 0}
+          {/* ---- Hint button ---- */}
+          {gameStatus === "playing" && (
+            <div style={{ display: "flex", justifyContent: "center", marginTop: "16px" }}>
+              <button
+                onClick={handleHint}
+                disabled={hintsRemaining <= 0}
+                style={{
+                  width: "auto",
+                  padding: "10px 20px",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  background: "#565758",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "6px",
+                  cursor: hintsRemaining > 0 ? "pointer" : "not-allowed",
+                  opacity: hintsRemaining > 0 ? 1 : 0.4,
+                  animation: hintAnim ? "cl-hint-pulse 0.4s ease" : undefined,
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 18h6" />
+                  <path d="M10 22h4" />
+                  <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14" />
+                </svg>
+                Hint ({hintsRemaining})
+              </button>
+            </div>
+          )}
+
+          {showCompleteOverlay && (
+            <div
+              className="anim-fade-slide-up"
               style={{
-                width: "auto",
-                padding: "10px 20px",
-                fontSize: "13px",
-                fontWeight: 600,
+                position: "absolute",
+                inset: 0,
+                zIndex: 10,
                 display: "flex",
                 alignItems: "center",
-                gap: "6px",
-                background: "#565758",
-                color: "#ffffff",
-                border: "none",
+                justifyContent: "center",
+                padding: "16px",
+                background: "rgba(18, 18, 19, 0.92)",
                 borderRadius: "6px",
-                cursor: hintsRemaining > 0 ? "pointer" : "not-allowed",
-                opacity: hintsRemaining > 0 ? 1 : 0.4,
-                animation: hintAnim ? "cl-hint-pulse 0.4s ease" : undefined,
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 18h6" />
-                <path d="M10 22h4" />
-                <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14" />
-              </svg>
-              Hint ({hintsRemaining})
-            </button>
-          </div>
-        )}
+              <div
+                style={{
+                  width: "100%",
+                  padding: "28px 24px",
+                  textAlign: "center",
+                  border: "2px solid #6aaa64",
+                  background: "#1a1a1b",
+                  borderRadius: "6px",
+                }}
+              >
+                <div style={{ fontSize: "32px", marginBottom: "8px" }}>&#9670;</div>
+                <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#6aaa64", margin: "0 0 6px" }}>
+                  Chain Complete!
+                </h2>
+                <p style={{ fontSize: "13px", color: "#ffffff", margin: "0 0 20px" }}>
+                  Final score:{" "}
+                  <strong style={{ fontSize: "28px", fontWeight: 700, color: "#6aaa64" }}>
+                    {displayScore}
+                  </strong>
+                </p>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "center", marginBottom: "20px" }}>
+                  {puzzleWords.slice(1).map((w, i) => (
+                    <span
+                      key={i}
+                      style={{
+                        fontSize: "13px",
+                        padding: "6px 14px",
+                        background: "#3a3a3c",
+                        borderRadius: "6px",
+                        color: "#6aaa64",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {formatPair(puzzleWords[i], w)}
+                    </span>
+                  ))}
+                </div>
+
+                <div style={{ fontSize: "11px", color: "#787c7e", marginBottom: "16px" }}>
+                  Come back tomorrow for a new puzzle!
+                </div>
+
+                <AccountPrompt />
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* ---- Feedback ---- */}
         {feedback && (
@@ -607,47 +699,6 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
             {feedback.message}
           </div>
         )}
-
-        {/* ---- Completed ---- */}
-        {isComplete && (
-          <div className="anim-fade-slide-up" style={{ marginTop: "8px", padding: "28px 24px", textAlign: "center", border: "2px solid #6aaa64", background: "#1a1a1b", borderRadius: "6px", position: "relative" }}>
-            <div style={{ fontSize: "32px", marginBottom: "8px" }}>&#9670;</div>
-            <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#6aaa64", margin: "0 0 6px" }}>
-              Chain Complete!
-            </h2>
-            <p style={{ fontSize: "13px", color: "#ffffff", margin: "0 0 20px" }}>
-              Final score:{" "}
-              <strong style={{ fontSize: "28px", fontWeight: 700, color: "#6aaa64" }}>
-                {displayScore}
-              </strong>
-            </p>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "center", marginBottom: "20px" }}>
-              {puzzleWords.slice(1).map((w, i) => (
-                <span
-                  key={i}
-                  style={{
-                    fontSize: "13px",
-                    padding: "6px 14px",
-                    background: "#3a3a3c",
-                    borderRadius: "6px",
-                    color: "#6aaa64",
-                    fontWeight: 600,
-                  }}
-                >
-                  {formatPair(puzzleWords[i], w)}
-                </span>
-              ))}
-            </div>
-
-            <div style={{ fontSize: "11px", color: "#787c7e", marginBottom: "16px" }}>
-              Come back tomorrow for a new puzzle!
-            </div>
-
-            <AccountPrompt />
-          </div>
-        )}
-
 
       </div>
     </>
