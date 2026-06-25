@@ -26,6 +26,8 @@
 *.pem
 .playwright-mcp/
 .superpowers/
+.codegraph
+.omo/
 
 # debug
 npm-debug.log*
