@@ -5,11 +5,20 @@ import type { Database, Json } from "@/lib/supabase/database.types";
 import type {
   AnswerType,
   ClientClue,
+  ClientDailyPuzzle,
   ClientPuzzle,
   Clue,
+  DailyGuessResult,
   GuessResult,
   Puzzle,
 } from "./types";
+import {
+  buildDailyRounds,
+  DAILY_ROUND_COUNT,
+  scoreFromDistanceKm,
+} from "./daily";
+import { distanceBetweenCountriesKm, resolveGuessToCca3 } from "./geo";
+import { looseEqual } from "./normalize";
 
 /* ------------------------------------------------------------------ */
 /*  Row shape returned by Supabase                                     */
@@ -136,7 +145,7 @@ export async function upsertPuzzleByAnswer(
 /*  Identity-shaped query cache                                        */
 /* ------------------------------------------------------------------ */
 
-const fallbackDailyCache = new Map<string, ClientPuzzle>();
+const fallbackDailyCache = new Map<string, ClientDailyPuzzle>();
 
 /* ------------------------------------------------------------------ */
 /*  Fetch helpers                                                       */
@@ -145,7 +154,7 @@ const fallbackDailyCache = new Map<string, ClientPuzzle>();
 export async function getDailyPuzzle(
   db: SupabaseClient<Database>,
   date?: string,
-): Promise<ClientPuzzle | null> {
+): Promise<ClientDailyPuzzle | null> {
   const targetDate = date ?? new Date().toISOString().slice(0, 10);
 
   const cached = fallbackDailyCache.get(targetDate);
@@ -171,7 +180,6 @@ export async function getDailyPuzzle(
     if (error) throw error;
     puzzle = data as unknown as AgPuzzleRow;
   } else {
-    // Fallback: deterministic pick from approved puzzles (same UTC date → same country).
     const { data: approved, error: apprErr } = await db
       .from("ag_puzzles")
       .select("*")
@@ -185,7 +193,17 @@ export async function getDailyPuzzle(
   }
 
   if (!puzzle) return null;
-  const clientPuzzle = toClient(puzzle, "daily", targetDate);
+
+  const clientPuzzle: ClientDailyPuzzle = {
+    id: puzzle.id,
+    date: targetDate,
+    mode: "daily",
+    answer_type: puzzle.answer_type,
+    region: puzzle.region ?? undefined,
+    totalRounds: DAILY_ROUND_COUNT,
+    rounds: buildDailyRounds(puzzle.clues ?? []),
+    difficulty: puzzle.difficulty ?? undefined,
+  };
   fallbackDailyCache.set(targetDate, clientPuzzle);
   return clientPuzzle;
 }
@@ -231,55 +249,6 @@ async function queryApprovedPuzzles(
 /*  Guess validation                                                   */
 /* ------------------------------------------------------------------ */
 
-/**
- * Normalize an answer string for fuzzy comparison.
- *  - lowercase
- *  - strip diacritics
- *  - collapse non-letter/digit runs to single spaces
- *  - trim
- *
- * "United States" / "united states" / "United States of America " → "united states"
- */
-export function normalizeAnswer(input: string): string {
-  return (input ?? "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^\p{L}\p{N}]+/gu, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-/**
- * Compare a player guess against the canonical answer + alt_answers.
- * Matches canonical name OR any alt form, normalized.
- * The "the" / "kingdom of" / "republic of" prefixes are stripped on both sides
- * so "Republic of Ireland" matches "Ireland" when both routes expose it.
- */
-const STRIP_PREFIXES = [
-  "the ",
-  "kingdom of ",
-  "republic of ",
-  "united states of ",
-  "federated states of ",
-  "state of ",
-];
-
-function looseEqual(guess: string, candidate: string): boolean {
-  const g = normalizeAnswer(guess);
-  const c = normalizeAnswer(candidate);
-  if (!g || !c) return false;
-  if (g === c) return true;
-
-  const strip = (s: string): string => {
-    for (const p of STRIP_PREFIXES) {
-      if (s.startsWith(p)) return s.slice(p.length);
-    }
-    return s;
-  };
-  return strip(g) === strip(c);
-}
-
 interface PuzzleAnswerRow {
   id: string;
   answer_type: AnswerType;
@@ -287,6 +256,62 @@ interface PuzzleAnswerRow {
   alt_answers: string[] | null;
   metadata: Record<string, unknown> | null;
   clues: Clue[];
+}
+
+export async function validateDailyGuess(
+  db: SupabaseClient<Database>,
+  puzzleId: string,
+  guess: string,
+  roundIndex: number,
+): Promise<DailyGuessResult> {
+  if (roundIndex < 0 || roundIndex >= DAILY_ROUND_COUNT) {
+    throw new Error("Invalid round index");
+  }
+
+  const { data: puzzle, error } = await db
+    .from("ag_puzzles")
+    .select("id, answer, answer_id, alt_answers, metadata, flag_url")
+    .eq("id", puzzleId)
+    .single();
+
+  if (error || !puzzle) throw new Error("Puzzle not found");
+
+  const row = puzzle as {
+    answer: string;
+    answer_id: string | null;
+    alt_answers: string[] | null;
+    metadata: Record<string, unknown> | null;
+    flag_url: string | null;
+  };
+
+  const answerCca3 = row.answer_id;
+  if (!answerCca3) throw new Error("Puzzle missing country id");
+
+  const exact =
+    looseEqual(guess, row.answer) ||
+    (row.alt_answers ?? []).some((a) => looseEqual(guess, a));
+
+  const guessCca3 = (await resolveGuessToCca3(guess)) ?? "___";
+  const distanceKm =
+    guessCca3 === "___"
+      ? 20_000
+      : await distanceBetweenCountriesKm(guessCca3, answerCca3);
+
+  const roundScore = scoreFromDistanceKm(distanceKm);
+  const completed = roundIndex >= DAILY_ROUND_COUNT - 1;
+
+  return {
+    exact,
+    guess: guess.trim(),
+    answer: row.answer,
+    distanceKm,
+    roundScore,
+    completed,
+    funFact: completed
+      ? ((row.metadata?.fun_fact as string | undefined) ?? null)
+      : null,
+    flagUrl: completed ? row.flag_url : null,
+  };
 }
 
 export async function validateGuess(

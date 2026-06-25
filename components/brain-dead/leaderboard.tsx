@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
+import { GameBackLink } from "@/components/ui/game-back-link";
 import { fetchTodayLeaderboard } from "@/lib/brain-dead/storage";
 import type { AllTimeEntry, LeaderboardEntry } from "@/lib/brain-dead/types";
 
@@ -42,7 +42,10 @@ export default function Leaderboard() {
   });
 
   return (
-    <div style={{ width: "100%", margin: "0 auto" }}>
+    <div style={{ width: "100%", margin: "0 auto", position: "relative" }}>
+      <header style={{ position: "relative", marginBottom: "24px" }}>
+        <GameBackLink href="/brain-dead" color="var(--bd-text-muted)" />
+      </header>
       <div style={{ textAlign: "center", marginBottom: "24px" }}>
         <p
           style={{
@@ -125,12 +128,6 @@ export default function Leaderboard() {
         <AllTimeView entries={allTimeEntries} loading={loading} />
       )}
 
-      <p style={{ textAlign: "center", marginTop: "48px", fontSize: "10px", color: "var(--bd-text-muted)", opacity: 0.6 }}>
-        &larr;{" "}
-        <Link href="/brain-dead" style={{ color: "inherit", textDecoration: "none" }}>
-          Back to Brain Dead
-        </Link>
-      </p>
     </div>
   );
 }

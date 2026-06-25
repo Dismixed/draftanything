@@ -24,10 +24,12 @@ export default function ClueCard({
   clue,
   index,
   revealed,
+  headerLabel,
 }: {
   clue: ClientClue;
   index: number;
   revealed: boolean;
+  headerLabel?: string;
 }) {
   const [loaded, setLoaded] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -97,7 +99,7 @@ export default function ClueCard({
           borderBottom: "1px solid var(--ag-border)",
         }}
       >
-        {`Clue ${index + 1} · ${labelFor(clue)}`}
+        {headerLabel ?? `Clue ${index + 1} · ${labelFor(clue)}`}
       </div>
 
       <div

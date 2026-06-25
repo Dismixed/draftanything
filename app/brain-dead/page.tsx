@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { GameBackLink } from "@/components/ui/game-back-link";
 import {
   formatScore,
   formatStreak,
@@ -50,9 +51,12 @@ export default function BrainDeadPage() {
         style={{
           width: "100%",
           maxWidth: "400px",
+          position: "relative",
         }}
       >
-        <header style={{ textAlign: "center", marginBottom: "32px" }}>
+        <header style={{ position: "relative", marginBottom: "32px" }}>
+          <GameBackLink color="var(--bd-text-muted)" />
+          <div style={{ textAlign: "center" }}>
           <h1
             style={{
               fontSize: "22px",
@@ -75,6 +79,7 @@ export default function BrainDeadPage() {
           >
             Trivia Challenge
           </p>
+          </div>
         </header>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -261,20 +266,6 @@ export default function BrainDeadPage() {
           </div>
         </div>
 
-        <p
-          style={{
-            textAlign: "center",
-            fontSize: "10px",
-            color: "var(--bd-text-muted)",
-            marginTop: "48px",
-            opacity: 0.6,
-          }}
-        >
-          &larr;{" "}
-          <Link href="/" style={{ color: "inherit", textDecoration: "none" }}>
-            Back to Stim Games
-          </Link>
-        </p>
       </div>
     </main>
   );

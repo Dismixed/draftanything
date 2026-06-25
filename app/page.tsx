@@ -608,7 +608,7 @@ export default function StimGames() {
                   flex: 1,
                 }}
               >
-                Identify a country from cultural clues — environment, food, language, landmark. The fewer clues you reveal, the higher your score.
+                Identify a country across five daily rounds — landmark, language, person, food, and environment. Score points by how close your guess is.
               </p>
               <div
                 style={{

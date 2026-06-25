@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { DAILY_CLUE_TYPE_LABEL, formatDistanceKm } from "@/lib/anyguessr/daily";
 import { useCountUp } from "@/lib/motion/count-up";
 import { useAnyGuessrStore } from "@/lib/anyguessr/store";
 
@@ -18,25 +19,26 @@ export default function Results({
   scoreActive?: boolean;
   embedded?: boolean;
 }) {
-  const {
-    status,
-    answer,
-    flagUrl,
-    score,
-    guesses,
-    revealedCount,
-    totalClues,
-    funFact,
-    mode,
-    nextRound,
-  } = useAnyGuessrStore();
-  const isWin = status === "won";
-  const displayScore = useCountUp(isWin ? score : 0, scoreActive ?? isWin, 900);
+  const store = useAnyGuessrStore();
+  const isDaily = store.mode === "daily";
+  const isInfinite = store.mode === "infinite";
 
-  const nextLabel =
-    mode === "daily"
-      ? "Come back tomorrow"
-      : "Play next round";
+  const isWin = store.status === "won";
+  const isSurrendered = isInfinite && store.status === "surrendered";
+
+  const dailyScore = useCountUp(
+    isDaily ? store.totalScore : 0,
+    isDaily && (scoreActive ?? isWin),
+    900,
+  );
+  const infiniteScore = useCountUp(
+    isInfinite && isWin ? store.score : 0,
+    isInfinite && (scoreActive ?? isWin),
+    900,
+  );
+  const displayScore = isDaily ? dailyScore : infiniteScore;
+
+  const nextLabel = isDaily ? "Come back tomorrow" : "Play next round";
 
   return (
     <div
@@ -60,40 +62,97 @@ export default function Results({
           marginBottom: "12px",
         }}
       >
-        {isWin ? "Solved" : "Surrendered"}
+        {isDaily ? "Daily Complete" : isSurrendered ? "Surrendered" : "Solved"}
       </div>
 
-      <div
-        style={{
-          fontSize: "clamp(28px, 7vw, 40px)",
-          fontWeight: 800,
-          color: "var(--ag-text)",
-          letterSpacing: "-0.02em",
-          marginBottom: "4px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "14px",
-        }}
-      >
-        {flagUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={flagUrl}
-            alt=""
-            style={{ width: "44px", height: "30px", borderRadius: "4px", objectFit: "cover" }}
-          />
-        ) : null}
-        <span>{answer ?? "—"}</span>
-      </div>
+      {isDaily && store.answer && (
+        <div
+          style={{
+            fontSize: "clamp(28px, 7vw, 40px)",
+            fontWeight: 800,
+            color: "var(--ag-text)",
+            letterSpacing: "-0.02em",
+            marginBottom: "4px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "14px",
+          }}
+        >
+          {store.flagUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={store.flagUrl}
+              alt=""
+              style={{ width: "44px", height: "30px", borderRadius: "4px", objectFit: "cover" }}
+            />
+          ) : null}
+          <span>{store.answer}</span>
+        </div>
+      )}
+
+      {isInfinite && (
+        <div
+          style={{
+            fontSize: "clamp(28px, 7vw, 40px)",
+            fontWeight: 800,
+            color: "var(--ag-text)",
+            letterSpacing: "-0.02em",
+            marginBottom: "4px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "14px",
+          }}
+        >
+          {store.flagUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={store.flagUrl}
+              alt=""
+              style={{ width: "44px", height: "30px", borderRadius: "4px", objectFit: "cover" }}
+            />
+          ) : null}
+          <span>{store.answer ?? "—"}</span>
+        </div>
+      )}
 
       <div style={{ margin: "20px 0", display: "flex", flexDirection: "column", gap: "10px" }}>
-        <StatRow label="Score" value={isWin ? `${displayScore}` : "0"} highlight={isWin} />
-        <StatRow label="Guesses Made" value={`${guesses.length}`} />
-        <StatRow label="Clues Revealed" value={`${revealedCount} / ${totalClues}`} />
+        <StatRow
+          label="Total Score"
+          value={isWin || (isDaily && isWin) ? `${displayScore}` : isSurrendered ? "0" : `${displayScore}`}
+          highlight={isWin}
+        />
+
+        {isDaily &&
+          store.roundResults.map((round) => (
+            <StatRow
+              key={round.roundIndex}
+              label={
+                DAILY_CLUE_TYPE_LABEL[
+                  round.clueType as keyof typeof DAILY_CLUE_TYPE_LABEL
+                ] ?? round.clueType
+              }
+              value={
+                round.exact
+                  ? `+${round.roundScore} · correct`
+                  : `+${round.roundScore} · ${formatDistanceKm(round.distanceKm)}`
+              }
+            />
+          ))}
+
+        {isInfinite && (
+          <>
+            <StatRow label="Guesses Made" value={`${store.guesses.length}`} />
+            <StatRow
+              label="Clues Revealed"
+              value={`${store.revealedCount} / ${store.totalClues}`}
+            />
+          </>
+        )}
       </div>
 
-      {funFact && (
+      {store.funFact && (
         <div
           style={{
             fontSize: "12px",
@@ -103,16 +162,13 @@ export default function Results({
             fontStyle: "italic",
           }}
         >
-          {funFact}
+          {store.funFact}
         </div>
       )}
 
       <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
-        {mode === "infinite" ? (
-          <button
-            onClick={() => nextRound()}
-            style={primaryBtnStyle}
-          >
+        {isInfinite ? (
+          <button onClick={() => store.nextRound()} style={primaryBtnStyle}>
             Play Infinite
           </button>
         ) : (
@@ -125,8 +181,15 @@ export default function Results({
         </Link>
       </div>
 
-      {mode === "daily" && (
-        <div style={{ marginTop: "18px", fontSize: "10px", color: "var(--ag-muted)", opacity: 0.7 }}>
+      {isDaily && (
+        <div
+          style={{
+            marginTop: "18px",
+            fontSize: "10px",
+            color: "var(--ag-muted)",
+            opacity: 0.7,
+          }}
+        >
           {nextLabel} · {getDateString()}
         </div>
       )}
@@ -153,6 +216,7 @@ function StatRow({
         background: "var(--ag-surface-hi)",
         borderRadius: "8px",
         border: "1px solid var(--ag-border-faint)",
+        gap: "12px",
       }}
     >
       <span
@@ -161,15 +225,17 @@ function StatRow({
           letterSpacing: "0.14em",
           textTransform: "uppercase",
           color: "var(--ag-muted)",
+          textAlign: "left",
         }}
       >
         {label}
       </span>
       <span
         style={{
-          fontSize: "18px",
+          fontSize: "14px",
           fontWeight: 700,
           color: highlight ? "var(--ag-accent)" : "var(--ag-text)",
+          textAlign: "right",
         }}
       >
         {value}

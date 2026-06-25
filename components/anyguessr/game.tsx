@@ -2,15 +2,19 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { DAILY_CLUE_TYPE_LABEL, DAILY_ROUND_COUNT } from "@/lib/anyguessr/daily";
 import { useAnyGuessrStore } from "@/lib/anyguessr/store";
 import type { GameMode } from "@/lib/anyguessr/types";
 import { useSound } from "@/lib/audio/sound-context";
 import { fireConfetti } from "@/lib/motion/confetti";
+import { GameBackLink } from "@/components/ui/game-back-link";
 import { SoundToggle } from "@/components/ui/sound-toggle";
-import ClueViewer from "./clue-viewer";
-import Results from "./results";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
+import ClueCard from "./clue-card";
+import ClueViewer from "./clue-viewer";
 import CountryPicker from "./country-picker";
+import ProgressDots from "./progress-dots";
+import Results from "./results";
 
 interface Props {
   mode?: GameMode;
@@ -41,25 +45,28 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
   const [showResultsOverlay, setShowResultsOverlay] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  const {
-    loading,
-    date,
-    clues,
-    totalClues,
-    revealedCount,
-    score,
-    status,
-    feedback,
-    puzzleId,
-    initPuzzle,
-    submitGuess,
-    revealNextClue,
-    surrender,
-    clearFeedback,
-    nextRound,
-  } = store;
+  const isDaily = mode === "daily" && store.mode === "daily";
+  const isInfinite = mode === "infinite" && store.mode === "infinite";
 
-  const isOver = status === "won" || status === "surrendered";
+  const loading = store.loading;
+  const date = store.date;
+  const status = store.status;
+  const feedback = store.feedback;
+  const puzzleId = store.puzzleId;
+  const initPuzzle = store.initPuzzle;
+  const clearFeedback = store.clearFeedback;
+  const nextRound = store.nextRound;
+
+  const isOver = isDaily
+    ? status === "won"
+    : isInfinite
+      ? status === "won" || status === "surrendered"
+      : false;
+
+  const displayScore = isDaily ? store.totalScore : isInfinite ? store.score : 0;
+
+  const dailyRound = isDaily ? store.dailyRounds[store.currentRound] : null;
+  const roundsComplete = isDaily ? store.roundResults.length : 0;
 
   useEffect(() => {
     setMounted(true);
@@ -70,16 +77,17 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
       setShowResultsOverlay(false);
       return;
     }
-    const timer = setTimeout(() => setShowResultsOverlay(true), 1000);
+    const timer = setTimeout(() => setShowResultsOverlay(true), isDaily ? 1400 : 1000);
     return () => clearTimeout(timer);
-  }, [isOver]);
+  }, [isOver, isDaily]);
 
   useEffect(() => {
     if (status !== "won" || celebratedRef.current) return;
+    if (isDaily && store.roundResults.every((r) => !r.exact)) return;
     celebratedRef.current = true;
     play("win");
     void fireConfetti("gold");
-  }, [status, play]);
+  }, [status, play, isDaily, store.roundResults]);
 
   useEffect(() => {
     if (status === "playing") {
@@ -87,7 +95,6 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
     }
   }, [status]);
 
-  // Hydration + initial fetch
   useEffect(() => {
     const hydrate = () => initPuzzle(mode);
     if (useAnyGuessrStore.persist.hasHydrated()) {
@@ -97,46 +104,62 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
     }
   }, [mode, initPuzzle]);
 
-  // Feedback auto-dismiss
   useEffect(() => {
     if (!feedback) return;
-    const delay = feedback.type === "correct" ? 1500 : 2200;
+    const delay =
+      feedback.type === "correct" ? 1500 : feedback.type === "round" ? 1800 : 2200;
     const t = setTimeout(() => clearFeedback(), delay);
     return () => clearTimeout(t);
   }, [feedback, clearFeedback]);
 
-  const handleReveal = () => {
-    play("ui.tap");
-    revealNextClue();
-  };
-
   const handlePick = (name: string) => {
     setPickerOpen(false);
     play("ui.tap");
-    void submitGuess(name);
+    if (isDaily) {
+      void store.submitDailyGuess(name);
+      return;
+    }
+    void store.submitGuess(name);
   };
 
-  if (loading && clues.length === 0) {
+  const isLoading =
+    loading ||
+    (isDaily && store.dailyRounds.length === 0) ||
+    (isInfinite && store.clues.length === 0);
+
+  if (isLoading) {
     return (
-      <div
-        style={{
-          minHeight: "320px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "var(--ag-muted)",
-          fontSize: "13px",
-        }}
-      >
-        Loading puzzle…
+      <div style={{ width: "100%", maxWidth: "560px", margin: "0 auto" }}>
+        <header style={{ position: "relative", marginBottom: "24px" }}>
+          <GameBackLink color="var(--ag-muted)" />
+        </header>
+        <div
+          style={{
+            minHeight: "320px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "var(--ag-muted)",
+            fontSize: "13px",
+          }}
+        >
+          Loading puzzle…
+        </div>
       </div>
     );
   }
 
+  const dailyRoundLabel =
+    dailyRound &&
+    `Round ${dailyRound.roundIndex + 1} · ${
+      DAILY_CLUE_TYPE_LABEL[dailyRound.clueType as keyof typeof DAILY_CLUE_TYPE_LABEL] ??
+      dailyRound.clueType
+    }`;
+
   return (
     <div style={{ width: "100%", maxWidth: "560px", margin: "0 auto" }}>
-      {/* Header */}
       <header style={{ textAlign: "center", marginBottom: "24px", position: "relative" }}>
+        <GameBackLink color="var(--ag-muted)" />
         <div style={{ position: "absolute", top: 0, right: 0 }}>
           <SoundToggle />
         </div>
@@ -159,7 +182,9 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
             letterSpacing: "0.04em",
           }}
         >
-          Guess the {store.answerType ?? "country"} from cultural clues
+          {isDaily
+            ? "Five rounds — guess the country from each clue"
+            : `Guess the ${store.answerType ?? "country"} from cultural clues`}
         </p>
 
         <div
@@ -170,7 +195,7 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
             gap: "16px",
           }}
         >
-          <ScorePill value={score} />
+          <ScorePill value={displayScore} />
           {mode === "daily" && (
             <span style={{ fontSize: "11px", color: "var(--ag-muted)" }}>
               {formatDate(date || getDateString())}
@@ -181,16 +206,33 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
       </header>
 
       <div style={{ marginBottom: "16px" }}>
-        <ClueViewer
-          clues={clues}
-          revealedCount={revealedCount}
-          totalClues={totalClues}
-          puzzleId={puzzleId}
-          onNavigate={() => play("ui.tap")}
-        />
+        {isDaily && dailyRound ? (
+          <>
+            <ClueCard
+              clue={dailyRound.clue}
+              index={dailyRound.roundIndex}
+              revealed
+              headerLabel={dailyRoundLabel ?? undefined}
+            />
+            <div style={{ marginTop: "20px" }}>
+              <ProgressDots
+                current={Math.max(roundsComplete, store.currentRound + 1)}
+                total={DAILY_ROUND_COUNT}
+                active={store.currentRound}
+              />
+            </div>
+          </>
+        ) : isInfinite ? (
+          <ClueViewer
+            clues={store.clues}
+            revealedCount={store.revealedCount}
+            totalClues={store.totalClues}
+            puzzleId={puzzleId}
+            onNavigate={() => play("ui.tap")}
+          />
+        ) : null}
       </div>
 
-      {/* Feedback banner */}
       {feedback && (
         <div
           className="anim-pop-in"
@@ -226,7 +268,6 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
         </div>
       )}
 
-      {/* Action buttons */}
       {!isOver && (
         <div
           style={{
@@ -246,36 +287,45 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
           >
             Guess Country
           </button>
-          <div style={{ display: "flex", gap: "10px" }}>
-            <button
-              onClick={handleReveal}
-              disabled={revealedCount >= totalClues}
-              style={{
-                ...secondaryBtnStyle,
-                flex: 1,
-                opacity: revealedCount >= totalClues ? 0.4 : 1,
-                cursor: revealedCount >= totalClues ? "not-allowed" : "pointer",
-              }}
-            >
-              {revealedCount >= totalClues ? "All clues revealed" : "Reveal Next Clue"}
-            </button>
-            <button
-              onClick={() => {
-                play("ui.tap");
-                if (confirm("Give up? Your score will reset to 0.")) {
-                  void surrender();
-                }
-              }}
-              style={{
-                ...secondaryBtnStyle,
-                flex: 1,
-                color: "#ff6b6b",
-                borderColor: "rgba(255,107,107,0.3)",
-              }}
-            >
-              Give Up
-            </button>
-          </div>
+
+          {isInfinite && (
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button
+                onClick={() => {
+                  play("ui.tap");
+                  store.revealNextClue();
+                }}
+                disabled={store.revealedCount >= store.totalClues}
+                style={{
+                  ...secondaryBtnStyle,
+                  flex: 1,
+                  opacity: store.revealedCount >= store.totalClues ? 0.4 : 1,
+                  cursor:
+                    store.revealedCount >= store.totalClues ? "not-allowed" : "pointer",
+                }}
+              >
+                {store.revealedCount >= store.totalClues
+                  ? "All clues revealed"
+                  : "Reveal Next Clue"}
+              </button>
+              <button
+                onClick={() => {
+                  play("ui.tap");
+                  if (confirm("Give up? Your score will reset to 0.")) {
+                    void store.surrender();
+                  }
+                }}
+                style={{
+                  ...secondaryBtnStyle,
+                  flex: 1,
+                  color: "#ff6b6b",
+                  borderColor: "rgba(255,107,107,0.18)",
+                }}
+              >
+                Give Up
+              </button>
+            </div>
+          )}
         </div>
       )}
 

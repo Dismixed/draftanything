@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeAnswer } from "@/lib/anyguessr/puzzle-service";
+import { normalizeAnswer } from "@/lib/anyguessr/normalize";
 
 describe("AnyGuessr normalizeAnswer", () => {
   it("lowercases and trims surrounding whitespace", () => {

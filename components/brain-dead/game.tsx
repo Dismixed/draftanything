@@ -18,6 +18,7 @@ import {
 import { useSound } from "@/lib/audio/sound-context";
 import { fireConfetti } from "@/lib/motion/confetti";
 import { triggerAnimation } from "@/lib/motion/trigger-class";
+import { GameBackLink } from "@/components/ui/game-back-link";
 import { SoundToggle } from "@/components/ui/sound-toggle";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
 
@@ -331,9 +332,21 @@ export default function BrainDeadGame({
       : 0;
   const result = getResultCopy(correct);
 
+  const gameShell = (children: React.ReactNode, options?: { sound?: boolean; padTop?: boolean }) => (
+    <div style={{ width: "100%", maxWidth: "480px", margin: "0 auto", position: "relative" }}>
+      <GameBackLink color="var(--bd-text-muted)" />
+      {options?.sound !== false && (
+        <div style={{ position: "absolute", top: 0, right: 0, zIndex: 2 }}>
+          <SoundToggle />
+        </div>
+      )}
+      <div style={options?.padTop === false ? undefined : { paddingTop: "28px" }}>{children}</div>
+    </div>
+  );
+
   /* ── Already played ── */
   if (screen === "played") {
-    return (
+    return gameShell(
       <div style={{ textAlign: "center", padding: "24px 0" }}>
         <div
           style={{
@@ -423,13 +436,14 @@ export default function BrainDeadGame({
             </Link>
           </div>
         </div>
-      </div>
+      </div>,
+      { sound: false },
     );
   }
 
   /* ── Result ── */
   if (screen === "result") {
-    return (
+    return gameShell(
       <div className="anim-fade-slide-up" style={{ textAlign: "center", padding: "24px 0" }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--bd-primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -651,12 +665,28 @@ export default function BrainDeadGame({
             Home
           </Link>
         </div>
-      </div>
+      </div>,
+      { sound: false },
     );
   }
 
   /* ── Game ── */
-  if (!q) return null;
+  if (!q) {
+    return gameShell(
+      <div
+        style={{
+          minHeight: "200px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "var(--bd-text-muted)",
+          fontSize: "13px",
+        }}
+      >
+        {fetchError ?? "Loading questions…"}
+      </div>,
+    );
+  }
 
   const diffClass =
     q.d === 1
@@ -667,11 +697,8 @@ export default function BrainDeadGame({
           ? { color: "var(--bd-danger)", label: "Hard" }
           : { color: "var(--bd-secondary)", label: "Brutal" };
 
-  return (
-    <div style={{ width: "100%", maxWidth: "480px", margin: "0 auto", position: "relative" }}>
-      <div style={{ position: "absolute", top: 0, right: 0, zIndex: 2 }}>
-        <SoundToggle />
-      </div>
+  return gameShell(
+    <>
       <div
         style={{
           display: "flex",
@@ -839,6 +866,6 @@ export default function BrainDeadGame({
           ))}
         </div>
       </div>
-    </div>
+    </>,
   );
 }

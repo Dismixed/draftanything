@@ -101,6 +101,34 @@ export interface ClientPuzzle {
   difficulty?: string;
 }
 
+export interface ClientDailyRound {
+  roundIndex: number;
+  clueType: string;
+  clue: ClientClue;
+}
+
+/** Daily mode payload — five single-clue rounds for the same country. */
+export interface ClientDailyPuzzle {
+  id: string;
+  date: string;
+  mode: "daily";
+  answer_type: AnswerType;
+  region?: string;
+  totalRounds: number;
+  rounds: ClientDailyRound[];
+  difficulty?: string;
+}
+
+export interface DailyRoundResult {
+  roundIndex: number;
+  clueType: string;
+  guess: string;
+  answer: string;
+  distanceKm: number;
+  roundScore: number;
+  exact: boolean;
+}
+
 export interface ClientClue {
   type: string;
   content: string;
@@ -164,8 +192,20 @@ export interface GuessResult {
   funFact: string | null;
 }
 
+export interface DailyGuessResult {
+  exact: boolean;
+  guess: string;
+  answer: string;
+  distanceKm: number;
+  roundScore: number;
+  /** True when the player has finished all daily rounds. */
+  completed: boolean;
+  funFact: string | null;
+  flagUrl: string | null;
+}
+
 /* ------------------------------------------------------------------ */
 /*  Persisted client slice (zustand persist)                          */
 /* ------------------------------------------------------------------ */
 
-export const STORAGE_VERSION = "anyguessr-v1";
+export const STORAGE_VERSION = "anyguessr-v2";

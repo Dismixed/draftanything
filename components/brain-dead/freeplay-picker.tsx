@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { GameBackLink } from "@/components/ui/game-back-link";
 import { CATEGORIES } from "@/lib/brain-dead/game-logic";
 import type { CategoryId } from "@/lib/brain-dead/types";
 
@@ -125,7 +125,10 @@ export default function FreeplayPicker() {
   const regularCategories = CATEGORIES.filter((c) => c.id !== "random");
 
   return (
-    <div style={{ textAlign: "center", width: "100%", margin: "0 auto" }}>
+    <div style={{ textAlign: "center", width: "100%", margin: "0 auto", position: "relative" }}>
+      <header style={{ position: "relative", marginBottom: "24px" }}>
+        <GameBackLink href="/brain-dead" color="var(--bd-text-muted)" />
+      </header>
       <p
         style={{
           fontSize: "11px",
@@ -230,13 +233,6 @@ export default function FreeplayPicker() {
       >
         Let&apos;s Go
       </button>
-
-      <p style={{ marginTop: "48px", fontSize: "10px", color: "var(--bd-text-muted)", opacity: 0.6 }}>
-        &larr;{" "}
-        <Link href="/brain-dead" style={{ color: "inherit", textDecoration: "none" }}>
-          Back to Brain Dead
-        </Link>
-      </p>
     </div>
   );
 }

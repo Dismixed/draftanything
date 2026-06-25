@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { GameBackLink } from "@/components/ui/game-back-link";
 
 export default function AnyGuessrPage() {
   return (
@@ -35,7 +36,9 @@ export default function AnyGuessrPage() {
           zIndex: 1,
         }}
       >
-        <header style={{ textAlign: "center", marginBottom: "32px" }}>
+        <header style={{ position: "relative", marginBottom: "32px" }}>
+          <GameBackLink color="var(--ag-muted)" />
+          <div style={{ textAlign: "center" }}>
           <h1
             style={{
               fontSize: "clamp(26px, 5.5vw, 34px)",
@@ -58,6 +61,7 @@ export default function AnyGuessrPage() {
           >
             Guess the country from cultural clues
           </p>
+          </div>
         </header>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -103,7 +107,7 @@ export default function AnyGuessrPage() {
                 Today&apos;s Puzzle
               </div>
               <div style={{ fontSize: "10px", color: "var(--ag-muted)" }}>
-                One country. Same for everyone. Fewer clues, higher score.
+                Five rounds. Closer guesses score more. Same country for everyone.
               </div>
             </div>
           </Link>
@@ -156,20 +160,6 @@ export default function AnyGuessrPage() {
           </Link>
         </div>
 
-        <p
-          style={{
-            textAlign: "center",
-            fontSize: "10px",
-            color: "var(--ag-muted)",
-            marginTop: "48px",
-            opacity: 0.6,
-          }}
-        >
-          &larr;{" "}
-          <Link href="/" style={{ color: "inherit", textDecoration: "none" }}>
-            Back to Stim Games
-          </Link>
-        </p>
       </div>
     </main>
   );
