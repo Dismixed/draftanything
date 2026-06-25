@@ -6,9 +6,9 @@ import type { GameMode } from "@/lib/anyguessr/types";
 import { useSound } from "@/lib/audio/sound-context";
 import { fireConfetti } from "@/lib/motion/confetti";
 import { SoundToggle } from "@/components/ui/sound-toggle";
-import { AccountPrompt } from "@/components/auth/account-prompt";
 import ClueViewer from "./clue-viewer";
 import Results from "./results";
+import { WinStreakLine } from "@/components/streak/streak-notifier";
 import CountryPicker from "./country-picker";
 
 interface Props {
@@ -202,10 +202,8 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
             }}
           >
             <Results scoreActive embedded />
-            {status === "won" && (
-              <div style={{ marginTop: "18px", opacity: 0.9, width: "100%" }}>
-                <AccountPrompt />
-              </div>
+            {mode === "daily" && status === "won" && (
+              <WinStreakLine gameId="anyguessr" accentColor="var(--ag-accent)" />
             )}
             {mode === "infinite" && status === "won" && (
               <div style={{ textAlign: "center", marginTop: "12px", width: "100%" }}>

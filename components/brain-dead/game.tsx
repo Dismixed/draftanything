@@ -19,7 +19,7 @@ import { useSound } from "@/lib/audio/sound-context";
 import { fireConfetti } from "@/lib/motion/confetti";
 import { triggerAnimation } from "@/lib/motion/trigger-class";
 import { SoundToggle } from "@/components/ui/sound-toggle";
-import { AccountPrompt } from "@/components/auth/account-prompt";
+import { WinStreakLine } from "@/components/streak/streak-notifier";
 
 type Screen = "played" | "game" | "result";
 
@@ -586,7 +586,7 @@ export default function BrainDeadGame({
           </Link>
         )}
 
-        {submitted && <AccountPrompt />}
+        {isDaily && <WinStreakLine gameId="brain-dead" accentColor="var(--bd-primary)" />}
 
         <div
           style={{

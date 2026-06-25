@@ -7,11 +7,10 @@ import { formatPair, getDateString } from "@/lib/chainlink/puzzles";
 import type { GameMode } from "@/lib/chainlink/types";
 import { useSound } from "@/lib/audio/sound-context";
 import { fireConfetti } from "@/lib/motion/confetti";
-import { useCountUp } from "@/lib/motion/count-up";
 import { triggerAnimation } from "@/lib/motion/trigger-class";
 import { SoundToggle } from "@/components/ui/sound-toggle";
 import TutorialModal from "./tutorial-modal";
-import { AccountPrompt } from "@/components/auth/account-prompt";
+import { WinStreakLine } from "@/components/streak/streak-notifier";
 import { recordDailyCompletion } from "@/lib/streak/storage";
 
 /* ------------------------------------------------------------------ */
@@ -395,7 +394,6 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
     wordAttempts,
     revealedLetters,
     hintsRemaining,
-    score,
     gameStatus,
     puzzleId,
     feedback,
@@ -412,7 +410,6 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
   const [showCompleteOverlay, setShowCompleteOverlay] = useState(false);
 
   const isComplete = gameStatus === "completed";
-  const displayScore = useCountUp(score, showCompleteOverlay);
 
   // Initialize after persist rehydration so puzzle is not stuck loading.
   useEffect(() => {
@@ -443,11 +440,10 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
       body: JSON.stringify({
         puzzleId,
         mode,
-        score,
         completed: true,
       }),
     }).catch(() => {});
-  }, [isComplete, puzzleId, mode, score]);
+  }, [isComplete, puzzleId, mode]);
 
   useEffect(() => {
     if (!isComplete) {
@@ -534,14 +530,8 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
             {`Daily Puzzle · ${formatDate(date || getDateString())}`}
           </div>
 
-          {/* Score + Hints row */}
+          {/* Hints row */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", marginTop: "8px" }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 14px" }}>
-              <span style={{ fontSize: "13px", fontWeight: 700, color: "#6aaa64" }}>
-                Score: {score}
-              </span>
-            </div>
-
             {gameStatus === "playing" && (
               <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 14px" }}>
                 <span style={{ fontSize: "13px", fontWeight: 700, color: "#c9b458" }}>
@@ -640,15 +630,9 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                 }}
               >
                 <div style={{ fontSize: "32px", marginBottom: "8px" }}>&#9670;</div>
-                <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#6aaa64", margin: "0 0 6px" }}>
+                <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#6aaa64", margin: "0 0 20px" }}>
                   Chain Complete!
                 </h2>
-                <p style={{ fontSize: "13px", color: "#ffffff", margin: "0 0 20px" }}>
-                  Final score:{" "}
-                  <strong style={{ fontSize: "28px", fontWeight: 700, color: "#6aaa64" }}>
-                    {displayScore}
-                  </strong>
-                </p>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "center", marginBottom: "20px" }}>
                   {puzzleWords.slice(1).map((w, i) => (
@@ -672,7 +656,9 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                   Come back tomorrow for a new puzzle!
                 </div>
 
-                <AccountPrompt />
+                {mode === "daily" && (
+                  <WinStreakLine gameId="chainlink" accentColor="#6aaa64" />
+                )}
               </div>
             </div>
           )}

@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
 import Link from "next/link";
-import { useSound } from "@/lib/audio/sound-context";
 import type { DailyGameId } from "@/lib/streak/types";
 import { useStreak } from "@/lib/streak/context";
 
@@ -63,86 +61,43 @@ export function GameCardStreak({
   );
 }
 
-export function StreakNotifier() {
-  const { notification, dismissNotification } = useStreak();
-  const { play } = useSound();
+export function WinStreakLine({
+  gameId,
+  accentColor = "var(--gold)",
+}: {
+  gameId: DailyGameId;
+  accentColor?: string;
+}) {
+  const { streaks } = useStreak();
+  const game = streaks.find((s) => s.id === gameId);
+  const streak = game?.currentStreak ?? 0;
 
-  useEffect(() => {
-    if (!notification) return;
-    play("streak");
-    const timer = setTimeout(dismissNotification, 4500);
-    return () => clearTimeout(timer);
-  }, [notification, dismissNotification, play]);
-
-  if (!notification) return null;
+  if (streak <= 0) return null;
 
   return (
     <div
-      role="status"
-      aria-live="polite"
-      className="anim-slide-in-top"
+      className="anim-fade-slide-up"
       style={{
-        position: "fixed",
-        top: "72px",
-        left: "50%",
-        transform: "translateX(-50%)",
-        zIndex: 300,
-        background: "var(--panel)",
-        border: "1px solid rgba(201,168,76,0.35)",
-        borderRadius: "10px",
-        padding: "12px 18px",
-        boxShadow: "0 12px 32px rgba(0,0,0,0.45)",
-        display: "flex",
+        display: "inline-flex",
         alignItems: "center",
-        gap: "10px",
-        maxWidth: "min(92vw, 360px)",
+        justifyContent: "center",
+        gap: "6px",
+        marginTop: "14px",
+        padding: "8px 14px",
+        borderRadius: "999px",
+        background: `color-mix(in srgb, ${accentColor} 12%, transparent)`,
+        border: `1px solid color-mix(in srgb, ${accentColor} 35%, transparent)`,
+        fontFamily: "'Outfit', sans-serif",
+        fontSize: "12px",
+        fontWeight: 600,
+        color: accentColor,
+        letterSpacing: "0.02em",
       }}
     >
-      <span
-        className="anim-streak-pulse"
-        style={{ fontSize: "18px", lineHeight: 1 }}
-        aria-hidden
-      >
+      <span aria-hidden style={{ fontSize: "14px", lineHeight: 1 }}>
         &#128293;
       </span>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontSize: "13px",
-            fontWeight: 600,
-            color: "var(--text)",
-            fontFamily: "'Outfit', sans-serif",
-          }}
-        >
-          {notification.label}
-        </div>
-        <div
-          style={{
-            fontSize: "11px",
-            color: "var(--gold)",
-            fontFamily: "'Outfit', sans-serif",
-            marginTop: "2px",
-          }}
-        >
-          {formatStreak(notification.streak)} streak
-        </div>
-      </div>
-      <button
-        type="button"
-        onClick={dismissNotification}
-        aria-label="Dismiss"
-        style={{
-          background: "transparent",
-          border: "none",
-          color: "var(--text-dim)",
-          cursor: "pointer",
-          fontSize: "16px",
-          lineHeight: 1,
-          padding: "2px 4px",
-        }}
-      >
-        &times;
-      </button>
+      <span>{formatStreak(streak)} daily streak</span>
     </div>
   );
 }
