@@ -117,7 +117,7 @@ export default function Results({
           </button>
         ) : (
           <Link href="/" style={{ textDecoration: "none" }}>
-            <button style={primaryBtnStyle} disabled>Back home</button>
+            <button style={primaryBtnStyle}>Back home</button>
           </Link>
         )}
         <Link href="/anyguessr/infinite" style={{ textDecoration: "none" }}>

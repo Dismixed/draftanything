@@ -659,6 +659,24 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                 {mode === "daily" && (
                   <WinStreakLine gameId="chainlink" accentColor="#6aaa64" />
                 )}
+
+                <Link
+                  href="/"
+                  style={{
+                    display: "inline-block",
+                    marginTop: "20px",
+                    textDecoration: "none",
+                    background: "#565758",
+                    color: "#ffffff",
+                    padding: "10px 24px",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    borderRadius: "6px",
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  &larr; Back
+                </Link>
               </div>
             </div>
           )}

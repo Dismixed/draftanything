@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 /* ------------------------------------------------------------------ */
 /*  Country list — single global copy (zero deps, ~4KB)                */
@@ -69,7 +70,6 @@ export const COUNTRIES: readonly CountryItem[] = [
   { name: "Croatia", iso2: "HR", flag: "🇭🇷" },
   { name: "Serbia", iso2: "RS", flag: "🇷🇸" },
   { name: "Ukraine", iso2: "UA", flag: "🇺🇦" },
-  { name: "Iceland", iso2: "IS", flag: "🇮🇸" },
   { name: "Albania", iso2: "AL", flag: "🇦🇱" },
   { name: "Estonia", iso2: "EE", flag: "🇪🇪" },
   { name: "Latvia", iso2: "LV", flag: "🇱🇻" },
@@ -79,7 +79,6 @@ export const COUNTRIES: readonly CountryItem[] = [
   { name: "Bosnia and Herzegovina", iso2: "BA", flag: "🇧🇦" },
   { name: "North Macedonia", iso2: "MK", flag: "🇲🇰" },
   { name: "Montenegro", iso2: "ME", flag: "🇲🇪" },
-  { name: "Greece", iso2: "GR", flag: "🇬🇷" },
   { name: "Cyprus", iso2: "CY", flag: "🇨🇾" },
   { name: "Malta", iso2: "MT", flag: "🇲🇹" },
   { name: "Luxembourg", iso2: "LU", flag: "🇱🇺" },
@@ -116,7 +115,6 @@ export const COUNTRIES: readonly CountryItem[] = [
   { name: "Lebanon", iso2: "LB", flag: "🇱🇧" },
   { name: "Israel", iso2: "IL", flag: "🇮🇱" },
   { name: "Palestine", iso2: "PS", flag: "🇵🇸" },
-  { name: "Jordan", iso2: "JO", flag: "🇯🇴" },
   { name: "Yemen", iso2: "YE", flag: "🇾🇪" },
   { name: "Oman", iso2: "OM", flag: "🇴🇲" },
   { name: "United Arab Emirates", iso2: "AE", flag: "🇦🇪" },
@@ -255,10 +253,15 @@ interface Props {
 export default function CountryPicker({ open, onClose, onPick }: Props) {
   const [query, setQuery] = useState("");
   const [hovered, setHovered] = useState(0);
+  const [mounted, setMounted] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const matches = useMemo(() => rank(query), [query]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -266,7 +269,7 @@ export default function CountryPicker({ open, onClose, onPick }: Props) {
     return () => clearTimeout(t);
   }, [open]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
   const submit = () => {
     const picked = matches[hovered] ?? matches[0];
@@ -280,7 +283,7 @@ export default function CountryPicker({ open, onClose, onPick }: Props) {
     }
   };
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -420,6 +423,7 @@ export default function CountryPicker({ open, onClose, onPick }: Props) {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
