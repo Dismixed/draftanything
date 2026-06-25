@@ -94,8 +94,9 @@ export async function createRoom(
     p_draft_type: input.draftType,
     p_judging_mode: input.judgingMode,
     p_ai_personality: input.aiPersonality,
-    p_timer_seconds: input.timerSeconds ?? null,
-    p_custom_judge_prompt: input.customJudgePrompt ?? null,
+    // Generated RPC types omit nullability; Postgres accepts null for timer off.
+    p_timer_seconds: input.timerSeconds as number,
+    p_custom_judge_prompt: input.customJudgePrompt ?? undefined,
     p_picking_mode: input.pickingMode,
   });
 
@@ -324,12 +325,12 @@ export async function updateRoomConfig(
     p_topic: config.topic,
     p_max_players: config.maxPlayers,
     p_rounds: config.rounds,
-    p_timer_seconds: config.timerSeconds ?? null,
+    p_timer_seconds: config.timerSeconds as number,
     p_draft_type: config.draftType,
     p_picking_mode: config.pickingMode,
     p_judging_mode: config.judgingMode,
     p_ai_personality: config.aiPersonality,
-    p_custom_judge_prompt: config.customJudgePrompt ?? null,
+    p_custom_judge_prompt: (config.customJudgePrompt ?? null) as string,
   });
 
   if (error) {

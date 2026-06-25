@@ -71,6 +71,7 @@ export default function AdminChainsPage() {
     new Date().toISOString().slice(0, 10),
   );
   const [generating, setGenerating] = useState(false);
+  const [autoScheduling, setAutoScheduling] = useState(false);
   const [genResult, setGenResult] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [scheduleSaving, setScheduleSaving] = useState(false);
@@ -245,6 +246,52 @@ export default function AdminChainsPage() {
     }
   };
 
+  /* ---- Auto-schedule all approved puzzles ---- */
+  const autoScheduleAll = async () => {
+    const startDate = new Date().toISOString().slice(0, 10);
+    const confirmed = confirm(
+      `Schedule all approved puzzles on consecutive open dates starting ${startDate}? Puzzles already on the calendar are skipped.`,
+    );
+    if (!confirmed) return;
+
+    setAutoScheduling(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/chains/schedule/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ startDate }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          typeof data.error === "string" ? data.error : "Auto-schedule failed",
+        );
+      }
+
+      const range =
+        data.endDate && data.startDate !== data.endDate
+          ? `${data.startDate} through ${data.endDate}`
+          : data.startDate;
+
+      setSuccessMsg(
+        `Scheduled ${data.scheduled} puzzle${data.scheduled === 1 ? "" : "s"} (${range})${
+          data.skippedAlreadyScheduled
+            ? `; ${data.skippedAlreadyScheduled} already on the calendar`
+            : ""
+        }.`,
+      );
+      fetchPuzzles();
+      fetchDailyUsage();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Auto-schedule failed";
+      setError(msg);
+    } finally {
+      setAutoScheduling(false);
+    }
+  };
+
   /* ---- Schedule puzzle ---- */
   const schedulePuzzleAction = async () => {
     if (!schedulePuzzle) return;
@@ -389,7 +436,7 @@ export default function AdminChainsPage() {
 
           <button
             onClick={generateChains}
-            disabled={generating}
+            disabled={generating || autoScheduling}
             style={{
               padding: "8px 16px",
               background: "#c9b458",
@@ -398,11 +445,29 @@ export default function AdminChainsPage() {
               borderRadius: "6px",
               fontSize: "12px",
               fontWeight: 600,
-              cursor: generating ? "not-allowed" : "pointer",
-              opacity: generating ? 0.6 : 1,
+              cursor: generating || autoScheduling ? "not-allowed" : "pointer",
+              opacity: generating || autoScheduling ? 0.6 : 1,
             }}
           >
             {generating ? "Generating..." : "Generate 25 Draft Chains"}
+          </button>
+
+          <button
+            onClick={autoScheduleAll}
+            disabled={autoScheduling || generating}
+            style={{
+              padding: "8px 16px",
+              background: "#6aaa64",
+              color: "#121213",
+              border: "none",
+              borderRadius: "6px",
+              fontSize: "12px",
+              fontWeight: 600,
+              cursor: autoScheduling || generating ? "not-allowed" : "pointer",
+              opacity: autoScheduling || generating ? 0.6 : 1,
+            }}
+          >
+            {autoScheduling ? "Scheduling..." : "Auto-Schedule Approved"}
           </button>
 
           {genResult && (

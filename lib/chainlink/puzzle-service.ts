@@ -41,14 +41,20 @@ export interface HintResult {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Daily Puzzle                                                       */
+/*  Daily — in-memory cache so fallback is same for everyone on a day  */
 /* ------------------------------------------------------------------ */
+
+const fallbackCache = new Map<string, PlayablePuzzle>();
 
 export async function getDailyPuzzle(
   db: SupabaseClient<Database>,
   date?: string,
 ): Promise<PlayablePuzzle | null> {
   const targetDate = date ?? new Date().toISOString().slice(0, 10);
+
+  // Check fallback cache first
+  const cached = fallbackCache.get(targetDate);
+  if (cached) return cached;
 
   // Find today's scheduled puzzle
   const { data: scheduled, error: schedError } = await db
@@ -58,19 +64,40 @@ export async function getDailyPuzzle(
     .maybeSingle();
 
   if (schedError) throw schedError;
-  if (!scheduled) return null;
 
-  const { data: puzzle, error: puzzleError } = await db
+  if (scheduled) {
+    const { data: puzzle, error: puzzleError } = await db
+      .from("chain_puzzles")
+      .select("*")
+      .eq("id", scheduled.puzzle_id)
+      .single();
+
+    if (puzzleError) throw puzzleError;
+    if (puzzle) {
+      const words = puzzle.words as string[];
+      const result = buildPlayablePuzzle(puzzle.id, words, "daily", puzzle.difficulty, scheduled.publish_date);
+      fallbackCache.set(targetDate, result);
+      return result;
+    }
+  }
+
+  // Fallback: pick a random approved puzzle and cache it for the day
+  const { data: approved } = await db
     .from("chain_puzzles")
     .select("*")
-    .eq("id", scheduled.puzzle_id)
-    .single();
+    .in("status", ["approved", "published"])
+    .order("score", { ascending: false })
+    .limit(50);
 
-  if (puzzleError) throw puzzleError;
-  if (!puzzle) return null;
+  if (approved && approved.length > 0) {
+    const pick = approved[Math.floor(Math.random() * approved.length)];
+    const words = pick.words as string[];
+    const result = buildPlayablePuzzle(pick.id, words, "daily", pick.difficulty, targetDate);
+    fallbackCache.set(targetDate, result);
+    return result;
+  }
 
-  const words = puzzle.words as string[];
-  return buildPlayablePuzzle(puzzle.id, words, "daily", puzzle.difficulty, scheduled.publish_date);
+  return null;
 }
 
 /* ------------------------------------------------------------------ */

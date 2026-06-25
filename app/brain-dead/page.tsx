@@ -78,7 +78,7 @@ export default function BrainDeadPage() {
                   background: "var(--bd-primary)",
                 }}
               />
-              <div style={{ marginBottom: "8px" }}>
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: "8px" }}>
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--bd-text-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10"/>
                   <path d="M12 6v6l4 2"/>
@@ -125,7 +125,7 @@ export default function BrainDeadPage() {
                   background: "var(--bd-secondary)",
                 }}
               />
-              <div style={{ marginBottom: "8px" }}>
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: "8px" }}>
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--bd-text-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <polygon points="5 3 19 12 5 21 5 3"/>
                 </svg>
@@ -171,7 +171,7 @@ export default function BrainDeadPage() {
                   background: "var(--bd-success)",
                 }}
               />
-              <div style={{ marginBottom: "8px" }}>
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: "8px" }}>
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--bd-text-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
                   <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>

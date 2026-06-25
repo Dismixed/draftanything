@@ -1,5 +1,5 @@
 -- Rework brain_dead_leaderboard: replace player_token with dual identity columns
--- Existing rows keep display_name but lose guest linkage (lossy)
+-- Legacy rows (player_token) cannot link to guest_sessions; grandfather via is_legacy.
 
 alter table public.brain_dead_leaderboard
   add column guest_id uuid references public.guest_sessions(id) on delete set null;
@@ -7,9 +7,11 @@ alter table public.brain_dead_leaderboard
 alter table public.brain_dead_leaderboard
   add column user_id uuid references public.profiles(id) on delete set null;
 
+alter table public.brain_dead_leaderboard
+  add column is_legacy boolean not null default false;
+
 update public.brain_dead_leaderboard
-  set guest_id = null
-  where guest_id is not null;
+  set is_legacy = true;
 
 alter table public.brain_dead_leaderboard
   drop constraint brain_dead_leaderboard_player_token_play_date_key;
@@ -19,7 +21,7 @@ alter table public.brain_dead_leaderboard
 
 alter table public.brain_dead_leaderboard
   add constraint brain_dead_leaderboard_identity_check
-    check (num_nonnulls(guest_id, user_id) >= 1);
+    check (is_legacy or num_nonnulls(guest_id, user_id) >= 1);
 
 create unique index brain_dead_leaderboard_guest_play_date_idx
   on public.brain_dead_leaderboard (guest_id, play_date) where guest_id is not null;

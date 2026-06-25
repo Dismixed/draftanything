@@ -17,13 +17,6 @@ const GAMES = [
     status: "coming-soon" as const,
   },
   {
-    name: "AnyGuessr",
-    description:
-      "Guess anything from a clue — food, language, place, and more.",
-    icon: "?",
-    status: "coming-soon" as const,
-  },
-  {
     name: "Scattergories",
     description: "A letter, a timer, twelve categories. Unique answers win.",
     icon: "A",
@@ -338,111 +331,85 @@ export default function StimGames() {
               display: "block",
             }}
           >
-            <div
-              style={{
-                height: "100%",
-                background: "#1a1a1b",
-                border: "2px solid #3a3a3c",
-                borderRadius: "6px",
-                padding: "28px 24px",
-                position: "relative",
-                overflow: "hidden",
-                cursor: "pointer",
-                transition: "border-color 0.25s, box-shadow 0.25s",
-                display: "flex",
-                flexDirection: "column",
-              }}
-              className="stim-hero-card"
+            <Link
+              href="/chainlink"
+              style={{ textDecoration: "none", display: "block", height: "100%" }}
             >
-              <Link
-                href="/chainlink"
-                aria-label="Chainlink — All modes"
+              <div
                 style={{
-                  position: "absolute",
-                  inset: 0,
-                  zIndex: 1,
+                  height: "100%",
+                  background: "#1a1a1b",
+                  border: "2px solid #3a3a3c",
                   borderRadius: "6px",
-                }}
-              />
-              <div
-                style={{
-                  fontSize: "9px",
-                  fontWeight: 600,
-                  letterSpacing: "0.32em",
-                  textTransform: "uppercase",
-                  color: "#6aaa64",
-                  opacity: 0.9,
-                  marginBottom: "8px",
-                }}
-              >
-                Word Game
-              </div>
-              <h2
-                style={{
-                  fontSize: "clamp(24px, 4vw, 32px)",
-                  fontWeight: 700,
-                  lineHeight: 0.95,
-                  color: "#ffffff",
-                  margin: "0 0 6px",
-                }}
-              >
-                Chainlink
-              </h2>
-              <p style={{ ...modeHintStyle, margin: "0 0 10px", color: "#787c7e" }}>
-                Solo · Daily puzzle
-              </p>
-              <p
-                style={{
-                  fontSize: "12px",
-                  color: "#787c7e",
-                  lineHeight: 1.55,
-                  margin: "0 0 20px",
-                  fontWeight: 300,
-                  flex: 1,
-                }}
-              >
-                Link five words in a chain — each pairs with the one before it.
-              </p>
-              <div
-                style={{
-                  display: "flex",
-                  gap: "16px",
-                  flexWrap: "wrap",
-                  alignItems: "center",
+                  padding: "28px 24px",
                   position: "relative",
-                  zIndex: 2,
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  transition: "border-color 0.25s, box-shadow 0.25s",
+                  display: "flex",
+                  flexDirection: "column",
                 }}
+                className="stim-hero-card"
               >
-                <span
-                  className="stim-text-link"
+                <div
                   style={{
-                    fontSize: "10px",
+                    fontSize: "9px",
                     fontWeight: 600,
-                    letterSpacing: "0.18em",
+                    letterSpacing: "0.32em",
                     textTransform: "uppercase",
-                    color: "#c9b458",
+                    color: "#6aaa64",
+                    opacity: 0.9,
+                    marginBottom: "8px",
                   }}
                 >
-                  All modes
-                  <span style={{ fontSize: "12px" }}>&#8594;</span>
-                </span>
-                <Link
-                  href="/chainlink/daily"
+                  Word Game
+                </div>
+                <h2
+                  style={{
+                    fontSize: "clamp(24px, 4vw, 32px)",
+                    fontWeight: 700,
+                    lineHeight: 0.95,
+                    color: "#ffffff",
+                    margin: "0 0 6px",
+                  }}
+                >
+                  Chainlink
+                </h2>
+                <p style={{ ...modeHintStyle, margin: "0 0 10px", color: "#787c7e" }}>
+                  Solo · Daily puzzle
+                </p>
+                <p
+                  style={{
+                    fontSize: "12px",
+                    color: "#787c7e",
+                    lineHeight: 1.55,
+                    margin: "0 0 20px",
+                    fontWeight: 300,
+                    flex: 1,
+                  }}
+                >
+                  Link five words in a chain — each pairs with the one before it.
+                </p>
+                <div
                   className="stim-text-link"
                   style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
                     fontSize: "10px",
                     fontWeight: 600,
                     letterSpacing: "0.14em",
                     textTransform: "uppercase",
-                    color: "#787c7e",
-                    opacity: 0.85,
+                    color: "#c9b458",
+                    position: "relative",
+                    zIndex: 2,
                   }}
                 >
-                  Today&apos;s puzzle
+                  Play today&apos;s puzzle
                   <span style={{ fontSize: "12px" }}>&#8594;</span>
-                </Link>
+                </div>
               </div>
-            </div>
+            </Link>
           </div>
 
           <div
@@ -566,6 +533,180 @@ export default function StimGames() {
                 </Link>
               </div>
             </div>
+          </div>
+
+          {/* AnyGuessr */}
+          <div
+            style={{
+              flex: "1 1 280px",
+              display: "block",
+            }}
+          >
+            <Link
+              href="/anyguessr"
+              style={{ textDecoration: "none", display: "block", height: "100%" }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  background: "var(--ag-surface)",
+                  border: "1px solid var(--ag-border)",
+                  borderRadius: "10px",
+                  padding: "28px 24px",
+                  position: "relative",
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  transition: "transform 0.2s, border-color 0.2s",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+                className="stim-hero-card"
+              >
+                <div
+                  style={{
+                    fontSize: "9px",
+                    fontWeight: 600,
+                    letterSpacing: "0.32em",
+                    textTransform: "uppercase",
+                    color: "var(--ag-accent)",
+                    marginBottom: "8px",
+                  }}
+                >
+                  Daily Trivia
+                </div>
+                <h2
+                  style={{
+                    fontSize: "clamp(24px, 4vw, 32px)",
+                    fontWeight: 800,
+                    lineHeight: 0.95,
+                    color: "var(--ag-text)",
+                    margin: "0 0 6px",
+                    letterSpacing: "-0.02em",
+                  }}
+                >
+                  AnyGuessr
+                </h2>
+                <p style={{ ...modeHintStyle, margin: "0 0 10px", color: "var(--ag-muted)" }}>
+                  Solo · Daily + Infinite
+                </p>
+                <p
+                  style={{
+                    fontSize: "12px",
+                    color: "var(--ag-muted)",
+                    lineHeight: 1.55,
+                    margin: "0 0 20px",
+                    fontWeight: 300,
+                    flex: 1,
+                  }}
+                >
+                  Identify a country from cultural clues — environment, food, language, landmark. The fewer clues you reveal, the higher your score.
+                </p>
+                <div
+                  className="stim-text-link"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    color: "var(--ag-accent)",
+                    position: "relative",
+                    zIndex: 2,
+                  }}
+                >
+                  Play today&apos;s puzzle
+                  <span style={{ fontSize: "12px" }}>&#8594;</span>
+                </div>
+              </div>
+            </Link>
+          </div>
+
+          {/* Slippery Slope */}
+          <div
+            style={{
+              flex: "1 1 280px",
+              display: "block",
+            }}
+          >
+            <Link
+              href="/slippery-slope"
+              style={{ textDecoration: "none", display: "block", height: "100%" }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  background: "var(--ss-surface)",
+                  border: "1px solid var(--ss-border)",
+                  borderRadius: "14px",
+                  padding: "28px 24px",
+                  position: "relative",
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  transition: "transform 0.2s, border-color 0.2s",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+                className="stim-hero-card"
+              >
+                <div
+                  style={{
+                    fontSize: "9px",
+                    fontWeight: 600,
+                    letterSpacing: "0.32em",
+                    textTransform: "uppercase",
+                    color: "var(--ss-lime)",
+                    marginBottom: "8px",
+                  }}
+                >
+                  Trivia + Board Game
+                </div>
+                <h2
+                  style={{
+                    fontSize: "clamp(24px, 4vw, 32px)",
+                    fontWeight: 700,
+                    lineHeight: 0.95,
+                    color: "var(--ss-text)",
+                    margin: "0 0 6px",
+                  }}
+                >
+                  Slippery{" "}
+                  <span style={{ color: "var(--ss-lime)" }}>
+                    Slope
+                  </span>
+                </h2>
+                <p style={{ ...modeHintStyle, margin: "0 0 10px" }}>
+                  Solo · Multiplayer
+                </p>
+                <p
+                  style={{
+                    fontSize: "12px",
+                    color: "var(--ss-muted)",
+                    lineHeight: 1.55,
+                    margin: "0 0 20px",
+                    flex: 1,
+                  }}
+                >
+                  Trivia meets Snakes & Ladders. Wager your confidence. Land somewhere you didn&apos;t expect.
+                </p>
+                <div
+                  className="stim-text-link"
+                  style={{
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    color: "var(--ss-lime)",
+                    position: "relative",
+                    zIndex: 2,
+                  }}
+                >
+                  Play Slippery Slope
+                  <span style={{ fontSize: "12px" }}>&#8594;</span>
+                </div>
+              </div>
+            </Link>
           </div>
         </div>
 

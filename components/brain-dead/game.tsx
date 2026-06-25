@@ -345,7 +345,7 @@ export default function BrainDeadGame({
             margin: "0 auto",
           }}
         >
-          <div style={{ marginBottom: "16px" }}>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--bd-text-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
@@ -431,7 +431,7 @@ export default function BrainDeadGame({
   if (screen === "result") {
     return (
       <div className="anim-fade-slide-up" style={{ textAlign: "center", padding: "24px 0" }}>
-        <div style={{ marginBottom: "16px" }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--bd-primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="8" r="7"/>
             <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>

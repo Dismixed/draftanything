@@ -174,7 +174,7 @@ export default function FreeplayPicker() {
               transition: "all 0.15s",
             }}
           >
-            <span style={{ display: "block", marginBottom: "8px" }}>
+            <span style={{ display: "flex", justifyContent: "center", marginBottom: "8px" }}>
               <CategoryIcon id={cat.id} />
             </span>
             {cat.name}
