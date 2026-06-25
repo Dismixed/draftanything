@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useAnyGuessrStore } from "@/lib/anyguessr/store";
 import type { GameMode } from "@/lib/anyguessr/types";
 import { useSound } from "@/lib/audio/sound-context";
@@ -38,6 +39,7 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerKey, setPickerKey] = useState(0);
   const [showResultsOverlay, setShowResultsOverlay] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const {
     loading,
@@ -58,6 +60,10 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
   } = store;
 
   const isOver = status === "won" || status === "surrendered";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!isOver) {
@@ -174,8 +180,7 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
         </div>
       </header>
 
-      {/* Clues + results overlay */}
-      <div style={{ position: "relative", marginBottom: "16px" }}>
+      <div style={{ marginBottom: "16px" }}>
         <ClueViewer
           clues={clues}
           revealedCount={revealedCount}
@@ -183,43 +188,6 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
           puzzleId={puzzleId}
           onNavigate={() => play("ui.tap")}
         />
-
-        {showResultsOverlay && (
-          <div
-            className="anim-fade-slide-up"
-            style={{
-              position: "absolute",
-              inset: 0,
-              zIndex: 10,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "16px",
-              background: "rgba(7, 9, 15, 0.92)",
-              borderRadius: "14px",
-              overflowY: "auto",
-            }}
-          >
-            <Results scoreActive embedded />
-            {mode === "daily" && status === "won" && (
-              <WinStreakLine gameId="anyguessr" accentColor="var(--ag-accent)" />
-            )}
-            {mode === "infinite" && status === "won" && (
-              <div style={{ textAlign: "center", marginTop: "12px", width: "100%" }}>
-                <button
-                  onClick={() => {
-                    play("ui.tap");
-                    void nextRound();
-                  }}
-                  style={primaryBtnStyle}
-                >
-                  Next Round
-                </button>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Feedback banner */}
@@ -317,6 +285,50 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
         onClose={() => setPickerOpen(false)}
         onPick={handlePick}
       />
+
+      {mounted &&
+        showResultsOverlay &&
+        createPortal(
+          <div
+            className="anim-fade-slide-up"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Puzzle results"
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 1000,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "20px",
+              background: "rgba(7, 9, 15, 0.92)",
+              overflowY: "auto",
+            }}
+          >
+            <div style={{ width: "100%", maxWidth: "440px" }}>
+              <Results scoreActive embedded />
+              {mode === "daily" && status === "won" && (
+                <WinStreakLine gameId="anyguessr" accentColor="var(--ag-accent)" />
+              )}
+              {mode === "infinite" && status === "won" && (
+                <div style={{ textAlign: "center", marginTop: "12px", width: "100%" }}>
+                  <button
+                    onClick={() => {
+                      play("ui.tap");
+                      void nextRound();
+                    }}
+                    style={primaryBtnStyle}
+                  >
+                    Next Round
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

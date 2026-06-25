@@ -545,86 +545,111 @@ export default function StimGames() {
               display: "block",
             }}
           >
-            <Link
-              href="/anyguessr"
-              style={{ textDecoration: "none", display: "block", height: "100%" }}
+            <div
+              style={{
+                height: "100%",
+                background: "var(--ag-surface)",
+                border: "1px solid var(--ag-border)",
+                borderRadius: "10px",
+                padding: "28px 24px",
+                position: "relative",
+                overflow: "hidden",
+                cursor: "pointer",
+                transition: "transform 0.2s, border-color 0.2s",
+                display: "flex",
+                flexDirection: "column",
+              }}
+              className="stim-hero-card"
             >
+              <GameCardStreak gameId="anyguessr" accentColor="var(--ag-accent)" />
+              <Link
+                href="/anyguessr"
+                aria-label="AnyGuessr — All modes"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  zIndex: 1,
+                }}
+              />
               <div
                 style={{
-                  height: "100%",
-                  background: "var(--ag-surface)",
-                  border: "1px solid var(--ag-border)",
-                  borderRadius: "10px",
-                  padding: "28px 24px",
-                  position: "relative",
-                  overflow: "hidden",
-                  cursor: "pointer",
-                  transition: "transform 0.2s, border-color 0.2s",
-                  display: "flex",
-                  flexDirection: "column",
+                  fontSize: "9px",
+                  fontWeight: 600,
+                  letterSpacing: "0.32em",
+                  textTransform: "uppercase",
+                  color: "var(--ag-accent)",
+                  marginBottom: "8px",
                 }}
-                className="stim-hero-card"
               >
-                <GameCardStreak gameId="anyguessr" accentColor="var(--ag-accent)" />
-                <div
-                  style={{
-                    fontSize: "9px",
-                    fontWeight: 600,
-                    letterSpacing: "0.32em",
-                    textTransform: "uppercase",
-                    color: "var(--ag-accent)",
-                    marginBottom: "8px",
-                  }}
-                >
-                  Daily Trivia
-                </div>
-                <h2
-                  style={{
-                    fontSize: "clamp(24px, 4vw, 32px)",
-                    fontWeight: 800,
-                    lineHeight: 0.95,
-                    color: "var(--ag-text)",
-                    margin: "0 0 6px",
-                    letterSpacing: "-0.02em",
-                  }}
-                >
-                  AnyGuessr
-                </h2>
-                <p style={{ ...modeHintStyle, margin: "0 0 10px", color: "var(--ag-muted)" }}>
-                  Solo · Daily + Infinite
-                </p>
-                <p
-                  style={{
-                    fontSize: "12px",
-                    color: "var(--ag-muted)",
-                    lineHeight: 1.55,
-                    margin: "0 0 20px",
-                    fontWeight: 300,
-                    flex: 1,
-                  }}
-                >
-                  Identify a country from cultural clues — environment, food, language, landmark. The fewer clues you reveal, the higher your score.
-                </p>
-                <div
+                Daily Trivia
+              </div>
+              <h2
+                style={{
+                  fontSize: "clamp(24px, 4vw, 32px)",
+                  fontWeight: 800,
+                  lineHeight: 0.95,
+                  color: "var(--ag-text)",
+                  margin: "0 0 6px",
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                AnyGuessr
+              </h2>
+              <p style={{ ...modeHintStyle, margin: "0 0 10px", color: "var(--ag-muted)" }}>
+                Solo · Daily + Infinite
+              </p>
+              <p
+                style={{
+                  fontSize: "12px",
+                  color: "var(--ag-muted)",
+                  lineHeight: 1.55,
+                  margin: "0 0 20px",
+                  fontWeight: 300,
+                  flex: 1,
+                }}
+              >
+                Identify a country from cultural clues — environment, food, language, landmark. The fewer clues you reveal, the higher your score.
+              </p>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "16px",
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                  position: "relative",
+                  zIndex: 2,
+                }}
+              >
+                <Link
+                  href="/anyguessr/daily"
                   className="stim-text-link"
                   style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
                     fontSize: "10px",
                     fontWeight: 600,
                     letterSpacing: "0.18em",
                     textTransform: "uppercase",
                     color: "var(--ag-accent)",
-                    position: "relative",
-                    zIndex: 2,
                   }}
                 >
-                  Play today&apos;s puzzle
+                  Today&apos;s puzzle
                   <span style={{ fontSize: "12px" }}>&#8594;</span>
-                </div>
+                </Link>
+                <Link
+                  href="/anyguessr/infinite"
+                  className="stim-text-link"
+                  style={{
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    color: "var(--ag-muted)",
+                  }}
+                >
+                  Infinite
+                  <span style={{ fontSize: "12px" }}>&#8594;</span>
+                </Link>
               </div>
-            </Link>
+            </div>
           </div>
 
           {/* Slippery Slope */}

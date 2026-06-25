@@ -31,5 +31,5 @@ export const GAME_META: Record<
 > = {
   chainlink: { label: "Chainlink", href: "/chainlink/daily" },
   "brain-dead": { label: "Brain Dead", href: "/brain-dead/daily" },
-  anyguessr: { label: "AnyGuessr", href: "/anyguessr" },
+  anyguessr: { label: "AnyGuessr", href: "/anyguessr/daily" },
 };
