@@ -65,32 +65,6 @@ export default function Results({
         {isDaily ? "Daily Complete" : isSurrendered ? "Surrendered" : "Solved"}
       </div>
 
-      {isDaily && store.answer && (
-        <div
-          style={{
-            fontSize: "clamp(28px, 7vw, 40px)",
-            fontWeight: 800,
-            color: "var(--ag-text)",
-            letterSpacing: "-0.02em",
-            marginBottom: "4px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "14px",
-          }}
-        >
-          {store.flagUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={store.flagUrl}
-              alt=""
-              style={{ width: "44px", height: "30px", borderRadius: "4px", objectFit: "cover" }}
-            />
-          ) : null}
-          <span>{store.answer}</span>
-        </div>
-      )}
-
       {isInfinite && (
         <div
           style={{
@@ -118,27 +92,11 @@ export default function Results({
       )}
 
       <div style={{ margin: "20px 0", display: "flex", flexDirection: "column", gap: "10px" }}>
-        <StatRow
-          label="Total Score"
-          value={isWin || (isDaily && isWin) ? `${displayScore}` : isSurrendered ? "0" : `${displayScore}`}
-          highlight={isWin}
-        />
+        <StatRow label="Total Score" value={`${displayScore}`} highlight={isWin} />
 
         {isDaily &&
           store.roundResults.map((round) => (
-            <StatRow
-              key={round.roundIndex}
-              label={
-                DAILY_CLUE_TYPE_LABEL[
-                  round.clueType as keyof typeof DAILY_CLUE_TYPE_LABEL
-                ] ?? round.clueType
-              }
-              value={
-                round.exact
-                  ? `+${round.roundScore} · correct`
-                  : `+${round.roundScore} · ${formatDistanceKm(round.distanceKm)}`
-              }
-            />
+            <DailyRoundRow key={round.roundIndex} round={round} />
           ))}
 
         {isInfinite && (
@@ -151,20 +109,6 @@ export default function Results({
           </>
         )}
       </div>
-
-      {store.funFact && (
-        <div
-          style={{
-            fontSize: "12px",
-            color: "var(--ag-muted)",
-            lineHeight: 1.55,
-            margin: "0 0 20px",
-            fontStyle: "italic",
-          }}
-        >
-          {store.funFact}
-        </div>
-      )}
 
       <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
         {isInfinite ? (
@@ -193,6 +137,92 @@ export default function Results({
           {nextLabel} · {getDateString()}
         </div>
       )}
+    </div>
+  );
+}
+
+function DailyRoundRow({
+  round,
+}: {
+  round: {
+    roundIndex: number;
+    clueType: string;
+    answer: string;
+    flagUrl?: string;
+    roundScore: number;
+    exact: boolean;
+    distanceKm: number;
+  };
+}) {
+  const label =
+    DAILY_CLUE_TYPE_LABEL[round.clueType as keyof typeof DAILY_CLUE_TYPE_LABEL] ??
+    round.clueType;
+  const scoreLabel = round.exact
+    ? `+${round.roundScore}`
+    : `+${round.roundScore} · ${formatDistanceKm(round.distanceKm)}`;
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "8px 14px",
+        background: "var(--ag-surface-hi)",
+        borderRadius: "8px",
+        border: "1px solid var(--ag-border-faint)",
+        gap: "12px",
+      }}
+    >
+      <div style={{ textAlign: "left", minWidth: 0 }}>
+        <div
+          style={{
+            fontSize: "10px",
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: "var(--ag-muted)",
+            marginBottom: "4px",
+          }}
+        >
+          {label}
+        </div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            fontSize: "14px",
+            fontWeight: 700,
+            color: "var(--ag-text)",
+          }}
+        >
+          {round.flagUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={round.flagUrl}
+              alt=""
+              style={{
+                width: "24px",
+                height: "16px",
+                borderRadius: "2px",
+                objectFit: "cover",
+                flexShrink: 0,
+              }}
+            />
+          ) : null}
+          <span>{round.answer}</span>
+        </div>
+      </div>
+      <span
+        style={{
+          fontSize: "13px",
+          fontWeight: 700,
+          color: "var(--ag-accent)",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {scoreLabel}
+      </span>
     </div>
   );
 }

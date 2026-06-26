@@ -13,11 +13,13 @@ import type {
   Puzzle,
 } from "./types";
 import {
-  buildDailyRounds,
+  buildDailyRoundsFromPuzzles,
+  dailySessionId,
   DAILY_ROUND_COUNT,
+  pickDailyPuzzles,
   scoreFromDistanceKm,
 } from "./daily";
-import { distanceBetweenCountriesKm, resolveGuessToCca3 } from "./geo";
+import { getLatLngForCca3, haversineKm, resolveGuessToCca3 } from "./geo";
 import { looseEqual } from "./normalize";
 
 /* ------------------------------------------------------------------ */
@@ -160,49 +162,27 @@ export async function getDailyPuzzle(
   const cached = fallbackDailyCache.get(targetDate);
   if (cached) return cached;
 
-  const { data: scheduled, error: schedError } = await db
-    .from("daily_ag_puzzles")
-    .select("puzzle_id, publish_date")
-    .eq("publish_date", targetDate)
-    .maybeSingle();
+  const { data: approved, error: apprErr } = await db
+    .from("ag_puzzles")
+    .select("*")
+    .in("status", ["approved", "published"])
+    .order("id", { ascending: true })
+    .limit(500);
 
-  if (schedError) throw schedError;
+  if (apprErr) throw apprErr;
+  if (!approved || approved.length < DAILY_ROUND_COUNT) return null;
 
-  const puzzleId = scheduled?.puzzle_id;
-  let puzzle: AgPuzzleRow | null = null;
-
-  if (puzzleId) {
-    const { data, error } = await db
-      .from("ag_puzzles")
-      .select("*")
-      .eq("id", puzzleId)
-      .single();
-    if (error) throw error;
-    puzzle = data as unknown as AgPuzzleRow;
-  } else {
-    const { data: approved, error: apprErr } = await db
-      .from("ag_puzzles")
-      .select("*")
-      .in("status", ["approved", "published"])
-      .order("id", { ascending: true })
-      .limit(500);
-    if (apprErr) throw apprErr;
-    if (!approved || approved.length === 0) return null;
-    const idx = dateStringHash(targetDate) % approved.length;
-    puzzle = approved[idx] as unknown as AgPuzzleRow;
-  }
-
-  if (!puzzle) return null;
+  const rows = approved as unknown as AgPuzzleRow[];
+  const picked = pickDailyPuzzles(rows, targetDate);
 
   const clientPuzzle: ClientDailyPuzzle = {
-    id: puzzle.id,
+    id: dailySessionId(targetDate),
     date: targetDate,
     mode: "daily",
-    answer_type: puzzle.answer_type,
-    region: puzzle.region ?? undefined,
+    answer_type: "country",
     totalRounds: DAILY_ROUND_COUNT,
-    rounds: buildDailyRounds(puzzle.clues ?? []),
-    difficulty: puzzle.difficulty ?? undefined,
+    rounds: buildDailyRoundsFromPuzzles(picked),
+    difficulty: "medium",
   };
   fallbackDailyCache.set(targetDate, clientPuzzle);
   return clientPuzzle;
@@ -291,11 +271,18 @@ export async function validateDailyGuess(
     looseEqual(guess, row.answer) ||
     (row.alt_answers ?? []).some((a) => looseEqual(guess, a));
 
-  const guessCca3 = (await resolveGuessToCca3(guess)) ?? "___";
+  const guessCca3 = resolveGuessToCca3(guess);
+  const answerCoords = getLatLngForCca3(answerCca3);
+  const guessCoords = guessCca3 ? getLatLngForCca3(guessCca3) : null;
+
   const distanceKm =
-    guessCca3 === "___"
+    !guessCca3 || !answerCoords
       ? 20_000
-      : await distanceBetweenCountriesKm(guessCca3, answerCca3);
+      : guessCca3 === answerCca3
+        ? 0
+        : guessCoords
+          ? haversineKm(guessCoords, answerCoords)
+          : 20_000;
 
   const roundScore = scoreFromDistanceKm(distanceKm);
   const completed = roundIndex >= DAILY_ROUND_COUNT - 1;
@@ -307,10 +294,14 @@ export async function validateDailyGuess(
     distanceKm,
     roundScore,
     completed,
-    funFact: completed
-      ? ((row.metadata?.fun_fact as string | undefined) ?? null)
-      : null,
-    flagUrl: completed ? row.flag_url : null,
+    funFact: null,
+    flagUrl: row.flag_url,
+    answerLat: answerCoords?.[0] ?? 0,
+    answerLng: answerCoords?.[1] ?? 0,
+    guessLat: guessCoords?.[0] ?? null,
+    guessLng: guessCoords?.[1] ?? null,
+    answerCca3,
+    guessCca3,
   };
 }
 

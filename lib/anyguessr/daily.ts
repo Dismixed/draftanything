@@ -1,4 +1,4 @@
-import type { Clue, ClientClue } from "./types";
+import type { Clue, ClientClue, ClientDailyRound } from "./types";
 
 /** Fixed order for daily rounds — one clue type per round. */
 export const DAILY_ROUND_CLUE_TYPES = [
@@ -23,12 +23,6 @@ export const DAILY_CLUE_TYPE_LABEL: Record<DailyRoundClueType, string> = {
   environment: "Environment",
 };
 
-export interface ClientDailyRound {
-  roundIndex: number;
-  clueType: DailyRoundClueType;
-  clue: ClientClue;
-}
-
 /**
  * Points decay with geographic distance. Exact match (≤25 km) earns full round score.
  */
@@ -44,6 +38,10 @@ export function formatDistanceKm(distanceKm: number): string {
   if (distanceKm < 1) return "0 km";
   if (distanceKm < 100) return `${Math.round(distanceKm)} km`;
   return `${Math.round(distanceKm).toLocaleString()} km`;
+}
+
+export function dailySessionId(date: string): string {
+  return `daily-${date}`;
 }
 
 function redactClueForClient(clue: Clue): ClientClue {
@@ -62,21 +60,76 @@ function redactClueForClient(clue: Clue): ClientClue {
   };
 }
 
-export function buildDailyRounds(clues: Clue[]): ClientDailyRound[] {
-  const byType = new Map<string, Clue>();
-  for (const clue of clues) {
-    if (!byType.has(clue.type)) byType.set(clue.type, clue);
+export function buildDailyRound(
+  puzzle: { id: string; clues: Clue[] },
+  clueType: DailyRoundClueType,
+  roundIndex: number,
+): ClientDailyRound {
+  const source = (puzzle.clues ?? []).find((c) => c.type === clueType);
+  if (!source) {
+    throw new Error(`Puzzle ${puzzle.id} missing clue type: ${clueType}`);
+  }
+  return {
+    roundIndex,
+    puzzleId: puzzle.id,
+    clueType,
+    clue: redactClueForClient(source),
+  };
+}
+
+interface DailyPickSource {
+  id: string;
+  clues: Clue[];
+}
+
+/** Deterministically pick N unique puzzles for a daily session. */
+export function pickDailyPuzzles<T extends DailyPickSource>(
+  approved: T[],
+  date: string,
+): T[] {
+  if (approved.length < DAILY_ROUND_COUNT) {
+    throw new Error(
+      `Need at least ${DAILY_ROUND_COUNT} approved puzzles for daily mode`,
+    );
   }
 
-  return DAILY_ROUND_CLUE_TYPES.map((clueType, roundIndex) => {
-    const source = byType.get(clueType);
-    if (!source) {
-      throw new Error(`Daily puzzle missing clue type: ${clueType}`);
+  const used = new Set<string>();
+  const picks: T[] = [];
+
+  for (const clueType of DAILY_ROUND_CLUE_TYPES) {
+    let found = false;
+    for (let attempt = 0; attempt < approved.length; attempt++) {
+      const idx = dateRoundHash(date, clueType, attempt) % approved.length;
+      const candidate = approved[idx];
+      if (!used.has(candidate.id)) {
+        used.add(candidate.id);
+        picks.push(candidate);
+        found = true;
+        break;
+      }
     }
-    return {
-      roundIndex,
-      clueType,
-      clue: redactClueForClient(source),
-    };
-  });
+    if (!found) {
+      throw new Error(`Could not pick ${DAILY_ROUND_COUNT} unique daily puzzles`);
+    }
+  }
+
+  return picks;
+}
+
+function dateRoundHash(date: string, clueType: string, attempt: number): number {
+  let h = 0x811c9dc5;
+  const input = `${date}:${clueType}:${attempt}`;
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+
+export function buildDailyRoundsFromPuzzles(
+  puzzles: DailyPickSource[],
+): ClientDailyRound[] {
+  return DAILY_ROUND_CLUE_TYPES.map((clueType, roundIndex) =>
+    buildDailyRound(puzzles[roundIndex], clueType, roundIndex),
+  );
 }

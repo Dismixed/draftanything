@@ -15,6 +15,7 @@ import ClueViewer from "./clue-viewer";
 import CountryPicker from "./country-picker";
 import ProgressDots from "./progress-dots";
 import Results from "./results";
+import RoundRecap from "./round-recap";
 
 interface Props {
   mode?: GameMode;
@@ -67,27 +68,28 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
 
   const dailyRound = isDaily ? store.dailyRounds[store.currentRound] : null;
   const roundsComplete = isDaily ? store.roundResults.length : 0;
+  const showRoundRecap = isDaily && !!store.roundRecap;
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (!isOver) {
+    if (!isOver || showRoundRecap) {
       setShowResultsOverlay(false);
       return;
     }
-    const timer = setTimeout(() => setShowResultsOverlay(true), isDaily ? 1400 : 1000);
+    const timer = setTimeout(() => setShowResultsOverlay(true), isDaily ? 400 : 1000);
     return () => clearTimeout(timer);
-  }, [isOver, isDaily]);
+  }, [isOver, isDaily, showRoundRecap]);
 
   useEffect(() => {
     if (status !== "won" || celebratedRef.current) return;
-    if (isDaily && store.roundResults.every((r) => !r.exact)) return;
+    if (isDaily && !isOver) return;
     celebratedRef.current = true;
     play("win");
     void fireConfetti("gold");
-  }, [status, play, isDaily, store.roundResults]);
+  }, [status, play, isDaily, isOver]);
 
   useEffect(() => {
     if (status === "playing") {
@@ -105,12 +107,16 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
   }, [mode, initPuzzle]);
 
   useEffect(() => {
-    if (!feedback) return;
+    if (!feedback || showRoundRecap) return;
     const delay =
-      feedback.type === "correct" ? 1500 : feedback.type === "round" ? 1800 : 2200;
+      feedback.type === "correct"
+        ? 1500
+        : feedback.type === "wrong"
+          ? 2200
+          : 2200;
     const t = setTimeout(() => clearFeedback(), delay);
     return () => clearTimeout(t);
-  }, [feedback, clearFeedback]);
+  }, [feedback, clearFeedback, showRoundRecap]);
 
   const handlePick = (name: string) => {
     setPickerOpen(false);
@@ -183,7 +189,7 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
           }}
         >
           {isDaily
-            ? "Five rounds — guess the country from each clue"
+            ? "Five countries — one clue each. Score by how close you guess."
             : `Guess the ${store.answerType ?? "country"} from cultural clues`}
         </p>
 
@@ -233,42 +239,48 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
         ) : null}
       </div>
 
-      {feedback && (
+      {feedback && !showRoundRecap && (
         <div
-          className="anim-pop-in"
+          className={
+            isDaily && !isOver && feedback.type === "round" ? undefined : "anim-pop-in"
+          }
           style={{
             textAlign: "center",
-            padding: "10px 14px",
-            marginBottom: "16px",
-            fontSize: "13px",
-            fontWeight: 600,
+            padding: isDaily && !isOver ? "6px 10px" : "10px 14px",
+            marginBottom: isDaily && !isOver ? "12px" : "16px",
+            fontSize: isDaily && !isOver ? "11px" : "13px",
+            fontWeight: isDaily && !isOver ? 500 : 600,
             color:
               feedback.type === "correct"
                 ? "var(--ag-accent)"
                 : feedback.type === "wrong"
                   ? "#ff6b6b"
-                  : "var(--ag-text)",
+                  : "var(--ag-muted)",
             background:
               feedback.type === "correct"
                 ? "rgba(224,168,88,0.08)"
                 : feedback.type === "wrong"
                   ? "rgba(255,107,107,0.08)"
-                  : "var(--ag-surface-hi)",
+                  : isDaily && !isOver
+                    ? "transparent"
+                    : "var(--ag-surface-hi)",
             border: `1px solid ${
               feedback.type === "correct"
                 ? "rgba(224,168,88,0.2)"
                 : feedback.type === "wrong"
                   ? "rgba(255,107,107,0.18)"
-                  : "var(--ag-border)"
+                  : isDaily && !isOver
+                    ? "var(--ag-border-faint)"
+                    : "var(--ag-border)"
             }`,
-            borderRadius: "8px",
+            borderRadius: isDaily && !isOver ? "6px" : "8px",
           }}
         >
           {feedback.message}
         </div>
       )}
 
-      {!isOver && (
+      {!isOver && !showRoundRecap && (
         <div
           style={{
             display: "flex",
@@ -335,6 +347,42 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
         onClose={() => setPickerOpen(false)}
         onPick={handlePick}
       />
+
+      {mounted &&
+        showRoundRecap &&
+        store.roundRecap &&
+        createPortal(
+          <div
+            className="anim-fade-slide-up"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Round results"
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 1000,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "20px",
+              background: "rgba(7, 9, 15, 0.92)",
+              overflowY: "auto",
+            }}
+          >
+            <div style={{ width: "100%", maxWidth: "440px" }}>
+              <RoundRecap
+                recap={store.roundRecap}
+                totalScore={store.totalScore}
+                onContinue={() => {
+                  play("ui.tap");
+                  store.continueDailyRound();
+                }}
+              />
+            </div>
+          </div>,
+          document.body,
+        )}
 
       {mounted &&
         showResultsOverlay &&

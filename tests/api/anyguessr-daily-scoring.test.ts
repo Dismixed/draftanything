@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   DAILY_MAX_ROUND_SCORE,
+  DAILY_ROUND_COUNT,
   formatDistanceKm,
+  pickDailyPuzzles,
   scoreFromDistanceKm,
 } from "@/lib/anyguessr/daily";
-import { haversineKm } from "@/lib/anyguessr/geo";
+import { haversineKm, resolveGuessToCca3, distanceBetweenCountriesKm } from "@/lib/anyguessr/country-geo";
+import { boundsForPoints, equirectangularViewBox, projectLatLng } from "@/lib/anyguessr/map-projection";
 
 describe("AnyGuessr daily scoring", () => {
   it("awards full round score at zero distance", () => {
@@ -26,6 +29,21 @@ describe("AnyGuessr daily scoring", () => {
   });
 });
 
+describe("country geo lookup", () => {
+  it("resolves picker country names to cca3", () => {
+    expect(resolveGuessToCca3("France")).toBe("FRA");
+    expect(resolveGuessToCca3("United States")).toBe("USA");
+    expect(resolveGuessToCca3("South Korea")).toBe("KOR");
+  });
+
+  it("scores nearby countries with non-zero points", () => {
+    const km = distanceBetweenCountriesKm("FRA", "DEU");
+    expect(km).toBeGreaterThan(0);
+    expect(km).toBeLessThan(1000);
+    expect(scoreFromDistanceKm(km)).toBeGreaterThan(0);
+  });
+});
+
 describe("AnyGuessr haversineKm", () => {
   it("returns zero for identical coordinates", () => {
     expect(haversineKm([48.8566, 2.3522], [48.8566, 2.3522])).toBe(0);
@@ -35,5 +53,42 @@ describe("AnyGuessr haversineKm", () => {
     const km = haversineKm([48.8566, 2.3522], [51.5074, -0.1278]);
     expect(km).toBeGreaterThan(300);
     expect(km).toBeLessThan(400);
+  });
+});
+
+describe("map projection", () => {
+  it("builds a viewBox that contains both points", () => {
+    const bounds = boundsForPoints(
+      { lat: 48.85, lng: 2.35 },
+      { lat: 51.5, lng: -0.12 },
+    );
+    const [x, y, w, h] = equirectangularViewBox(bounds, 720, 360).split(" ").map(Number);
+    const paris = projectLatLng(48.85, 2.35, 720, 360);
+    const london = projectLatLng(51.5, -0.12, 720, 360);
+    expect(paris.x).toBeGreaterThanOrEqual(x);
+    expect(paris.x).toBeLessThanOrEqual(x + w);
+    expect(london.y).toBeGreaterThanOrEqual(y);
+    expect(london.y).toBeLessThanOrEqual(y + h);
+  });
+});
+
+describe("pickDailyPuzzles", () => {
+  const pool = Array.from({ length: 12 }, (_, i) => ({
+    id: `puzzle-${i}`,
+    clues: [],
+  }));
+
+  it("picks five unique puzzles deterministically per date", () => {
+    const a = pickDailyPuzzles(pool, "2026-06-25");
+    const b = pickDailyPuzzles(pool, "2026-06-25");
+    expect(a).toHaveLength(DAILY_ROUND_COUNT);
+    expect(b.map((p) => p.id)).toEqual(a.map((p) => p.id));
+    expect(new Set(a.map((p) => p.id)).size).toBe(DAILY_ROUND_COUNT);
+  });
+
+  it("picks a different set for a different date", () => {
+    const a = pickDailyPuzzles(pool, "2026-06-25").map((p) => p.id);
+    const b = pickDailyPuzzles(pool, "2026-06-26").map((p) => p.id);
+    expect(a).not.toEqual(b);
   });
 });

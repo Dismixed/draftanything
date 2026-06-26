@@ -5,8 +5,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import {
   DAILY_ROUND_COUNT,
-  formatDistanceKm,
 } from "./daily";
+import { isValidLatLng } from "./map-projection";
 import {
   MIN_SCORE,
   REVEAL_PENALTY,
@@ -19,6 +19,7 @@ import {
   type ClientDailyRound,
   type ClientPuzzle,
   type DailyGuessResult,
+  type DailyRoundRecap,
   type DailyRoundResult,
   type GameMode,
   type GuessResult,
@@ -50,6 +51,7 @@ interface PersistedData {
   currentRound: number;
   roundResults: DailyRoundResult[];
   totalScore: number;
+  roundRecap: DailyRoundRecap | null;
 }
 
 export interface AnyGuessrStore extends PersistedData {
@@ -64,6 +66,7 @@ export interface AnyGuessrStore extends PersistedData {
   revealNextClue: () => void;
   submitGuess: (guess: string) => Promise<void>;
   submitDailyGuess: (guess: string) => Promise<void>;
+  continueDailyRound: () => void;
   advanceDailyRound: () => void;
   surrender: () => Promise<void>;
   nextRound: () => Promise<void>;
@@ -79,6 +82,22 @@ function getDateString(d: Date = new Date()): string {
 
 function isToday(dateStr: string | undefined | null): boolean {
   return !!dateStr && dateStr === getDateString();
+}
+
+function hasValidDailyRounds(rounds: ClientDailyRound[]): boolean {
+  return (
+    rounds.length === DAILY_ROUND_COUNT &&
+    rounds.every((r) => typeof r.puzzleId === "string" && r.puzzleId.length > 0)
+  );
+}
+
+function isResumableDailyState(s: PersistedData): boolean {
+  return (
+    s.mode === "daily" &&
+    isToday(s.date) &&
+    hasValidDailyRounds(s.dailyRounds) &&
+    (s.status === "playing" || s.status === "won")
+  );
 }
 
 function buildInitialState(mode: GameMode = "daily"): PersistedData {
@@ -103,6 +122,7 @@ function buildInitialState(mode: GameMode = "daily"): PersistedData {
     currentRound: 0,
     roundResults: [],
     totalScore: 0,
+    roundRecap: null,
   };
 }
 
@@ -127,7 +147,6 @@ function buildStateFromDailyPuzzle(puzzle: ClientDailyPuzzle): PersistedData {
     puzzleId: puzzle.id,
     date: puzzle.date,
     answerType: puzzle.answer_type,
-    region: puzzle.region,
     dailyRounds: puzzle.rounds,
     startTime: Date.now(),
   };
@@ -216,7 +235,7 @@ export const useAnyGuessrStore = create<AnyGuessrStore>()(
 
       initPuzzle: async (mode: GameMode) => {
         const s = get();
-        if (mode === "daily" && isDailyState(s) && s.puzzleId && isToday(s.date)) {
+        if (mode === "daily" && isResumableDailyState(s)) {
           return;
         }
         if (mode === "infinite" && isInfiniteState(s) && s.puzzleId && s.status === "playing") {
@@ -324,12 +343,28 @@ export const useAnyGuessrStore = create<AnyGuessrStore>()(
 
       submitDailyGuess: async (guess: string) => {
         const s = get();
-        if (!isDailyState(s) || s.status !== "playing" || !s.puzzleId) return;
+        if (!isDailyState(s) || s.status !== "playing") return;
         const trimmed = guess.trim();
         if (!trimmed) return;
 
         const round = s.dailyRounds[s.currentRound];
-        if (!round) return;
+        if (!round?.puzzleId) {
+          set({
+            feedback: {
+              type: "info",
+              message: "Refreshing today's puzzle…",
+            },
+          });
+          await get().initPuzzle("daily");
+          const refreshed = get().dailyRounds[get().currentRound];
+          if (!refreshed?.puzzleId) {
+            set({ feedback: { type: "info", message: "Couldn't load a puzzle. Try again." } });
+            return;
+          }
+        }
+
+        const activeRound = get().dailyRounds[get().currentRound];
+        if (!activeRound?.puzzleId) return;
 
         let res: DailyGuessResult;
         try {
@@ -337,9 +372,9 @@ export const useAnyGuessrStore = create<AnyGuessrStore>()(
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              puzzleId: s.puzzleId,
+              puzzleId: activeRound.puzzleId,
               guess: trimmed,
-              roundIndex: s.currentRound,
+              roundIndex: get().currentRound,
             }),
           });
           if (!r.ok) {
@@ -354,49 +389,62 @@ export const useAnyGuessrStore = create<AnyGuessrStore>()(
         }
 
         const roundResult: DailyRoundResult = {
-          roundIndex: s.currentRound,
-          clueType: round.clueType,
+          roundIndex: get().currentRound,
+          clueType: activeRound.clueType,
+          puzzleId: activeRound.puzzleId,
           guess: res.guess,
           answer: res.answer,
           distanceKm: res.distanceKm,
           roundScore: res.roundScore,
           exact: res.exact,
+          flagUrl: res.flagUrl ?? undefined,
         };
 
-        const roundResults = [...s.roundResults, roundResult];
-        const totalScore = s.totalScore + res.roundScore;
-        const message = res.exact
-          ? `Correct! +${res.roundScore} pts`
-          : `${formatDistanceKm(res.distanceKm)} away · +${res.roundScore} pts`;
-
-        if (res.completed) {
-          set({
-            roundResults,
-            totalScore,
-            status: "won",
-            answer: res.answer,
-            flagUrl: res.flagUrl ?? undefined,
-            funFact: res.funFact ?? undefined,
-            feedback: {
-              type: res.exact ? "correct" : "round",
-              message,
-              scoreDelta: res.roundScore,
-            },
-          });
-          void postDailyAttempt(s, totalScore, roundResults.length);
-          return;
-        }
+        const roundResults = [...get().roundResults, roundResult];
+        const totalScore = get().totalScore + res.roundScore;
+        const currentRound = get().currentRound;
+        const isLastRound = currentRound >= DAILY_ROUND_COUNT - 1;
 
         set({
           roundResults,
           totalScore,
-          currentRound: s.currentRound + 1,
-          feedback: {
-            type: res.exact ? "correct" : "round",
-            message,
-            scoreDelta: res.roundScore,
+          roundRecap: {
+            roundIndex: currentRound,
+            clueType: activeRound.clueType,
+            guess: res.guess,
+            answer: res.answer,
+            distanceKm: res.distanceKm,
+            roundScore: res.roundScore,
+            exact: res.exact,
+            flagUrl: res.flagUrl ?? undefined,
+            answerLat: res.answerLat,
+            answerLng: res.answerLng,
+            guessLat: res.guessLat,
+            guessLng: res.guessLng,
+            answerCca3: res.answerCca3,
+            guessCca3: res.guessCca3,
+            isFinalRound: isLastRound,
           },
+          feedback: null,
         });
+      },
+
+      continueDailyRound: () => {
+        const s = get();
+        if (!isDailyState(s) || !s.roundRecap) return;
+
+        const isFinal = s.roundRecap.isFinalRound;
+        set({
+          roundRecap: null,
+          feedback: null,
+          ...(isFinal
+            ? { status: "won" as const }
+            : { currentRound: s.currentRound + 1 }),
+        });
+
+        if (isFinal) {
+          void postDailyAttempt(get(), get().totalScore, get().roundResults.length);
+        }
       },
 
       advanceDailyRound: () => {
@@ -489,11 +537,28 @@ export const useAnyGuessrStore = create<AnyGuessrStore>()(
         currentRound: s.currentRound,
         roundResults: s.roundResults,
         totalScore: s.totalScore,
+        roundRecap: s.roundRecap,
       }),
-      merge: (persisted, current) => ({
-        ...current,
-        ...(persisted as PersistedData),
-      }),
+      merge: (persisted, current) => {
+        const merged = {
+          ...current,
+          ...(persisted as PersistedData),
+        };
+        if (merged.mode === "daily" && !hasValidDailyRounds(merged.dailyRounds)) {
+          return {
+            ...current,
+            ...buildInitialState("daily"),
+          };
+        }
+        if (
+          merged.roundRecap &&
+          (!isValidLatLng(merged.roundRecap.answerLat, merged.roundRecap.answerLng) ||
+            !merged.roundRecap.answerCca3)
+        ) {
+          merged.roundRecap = null;
+        }
+        return merged;
+      },
     },
   ),
 );

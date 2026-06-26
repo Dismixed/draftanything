@@ -107,7 +107,7 @@ export default function AnyGuessrPage() {
                 Today&apos;s Puzzle
               </div>
               <div style={{ fontSize: "10px", color: "var(--ag-muted)" }}>
-                Five rounds. Closer guesses score more. Same country for everyone.
+                Five countries, five clue types. Closer guesses score more.
               </div>
             </div>
           </Link>

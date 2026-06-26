@@ -103,17 +103,18 @@ export interface ClientPuzzle {
 
 export interface ClientDailyRound {
   roundIndex: number;
+  puzzleId: string;
   clueType: string;
   clue: ClientClue;
 }
 
-/** Daily mode payload — five single-clue rounds for the same country. */
+/** Daily mode payload — five rounds, each a different country and clue type. */
 export interface ClientDailyPuzzle {
+  /** Composite id for the daily session, e.g. `daily-2026-06-25`. */
   id: string;
   date: string;
   mode: "daily";
   answer_type: AnswerType;
-  region?: string;
   totalRounds: number;
   rounds: ClientDailyRound[];
   difficulty?: string;
@@ -122,11 +123,13 @@ export interface ClientDailyPuzzle {
 export interface DailyRoundResult {
   roundIndex: number;
   clueType: string;
+  puzzleId: string;
   guess: string;
   answer: string;
   distanceKm: number;
   roundScore: number;
   exact: boolean;
+  flagUrl?: string;
 }
 
 export interface ClientClue {
@@ -198,14 +201,38 @@ export interface DailyGuessResult {
   answer: string;
   distanceKm: number;
   roundScore: number;
-  /** True when the player has finished all daily rounds. */
   completed: boolean;
   funFact: string | null;
   flagUrl: string | null;
+  answerLat: number;
+  answerLng: number;
+  guessLat: number | null;
+  guessLng: number | null;
+  answerCca3: string;
+  guessCca3: string | null;
+}
+
+/** Shown after each daily guess until the player taps Continue. */
+export interface DailyRoundRecap {
+  roundIndex: number;
+  clueType: string;
+  guess: string;
+  answer: string;
+  distanceKm: number;
+  roundScore: number;
+  exact: boolean;
+  flagUrl?: string;
+  answerLat: number;
+  answerLng: number;
+  guessLat: number | null;
+  guessLng: number | null;
+  answerCca3: string;
+  guessCca3: string | null;
+  isFinalRound: boolean;
 }
 
 /* ------------------------------------------------------------------ */
 /*  Persisted client slice (zustand persist)                          */
 /* ------------------------------------------------------------------ */
 
-export const STORAGE_VERSION = "anyguessr-v2";
+export const STORAGE_VERSION = "anyguessr-v4";

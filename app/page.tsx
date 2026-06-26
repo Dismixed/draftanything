@@ -608,7 +608,7 @@ export default function StimGames() {
                   flex: 1,
                 }}
               >
-                Identify a country across five daily rounds — landmark, language, person, food, and environment. Score points by how close your guess is.
+                Five daily rounds — each a different country. Landmark, language, person, food, environment. Score points by how close your guess is.
               </p>
               <div
                 style={{
