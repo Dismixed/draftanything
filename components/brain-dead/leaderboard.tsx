@@ -44,7 +44,7 @@ export default function Leaderboard() {
   return (
     <div style={{ width: "100%", margin: "0 auto", position: "relative" }}>
       <header style={{ position: "relative", marginBottom: "24px" }}>
-        <GameBackLink href="/brain-dead" color="var(--bd-text-muted)" />
+        <GameBackLink color="var(--bd-text-muted)" />
       </header>
       <div style={{ textAlign: "center", marginBottom: "24px" }}>
         <p

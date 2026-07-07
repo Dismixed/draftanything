@@ -4,22 +4,16 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { DAILY_CLUE_TYPE_LABEL, DAILY_ROUND_COUNT } from "@/lib/anyguessr/daily";
 import { useAnyGuessrStore } from "@/lib/anyguessr/store";
-import type { GameMode } from "@/lib/anyguessr/types";
 import { useSound } from "@/lib/audio/sound-context";
 import { fireConfetti } from "@/lib/motion/confetti";
 import { GameBackLink } from "@/components/ui/game-back-link";
 import { SoundToggle } from "@/components/ui/sound-toggle";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
 import ClueCard from "./clue-card";
-import ClueViewer from "./clue-viewer";
 import CountryPicker from "./country-picker";
 import ProgressDots from "./progress-dots";
 import Results from "./results";
 import RoundRecap from "./round-recap";
-
-interface Props {
-  mode?: GameMode;
-}
 
 function getDateString(d: Date = new Date()): string {
   const y = d.getFullYear();
@@ -37,7 +31,7 @@ function formatDate(dateStr: string): string {
   });
 }
 
-export default function AnyGuessrGame({ mode = "daily" }: Props) {
+export default function AnyGuessrGame() {
   const store = useAnyGuessrStore();
   const { play } = useSound();
   const celebratedRef = useRef(false);
@@ -46,29 +40,17 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
   const [showResultsOverlay, setShowResultsOverlay] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  const isDaily = mode === "daily" && store.mode === "daily";
-  const isInfinite = mode === "infinite" && store.mode === "infinite";
-
   const loading = store.loading;
   const date = store.date;
   const status = store.status;
   const feedback = store.feedback;
-  const puzzleId = store.puzzleId;
   const initPuzzle = store.initPuzzle;
-  const clearFeedback = store.clearFeedback;
-  const nextRound = store.nextRound;
 
-  const isOver = isDaily
-    ? status === "won"
-    : isInfinite
-      ? status === "won" || status === "surrendered"
-      : false;
-
-  const displayScore = isDaily ? store.totalScore : isInfinite ? store.score : 0;
-
-  const dailyRound = isDaily ? store.dailyRounds[store.currentRound] : null;
-  const roundsComplete = isDaily ? store.roundResults.length : 0;
-  const showRoundRecap = isDaily && !!store.roundRecap;
+  const isOver = status === "won";
+  const displayScore = store.totalScore;
+  const dailyRound = store.dailyRounds[store.currentRound] ?? null;
+  const roundsComplete = store.roundResults.length;
+  const showRoundRecap = !!store.roundRecap;
 
   useEffect(() => {
     setMounted(true);
@@ -79,17 +61,17 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
       setShowResultsOverlay(false);
       return;
     }
-    const timer = setTimeout(() => setShowResultsOverlay(true), isDaily ? 400 : 1000);
+    const timer = setTimeout(() => setShowResultsOverlay(true), 400);
     return () => clearTimeout(timer);
-  }, [isOver, isDaily, showRoundRecap]);
+  }, [isOver, showRoundRecap]);
 
   useEffect(() => {
     if (status !== "won" || celebratedRef.current) return;
-    if (isDaily && !isOver) return;
+    if (!isOver) return;
     celebratedRef.current = true;
     play("win");
     void fireConfetti("gold");
-  }, [status, play, isDaily, isOver]);
+  }, [status, play, isOver]);
 
   useEffect(() => {
     if (status === "playing") {
@@ -98,13 +80,13 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
   }, [status]);
 
   useEffect(() => {
-    const hydrate = () => initPuzzle(mode);
+    const hydrate = () => initPuzzle();
     if (useAnyGuessrStore.persist.hasHydrated()) {
       hydrate();
     } else {
       return useAnyGuessrStore.persist.onFinishHydration(hydrate);
     }
-  }, [mode, initPuzzle]);
+  }, [initPuzzle]);
 
   useEffect(() => {
     if (!feedback || showRoundRecap) return;
@@ -114,24 +96,17 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
         : feedback.type === "wrong"
           ? 2200
           : 2200;
-    const t = setTimeout(() => clearFeedback(), delay);
+    const t = setTimeout(() => store.clearFeedback(), delay);
     return () => clearTimeout(t);
-  }, [feedback, clearFeedback, showRoundRecap]);
+  }, [feedback, store, showRoundRecap]);
 
   const handlePick = (name: string) => {
     setPickerOpen(false);
     play("ui.tap");
-    if (isDaily) {
-      void store.submitDailyGuess(name);
-      return;
-    }
-    void store.submitGuess(name);
+    void store.submitDailyGuess(name);
   };
 
-  const isLoading =
-    loading ||
-    (isDaily && store.dailyRounds.length === 0) ||
-    (isInfinite && store.clues.length === 0);
+  const isLoading = loading || store.dailyRounds.length === 0;
 
   if (isLoading) {
     return (
@@ -188,9 +163,7 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
             letterSpacing: "0.04em",
           }}
         >
-          {isDaily
-            ? "Five countries — one clue each. Score by how close you guess."
-            : `Guess the ${store.answerType ?? "country"} from cultural clues`}
+          Nine countries — one clue each. Score by how close you guess.
         </p>
 
         <div
@@ -202,17 +175,24 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
           }}
         >
           <ScorePill value={displayScore} />
-          {mode === "daily" && (
-            <span style={{ fontSize: "11px", color: "var(--ag-muted)" }}>
-              {formatDate(date || getDateString())}
-            </span>
-          )}
-          <ModeTag mode={mode} />
+          <span style={{ fontSize: "11px", color: "var(--ag-muted)" }}>
+            {formatDate(date || getDateString())}
+          </span>
+          <span
+            style={{
+              fontSize: "10px",
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: "var(--ag-muted)",
+            }}
+          >
+            Daily
+          </span>
         </div>
       </header>
 
       <div style={{ marginBottom: "16px" }}>
-        {isDaily && dailyRound ? (
+        {dailyRound ? (
           <>
             <ClueCard
               clue={dailyRound.clue}
@@ -228,28 +208,18 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
               />
             </div>
           </>
-        ) : isInfinite ? (
-          <ClueViewer
-            clues={store.clues}
-            revealedCount={store.revealedCount}
-            totalClues={store.totalClues}
-            puzzleId={puzzleId}
-            onNavigate={() => play("ui.tap")}
-          />
         ) : null}
       </div>
 
       {feedback && !showRoundRecap && (
         <div
-          className={
-            isDaily && !isOver && feedback.type === "round" ? undefined : "anim-pop-in"
-          }
+          className={!isOver && feedback.type === "round" ? undefined : "anim-pop-in"}
           style={{
             textAlign: "center",
-            padding: isDaily && !isOver ? "6px 10px" : "10px 14px",
-            marginBottom: isDaily && !isOver ? "12px" : "16px",
-            fontSize: isDaily && !isOver ? "11px" : "13px",
-            fontWeight: isDaily && !isOver ? 500 : 600,
+            padding: !isOver ? "6px 10px" : "10px 14px",
+            marginBottom: !isOver ? "12px" : "16px",
+            fontSize: !isOver ? "11px" : "13px",
+            fontWeight: !isOver ? 500 : 600,
             color:
               feedback.type === "correct"
                 ? "var(--ag-accent)"
@@ -261,7 +231,7 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
                 ? "rgba(224,168,88,0.08)"
                 : feedback.type === "wrong"
                   ? "rgba(255,107,107,0.08)"
-                  : isDaily && !isOver
+                  : !isOver
                     ? "transparent"
                     : "var(--ag-surface-hi)",
             border: `1px solid ${
@@ -269,11 +239,11 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
                 ? "rgba(224,168,88,0.2)"
                 : feedback.type === "wrong"
                   ? "rgba(255,107,107,0.18)"
-                  : isDaily && !isOver
+                  : !isOver
                     ? "var(--ag-border-faint)"
                     : "var(--ag-border)"
             }`,
-            borderRadius: isDaily && !isOver ? "6px" : "8px",
+            borderRadius: !isOver ? "6px" : "8px",
           }}
         >
           {feedback.message}
@@ -300,50 +270,28 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
             Guess Country
           </button>
 
-          {isInfinite && (
-            <div style={{ display: "flex", gap: "10px" }}>
-              <button
-                onClick={() => {
-                  play("ui.tap");
-                  store.revealNextClue();
-                }}
-                disabled={store.revealedCount >= store.totalClues}
-                style={{
-                  ...secondaryBtnStyle,
-                  flex: 1,
-                  opacity: store.revealedCount >= store.totalClues ? 0.4 : 1,
-                  cursor:
-                    store.revealedCount >= store.totalClues ? "not-allowed" : "pointer",
-                }}
-              >
-                {store.revealedCount >= store.totalClues
-                  ? "All clues revealed"
-                  : "Reveal Next Clue"}
-              </button>
-              <button
-                onClick={() => {
-                  play("ui.tap");
-                  if (confirm("Give up? Your score will reset to 0.")) {
-                    void store.surrender();
-                  }
-                }}
-                style={{
-                  ...secondaryBtnStyle,
-                  flex: 1,
-                  color: "#ff6b6b",
-                  borderColor: "rgba(255,107,107,0.18)",
-                }}
-              >
-                Give Up
-              </button>
-            </div>
-          )}
+          <button
+            onClick={() => {
+              play("ui.tap");
+              if (confirm("Give up this round? You'll score 0 points.")) {
+                void store.surrender();
+              }
+            }}
+            style={{
+              ...secondaryBtnStyle,
+              color: "#ff6b6b",
+              borderColor: "rgba(255,107,107,0.18)",
+            }}
+          >
+            Give Up
+          </button>
         </div>
       )}
 
       <CountryPicker
         key={pickerKey}
         open={pickerOpen}
+        roundKey={store.currentRound}
         onClose={() => setPickerOpen(false)}
         onPick={handlePick}
       />
@@ -407,21 +355,8 @@ export default function AnyGuessrGame({ mode = "daily" }: Props) {
           >
             <div style={{ width: "100%", maxWidth: "440px" }}>
               <Results scoreActive embedded />
-              {mode === "daily" && status === "won" && (
+              {status === "won" && (
                 <WinStreakLine gameId="anyguessr" accentColor="var(--ag-accent)" />
-              )}
-              {mode === "infinite" && status === "won" && (
-                <div style={{ textAlign: "center", marginTop: "12px", width: "100%" }}>
-                  <button
-                    onClick={() => {
-                      play("ui.tap");
-                      void nextRound();
-                    }}
-                    style={primaryBtnStyle}
-                  >
-                    Next Round
-                  </button>
-                </div>
               )}
             </div>
           </div>,
@@ -448,21 +383,6 @@ function ScorePill({ value }: { value: number }) {
     >
       Score: {value}
     </div>
-  );
-}
-
-function ModeTag({ mode }: { mode: GameMode }) {
-  return (
-    <span
-      style={{
-        fontSize: "10px",
-        letterSpacing: "0.18em",
-        textTransform: "uppercase",
-        color: "var(--ag-muted)",
-      }}
-    >
-      {mode === "daily" ? "Daily" : "Infinite"}
-    </span>
   );
 }
 

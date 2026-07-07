@@ -408,8 +408,13 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
 
   const [hintAnim, setHintAnim] = useState(false);
   const [showCompleteOverlay, setShowCompleteOverlay] = useState(false);
+  const [showFailOverlay, setShowFailOverlay] = useState(false);
+  const failCelebratedRef = useRef(false);
+  const savedFailRef = useRef(false);
 
   const isComplete = gameStatus === "completed";
+  const isFailed = gameStatus === "failed";
+  const isOver = isComplete || isFailed;
 
   // Initialize after persist rehydration so puzzle is not stuck loading.
   useEffect(() => {
@@ -446,19 +451,53 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
   }, [isComplete, puzzleId, mode]);
 
   useEffect(() => {
+    if (!isFailed || failCelebratedRef.current) return;
+    failCelebratedRef.current = true;
+    play("wrong");
+  }, [isFailed, play]);
+
+  useEffect(() => {
+    if (!isFailed || savedFailRef.current) return;
+    savedFailRef.current = true;
+    fetch("/api/chain/attempt", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        puzzleId,
+        mode,
+        completed: false,
+      }),
+    }).catch(() => {});
+  }, [isFailed, puzzleId, mode]);
+
+  useEffect(() => {
     if (!isComplete) {
       completeCelebratedRef.current = false;
       savedAttemptRef.current = false;
       setShowCompleteOverlay(false);
-      return;
     }
-    const timer = setTimeout(() => setShowCompleteOverlay(true), 1000);
+    if (!isFailed) {
+      failCelebratedRef.current = false;
+      savedFailRef.current = false;
+      setShowFailOverlay(false);
+    }
+    if (!isComplete && !isFailed) return;
+
+    if (isComplete) {
+      const timer = setTimeout(() => setShowCompleteOverlay(true), 1000);
+      return () => clearTimeout(timer);
+    }
+
+    const timer = setTimeout(() => setShowFailOverlay(true), 600);
     return () => clearTimeout(timer);
-  }, [isComplete]);
+  }, [isComplete, isFailed]);
 
   useEffect(() => {
     if (feedback) {
-      const delay = feedback.type === "correct" ? 1500 : 2000;
+      const delay =
+        feedback.type === "correct" ? 1500
+        : feedback.type === "hint" ? 1800
+        : 2000;
       const timer = setTimeout(() => clearFeedback(), delay);
       return () => clearTimeout(timer);
     }
@@ -543,7 +582,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
 
         </header>
 
-        {!isComplete && (
+        {!isOver && (
           <div className="cl-hint-banner" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginBottom: "24px", padding: "10px 16px", background: "rgba(106,170,100,0.08)", border: "1px solid rgba(106,170,100,0.2)", borderRadius: "6px" }}>
             <span style={{ fontSize: "14px", color: "#6aaa64", opacity: 0.7 }}>&#9670;</span>
             <span style={{ fontSize: "11px", color: "#787c7e", letterSpacing: "0.04em" }}>
@@ -604,6 +643,82 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
             </div>
           )}
 
+          {showFailOverlay && (
+            <div
+              className="anim-fade-slide-up"
+              style={{
+                position: "absolute",
+                inset: 0,
+                zIndex: 10,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "16px",
+                background: "rgba(18, 18, 19, 0.92)",
+                borderRadius: "6px",
+              }}
+            >
+              <div
+                style={{
+                  width: "100%",
+                  padding: "28px 24px",
+                  textAlign: "center",
+                  border: "2px solid #ff6b6b",
+                  background: "#1a1a1b",
+                  borderRadius: "6px",
+                }}
+              >
+                <div style={{ fontSize: "32px", marginBottom: "8px" }}>&#10007;</div>
+                <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#ff6b6b", margin: "0 0 8px" }}>
+                  Out of Hints
+                </h2>
+                <p style={{ fontSize: "12px", color: "#787c7e", margin: "0 0 20px" }}>
+                  The full chain was:
+                </p>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "center", marginBottom: "20px" }}>
+                  {puzzleWords.slice(1).map((w, i) => (
+                    <span
+                      key={i}
+                      style={{
+                        fontSize: "13px",
+                        padding: "6px 14px",
+                        background: "#3a3a3c",
+                        borderRadius: "6px",
+                        color: "#ff6b6b",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {formatPair(puzzleWords[i], w)}
+                    </span>
+                  ))}
+                </div>
+
+                <div style={{ fontSize: "11px", color: "#787c7e", marginBottom: "16px" }}>
+                  Come back tomorrow for a new puzzle!
+                </div>
+
+                <Link
+                  href="/"
+                  style={{
+                    display: "inline-block",
+                    marginTop: "8px",
+                    textDecoration: "none",
+                    background: "#565758",
+                    color: "#ffffff",
+                    padding: "10px 24px",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    borderRadius: "6px",
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  &larr; Back
+                </Link>
+              </div>
+            </div>
+          )}
+
           {showCompleteOverlay && (
             <div
               className="anim-fade-slide-up"
@@ -652,31 +767,40 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                   ))}
                 </div>
 
-                <div style={{ fontSize: "11px", color: "#787c7e", marginBottom: "16px" }}>
+                <div style={{ fontSize: "11px", color: "#787c7e", marginBottom: "4px" }}>
                   Come back tomorrow for a new puzzle!
                 </div>
 
-                {mode === "daily" && (
-                  <WinStreakLine gameId="chainlink" accentColor="#6aaa64" />
-                )}
-
-                <Link
-                  href="/"
+                <div
                   style={{
-                    display: "inline-block",
-                    marginTop: "20px",
-                    textDecoration: "none",
-                    background: "#565758",
-                    color: "#ffffff",
-                    padding: "10px 24px",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    borderRadius: "6px",
-                    letterSpacing: "0.04em",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "28px",
+                    marginTop: "16px",
                   }}
                 >
-                  &larr; Back
-                </Link>
+                  {mode === "daily" && (
+                    <WinStreakLine gameId="chainlink" accentColor="#6aaa64" />
+                  )}
+
+                  <Link
+                    href="/"
+                    style={{
+                      display: "inline-block",
+                      textDecoration: "none",
+                      background: "#565758",
+                      color: "#ffffff",
+                      padding: "10px 24px",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      borderRadius: "6px",
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    &larr; Back
+                  </Link>
+                </div>
               </div>
             </div>
           )}
@@ -693,9 +817,19 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
               marginBottom: "16px",
               fontSize: "13px",
               fontWeight: 600,
-              color: feedback.type === "correct" ? "#6aaa64" : "#ff6b6b",
-              background: feedback.type === "correct" ? "rgba(106,170,100,0.1)" : "rgba(255,107,107,0.08)",
-              border: `1px solid ${feedback.type === "correct" ? "rgba(106,170,100,0.25)" : "rgba(255,107,107,0.2)"}`,
+              color:
+                feedback.type === "correct" ? "#6aaa64"
+                : feedback.type === "hint" ? "#c9b458"
+                : "#ff6b6b",
+              background:
+                feedback.type === "correct" ? "rgba(106,170,100,0.1)"
+                : feedback.type === "hint" ? "rgba(201,180,88,0.1)"
+                : "rgba(255,107,107,0.08)",
+              border: `1px solid ${
+                feedback.type === "correct" ? "rgba(106,170,100,0.25)"
+                : feedback.type === "hint" ? "rgba(201,180,88,0.25)"
+                : "rgba(255,107,107,0.2)"
+              }`,
               borderRadius: "6px",
               transition: "opacity 0.3s ease",
             }}

@@ -26,11 +26,20 @@ interface Props {
 
 const MAP_HEIGHT = 260;
 
+const BASEMAP_URL =
+  "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png";
+
 const MAP_LABEL_TILES =
   "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png";
 
 const LABEL_ATTRIBUTION =
   'Labels &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+
+const BASEMAP_ATTRIBUTION = `&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>. ${LABEL_ATTRIBUTION}`;
+
+const MAP_BACKGROUND = "#e8eef4";
+const BORDER_COLOR = "#64748b";
+const BORDER_OPACITY = 0.28;
 
 const COUNTRY_GEOJSON_BASE =
   "https://raw.githubusercontent.com/johan/world.geo.json/master/countries";
@@ -39,69 +48,16 @@ const WORLD_COUNTRY_BORDERS_URL = "/anyguessr/world-countries-110m.geojson";
 
 let worldBordersCache: GeoJSON.GeoJsonObject | null = null;
 
-type BasemapId = "voyager" | "terrain" | "satellite" | "light";
-
-interface BasemapConfig {
-  id: BasemapId;
-  label: string;
-  url: string;
-  subdomains?: string;
-  attribution: string;
-  background: string;
-  borderColor: string;
-  borderOpacity: number;
-}
-
-const BASEMAPS: Record<BasemapId, BasemapConfig> = {
-  voyager: {
-    id: "voyager",
-    label: "Colorful",
-    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png",
-    subdomains: "abcd",
-    attribution: `&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>. ${LABEL_ATTRIBUTION}`,
-    background: "#e8eef4",
-    borderColor: "#64748b",
-    borderOpacity: 0.28,
-  },
-  terrain: {
-    id: "terrain",
-    label: "Terrain",
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}",
-    attribution:
-      "Tiles &copy; Esri &mdash; US National Park Service, USGS, NOAA, and others. " +
-      LABEL_ATTRIBUTION,
-    background: "#d4e6f1",
-    borderColor: "#475569",
-    borderOpacity: 0.3,
-  },
-  satellite: {
-    id: "satellite",
-    label: "Satellite",
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    attribution:
-      "Imagery &copy; Esri, Maxar, Earthstar Geographics, and the GIS User Community. " +
-      LABEL_ATTRIBUTION,
-    background: "#1e293b",
-    borderColor: "#e2e8f0",
-    borderOpacity: 0.38,
-  },
-  light: {
-    id: "light",
-    label: "Light",
-    url: "https://{s}.basemaps.cartocdn.com/rastertiles/light_nolabels/{z}/{x}/{y}{r}.png",
-    subdomains: "abcd",
-    attribution: `&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>. ${LABEL_ATTRIBUTION}`,
-    background: "#f1f5f9",
-    borderColor: "#94a3b8",
-    borderOpacity: 0.32,
-  },
-};
-
-const DEFAULT_BASEMAP: BasemapId = "voyager";
-
 const ANSWER_FILL = "#34d399";
 const ANSWER_STROKE = "#10b981";
 const GUESS_PIN = "#f87171";
+
+const WORLD_BORDER_STYLE = {
+  fillOpacity: 0,
+  color: BORDER_COLOR,
+  weight: 0.65,
+  opacity: BORDER_OPACITY,
+};
 
 function guessPinIcon() {
   return L.divIcon({
@@ -134,13 +90,7 @@ function FitMapToPoints({
   return null;
 }
 
-function WorldCountryBorders({
-  borderColor,
-  borderOpacity,
-}: {
-  borderColor: string;
-  borderOpacity: number;
-}) {
+function WorldCountryBorders() {
   const [data, setData] = useState<GeoJSON.GeoJsonObject | null>(worldBordersCache);
 
   useEffect(() => {
@@ -158,17 +108,7 @@ function WorldCountryBorders({
 
   if (!data) return null;
 
-  return (
-    <GeoJSON
-      data={data}
-      style={() => ({
-        fillOpacity: 0,
-        color: borderColor,
-        weight: 0.65,
-        opacity: borderOpacity,
-      })}
-    />
-  );
+  return <GeoJSON data={data} style={WORLD_BORDER_STYLE} />;
 }
 
 function AnswerCountryHighlight({ cca3 }: { cca3: string }) {
@@ -214,8 +154,6 @@ export default function GuessMapLeaflet({
   answerLabel,
   guessLabel,
 }: Props) {
-  const [basemapId, setBasemapId] = useState<BasemapId>(DEFAULT_BASEMAP);
-  const basemap = BASEMAPS[basemapId];
   const guessIcon = useMemo(() => guessPinIcon(), []);
 
   if (!isValidLatLng(answerLat, answerLng)) {
@@ -256,7 +194,7 @@ export default function GuessMapLeaflet({
         borderRadius: "10px",
         overflow: "hidden",
         border: "1px solid #1d2440",
-        background: basemap.background,
+        background: MAP_BACKGROUND,
       }}
     >
       <MapContainer
@@ -267,22 +205,18 @@ export default function GuessMapLeaflet({
         maxZoom={12}
         scrollWheelZoom
         worldCopyJump
-        style={{ height: MAP_HEIGHT, width: "100%", background: basemap.background }}
+        style={{ height: MAP_HEIGHT, width: "100%", background: MAP_BACKGROUND }}
         attributionControl
       >
         <TileLayer
-          key={basemap.id}
-          url={basemap.url}
-          subdomains={basemap.subdomains}
-          attribution={basemap.attribution}
+          url={BASEMAP_URL}
+          subdomains="abcd"
+          attribution={BASEMAP_ATTRIBUTION}
           maxZoom={16}
         />
 
         <AnswerCountryHighlight cca3={answerCca3} />
-        <WorldCountryBorders
-          borderColor={basemap.borderColor}
-          borderOpacity={basemap.borderOpacity}
-        />
+        <WorldCountryBorders />
 
         <TileLayer
           url={MAP_LABEL_TILES}
@@ -320,8 +254,9 @@ export default function GuessMapLeaflet({
       <div
         style={{
           display: "flex",
-          flexDirection: "column",
-          gap: "8px",
+          justifyContent: "center",
+          flexWrap: "wrap",
+          gap: "12px 16px",
           padding: "8px 12px",
           fontSize: "10px",
           color: "#707790",
@@ -329,60 +264,29 @@ export default function GuessMapLeaflet({
           background: "#0b0e1c",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexWrap: "wrap",
-            gap: "6px",
-          }}
-        >
-          <span style={{ color: "#505870", marginRight: "2px" }}>Map style</span>
-          {(Object.keys(BASEMAPS) as BasemapId[]).map((id) => (
-            <button
-              key={id}
-              type="button"
-              className={`ag-map-basemap-btn${basemapId === id ? " ag-map-basemap-btn-active" : ""}`}
-              onClick={() => setBasemapId(id)}
-            >
-              {BASEMAPS[id].label}
-            </button>
-          ))}
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            flexWrap: "wrap",
-            gap: "12px 16px",
-          }}
-        >
+        <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <span
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: "2px",
+              background: ANSWER_FILL,
+              border: `1px solid ${ANSWER_STROKE}`,
+              display: "inline-block",
+            }}
+          />
+          Correct country
+        </span>
+        {showGuessPin && (
           <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <span
-              style={{
-                width: 10,
-                height: 10,
-                borderRadius: "2px",
-                background: ANSWER_FILL,
-                border: `1px solid ${ANSWER_STROKE}`,
-                display: "inline-block",
-              }}
+              className="ag-map-pin-guess ag-map-pin-legend"
+              aria-hidden
             />
-            Correct country
+            Your guess
           </span>
-          {showGuessPin && (
-            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span
-                className="ag-map-pin-guess ag-map-pin-legend"
-                aria-hidden
-              />
-              Your guess
-            </span>
-          )}
-          <span style={{ color: "#505870" }}>Drag or scroll to explore</span>
-        </div>
+        )}
+        <span style={{ color: "#505870" }}>Drag or scroll to explore</span>
       </div>
     </div>
   );

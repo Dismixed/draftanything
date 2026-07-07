@@ -32,14 +32,14 @@ const SoundContext = createContext<SoundContextValue | null>(null);
 
 export function SoundProvider({ children }: { children: React.ReactNode }) {
   const [unlocked, setUnlocked] = useState(false);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(true);
   const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     try {
-      setMuted(localStorage.getItem(STORAGE_KEY) === "true");
+      setMuted(localStorage.getItem(STORAGE_KEY) !== "false");
     } catch {
-      setMuted(false);
+      setMuted(true);
     }
   }, []);
 

@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { CategoryId, GameMode, Question } from "@/lib/brain-dead/types";
+import { appendUniqueQuestions } from "@/lib/brain-dead/trivia-api";
+import {
+  loadSeenQuestionIds,
+  recordSeenQuestionIds,
+} from "@/lib/brain-dead/seen-questions";
 import {
   TIMER_MAX,
   LETTERS,
@@ -58,6 +63,7 @@ export default function BrainDeadGame({
   const [fetchError, setFetchError] = useState<string | null>(null);
   const loadingRef = useRef(false);
   const tokenRef = useRef("");
+  const seenIdsRef = useRef<string[]>([]);
   const { play } = useSound();
   const questionCardRef = useRef<HTMLDivElement>(null);
   const lastTickSecondRef = useRef<number | null>(null);
@@ -155,23 +161,37 @@ export default function BrainDeadGame({
   /*  Fetch questions — freeplay (batched, token-managed)                */
   /* ------------------------------------------------------------------ */
 
-  const fetchMoreQuestions = useCallback(async () => {
+  const fetchMoreQuestions = useCallback(async (initial = false) => {
     if (loadingRef.current) return;
     if (fetchError) return;
     loadingRef.current = true;
     setFetchError(null);
     try {
-      const params = new URLSearchParams({ count: "20" });
+      const params = new URLSearchParams({
+        count: initial ? "50" : "20",
+      });
       if (category !== "random") params.set("category", category);
       if (tokenRef.current) params.set("token", tokenRef.current);
+      const seen = seenIdsRef.current.length
+        ? seenIdsRef.current
+        : loadSeenQuestionIds(category);
+      seenIdsRef.current = seen;
+      if (seen.length) params.set("seen", seen.join(","));
 
       const res = await fetch(`/api/brain-dead/questions?${params}`);
       if (!res.ok) throw new Error("Failed to fetch questions");
       const data = await res.json();
 
       if (data.questions?.length) {
-        setQuestions((prev) => [...prev, ...data.questions]);
+        const incomingIds = data.questions
+          .map((q: Question & { id?: string }) => q.id)
+          .filter((id: string | undefined): id is string => Boolean(id));
+        seenIdsRef.current = recordSeenQuestionIds(category, incomingIds);
+
+        setQuestions((prev) => appendUniqueQuestions(prev, data.questions));
         tokenRef.current = data.token ?? tokenRef.current;
+      } else if (initial) {
+        setFetchError("No new questions available. Try a different category.");
       }
     } catch {
       setFetchError("Could not load more questions. Check your connection.");
@@ -201,7 +221,8 @@ export default function BrainDeadGame({
     setFetchError(null);
     tokenRef.current = "";
     loadingRef.current = false;
-  }, [clearTimers]);
+    void fetchMoreQuestions(true);
+  }, [clearTimers, fetchMoreQuestions]);
 
   useEffect(() => {
     let cancelled = false;
@@ -230,11 +251,15 @@ export default function BrainDeadGame({
           if (!cancelled) setFetchError("Could not load daily questions.");
         });
     } else {
+      seenIdsRef.current = loadSeenQuestionIds(category);
       beginGame([]);
+      void fetchMoreQuestions(true);
     }
 
     return () => { cancelled = true; clearTimers(); };
-  }, [isDaily, beginGame, clearTimers]);
+    // Initial freeplay load only — refills use the prefetch effect below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDaily, category]);
 
   useEffect(() => {
     if (screen === "game" && q && answered === "idle") {
@@ -306,6 +331,7 @@ export default function BrainDeadGame({
     if (isDaily) return;
     if (screen !== "game") return;
     if (fetchError) return;
+    if (questions.length === 0) return;
 
     const remaining = questions.length - qi;
     if (remaining <= 5) {
@@ -649,7 +675,7 @@ export default function BrainDeadGame({
             </>
           )}
           <Link
-            href="/brain-dead"
+            href="/"
             style={{
               textDecoration: "none",
               background: "var(--bd-surface)",

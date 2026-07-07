@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      ag_country_aliases: {
+        Row: {
+          alias: string
+          cca3: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          alias: string
+          cca3: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          alias?: string
+          cca3?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       ag_puzzle_attempts: {
         Row: {
           clues_revealed: number
@@ -128,6 +149,60 @@ export type Database = {
           score?: number
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      ag_seed_entries: {
+        Row: {
+          cca3: string
+          clue_type: string
+          country_common: string
+          created_at: string
+          id: string
+          image_candidates: Json
+          notes: string | null
+          proposed_by: string | null
+          selected_candidate_index: number
+          status: string
+          text_content: string | null
+          updated_at: string
+          vision_notes: string | null
+          vision_pass: boolean | null
+          wiki_title: string | null
+        }
+        Insert: {
+          cca3: string
+          clue_type: string
+          country_common: string
+          created_at?: string
+          id?: string
+          image_candidates?: Json
+          notes?: string | null
+          proposed_by?: string | null
+          selected_candidate_index?: number
+          status?: string
+          text_content?: string | null
+          updated_at?: string
+          vision_notes?: string | null
+          vision_pass?: boolean | null
+          wiki_title?: string | null
+        }
+        Update: {
+          cca3?: string
+          clue_type?: string
+          country_common?: string
+          created_at?: string
+          id?: string
+          image_candidates?: Json
+          notes?: string | null
+          proposed_by?: string | null
+          selected_candidate_index?: number
+          status?: string
+          text_content?: string | null
+          updated_at?: string
+          vision_notes?: string | null
+          vision_pass?: boolean | null
+          wiki_title?: string | null
         }
         Relationships: []
       }

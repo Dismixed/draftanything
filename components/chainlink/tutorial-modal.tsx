@@ -168,8 +168,9 @@ export default function TutorialModal() {
                   Stuck? Use a Hint
                 </div>
                 <p style={{ fontSize: "12px", color: "#787c7e", margin: 0, lineHeight: 1.6 }}>
-                  Each hint reveals one letter of the current word (<strong style={{ color: "#ff6b6b" }}>-25 pts</strong>).
-                  You get 3 hints per puzzle.
+                  Wrong guesses won&apos;t reveal letters — only hints do. Each hint reveals one
+                  letter of the current word. You get 3 hints for the whole puzzle; use them all
+                  without finishing and you lose.
                 </p>
               </div>
             </div>

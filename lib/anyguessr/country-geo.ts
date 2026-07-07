@@ -32,6 +32,10 @@ export function getLatLngForCca3(cca3: string): [number, number] | null {
   return byCca3.get(cca3)?.latlng ?? null;
 }
 
+export function getNameForCca3(cca3: string): string | null {
+  return byCca3.get(cca3)?.name ?? null;
+}
+
 export function getLatLngForIso2(iso2: string): [number, number] | null {
   return byCca2.get(iso2.toUpperCase())?.latlng ?? null;
 }

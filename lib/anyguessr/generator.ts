@@ -2,24 +2,26 @@
  * AnyGuessr online generator.
  *
  * Pipeline:
- *   1. Fetch country metadata from REST Countries (cached per process).
- *   2. For each seed entry, resolve the curated Wikipedia page titles
- *      (environment / person / food / landmark) into Commons image URLs via
- *      the Wikipedia REST `page/summary` endpoint, which returns a thumbnail
- *      + original image URL pair per article.
- *   3. Assemble a Clue[] in difficulty order (hardest → easiest) and persist
- *      via the puzzle-service.
- *
- * If external APIs are unreachable, the generator falls back to writing the
- * seed as fixtures with no media (the written-language clue still makes the
- * puzzle solvable).
+ *   1. Load approved seed entries from ag_seed_entries (fallback: seed.ts).
+ *   2. Fetch country metadata from REST Countries (cached, retry/backoff).
+ *   3. Resolve image candidates (DB-stored or Wikipedia + Commons search).
+ *   4. Assemble Clue[] and persist via puzzle-service.
  */
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import type { AnswerType, Clue } from "./types";
-import { SEED, type SeedEntry } from "./seed";
+import { fetchWithRetry } from "./async-pool";
+import { expandAltAnswers } from "./country-aliases";
+import { resolveImageCandidates, resolveTitlesToCandidates } from "./image-sourcing";
+import {
+  buildCoverageReport,
+  imageAltsFor,
+  loadCountrySeedBundles,
+  type CountrySeedBundle,
+} from "./seed-db";
+import type { GenerateCoverageReport, ImageCandidate, SeedEntryRow } from "./seed-types";
+import type { AnswerType, Clue, ClueImageOption } from "./types";
 import { upsertPuzzleByAnswer } from "./puzzle-service";
 
 export interface GenerateResult {
@@ -29,6 +31,7 @@ export interface GenerateResult {
   clues: number;
   ok: boolean;
   error?: string;
+  gaps?: GenerateCoverageReport["gaps"];
 }
 
 export interface GenerateAllResult {
@@ -36,14 +39,16 @@ export interface GenerateAllResult {
   succeeded: number;
   failed: number;
   results: GenerateResult[];
+  coverage: GenerateCoverageReport;
 }
 
-/* ------------------------------------------------------------------ */
-/*  REST Countries                                                     */
-/* ------------------------------------------------------------------ */
-
 const REST_COUNTRIES_ALL_URL =
-  "https://restcountries.com/v3.1/all?fields=cca3,name,region,flags,altSpellings,demonyms,languages";
+  "https://restcountries.com/v3.1/all?fields=cca3,name,region,flags,altSpellings,demonyms,languages,currencies";
+
+interface RestCurrency {
+  name: string;
+  symbol?: string;
+}
 
 interface RestCountry {
   cca3: string;
@@ -52,6 +57,7 @@ interface RestCountry {
   flags: { png?: string; svg?: string; alt?: string };
   altSpellings?: string[];
   languages?: Record<string, string>;
+  currencies?: Record<string, RestCurrency>;
 }
 
 let restCountriesCache: RestCountry[] | null = null;
@@ -59,8 +65,7 @@ let restCountriesCache: RestCountry[] | null = null;
 async function fetchRestCountries(): Promise<RestCountry[]> {
   if (restCountriesCache) return restCountriesCache;
   try {
-    const res = await fetch(REST_COUNTRIES_ALL_URL, {
-      headers: { Accept: "application/json" },
+    const res = await fetchWithRetry(REST_COUNTRIES_ALL_URL, {
       next: { revalidate: 86_400 },
     });
     if (!res.ok) throw new Error(`REST Countries ${res.status}`);
@@ -73,70 +78,51 @@ async function fetchRestCountries(): Promise<RestCountry[]> {
   return restCountriesCache;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Wikipedia REST page/summary                                        */
-/* ------------------------------------------------------------------ */
-
-interface WikiSummary {
-  title: string;
-  thumbnail?: { source: string; width: number; height: number };
-  originalimage?: { source: string; width: number; height: number };
-  content_urls?: { page: string };
-  extract?: string;
+function candidatesToOptions(
+  candidates: ImageCandidate[],
+  label: string,
+): ClueImageOption[] {
+  return candidates.map((c) => ({
+    image_url: c.image_url,
+    thumb_url: c.thumb_url ?? c.image_url,
+    source: c.source,
+    source_url: c.source_url,
+    label,
+    license: c.license,
+    artist: c.artist,
+    credit: c.credit,
+  }));
 }
-
-async function fetchWikiSummary(title: string): Promise<WikiSummary | null> {
-  const url =
-    "https://en.wikipedia.org/api/rest_v1/page/summary/" +
-    encodeURIComponent(title.replace(/ /g, "_"));
-  try {
-    const res = await fetch(url, {
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "Stim-Labs-AnyGuessr/1.0 (https://stimlabs.games)",
-      },
-      next: { revalidate: 604_800 },
-    });
-    if (!res.ok) return null;
-    return (await res.json()) as WikiSummary;
-  } catch {
-    return null;
-  }
-}
-
-/* ------------------------------------------------------------------ */
-/*  Clue assembly                                                      */
-/* ------------------------------------------------------------------ */
 
 function buildImageClue(
   type: string,
-  wiki: WikiSummary | null,
+  label: string,
+  candidates: ImageCandidate[],
   difficultyRank: number,
-  fallbackTitle: string,
 ): Clue {
-  const image = wiki?.originalimage?.source ?? wiki?.thumbnail?.source;
-  const thumb = wiki?.thumbnail?.source ?? image;
+  const options = candidatesToOptions(candidates, label);
+  const primary = options[0];
   return {
     type,
-    content: fallbackTitle, // alt-text fallback — never displayed to player
+    content: label,
     difficulty_rank: difficultyRank,
     metadata: {
-      image_url: image,
-      thumb_url: thumb,
+      image_url: primary?.image_url,
+      thumb_url: primary?.thumb_url,
       alt_text: `${type} clue photo`,
-      source: wiki?.title,
-      source_url: wiki?.content_urls?.page,
+      source: primary?.source,
+      source_url: primary?.source_url,
       hide_label: true,
-      label: fallbackTitle,
+      label,
+      image_options: options,
+      license: primary?.license,
+      artist: primary?.artist,
+      credit: primary?.credit,
     },
   };
 }
 
-function buildTextClue(
-  type: string,
-  text: string,
-  difficultyRank: number,
-): Clue {
+function buildTextClue(type: string, text: string, difficultyRank: number): Clue {
   return {
     type,
     content: text,
@@ -145,115 +131,214 @@ function buildTextClue(
   };
 }
 
-/* ------------------------------------------------------------------ */
-/*  One country → one puzzle                                           */
-/* ------------------------------------------------------------------ */
+function buildFlagClue(meta: RestCountry | undefined, difficultyRank: number): Clue {
+  const imageUrl = meta?.flags?.svg ?? meta?.flags?.png;
+  return {
+    type: "flag",
+    content: "",
+    difficulty_rank: difficultyRank,
+    metadata: {
+      image_url: imageUrl,
+      thumb_url: meta?.flags?.png ?? imageUrl,
+      alt_text: meta?.flags?.alt ?? "national flag",
+      hide_label: true,
+    },
+  };
+}
 
-export async function generatePuzzleForCountry(
+function currencyTextFromMeta(meta: RestCountry | undefined): string {
+  const entries = Object.entries(meta?.currencies ?? {});
+  if (entries.length === 0) return "?";
+  const [code, info] = entries[0];
+  return info.symbol?.trim() || info.name?.trim() || code;
+}
+
+async function candidatesForEntry(
+  bundle: CountrySeedBundle,
+  entry: SeedEntryRow,
+): Promise<ImageCandidate[]> {
+  if (entry.image_candidates.length > 0) {
+    const idx = Math.min(
+      entry.selected_candidate_index,
+      entry.image_candidates.length - 1,
+    );
+    const selected = entry.image_candidates[idx];
+    const rest = entry.image_candidates.filter((_, i) => i !== idx);
+    return [selected, ...rest].filter(Boolean);
+  }
+
+  const extras = imageAltsFor(bundle.cca3, entry.clue_type);
+  const titles = Array.from(
+    new Set([entry.wiki_title, ...extras].filter((t): t is string => !!t)),
+  );
+
+  if (titles.length > 0) {
+    const fromTitles = await resolveTitlesToCandidates(entry.clue_type, titles);
+    if (fromTitles.length > 0) return fromTitles;
+  }
+
+  return resolveImageCandidates({
+    clueType: entry.clue_type,
+    country: bundle.common,
+    wikiTitle: entry.wiki_title,
+    extraTitles: extras,
+  });
+}
+
+async function buildClueForEntry(
+  bundle: CountrySeedBundle,
+  entry: SeedEntryRow,
+  meta: RestCountry | undefined,
+  rank: number,
+): Promise<{ clue: Clue; gap?: GenerateCoverageReport["gaps"][number] }> {
+  if (entry.clue_type === "written_language") {
+    const text = entry.text_content?.trim() ?? "";
+    return { clue: buildTextClue("written_language", text, rank) };
+  }
+
+  const label = entry.wiki_title ?? entry.clue_type;
+  const candidates = await candidatesForEntry(bundle, entry);
+  if (candidates.length === 0) {
+    if (entry.clue_type === "currency") {
+      return {
+        clue: buildTextClue("currency", currencyTextFromMeta(meta), rank),
+      };
+    }
+    return {
+      clue: buildImageClue(entry.clue_type, label, [], rank),
+      gap: {
+        cca3: bundle.cca3,
+        country: bundle.common,
+        clueType: entry.clue_type,
+        issue: "missing_image",
+        wikiTitle: entry.wiki_title,
+      },
+    };
+  }
+
+  return { clue: buildImageClue(entry.clue_type, label, candidates, rank) };
+}
+
+const CLUE_RANKS: Record<string, number> = {
+  flag: 1,
+  currency: 2,
+  jersey: 3,
+  brand: 4,
+  environment: 5,
+  person: 6,
+  food: 7,
+  written_language: 8,
+  landmark: 9,
+};
+
+export async function generatePuzzleForBundle(
   db: SupabaseClient<Database>,
-  seed: SeedEntry,
+  bundle: CountrySeedBundle,
   restCountries: RestCountry[],
 ): Promise<GenerateResult> {
-  const meta = restCountries.find((c) => c.cca3 === seed.cca3);
+  const meta = restCountries.find((c) => c.cca3 === bundle.cca3);
+  const gaps: GenerateCoverageReport["gaps"] = [];
 
-  const [env, person, food, landmark] = await Promise.all([
-    fetchWikiSummary(seed.environment),
-    fetchWikiSummary(seed.person),
-    fetchWikiSummary(seed.food),
-    fetchWikiSummary(seed.landmark),
-  ]);
+  const clues: Clue[] = [buildFlagClue(meta, CLUE_RANKS.flag)];
+  if (!clues[0].metadata?.image_url) {
+    gaps.push({
+      cca3: bundle.cca3,
+      country: bundle.common,
+      clueType: "flag",
+      issue: "missing_image",
+    });
+  }
 
-  const clues: Clue[] = [
-    buildImageClue("environment", env, 1, seed.environment),
-    buildImageClue("person", person, 2, seed.person),
-    buildImageClue("food", food, 3, seed.food),
-    buildTextClue("written_language", seed.written_language, 4),
-    buildImageClue("landmark", landmark, 5, seed.landmark),
-  ];
+  for (const entry of bundle.entries) {
+    const rank = CLUE_RANKS[entry.clue_type] ?? 5;
+    const built = await buildClueForEntry(bundle, entry, meta, rank);
+    clues.push(built.clue);
+    if (built.gap) gaps.push(built.gap);
+  }
 
+  const env = clues.find((c) => c.type === "environment");
   const funFact =
-    !!env?.extract && env.extract.length > 40
-      ? env.extract.split(".")[0] + "."
-      : `${seed.common} is part of the ${seed.region} region.`;
+    env?.metadata?.source && typeof env.metadata.source === "string"
+      ? `${bundle.common} is home to sights like ${env.metadata.source}.`
+      : `${bundle.common} is part of the ${bundle.region} region.`;
 
-  const alt = meta?.altSpellings ?? [];
-  const altNormalised = Array.from(
+  const altBase = Array.from(
     new Set(
-      [meta?.name.common, meta?.name.official, ...alt].filter(
+      [meta?.name.common, meta?.name.official, ...(meta?.altSpellings ?? [])].filter(
         (v): v is string => !!v,
       ),
     ),
   );
+  const altNormalised = await expandAltAnswers(db, bundle.cca3, altBase);
 
   try {
     const puzzleId = await upsertPuzzleByAnswer(db, {
       answer_type: "country" as AnswerType,
-      answer: seed.common,
-      answer_id: seed.cca3,
+      answer: bundle.common,
+      answer_id: bundle.cca3,
       alt_answers: altNormalised,
-      region: meta?.region ?? seed.region,
+      region: meta?.region ?? bundle.region,
       flag_url: meta?.flags?.png ?? meta?.flags?.svg,
       clues,
       difficulty: "medium",
       metadata: {
-        capital: seed.capital,
+        capital: bundle.capital,
         languages: meta?.languages,
         fun_fact: funFact,
       },
       created_by: "generator",
     });
 
-    return { cca3: seed.cca3, country: seed.common, puzzleId, clues: clues.length, ok: true };
+    return {
+      cca3: bundle.cca3,
+      country: bundle.common,
+      puzzleId,
+      clues: clues.length,
+      ok: true,
+      gaps,
+    };
   } catch (err) {
     return {
-      cca3: seed.cca3,
-      country: seed.common,
+      cca3: bundle.cca3,
+      country: bundle.common,
       puzzleId: "",
       clues: clues.length,
       ok: false,
       error: err instanceof Error ? err.message : String(err),
+      gaps,
     };
   }
 }
-
-/* ------------------------------------------------------------------ */
-/*  All-seed orchestration                                             */
-/* ------------------------------------------------------------------ */
 
 export async function generateAll(
   db: SupabaseClient<Database>,
   options?: { limit?: number },
 ): Promise<GenerateAllResult> {
   const rest = await fetchRestCountries();
-  const entries: SeedEntry[] = options?.limit
-    ? SEED.slice(0, options.limit)
-    : SEED;
+  const bundles = await loadCountrySeedBundles(db);
+  const slice = options?.limit ? bundles.slice(0, options.limit) : bundles;
 
   const results: GenerateResult[] = [];
-  for (const entry of entries) {
-    const r = await generatePuzzleForCountry(db, entry, rest);
+  const puzzleGaps: GenerateCoverageReport["gaps"] = [];
+
+  for (const bundle of slice) {
+    const r = await generatePuzzleForBundle(db, bundle, rest);
     results.push(r);
+    if (r.gaps) puzzleGaps.push(...r.gaps);
   }
 
   const succeeded = results.filter((r) => r.ok).length;
+  const coverage = buildCoverageReport(slice, puzzleGaps);
+
   return {
-    total: entries.length,
+    total: slice.length,
     succeeded,
-    failed: entries.length - succeeded,
+    failed: slice.length - succeeded,
     results,
+    coverage,
   };
 }
 
-/* ------------------------------------------------------------------ */
-/*  Daily scheduler                                                    */
-/* ------------------------------------------------------------------ */
-
-/**
- * Pick a puzzle for the given date (or today) and schedule it as daily.
- * Selection is deterministic from a date-derived FNV-1a hash so every
- * caller on the same UTC date picks the same country; the same hash helper
- * lives in puzzle-service.ts so the fallback path stays consistent.
- */
 export async function scheduleDailyPuzzle(
   db: SupabaseClient<Database>,
   date?: string,
@@ -298,7 +383,6 @@ export async function scheduleDailyPuzzle(
   return { puzzleId: pick.id as string, date: targetDate, alreadyScheduled: false };
 }
 
-/** Deterministic FNV-1a 32-bit hash of a string. Same helper lives in puzzle-service.ts. */
 function dateHash(s: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < s.length; i++) {

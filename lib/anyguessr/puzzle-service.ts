@@ -4,12 +4,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/supabase/database.types";
 import type {
   AnswerType,
-  ClientClue,
   ClientDailyPuzzle,
-  ClientPuzzle,
   Clue,
   DailyGuessResult,
-  GuessResult,
   Puzzle,
 } from "./types";
 import {
@@ -19,6 +16,7 @@ import {
   pickDailyPuzzles,
   scoreFromDistanceKm,
 } from "./daily";
+import { expandAltAnswers, resolveAliasToCca3 } from "./country-aliases";
 import { getLatLngForCca3, haversineKm, resolveGuessToCca3 } from "./geo";
 import { looseEqual } from "./normalize";
 
@@ -38,40 +36,6 @@ interface AgPuzzleRow {
   difficulty: string | null;
   metadata: Record<string, unknown> | null;
   status: string;
-}
-
-function toClient(puzzle: AgPuzzleRow, mode: "daily" | "infinite", date?: string): ClientPuzzle {
-  // Strip the answer before sending to client — the player must earn it.
-  // `content` is the alt-text fallback; we redact it from the client payload
-  // when the clue carries `hide_label: true` so the country name is never leaked.
-  const clues: ClientClue[] = (puzzle.clues ?? []).map((c) => {
-    const hideLabel = c.metadata?.hide_label === true;
-    return {
-      type: c.type,
-      content: hideLabel ? "" : c.content,
-      metadata: {
-        ...c.metadata,
-        // Don't leak the Wikipedia page title (which sometimes contains a country name).
-        source: hideLabel ? undefined : c.metadata?.source,
-        source_url: hideLabel ? undefined : c.metadata?.source_url,
-        label: hideLabel ? undefined : c.metadata?.label,
-        // Drop persisted flag so the renderer doesn't have to learn about it.
-        hide_label: undefined,
-      },
-      difficulty_rank: c.difficulty_rank,
-    };
-  });
-
-  return {
-    id: puzzle.id,
-    date,
-    mode,
-    answer_type: puzzle.answer_type,
-    region: puzzle.region ?? undefined,
-    flag_url: puzzle.flag_url ?? undefined,
-    clues,
-    difficulty: puzzle.difficulty ?? undefined,
-  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -181,62 +145,16 @@ export async function getDailyPuzzle(
     mode: "daily",
     answer_type: "country",
     totalRounds: DAILY_ROUND_COUNT,
-    rounds: buildDailyRoundsFromPuzzles(picked),
+    rounds: buildDailyRoundsFromPuzzles(picked, targetDate),
     difficulty: "medium",
   };
   fallbackDailyCache.set(targetDate, clientPuzzle);
   return clientPuzzle;
 }
 
-export async function getRandomApprovedPuzzle(
-  db: SupabaseClient<Database>,
-  options?: { excludeIds?: string[] },
-): Promise<ClientPuzzle | null> {
-  let puzzles = await queryApprovedPuzzles(db, options?.excludeIds);
-
-  // If the player has recently seen every puzzle in the pool, wrap around instead
-  // of returning 404 (common during dev when only a handful are seeded).
-  if (puzzles.length === 0 && options?.excludeIds?.length) {
-    puzzles = await queryApprovedPuzzles(db);
-  }
-
-  if (puzzles.length === 0) return null;
-
-  const pick = puzzles[Math.floor(Math.random() * puzzles.length)] as unknown as AgPuzzleRow;
-  return toClient(pick, "infinite");
-}
-
-async function queryApprovedPuzzles(
-  db: SupabaseClient<Database>,
-  excludeIds?: string[],
-): Promise<AgPuzzleRow[]> {
-  let query = db
-    .from("ag_puzzles")
-    .select("*")
-    .in("status", ["approved", "published"])
-    .limit(500);
-
-  if (excludeIds && excludeIds.length > 0) {
-    query = query.not("id", "in", `(${excludeIds.join(",")})`);
-  }
-
-  const { data: puzzles, error } = await query;
-  if (error) throw error;
-  return (puzzles ?? []) as unknown as AgPuzzleRow[];
-}
-
 /* ------------------------------------------------------------------ */
 /*  Guess validation                                                   */
 /* ------------------------------------------------------------------ */
-
-interface PuzzleAnswerRow {
-  id: string;
-  answer_type: AnswerType;
-  answer: string;
-  alt_answers: string[] | null;
-  metadata: Record<string, unknown> | null;
-  clues: Clue[];
-}
 
 export async function validateDailyGuess(
   db: SupabaseClient<Database>,
@@ -267,11 +185,14 @@ export async function validateDailyGuess(
   const answerCca3 = row.answer_id;
   if (!answerCca3) throw new Error("Puzzle missing country id");
 
+  const guessCca3 =
+    resolveGuessToCca3(guess) ?? (await resolveAliasToCca3(db, guess));
+
   const exact =
+    guessCca3 === answerCca3 ||
     looseEqual(guess, row.answer) ||
     (row.alt_answers ?? []).some((a) => looseEqual(guess, a));
 
-  const guessCca3 = resolveGuessToCca3(guess);
   const answerCoords = getLatLngForCca3(answerCca3);
   const guessCoords = guessCca3 ? getLatLngForCca3(guessCca3) : null;
 
@@ -305,71 +226,53 @@ export async function validateDailyGuess(
   };
 }
 
-export async function validateGuess(
+export async function revealDailyRound(
   db: SupabaseClient<Database>,
   puzzleId: string,
-  guess: string,
-): Promise<GuessResult> {
-  const { data: puzzle, error } = await db
-    .from("ag_puzzles")
-    .select("id, answer_type, answer, alt_answers, metadata, clues")
-    .eq("id", puzzleId)
-    .single();
-
-  if (error || !puzzle) throw new Error("Puzzle not found");
-
-  const row = puzzle as unknown as PuzzleAnswerRow;
-  const correct =
-    looseEqual(guess, row.answer) ||
-    (row.alt_answers ?? []).some((a) => looseEqual(guess, a));
-
-  if (!correct) {
-    // Wrong-guess reveal logic is purely client-side: the client knows how many
-    // clues it has revealed and the total clue count; auto-reveal = next index.
-    return {
-      correct: false,
-      autoReveal: false,
-      revealIndex: null,
-      completed: false,
-      normalizedAnswer: null,
-      funFact: null,
-    };
+  roundIndex: number,
+): Promise<DailyGuessResult> {
+  if (roundIndex < 0 || roundIndex >= DAILY_ROUND_COUNT) {
+    throw new Error("Invalid round index");
   }
 
-  return {
-    correct: true,
-    autoReveal: false,
-    revealIndex: null,
-    completed: true,
-    normalizedAnswer: row.answer,
-    funFact:
-      (row.metadata?.fun_fact as string | undefined) ?? null,
-  };
-}
-
-/**
- * Server-side surrender: returns the answer + fun fact for the results screen
- * without requiring a correct guess.
- */
-export async function revealAnswer(
-  db: SupabaseClient<Database>,
-  puzzleId: string,
-): Promise<{ answer: string; altAnswers: string[]; funFact: string | null }> {
   const { data: puzzle, error } = await db
     .from("ag_puzzles")
-    .select("answer, alt_answers, metadata")
+    .select("id, answer, answer_id, alt_answers, metadata, flag_url")
     .eq("id", puzzleId)
     .single();
 
   if (error || !puzzle) throw new Error("Puzzle not found");
 
+  const row = puzzle as {
+    answer: string;
+    answer_id: string | null;
+    alt_answers: string[] | null;
+    metadata: Record<string, unknown> | null;
+    flag_url: string | null;
+  };
+
+  const answerCca3 = row.answer_id;
+  if (!answerCca3) throw new Error("Puzzle missing country id");
+
+  const answerCoords = getLatLngForCca3(answerCca3);
+  const completed = roundIndex >= DAILY_ROUND_COUNT - 1;
+
   return {
-    answer: puzzle.answer as string,
-    altAnswers: (puzzle.alt_answers as string[] | null) ?? [],
+    exact: false,
+    guess: "",
+    answer: row.answer,
+    distanceKm: 20_000,
+    roundScore: 0,
+    completed,
     funFact:
-      (puzzle.metadata as Record<string, unknown> | null)?.fun_fact as
-        | string
-        | undefined ?? null,
+      (row.metadata?.fun_fact as string | undefined) ?? null,
+    flagUrl: row.flag_url,
+    answerLat: answerCoords?.[0] ?? 0,
+    answerLng: answerCoords?.[1] ?? 0,
+    guessLat: null,
+    guessLng: null,
+    answerCca3,
+    guessCca3: null,
   };
 }
 
@@ -388,19 +291,6 @@ export async function getFunFact(
     .single();
   if (error) return null;
   return (data.metadata as Record<string, unknown> | null)?.fun_fact as string | undefined ?? null;
-}
-
-/* ------------------------------------------------------------------ */
-/*  Hash helper (deterministic by date)                                */
-/* ------------------------------------------------------------------ */
-
-function dateStringHash(s: string): number {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return h >>> 0;
 }
 
 /* ------------------------------------------------------------------ */

@@ -5,10 +5,11 @@ export const CATEGORIES: Category[] = [
   { id: "sports", name: "Sports", emoji: "🏀" },
   { id: "movies", name: "Movies", emoji: "🎬" },
   { id: "music", name: "Music", emoji: "🎵" },
+  { id: "arts", name: "Arts & Lit", emoji: "📚" },
   { id: "science", name: "Science", emoji: "🔬" },
   { id: "history", name: "History", emoji: "📜" },
   { id: "food", name: "Food", emoji: "🍕" },
-  { id: "tech", name: "Tech", emoji: "💻" },
+  { id: "culture", name: "Culture", emoji: "🌐" },
   { id: "geography", name: "Geography", emoji: "🌍" },
   { id: "random", name: "Random Mix", emoji: "🎲" },
 ];

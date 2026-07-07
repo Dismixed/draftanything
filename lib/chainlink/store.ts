@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { WordStatus, GameMode } from "./types";
+import type { WordStatus, GameMode, GameStatus } from "./types";
 import { getDateString } from "./puzzles";
 
 /* ------------------------------------------------------------------ */
@@ -10,7 +10,6 @@ import { getDateString } from "./puzzles";
 /* ------------------------------------------------------------------ */
 
 const MAX_HINTS = 3;
-const HINT_PENALTY = 25;
 
 /* ------------------------------------------------------------------ */
 /*  API Puzzle type that comes from the server                        */
@@ -42,10 +41,11 @@ interface PersistedData {
   wordAttempts: string[][];
   revealedLetters: boolean[][];
   hintsRemaining: number;
-  score: number;
-  gameStatus: "playing" | "completed";
+  gameStatus: GameStatus;
   startTime: number;
 }
+
+type FeedbackType = "correct" | "incorrect" | "hint" | null;
 
 /* ------------------------------------------------------------------ */
 /*  Store shape                                                        */
@@ -61,12 +61,11 @@ interface ChainlinkStore {
   wordAttempts: string[][];
   revealedLetters: boolean[][];
   hintsRemaining: number;
-  score: number;
-  gameStatus: "playing" | "completed";
+  gameStatus: GameStatus;
   startTime: number;
   loading: boolean;
 
-  feedback: { type: "correct" | "incorrect" | null; message: string } | null;
+  feedback: { type: FeedbackType; message: string } | null;
   justSolvedIndex: number | null;
 
   initPuzzle: (mode?: GameMode) => Promise<void>;
@@ -92,7 +91,6 @@ function buildInitialState(): PersistedData {
     wordAttempts: [],
     revealedLetters: [],
     hintsRemaining: MAX_HINTS,
-    score: 0,
     gameStatus: "playing",
     startTime: 0,
   };
@@ -115,7 +113,6 @@ function buildStateFromPuzzle(puzzle: ApiPlayablePuzzle, mode: GameMode): Persis
     wordAttempts: words.map(() => []),
     revealedLetters: words.map(() => []),
     hintsRemaining: puzzle.maxHints ?? MAX_HINTS,
-    score: 0,
     gameStatus: "playing",
     startTime: Date.now(),
   };
@@ -154,7 +151,6 @@ export const useChainlinkStore = create<ChainlinkStore>()(
       wordAttempts: [] as string[][],
       revealedLetters: [] as boolean[][],
       hintsRemaining: MAX_HINTS,
-      score: 0,
       gameStatus: "playing",
       startTime: 0,
       loading: false,
@@ -165,7 +161,6 @@ export const useChainlinkStore = create<ChainlinkStore>()(
       initPuzzle: async (_mode?: GameMode) => {
         const { date, puzzleId } = get();
         try {
-          // Skip if we already have today's puzzle
           if (puzzleId && date && isToday(date)) {
             return;
           }
@@ -197,7 +192,7 @@ export const useChainlinkStore = create<ChainlinkStore>()(
           newStatuses[idx] = "solved";
 
           const nextIndex = idx + 1;
-          let newGameStatus: "playing" | "completed" = state.gameStatus;
+          let newGameStatus: GameStatus = state.gameStatus;
           if (nextIndex < state.puzzleWords.length) {
             newStatuses[nextIndex] = "active";
           } else {
@@ -208,13 +203,11 @@ export const useChainlinkStore = create<ChainlinkStore>()(
             wordStatuses: newStatuses,
             wordAttempts: newAttempts,
             currentWordIndex: Math.min(nextIndex, state.puzzleWords.length - 1),
-            score: state.score + 100,
             gameStatus: newGameStatus,
-            feedback: { type: "correct", message: "Correct! +100 pts" },
+            feedback: { type: "correct", message: "Correct!" },
             justSolvedIndex: idx,
           });
 
-          // Fire-and-forget server validation
           if (state.puzzleId) {
             fetch("/api/chain/guess", {
               method: "POST",
@@ -224,59 +217,16 @@ export const useChainlinkStore = create<ChainlinkStore>()(
           }
 
           return "correct";
-        } else {
-          const currentRevealed = [...(state.revealedLetters[idx] ?? [])];
-          const unrevealed: number[] = [];
-          for (let i = 1; i < word.length; i++) {
-            if (!currentRevealed[i]) unrevealed.push(i);
-          }
-          let newRevealed = state.revealedLetters;
-          let autoLetter: string | null = null;
-          if (unrevealed.length > 0) {
-            const pick = unrevealed[0];
-            currentRevealed[pick] = true;
-            newRevealed = [...state.revealedLetters];
-            newRevealed[idx] = currentRevealed;
-            autoLetter = word[pick];
-
-            const allRevealed = word.split("").every((_, i) => i === 0 || currentRevealed[i]);
-            if (allRevealed) {
-              const newStatuses = [...state.wordStatuses];
-              newStatuses[idx] = "solved";
-              const nextIndex = idx + 1;
-              let newGameStatus: "playing" | "completed" = state.gameStatus;
-              if (nextIndex < state.puzzleWords.length) {
-                newStatuses[nextIndex] = "active";
-              } else {
-                newGameStatus = "completed";
-              }
-
-              set({
-                wordAttempts: newAttempts,
-                revealedLetters: newRevealed,
-                wordStatuses: newStatuses,
-                currentWordIndex: Math.min(nextIndex, state.puzzleWords.length - 1),
-                score: state.score + 100,
-                gameStatus: newGameStatus,
-                feedback: { type: "correct", message: "All letters revealed! Word solved. +100 pts" },
-                justSolvedIndex: idx,
-              });
-              return "correct";
-            }
-          }
-
-          set({
-            wordAttempts: newAttempts,
-            revealedLetters: newRevealed,
-            feedback: {
-              type: "incorrect" as const,
-              message: autoLetter
-                ? `Incorrect. Letter revealed: "${autoLetter.toUpperCase()}"`
-                : "Not the right word. Try again.",
-            },
-          });
-          return "incorrect";
         }
+
+        set({
+          wordAttempts: newAttempts,
+          feedback: {
+            type: "incorrect",
+            message: "Not the right word. Try again.",
+          },
+        });
+        return "incorrect";
       },
 
       useHint: () => {
@@ -297,42 +247,30 @@ export const useChainlinkStore = create<ChainlinkStore>()(
         if (unrevealed.length === 0) return null;
 
         const pick = unrevealed[0];
+        const newHintsRemaining = state.hintsRemaining - 1;
 
         const newRevealed = [...state.revealedLetters];
         const wordRevealed = [...revealed];
         wordRevealed[pick] = true;
         newRevealed[idx] = wordRevealed;
 
-        const allRevealed = word.split("").every((_, i) => i === 0 || wordRevealed[i]);
-
-        if (allRevealed) {
-          const newStatuses = [...state.wordStatuses];
-          newStatuses[idx] = "solved";
-          const nextIndex = idx + 1;
-          let newGameStatus: "playing" | "completed" = state.gameStatus;
-          if (nextIndex < state.puzzleWords.length) {
-            newStatuses[nextIndex] = "active";
-          } else {
-            newGameStatus = "completed";
-          }
+        if (newHintsRemaining === 0) {
           set({
             revealedLetters: newRevealed,
-            hintsRemaining: state.hintsRemaining - 1,
-            score: Math.max(0, state.score + 100 - HINT_PENALTY),
-            wordStatuses: newStatuses,
-            currentWordIndex: Math.min(nextIndex, state.puzzleWords.length - 1),
-            gameStatus: newGameStatus,
-            feedback: { type: "correct", message: "All letters revealed! Word solved. +100 pts" },
-            justSolvedIndex: idx,
+            hintsRemaining: 0,
+            gameStatus: "failed",
+            feedback: {
+              type: "incorrect",
+              message: "Out of hints — game over.",
+            },
           });
         } else {
           set({
             revealedLetters: newRevealed,
-            hintsRemaining: state.hintsRemaining - 1,
-            score: Math.max(0, state.score - HINT_PENALTY),
+            hintsRemaining: newHintsRemaining,
             feedback: {
-              type: "correct",
-              message: `Hint: letter "${word[pick].toUpperCase()}" revealed. -${HINT_PENALTY} pts`,
+              type: "hint",
+              message: `Hint: letter "${word[pick].toUpperCase()}" revealed.`,
             },
           });
         }
@@ -350,7 +288,7 @@ export const useChainlinkStore = create<ChainlinkStore>()(
       },
     }),
     {
-      name: "chainlink-v2",
+      name: "chainlink-v3",
       partialize: (state): PersistedData => ({
         mode: state.mode,
         puzzleId: state.puzzleId,
@@ -361,7 +299,6 @@ export const useChainlinkStore = create<ChainlinkStore>()(
         wordAttempts: state.wordAttempts,
         revealedLetters: state.revealedLetters,
         hintsRemaining: state.hintsRemaining,
-        score: state.score,
         gameStatus: state.gameStatus,
         startTime: state.startTime,
       }),

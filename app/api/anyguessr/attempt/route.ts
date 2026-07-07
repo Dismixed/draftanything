@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     if (!puzzleId || typeof puzzleId !== "string") {
       return NextResponse.json({ error: "puzzleId is required" }, { status: 400 });
     }
-    if (!mode || !["daily", "infinite"].includes(mode)) {
+    if (!mode || mode !== "daily") {
       return NextResponse.json({ error: "valid mode is required" }, { status: 400 });
     }
 

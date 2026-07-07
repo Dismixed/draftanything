@@ -3,50 +3,25 @@
 import { recordDailyCompletion } from "@/lib/streak/storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import {
-  DAILY_ROUND_COUNT,
-} from "./daily";
+import { DAILY_ROUND_COUNT } from "./daily";
 import { isValidLatLng } from "./map-projection";
 import {
-  MIN_SCORE,
-  REVEAL_PENALTY,
-  STARTING_SCORE,
   STORAGE_VERSION,
-  WRONG_GUESS_PENALTY,
   type AnswerType,
-  type ClientClue,
   type ClientDailyPuzzle,
   type ClientDailyRound,
-  type ClientPuzzle,
   type DailyGuessResult,
   type DailyRoundRecap,
   type DailyRoundResult,
-  type GameMode,
-  type GuessResult,
 } from "./types";
 
-const RECENTLY_PLAYED_KEY = "ag-recently-played";
-const RECENT_LIMIT = 20;
-
 interface PersistedData {
-  mode: GameMode;
+  mode: "daily";
   puzzleId: string | null;
   date: string;
   answerType: AnswerType;
-  region: string | undefined;
-  flagUrl: string | undefined;
-  status: "playing" | "won" | "surrendered";
-  answer: string | undefined;
-  funFact: string | undefined;
+  status: "playing" | "won";
   startTime: number;
-  // Infinite mode
-  clues: ClientClue[];
-  totalClues: number;
-  revealedCount: number;
-  guesses: string[];
-  score: number;
-  altAnswers: string[];
-  // Daily mode
   dailyRounds: ClientDailyRound[];
   currentRound: number;
   roundResults: DailyRoundResult[];
@@ -60,16 +35,12 @@ export interface AnyGuessrStore extends PersistedData {
     | { type: "correct" | "wrong" | "info" | "round"; message: string; scoreDelta?: number }
     | null;
 
-  initPuzzle: (mode: GameMode) => Promise<void>;
-  startPuzzleFromApi: (puzzle: ClientPuzzle, mode: GameMode) => void;
+  initPuzzle: () => Promise<void>;
   startDailyFromApi: (puzzle: ClientDailyPuzzle) => void;
-  revealNextClue: () => void;
-  submitGuess: (guess: string) => Promise<void>;
   submitDailyGuess: (guess: string) => Promise<void>;
   continueDailyRound: () => void;
   advanceDailyRound: () => void;
   surrender: () => Promise<void>;
-  nextRound: () => Promise<void>;
   clearFeedback: () => void;
 }
 
@@ -100,24 +71,14 @@ function isResumableDailyState(s: PersistedData): boolean {
   );
 }
 
-function buildInitialState(mode: GameMode = "daily"): PersistedData {
+function buildInitialState(): PersistedData {
   return {
-    mode,
+    mode: "daily",
     puzzleId: null,
     date: "",
     answerType: "country",
-    region: undefined,
-    flagUrl: undefined,
     status: "playing",
-    answer: undefined,
-    funFact: undefined,
     startTime: 0,
-    clues: [],
-    totalClues: 0,
-    revealedCount: 0,
-    guesses: [],
-    score: STARTING_SCORE,
-    altAnswers: [],
     dailyRounds: [],
     currentRound: 0,
     roundResults: [],
@@ -126,24 +87,9 @@ function buildInitialState(mode: GameMode = "daily"): PersistedData {
   };
 }
 
-function buildStateFromPuzzle(puzzle: ClientPuzzle, mode: "infinite"): PersistedData {
-  return {
-    ...buildInitialState(mode),
-    puzzleId: puzzle.id,
-    date: puzzle.date ?? getDateString(),
-    answerType: puzzle.answer_type,
-    region: puzzle.region,
-    flagUrl: puzzle.flag_url,
-    clues: puzzle.clues,
-    totalClues: puzzle.clues.length,
-    revealedCount: 1,
-    startTime: Date.now(),
-  };
-}
-
 function buildStateFromDailyPuzzle(puzzle: ClientDailyPuzzle): PersistedData {
   return {
-    ...buildInitialState("daily"),
+    ...buildInitialState(),
     puzzleId: puzzle.id,
     date: puzzle.date,
     answerType: puzzle.answer_type,
@@ -161,50 +107,8 @@ async function fetchDailyPuzzle(): Promise<ClientDailyPuzzle> {
   return res.json();
 }
 
-async function fetchInfinitePuzzle(excludeIds: string[]): Promise<ClientPuzzle> {
-  const qs = excludeIds.length ? `?exclude=${encodeURIComponent(excludeIds.join(","))}` : "";
-  const res = await fetch(`/api/anyguessr/infinite${qs}`);
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error ?? "Failed to fetch puzzle");
-  }
-  return res.json();
-}
-
-function pushRecent(puzzleId: string): void {
-  if (typeof window === "undefined") return;
-  try {
-    const raw = window.localStorage.getItem(RECENTLY_PLAYED_KEY);
-    const arr: string[] = raw ? JSON.parse(raw) : [];
-    const filtered = arr.filter((id) => id !== puzzleId);
-    filtered.push(puzzleId);
-    while (filtered.length > RECENT_LIMIT) filtered.shift();
-    window.localStorage.setItem(RECENTLY_PLAYED_KEY, JSON.stringify(filtered));
-  } catch {
-    // ignore
-  }
-}
-
-function getRecent(): string[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(RECENTLY_PLAYED_KEY);
-    return raw ? (JSON.parse(raw) as string[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function applyPenalty(score: number, penalty: number): number {
-  return Math.max(MIN_SCORE, score - penalty);
-}
-
 function isDailyState(s: PersistedData): boolean {
   return s.mode === "daily";
-}
-
-function isInfiniteState(s: PersistedData): boolean {
-  return s.mode === "infinite";
 }
 
 export const useAnyGuessrStore = create<AnyGuessrStore>()(
@@ -214,131 +118,36 @@ export const useAnyGuessrStore = create<AnyGuessrStore>()(
       loading: false,
       feedback: null,
 
-      startPuzzleFromApi: (puzzle, mode) => {
-        if (mode !== "infinite") return;
-        set({
-          ...buildStateFromPuzzle(puzzle, mode),
-          feedback: null,
-          loading: false,
-        });
-        pushRecent(puzzle.id);
-      },
-
       startDailyFromApi: (puzzle) => {
         set({
           ...buildStateFromDailyPuzzle(puzzle),
           feedback: null,
           loading: false,
         });
-        pushRecent(puzzle.id);
       },
 
-      initPuzzle: async (mode: GameMode) => {
+      initPuzzle: async () => {
         const s = get();
-        if (mode === "daily" && isResumableDailyState(s)) {
-          return;
-        }
-        if (mode === "infinite" && isInfiniteState(s) && s.puzzleId && s.status === "playing") {
+        if (isResumableDailyState(s)) {
           return;
         }
 
         try {
           set({ loading: true });
-          if (mode === "daily") {
-            const puzzle = await fetchDailyPuzzle();
-            set({
-              ...buildStateFromDailyPuzzle(puzzle),
-              feedback: null,
-              loading: false,
-            });
-            pushRecent(puzzle.id);
-            return;
-          }
-
-          const puzzle = await fetchInfinitePuzzle(getRecent());
+          const puzzle = await fetchDailyPuzzle();
           set({
-            ...buildStateFromPuzzle(puzzle, "infinite"),
+            ...buildStateFromDailyPuzzle(puzzle),
             feedback: null,
             loading: false,
           });
-          pushRecent(puzzle.id);
         } catch (err) {
           console.error("anyguessr init failed:", err);
           set({
-            ...buildInitialState(mode),
+            ...buildInitialState(),
             loading: false,
             feedback: { type: "info", message: "Couldn't load a puzzle. Try again." },
           });
         }
-      },
-
-      revealNextClue: () => {
-        const s = get();
-        if (!isInfiniteState(s) || s.status !== "playing") return;
-        if (s.revealedCount >= s.totalClues) return;
-        set({
-          revealedCount: s.revealedCount + 1,
-          score: applyPenalty(s.score, REVEAL_PENALTY),
-          feedback: {
-            type: "info",
-            message: `Clue revealed · −${REVEAL_PENALTY}`,
-            scoreDelta: -REVEAL_PENALTY,
-          },
-        });
-      },
-
-      submitGuess: async (guess: string) => {
-        const s = get();
-        if (!isInfiniteState(s) || s.status !== "playing" || !s.puzzleId) return;
-        const trimmed = guess.trim();
-        if (!trimmed) return;
-
-        const newGuesses = [...s.guesses, trimmed];
-
-        let res: GuessResult;
-        try {
-          const r = await fetch("/api/anyguessr/guess", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ puzzleId: s.puzzleId, guess: trimmed }),
-          });
-          if (!r.ok) {
-            const err = await r.json().catch(() => ({}));
-            throw new Error(err.error ?? "Failed to validate guess");
-          }
-          res = (await r.json()) as GuessResult;
-        } catch (err) {
-          console.error("anyguessr guess failed:", err);
-          set({ feedback: { type: "info", message: "Couldn't validate guess. Try again." } });
-          return;
-        }
-
-        if (res.correct) {
-          set({
-            guesses: newGuesses,
-            status: "won",
-            answer: res.normalizedAnswer ?? undefined,
-            funFact: res.funFact ?? undefined,
-            feedback: { type: "correct", message: "Correct!" },
-          });
-          void postInfiniteAttempt(s, "won");
-          return;
-        }
-
-        const canRevealMore = s.revealedCount < s.totalClues;
-        const nextRevealedCount = canRevealMore ? s.revealedCount + 1 : s.revealedCount;
-        set({
-          guesses: newGuesses,
-          revealedCount: nextRevealedCount,
-          score: applyPenalty(s.score, WRONG_GUESS_PENALTY),
-          feedback: {
-            type: "wrong",
-            message: canRevealMore
-              ? `Wrong · −${WRONG_GUESS_PENALTY} · next clue revealed`
-              : `Wrong · −${WRONG_GUESS_PENALTY}`,
-            scoreDelta: -WRONG_GUESS_PENALTY,
-          },
-        });
       },
 
       submitDailyGuess: async (guess: string) => {
@@ -355,7 +164,7 @@ export const useAnyGuessrStore = create<AnyGuessrStore>()(
               message: "Refreshing today's puzzle…",
             },
           });
-          await get().initPuzzle("daily");
+          await get().initPuzzle();
           const refreshed = get().dailyRounds[get().currentRound];
           if (!refreshed?.puzzleId) {
             set({ feedback: { type: "info", message: "Couldn't load a puzzle. Try again." } });
@@ -456,60 +265,82 @@ export const useAnyGuessrStore = create<AnyGuessrStore>()(
 
       surrender: async () => {
         const s = get();
-        if (!s.puzzleId) return;
+        if (s.status !== "playing" || !isDailyState(s)) return;
 
-        if (isInfiniteState(s)) {
-          if (s.status !== "playing") return;
-          let answer: string | undefined;
-          let altAnswers: string[] = [];
-          let funFact: string | undefined;
-          try {
-            const r = await fetch("/api/anyguessr/surrender", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ puzzleId: s.puzzleId }),
-            });
-            if (r.ok) {
-              const j = (await r.json()) as {
-                answer: string;
-                altAnswers: string[];
-                funFact: string | null;
-              };
-              answer = j.answer;
-              altAnswers = j.altAnswers;
-              funFact = j.funFact ?? undefined;
-            }
-          } catch (err) {
-            console.error("anyguessr surrender failed:", err);
+        const round = s.dailyRounds[s.currentRound];
+        if (!round?.puzzleId) {
+          set({ feedback: { type: "info", message: "Refreshing today's puzzle…" } });
+          await get().initPuzzle();
+          const refreshed = get().dailyRounds[get().currentRound];
+          if (!refreshed?.puzzleId) {
+            set({ feedback: { type: "info", message: "Couldn't load a puzzle. Try again." } });
+            return;
           }
-          set({
-            status: "surrendered",
-            score: 0,
-            answer,
-            altAnswers,
-            funFact,
-            feedback: { type: "info", message: "Round surrendered · 0 pts" },
-          });
-          void postInfiniteAttempt(s, "surrendered");
         }
-      },
 
-      nextRound: async () => {
-        const s = get();
-        if (s.mode !== "infinite") return;
-        set({ ...buildInitialState("infinite"), loading: true });
+        const activeRound = get().dailyRounds[get().currentRound];
+        if (!activeRound?.puzzleId) return;
+
+        let res: DailyGuessResult;
         try {
-          const puzzle = await fetchInfinitePuzzle(getRecent());
-          set({
-            ...buildStateFromPuzzle(puzzle, "infinite"),
-            feedback: null,
-            loading: false,
+          const r = await fetch("/api/anyguessr/daily/surrender", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              puzzleId: activeRound.puzzleId,
+              roundIndex: get().currentRound,
+            }),
           });
-          pushRecent(puzzle.id);
+          if (!r.ok) {
+            const err = await r.json().catch(() => ({}));
+            throw new Error(err.error ?? "Failed to reveal answer");
+          }
+          res = (await r.json()) as DailyGuessResult;
         } catch (err) {
-          console.error("anyguessr next failed:", err);
-          set({ loading: false });
+          console.error("anyguessr daily surrender failed:", err);
+          set({ feedback: { type: "info", message: "Couldn't give up. Try again." } });
+          return;
         }
+
+        const roundResult: DailyRoundResult = {
+          roundIndex: get().currentRound,
+          clueType: activeRound.clueType,
+          puzzleId: activeRound.puzzleId,
+          guess: "",
+          answer: res.answer,
+          distanceKm: res.distanceKm,
+          roundScore: 0,
+          exact: false,
+          surrendered: true,
+          flagUrl: res.flagUrl ?? undefined,
+        };
+
+        const roundResults = [...get().roundResults, roundResult];
+        const currentRound = get().currentRound;
+        const isLastRound = currentRound >= DAILY_ROUND_COUNT - 1;
+
+        set({
+          roundResults,
+          roundRecap: {
+            roundIndex: currentRound,
+            clueType: activeRound.clueType,
+            guess: "",
+            answer: res.answer,
+            distanceKm: res.distanceKm,
+            roundScore: 0,
+            exact: false,
+            surrendered: true,
+            flagUrl: res.flagUrl ?? undefined,
+            answerLat: res.answerLat,
+            answerLng: res.answerLng,
+            guessLat: null,
+            guessLng: null,
+            answerCca3: res.answerCca3,
+            guessCca3: null,
+            isFinalRound: isLastRound,
+          },
+          feedback: null,
+        });
       },
 
       clearFeedback: () => set({ feedback: null }),
@@ -521,18 +352,8 @@ export const useAnyGuessrStore = create<AnyGuessrStore>()(
         puzzleId: s.puzzleId,
         date: s.date,
         answerType: s.answerType,
-        region: s.region,
-        flagUrl: s.flagUrl,
         status: s.status,
-        answer: s.answer,
-        funFact: s.funFact,
         startTime: s.startTime,
-        clues: s.clues,
-        totalClues: s.totalClues,
-        revealedCount: s.revealedCount,
-        guesses: s.guesses,
-        score: s.score,
-        altAnswers: s.altAnswers,
         dailyRounds: s.dailyRounds,
         currentRound: s.currentRound,
         roundResults: s.roundResults,
@@ -544,10 +365,10 @@ export const useAnyGuessrStore = create<AnyGuessrStore>()(
           ...current,
           ...(persisted as PersistedData),
         };
-        if (merged.mode === "daily" && !hasValidDailyRounds(merged.dailyRounds)) {
+        if (merged.mode !== "daily" || !hasValidDailyRounds(merged.dailyRounds)) {
           return {
             ...current,
-            ...buildInitialState("daily"),
+            ...buildInitialState(),
           };
         }
         if (
@@ -562,28 +383,6 @@ export const useAnyGuessrStore = create<AnyGuessrStore>()(
     },
   ),
 );
-
-function postInfiniteAttempt(
-  state: PersistedData,
-  outcome: "won" | "surrendered",
-): void {
-  if (!state.puzzleId) return;
-  const completed = outcome === "won";
-  void fetch("/api/anyguessr/attempt", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      puzzleId: state.puzzleId,
-      mode: state.mode,
-      completed,
-      surrendered: !completed,
-      correct: completed,
-      score: state.score,
-      guesses: state.guesses.length,
-      cluesRevealed: state.revealedCount,
-    }),
-  }).catch(() => {});
-}
 
 function postDailyAttempt(
   state: PersistedData,

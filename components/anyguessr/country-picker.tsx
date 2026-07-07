@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import GuessMapPicker from "./guess-map-picker";
 
 /* ------------------------------------------------------------------ */
 /*  Country list — single global copy (zero deps, ~4KB)                */
@@ -244,13 +245,33 @@ function rank(query: string): readonly CountryItem[] {
 /*  Component                                                           */
 /* ------------------------------------------------------------------ */
 
+type GuessTab = "map" | "search";
+
 interface Props {
   open: boolean;
+  roundKey: number;
   onClose: () => void;
   onPick: (countryName: string) => void;
 }
 
-export default function CountryPicker({ open, onClose, onPick }: Props) {
+function tabStyle(active: boolean): React.CSSProperties {
+  return {
+    flex: 1,
+    padding: "10px 12px",
+    fontSize: "12px",
+    fontWeight: 600,
+    letterSpacing: "0.04em",
+    border: "none",
+    borderBottom: `2px solid ${active ? "var(--ag-accent)" : "transparent"}`,
+    background: active ? "var(--ag-surface-hi)" : "transparent",
+    color: active ? "var(--ag-text)" : "var(--ag-muted)",
+    cursor: "pointer",
+    transition: "color 0.12s ease, background 0.12s ease",
+  };
+}
+
+export default function CountryPicker({ open, roundKey, onClose, onPick }: Props) {
+  const [tab, setTab] = useState<GuessTab>("map");
   const [query, setQuery] = useState("");
   const [hovered, setHovered] = useState(0);
   const [mounted, setMounted] = useState(false);
@@ -264,10 +285,16 @@ export default function CountryPicker({ open, onClose, onPick }: Props) {
   }, []);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setTab("map");
+      setQuery("");
+      setHovered(0);
+      return;
+    }
+    if (tab !== "search") return;
     const t = setTimeout(() => inputRef.current?.focus(), 16);
     return () => clearTimeout(t);
-  }, [open]);
+  }, [open, tab]);
 
   if (!open || !mounted) return null;
 
@@ -277,10 +304,14 @@ export default function CountryPicker({ open, onClose, onPick }: Props) {
       onPick(picked.name);
       setQuery("");
     } else if (query.trim()) {
-      // Allow the player to submit raw text — server normalizes and compares.
       onPick(query.trim());
       setQuery("");
     }
+  };
+
+  const handlePick = (name: string) => {
+    onPick(name);
+    setQuery("");
   };
 
   return createPortal(
@@ -296,7 +327,7 @@ export default function CountryPicker({ open, onClose, onPick }: Props) {
         display: "flex",
         alignItems: "flex-start",
         justifyContent: "center",
-        padding: "16vh 20px 20px",
+        padding: "4vh 20px 20px",
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -306,6 +337,9 @@ export default function CountryPicker({ open, onClose, onPick }: Props) {
         style={{
           width: "100%",
           maxWidth: "440px",
+          maxHeight: "92vh",
+          display: "flex",
+          flexDirection: "column",
           background: "var(--ag-surface)",
           border: "1px solid var(--ag-border)",
           borderRadius: "14px",
@@ -315,113 +349,145 @@ export default function CountryPicker({ open, onClose, onPick }: Props) {
       >
         <div
           style={{
-            padding: "12px 14px",
-            borderBottom: "1px solid var(--ag-border)",
             display: "flex",
             alignItems: "center",
-            gap: "10px",
+            borderBottom: "1px solid var(--ag-border)",
           }}
         >
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                submit();
-              } else if (e.key === "Escape") {
-                e.preventDefault();
-                onClose();
-              } else if (e.key === "ArrowDown") {
-                e.preventDefault();
-                setHovered((h) => Math.min(h + 1, matches.length - 1));
-              } else if (e.key === "ArrowUp") {
-                e.preventDefault();
-                setHovered((h) => Math.max(h - 1, 0));
-              }
-            }}
-            placeholder="Search countries…"
-            aria-label="Search countries"
-            autoComplete="off"
-            spellCheck={false}
-            style={{
-              flex: 1,
-              background: "transparent",
-              border: "none",
-              outline: "none",
-              color: "var(--ag-text)",
-              fontSize: "15px",
-              padding: "8px 4px",
-            }}
-          />
           <button
+            type="button"
+            onClick={() => setTab("map")}
+            aria-pressed={tab === "map"}
+            style={tabStyle(tab === "map")}
+          >
+            Map
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("search")}
+            aria-pressed={tab === "search"}
+            style={tabStyle(tab === "search")}
+          >
+            Search
+          </button>
+          <button
+            type="button"
             onClick={onClose}
-            aria-label="Close country picker"
+            aria-label="Close guess picker"
             style={{
               background: "transparent",
               border: "none",
               color: "var(--ag-muted)",
               cursor: "pointer",
               fontSize: "18px",
-              padding: "4px 8px",
+              padding: "10px 14px",
             }}
           >
             ✕
           </button>
         </div>
 
-        <div
-          ref={listRef}
-          style={{
-            maxHeight: "52vh",
-            overflowY: "auto",
-            scrollbarWidth: "thin",
-            scrollbarColor: "var(--ag-border) transparent",
-          }}
-        >
-          {matches.length === 0 ? (
+        {tab === "map" ? (
+          <GuessMapPicker roundKey={roundKey} onPick={handlePick} embedded />
+        ) : (
+          <>
             <div
               style={{
-                padding: "24px 16px",
-                textAlign: "center",
-                color: "var(--ag-muted)",
-                fontSize: "13px",
+                padding: "12px 14px",
+                borderBottom: "1px solid var(--ag-border)",
               }}
             >
-              No country matches — submit your guess anyway and we&apos;ll
-              normalize it for spelling.
-            </div>
-          ) : (
-            matches.map((c, i) => (
-              <button
-                key={`${c.iso2}-${i}`}
-                onClick={() => onPick(c.name)}
-                onMouseEnter={() => setHovered(i)}
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    submit();
+                  } else if (e.key === "Escape") {
+                    e.preventDefault();
+                    onClose();
+                  } else if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    setHovered((h) => Math.min(h + 1, matches.length - 1));
+                  } else if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    setHovered((h) => Math.max(h - 1, 0));
+                  }
+                }}
+                placeholder="Search countries…"
+                aria-label="Search countries"
+                autoComplete="off"
+                spellCheck={false}
                 style={{
                   width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "10px",
-                  padding: "10px 14px",
-                  background:
-                    i === hovered ? "var(--ag-surface-hi)" : "transparent",
+                  background: "transparent",
                   border: "none",
-                  borderBottom: "1px solid var(--ag-border-faint)",
-                  cursor: "pointer",
-                  textAlign: "left",
+                  outline: "none",
                   color: "var(--ag-text)",
-                  fontSize: "14px",
-                  transition: "background 0.12s ease",
+                  fontSize: "15px",
+                  padding: "8px 4px",
                 }}
-              >
-                <span style={{ fontSize: "20px", lineHeight: 1 }}>{c.flag}</span>
-                <span>{c.name}</span>
-              </button>
-            ))
-          )}
-        </div>
+              />
+            </div>
+
+            <div
+              ref={listRef}
+              style={{
+                flex: 1,
+                minHeight: 0,
+                maxHeight: "52vh",
+                overflowY: "auto",
+                scrollbarWidth: "thin",
+                scrollbarColor: "var(--ag-border) transparent",
+              }}
+            >
+              {matches.length === 0 ? (
+                <div
+                  style={{
+                    padding: "24px 16px",
+                    textAlign: "center",
+                    color: "var(--ag-muted)",
+                    fontSize: "13px",
+                  }}
+                >
+                  No country matches — submit your guess anyway and we&apos;ll
+                  normalize it for spelling.
+                </div>
+              ) : (
+                matches.map((c, i) => (
+                  <button
+                    key={`${c.iso2}-${i}`}
+                    type="button"
+                    onClick={() => handlePick(c.name)}
+                    onMouseEnter={() => setHovered(i)}
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "10px 14px",
+                      background:
+                        i === hovered ? "var(--ag-surface-hi)" : "transparent",
+                      border: "none",
+                      borderBottom: "1px solid var(--ag-border-faint)",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      color: "var(--ag-text)",
+                      fontSize: "14px",
+                      transition: "background 0.12s ease",
+                    }}
+                  >
+                    <span style={{ fontSize: "20px", lineHeight: 1 }}>{c.flag}</span>
+                    <span>{c.name}</span>
+                  </button>
+                ))
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>,
     document.body,

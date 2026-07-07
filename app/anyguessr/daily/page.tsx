@@ -26,7 +26,7 @@ export default function AnyGuessrDailyPage() {
         }}
       />
       <div style={{ width: "100%", maxWidth: "560px", position: "relative", zIndex: 1 }}>
-        <AnyGuessrGame mode="daily" />
+        <AnyGuessrGame />
       </div>
     </main>
   );

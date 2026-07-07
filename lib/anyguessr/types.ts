@@ -23,7 +23,7 @@ export type AnswerType =
   | "culture"
   | "language";
 
-export type GameMode = "daily" | "infinite";
+export type GameMode = "daily";
 export type PuzzleStatus =
   | "draft"
   | "approved"
@@ -55,6 +55,8 @@ export interface Clue {
 export interface ClueMetadata {
   image_url?: string;
   thumb_url?: string;
+  /** Alternate Commons images for the same clue type — rotated by date in daily mode. */
+  image_options?: ClueImageOption[];
   audio_url?: string;
   alt_text?: string;
   /** Display label rendered above the media (when shown). Optional. */
@@ -64,6 +66,17 @@ export interface ClueMetadata {
   source_url?: string;
   /** Optional extra key-value bag for future clue types. */
   [key: string]: unknown;
+}
+
+export interface ClueImageOption {
+  image_url?: string;
+  thumb_url?: string;
+  source?: string;
+  source_url?: string;
+  label?: string;
+  license?: string;
+  artist?: string;
+  credit?: string;
 }
 
 /**
@@ -84,21 +97,6 @@ export interface Puzzle {
   clues: Clue[];
   difficulty?: string;
   metadata?: Record<string, unknown>;
-}
-
-/**
- * The shape sent to the client — strips the answer, returns only display info.
- */
-export interface ClientPuzzle {
-  id: string;
-  date?: string;
-  mode: GameMode;
-  answer_type: AnswerType;
-  region?: string;
-  flag_url?: string;
-  /** Clue at index N is `locked` until the player reveals it. */
-  clues: ClientClue[];
-  difficulty?: string;
 }
 
 export interface ClientDailyRound {
@@ -129,6 +127,7 @@ export interface DailyRoundResult {
   distanceKm: number;
   roundScore: number;
   exact: boolean;
+  surrendered?: boolean;
   flagUrl?: string;
 }
 
@@ -137,62 +136,6 @@ export interface ClientClue {
   content: string;
   metadata?: ClueMetadata;
   difficulty_rank?: number;
-}
-
-/* ------------------------------------------------------------------ */
-/*  Round / session-state                                               */
-/* ------------------------------------------------------------------ */
-
-export type ClueStatus = "locked" | "revealed";
-
-export interface RoundState {
-  puzzleId: string;
-  mode: GameMode;
-  date: string;
-  answerType: AnswerType;
-  region?: string;
-  flagUrl?: string;
-  /** Full set of clues the player has revealed. Index = reveal order. */
-  revealedClues: ClientClue[];
-  /** Total clue count in the puzzle (so progress dots can render locked ones). */
-  totalClues: number;
-  /** One entry per guess attempt, in submission order. */
-  guesses: string[];
-  score: number;
-  /** Whether the round is over and why. */
-  status: "playing" | "won" | "surrendered";
-  /** Populated once the round is over. */
-  answer?: string;
-  altAnswers?: string[];
-  funFact?: string;
-  startTime: number;
-}
-
-/* ------------------------------------------------------------------ */
-/*  Scoring                                                             */
-/* ------------------------------------------------------------------ */
-
-export const STARTING_SCORE = 1000;
-export const REVEAL_PENALTY = 100;
-export const WRONG_GUESS_PENALTY = 150;
-export const MIN_SCORE = 0;
-
-/* ------------------------------------------------------------------ */
-/*  Guess result                                                        */
-/* ------------------------------------------------------------------ */
-
-export interface GuessResult {
-  correct: boolean;
-  /** True if we should auto-reveal next clue after this wrong guess. */
-  autoReveal: boolean;
-  /** Clue index to reveal (only when autoReveal). */
-  revealIndex: number | null;
-  /** True when this guess cleared the round (correct === true). */
-  completed: boolean;
-  /** Canonical answer, when the round is over. */
-  normalizedAnswer: string | null;
-  /** Optional fun-fact for the results screen. */
-  funFact: string | null;
 }
 
 export interface DailyGuessResult {
@@ -221,6 +164,7 @@ export interface DailyRoundRecap {
   distanceKm: number;
   roundScore: number;
   exact: boolean;
+  surrendered?: boolean;
   flagUrl?: string;
   answerLat: number;
   answerLng: number;
@@ -235,4 +179,4 @@ export interface DailyRoundRecap {
 /*  Persisted client slice (zustand persist)                          */
 /* ------------------------------------------------------------------ */
 
-export const STORAGE_VERSION = "anyguessr-v4";
+export const STORAGE_VERSION = "anyguessr-v6";

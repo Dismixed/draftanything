@@ -1,27 +1,19 @@
 import { z } from "zod/v4";
 import { getDateString } from "@/lib/brain-dead/game-logic";
+import { ensureGuestSession } from "@/features/guest/session";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { hashGuestToken } from "@/features/guest/token";
+import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 const DAILY_QUESTION_COUNT = 15;
 const MAX_SCORE = 6000;
 
 const submitSchema = z.object({
-  guestId: z.string().min(1),
   name: z.string().trim().min(1).max(20),
   score: z.number().int().min(0).max(MAX_SCORE),
   correct: z.number().int().min(0).max(DAILY_QUESTION_COUNT),
   playDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
-
-function getPepper(): string {
-  const pepper = process.env.GUEST_TOKEN_PEPPER;
-  if (!pepper) {
-    throw new Error("GUEST_TOKEN_PEPPER is not configured");
-  }
-  return pepper;
-}
 
 export async function POST(request: Request) {
   const rateResult = checkRateLimit(
@@ -53,34 +45,40 @@ export async function POST(request: Request) {
     return Response.json({ error: "INVALID_INPUT" }, { status: 400 });
   }
 
-  const { guestId, name, score, correct } = parsed.data;
+  const { name, score, correct } = parsed.data;
   const playDate = parsed.data.playDate ?? getDateString();
 
   if (playDate !== getDateString()) {
     return Response.json({ error: "INVALID_DATE" }, { status: 400 });
   }
 
-  const tokenHash = hashGuestToken(guestId, getPepper());
+  const supa = await createClient();
+  const { data: auth } = await supa.auth.getUser();
+  const userId = auth.user?.id ?? null;
 
-  const db = createAdminClient();
-  const { data: sessionId, error: rpcError } = await db.rpc(
-    "get_active_guest_session_id",
-    { p_token_hash: tokenHash },
-  );
-
-  if (rpcError || !sessionId) {
-    return Response.json(
-      { error: "INVALID_GUEST_SESSION" },
-      { status: 400 },
-    );
+  let guestSessionId: string | null = null;
+  if (!userId) {
+    try {
+      const guest = await ensureGuestSession();
+      guestSessionId = guest.guestId;
+    } catch {
+      return Response.json(
+        { error: "INVALID_GUEST_SESSION" },
+        { status: 400 },
+      );
+    }
   }
 
-  const { data: existing } = await db
+  const db = createAdminClient();
+  const existingQuery = db
     .from("brain_dead_leaderboard")
     .select("id, score")
-    .eq("guest_id", sessionId)
-    .eq("play_date", playDate)
-    .maybeSingle();
+    .eq("play_date", playDate);
+
+  const { data: existing } = await (userId
+    ? existingQuery.eq("user_id", userId)
+    : existingQuery.eq("guest_id", guestSessionId!)
+  ).maybeSingle();
 
   if (existing) {
     if (score <= existing.score) {
@@ -101,7 +99,8 @@ export async function POST(request: Request) {
   const { data, error } = await db
     .from("brain_dead_leaderboard")
     .insert({
-      guest_id: sessionId,
+      guest_id: userId ? null : guestSessionId,
+      user_id: userId,
       display_name: name,
       score,
       correct,

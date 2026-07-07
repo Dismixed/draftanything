@@ -64,101 +64,52 @@ export default function AnyGuessrPage() {
           </div>
         </header>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          <Link href="/anyguessr/daily" style={{ textDecoration: "none", display: "block" }}>
+        <Link href="/anyguessr/daily" style={{ textDecoration: "none", display: "block" }}>
+          <div
+            style={{
+              background: "var(--ag-surface)",
+              border: "1px solid var(--ag-border)",
+              borderRadius: "10px",
+              padding: "16px",
+              textAlign: "center",
+              position: "relative",
+              overflow: "hidden",
+              cursor: "pointer",
+              transition: "transform 0.2s, border-color 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.borderColor = "var(--ag-accent)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.borderColor = "var(--ag-border)";
+            }}
+          >
             <div
               style={{
-                background: "var(--ag-surface)",
-                border: "1px solid var(--ag-border)",
-                borderRadius: "10px",
-                padding: "16px",
-                textAlign: "center",
-                position: "relative",
-                overflow: "hidden",
-                cursor: "pointer",
-                transition: "transform 0.2s, border-color 0.2s",
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                height: "3px",
+                background: "var(--ag-accent)",
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.borderColor = "var(--ag-accent)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.borderColor = "var(--ag-border)";
-              }}
-            >
-              <div
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: "3px",
-                  background: "var(--ag-accent)",
-                }}
-              />
-              <div style={{ display: "flex", justifyContent: "center", marginBottom: "8px" }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--ag-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 6v6l4 2" />
-                </svg>
-              </div>
-              <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--ag-text)", marginBottom: "2px" }}>
-                Today&apos;s Puzzle
-              </div>
-              <div style={{ fontSize: "10px", color: "var(--ag-muted)" }}>
-                Five countries, five clue types. Closer guesses score more.
-              </div>
+            />
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: "8px" }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--ag-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 6v6l4 2" />
+              </svg>
             </div>
-          </Link>
-
-          <Link href="/anyguessr/infinite" style={{ textDecoration: "none", display: "block" }}>
-            <div
-              style={{
-                background: "var(--ag-surface)",
-                border: "1px solid var(--ag-border)",
-                borderRadius: "10px",
-                padding: "16px",
-                textAlign: "center",
-                position: "relative",
-                overflow: "hidden",
-                cursor: "pointer",
-                transition: "transform 0.2s, border-color 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.borderColor = "rgba(124,58,255,0.6)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.borderColor = "var(--ag-border)";
-              }}
-            >
-              <div
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: "3px",
-                  background: "rgba(124,58,255,0.8)",
-                }}
-              />
-              <div style={{ display: "flex", justifyContent: "center", marginBottom: "8px" }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--ag-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
-                  <path d="M21 3v5h-5" />
-                </svg>
-              </div>
-              <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--ag-text)", marginBottom: "2px" }}>
-                Infinite
-              </div>
-              <div style={{ fontSize: "10px", color: "var(--ag-muted)" }}>
-                Random countries, round after round. No daily limit.
-              </div>
+            <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--ag-text)", marginBottom: "2px" }}>
+              Today&apos;s Puzzle
             </div>
-          </Link>
-        </div>
+            <div style={{ fontSize: "10px", color: "var(--ag-muted)" }}>
+              Nine countries, nine clue types. Closer guesses score more.
+            </div>
+          </div>
+        </Link>
 
       </div>
     </main>

@@ -6,6 +6,8 @@ export interface Puzzle {
 
 export type WordStatus = "locked" | "active" | "solved";
 
+export type GameStatus = "playing" | "completed" | "failed";
+
 export interface GameState {
   mode: GameMode;
   puzzle: Puzzle | null;
@@ -15,7 +17,6 @@ export interface GameState {
   wordAttempts: string[][];
   revealedLetters: boolean[][];
   hintsRemaining: number;
-  score: number;
-  gameStatus: "playing" | "completed";
+  gameStatus: GameStatus;
   startTime: number;
 }

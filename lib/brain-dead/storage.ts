@@ -10,12 +10,6 @@ function getTodayKey(): string {
   return `bd_daily_${getDateString()}`;
 }
 
-function getGuestId(): string | null {
-  if (typeof window === "undefined") return null;
-  const match = document.cookie.match(/(?:^|;\s*)guest_token=([^;]*)/);
-  return match ? match[1] : null;
-}
-
 export function getSubmittedEntryId(): string | null {
   if (typeof window === "undefined") return null;
   try {
@@ -109,13 +103,11 @@ export async function saveLeaderboardEntry(
   correct: number,
 ): Promise<{ ok: true; id: string } | { ok: false }> {
   try {
-    const guestId = getGuestId();
-    if (!guestId) return { ok: false };
     const res = await fetch("/api/brain-dead/leaderboard", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
       body: JSON.stringify({
-        guestId,
         name,
         score,
         correct,

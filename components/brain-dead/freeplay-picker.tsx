@@ -11,10 +11,11 @@ const CATEGORY_COLORS: Record<CategoryId, string> = {
   sports: "#22c55e",
   movies: "#d97706",
   music: "#a855f7",
+  arts: "#8b5cf6",
   science: "#06b6d4",
   history: "#eab308",
   food: "#f97316",
-  tech: "#6366f1",
+  culture: "#f472b6",
   geography: "#14b8a6",
   random: "#d97706",
 };
@@ -85,19 +86,20 @@ function CategoryIcon({ id }: { id: CategoryId }) {
           <path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>
         </svg>
       );
-    case "tech":
+    case "arts":
       return (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="4" y="4" width="16" height="16" rx="2" ry="2"/>
-          <rect x="9" y="9" width="6" height="6"/>
-          <line x1="9" y1="1" x2="9" y2="4"/>
-          <line x1="15" y1="1" x2="15" y2="4"/>
-          <line x1="9" y1="20" x2="9" y2="23"/>
-          <line x1="15" y1="20" x2="15" y2="23"/>
-          <line x1="20" y1="9" x2="23" y2="9"/>
-          <line x1="20" y1="14" x2="23" y2="14"/>
-          <line x1="1" y1="9" x2="4" y2="9"/>
-          <line x1="1" y1="14" x2="4" y2="14"/>
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+      );
+    case "culture":
+      return (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
         </svg>
       );
     case "geography":
@@ -127,7 +129,7 @@ export default function FreeplayPicker() {
   return (
     <div style={{ textAlign: "center", width: "100%", margin: "0 auto", position: "relative" }}>
       <header style={{ position: "relative", marginBottom: "24px" }}>
-        <GameBackLink href="/brain-dead" color="var(--bd-text-muted)" />
+        <GameBackLink color="var(--bd-text-muted)" />
       </header>
       <p
         style={{
@@ -153,8 +155,9 @@ export default function FreeplayPicker() {
 
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "center",
           gap: "8px",
           marginBottom: "12px",
         }}
@@ -175,6 +178,12 @@ export default function FreeplayPicker() {
               fontSize: "11px",
               fontWeight: 600,
               transition: "all 0.15s",
+              flex: "0 0 calc((100% - 16px) / 3)",
+              maxWidth: "calc((100% - 16px) / 3)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
             }}
           >
             <span style={{ display: "flex", justifyContent: "center", marginBottom: "8px" }}>

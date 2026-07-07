@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { createClient } from "@/lib/supabase/browser";
 
-export function AdminSignIn() {
+export function AdminSignIn({ redirectPath = "/admin" }: { redirectPath?: string }) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [message, setMessage] = useState<string | null>(null);
@@ -15,7 +15,7 @@ export function AdminSignIn() {
     setMessage(null);
 
     const supabase = createClient();
-    const redirectTo = `${window.location.origin}/auth/callback?next=/admin/chains`;
+    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectPath)}`;
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
       options: { emailRedirectTo: redirectTo },

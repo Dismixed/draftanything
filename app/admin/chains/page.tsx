@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
-import { AdminSignIn } from "@/components/admin/admin-sign-in";
+import { AdminShell } from "@/components/admin/admin-shell";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -63,7 +63,6 @@ export default function AdminChainsPage() {
   const [puzzles, setPuzzles] = useState<Puzzle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [unauthorized, setUnauthorized] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [editingPuzzle, setEditingPuzzle] = useState<Puzzle | null>(null);
   const [schedulePuzzle, setSchedulePuzzle] = useState<Puzzle | null>(null);
@@ -89,15 +88,13 @@ export default function AdminChainsPage() {
 
   const fetchPuzzles = useCallback(async () => {
     setLoading(true);
-    setUnauthorized(false);
     try {
       const params = new URLSearchParams({ limit: "200" });
       if (statusFilter) params.set("status", statusFilter);
 
       const res = await fetch(`/api/admin/chains?${params}`);
       if (res.status === 403) {
-        setUnauthorized(true);
-        setError("Sign in with an admin account to continue.");
+        setError("Session expired — refresh the page or sign in again.");
         setPuzzles([]);
         return;
       }
@@ -338,17 +335,10 @@ export default function AdminChainsPage() {
   };
 
   return (
-    <main style={{ minHeight: "100vh", background: "#121213", color: "#ffffff", padding: "32px 24px" }}>
-      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-        <header style={{ marginBottom: "32px" }}>
-          <h1 style={{ fontSize: "24px", fontWeight: 700, margin: "0 0 4px" }}>
-            Chain Puzzle Admin
-          </h1>
-          <p style={{ fontSize: "12px", color: "#787c7e", margin: 0 }}>
-            Manage, approve, generate, and schedule word chain puzzles.
-          </p>
-        </header>
-
+    <AdminShell
+      title="Chainlink"
+      subtitle="Manage, approve, generate, and schedule word chain puzzles."
+    >
         {/* ---- Notifications ---- */}
         {successMsg && (
           <div
@@ -408,10 +398,6 @@ export default function AdminChainsPage() {
           </div>
         )}
 
-        {unauthorized ? (
-          <AdminSignIn />
-        ) : (
-          <>
         {/* ---- Action bar ---- */}
         <div style={{ display: "flex", gap: "12px", marginBottom: "24px", flexWrap: "wrap", alignItems: "center" }}>
           <select
@@ -624,9 +610,6 @@ export default function AdminChainsPage() {
             ? `${dailyUsage.size} puzzle(s) have been used as daily puzzles`
             : "No puzzles have been used as daily puzzles yet"}
         </div>
-          </>
-        )}
-      </div>
 
       {/* ---- Edit Modal ---- */}
       {editingPuzzle && (
@@ -776,7 +759,7 @@ export default function AdminChainsPage() {
           </div>
         </div>
       )}
-    </main>
+    </AdminShell>
   );
 }
 

@@ -1,19 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   CATS,
   DCLASS,
   DLABEL,
   LETTERS,
   PCOLORS,
-  QDB,
-  SL_MAP,
+  generateSlMap,
   WCLASS,
   wagerToDiff,
   type Player,
   type Question,
 } from "./data";
+import { appendUniqueQuestions } from "@/lib/brain-dead/trivia-api";
 
 /* ══════════════════════════════════
    Types
@@ -37,7 +37,7 @@ interface GameState {
   players: Player[];
   currentIdx: number;
   wager: number | null;
-  usedQ: Record<string, Set<number>>;
+  usedQ: Set<number>;
   roomCode: string;
   totalPlayers: number;
 }
@@ -51,25 +51,53 @@ function genCode(): string {
   return Array.from({ length: 4 }, () => c[Math.floor(Math.random() * c.length)]).join("");
 }
 
-function getQ(
-  cat: string,
+function matchesDifficulty(q: Question, diff: number): boolean {
+  if (diff === 4) return q.d >= 3;
+  return q.d === diff;
+}
+
+function pickQuestion(
+  pool: Question[],
   wager: number,
-  usedQ: Record<string, Set<number>>,
-): { q: Question; usedQ: Record<string, Set<number>> } {
+  usedQ: Set<number>,
+): { q: Question; usedQ: Set<number> } | null {
+  if (!pool.length) return null;
+
   const d = wagerToDiff(wager);
-  const key = cat === "random" || !QDB[cat] ? "random" : cat;
-  if (!usedQ[key]) usedQ[key] = new Set();
-  const pool = QDB[key] || [];
-  let cands = pool.filter((q, i) => q.d === d && !usedQ[key].has(i));
-  if (!cands.length) cands = pool.filter((q, i) => !usedQ[key].has(i));
+  let cands = pool
+    .map((q, i) => ({ q, i }))
+    .filter(({ q, i }) => matchesDifficulty(q, d) && !usedQ.has(i));
+
   if (!cands.length) {
-    usedQ[key] = new Set();
-    cands = pool;
+    cands = pool.map((q, i) => ({ q, i })).filter(({ i }) => !usedQ.has(i));
   }
-  const q = cands[Math.floor(Math.random() * cands.length)];
-  const idx = pool.indexOf(q);
-  usedQ[key] = new Set([...usedQ[key], idx]);
-  return { q, usedQ: { ...usedQ } };
+
+  if (!cands.length) return null;
+
+  const pick = cands[Math.floor(Math.random() * cands.length)];
+  const nextUsed = new Set(usedQ);
+  nextUsed.add(pick.i);
+  return { q: pick.q, usedQ: nextUsed };
+}
+
+function wagerTopicHint(gameCat: string, question: Question): string {
+  if (gameCat === "general" || gameCat === "random") {
+    return question.cat;
+  }
+  return CATS.find((c) => c.id === gameCat)?.name ?? question.cat;
+}
+
+function clampPos(pos: number): number {
+  return Math.max(0, Math.min(50, pos));
+}
+
+function applyPenalty(pos: number, pen: number): number {
+  return clampPos(pos - Math.min(pen, pos));
+}
+
+/** Board cells are 1–50; pos 0 is off-board start (shown on square 1). */
+function boardSquare(pos: number): number {
+  return pos === 0 ? 1 : pos;
 }
 
 /* Board: top row = 41-50 (boustrophedon) */
@@ -84,6 +112,8 @@ function buildBoardRows(): number[][] {
   return rows;
 }
 
+const BOARD_ROWS = buildBoardRows();
+
 /* ══════════════════════════════════
    Component
    ══════════════════════════════════ */
@@ -96,10 +126,16 @@ export default function SlipperySlopeGame() {
     players: [],
     currentIdx: 0,
     wager: null,
-    usedQ: {},
+    usedQ: new Set(),
     roomCode: "",
     totalPlayers: 2,
   });
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [questionsLoading, setQuestionsLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const tokenRef = useRef("");
+  const seenIdsRef = useRef<string[]>([]);
+  const loadingRef = useRef(false);
   const [soloCat, setSoloCat] = useState("general");
   const [crName, setCrName] = useState("");
   const [crCat, setCrCat] = useState("general");
@@ -114,6 +150,7 @@ export default function SlipperySlopeGame() {
   const [currentQ, setCurrentQ] = useState<Question | null>(null);
   const [currentW, setCurrentW] = useState(0);
   const [revealedSL, setRevealedSL] = useState<Set<number>>(new Set());
+  const [slMap, setSlMap] = useState<Record<number, number>>(() => generateSlMap());
 
   /* Timer */
   const [timerPct, setTimerPct] = useState(100);
@@ -124,6 +161,9 @@ export default function SlipperySlopeGame() {
   const [toast, setToast] = useState<{ id: string; cls: string; h: string; b: string } | null>(null);
   const [slToast, setSlToast] = useState<{ h: string; b: string; isSnake: boolean } | null>(null);
   const [slLine, setSlLine] = useState<{ from: number; to: number; isSnake: boolean } | null>(null);
+  const [cellCenters, setCellCenters] = useState<Record<number, { x: number; y: number }>>({});
+  const [gridSize, setGridSize] = useState<{ w: number; h: number } | null>(null);
+  const boardGridRef = useRef<HTMLDivElement>(null);
 
   /* Animation */
   const [hopAnimating, setHopAnimating] = useState(false);
@@ -148,9 +188,14 @@ export default function SlipperySlopeGame() {
    * can call each other without declaration-order issues.
    */
   const startTurnRef = useRef<((g: GameState) => void) | null>(null);
-  const checkSLRef = useRef<(() => void) | null>(null);
+  const checkSLRef = useRef<((landedPos: number) => void) | null>(null);
   const triggerWinRef = useRef<((wi: number) => void) | null>(null);
-  const animateMoveRef = useRef<((playerIdx: number, from: number, to: number, done: () => void) => void) | null>(null);
+  const animateMoveRef = useRef<
+    ((playerIdx: number, from: number, to: number, done: (landedPos: number) => void) => void) | null
+  >(null);
+  const gRef = useRef(G);
+  const revealedSLRef = useRef(revealedSL);
+  const slMapRef = useRef(slMap);
 
   /* ══════════════════════════════════
      Cleanup
@@ -160,6 +205,62 @@ export default function SlipperySlopeGame() {
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = null;
   }
+
+  const resetQuestionPool = useCallback(() => {
+    setQuestions([]);
+    setFetchError(null);
+    tokenRef.current = "";
+    seenIdsRef.current = [];
+    loadingRef.current = false;
+  }, []);
+
+  const fetchMoreQuestions = useCallback(async (cat: string) => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
+    setFetchError(null);
+    try {
+      const params = new URLSearchParams({ count: "30" });
+      if (cat !== "random") params.set("category", cat);
+      if (tokenRef.current) params.set("token", tokenRef.current);
+      if (seenIdsRef.current.length) {
+        params.set("seen", seenIdsRef.current.slice(-150).join(","));
+      }
+
+      const res = await fetch(`/api/slippery-slope/questions?${params}`);
+      if (!res.ok) throw new Error("Failed to fetch questions");
+      const data = await res.json();
+
+      if (data.questions?.length) {
+        setQuestions((prev) => {
+          const next = appendUniqueQuestions(prev, data.questions);
+          for (const q of data.questions) {
+            if (q.id && !seenIdsRef.current.includes(q.id)) {
+              seenIdsRef.current.push(q.id);
+            }
+          }
+          return next;
+        });
+        tokenRef.current = data.token ?? tokenRef.current;
+      } else {
+        setQuestions((prev) => {
+          if (!prev.length) {
+            setFetchError("No questions available. Try again.");
+          }
+          return prev;
+        });
+      }
+    } catch {
+      setQuestions((prev) => {
+        if (!prev.length) {
+          setFetchError("Could not load trivia questions. Check your connection.");
+        }
+        return prev;
+      });
+    } finally {
+      loadingRef.current = false;
+      setQuestionsLoading(false);
+    }
+  }, []);
 
   /* ══════════════════════════════════
      Navigation
@@ -180,13 +281,15 @@ export default function SlipperySlopeGame() {
      ══════════════════════════════════ */
 
   const startSolo = useCallback(() => {
+    resetQuestionPool();
+    setSlMap(generateSlMap());
     setG({
       mode: "solo",
       cat: soloCat,
       players: [{ name: "You", color: PCOLORS[0], pos: 0, isHuman: true }],
       currentIdx: 0,
       wager: null,
-      usedQ: {},
+      usedQ: new Set(),
       roomCode: "",
       totalPlayers: 2,
     });
@@ -203,7 +306,7 @@ export default function SlipperySlopeGame() {
     setTopicHint(null);
     setTopicLoading(false);
     setScreen("game");
-  }, [soloCat]);
+  }, [soloCat, resetQuestionPool]);
 
   /* ══════════════════════════════════
      ROOM / MULTIPLAYER
@@ -226,7 +329,7 @@ export default function SlipperySlopeGame() {
       totalPlayers: crCount,
       players,
       currentIdx: 0,
-      usedQ: {},
+      usedQ: new Set(),
     }));
     setLobbyJoined(1);
     setScreen("lobby");
@@ -262,7 +365,7 @@ export default function SlipperySlopeGame() {
       totalPlayers: 4,
       players,
       currentIdx: 0,
-      usedQ: {},
+      usedQ: new Set(),
     }));
     setLobbyJoined(2);
     setScreen("lobby");
@@ -280,10 +383,12 @@ export default function SlipperySlopeGame() {
   }, [jrName, jrCode]);
 
   const startMulti = useCallback(() => {
+    resetQuestionPool();
+    setSlMap(generateSlMap());
     setG((prev) => ({
       ...prev,
       currentIdx: 0,
-      usedQ: {},
+      usedQ: new Set(),
       players: prev.players.map((p) => ({ ...p, pos: 0, joined: true })),
     }));
     setRevealedSL(new Set());
@@ -299,13 +404,15 @@ export default function SlipperySlopeGame() {
     setTopicHint(null);
     setTopicLoading(false);
     setScreen("game");
-  }, []);
+  }, [resetQuestionPool]);
 
   const playAgain = useCallback(() => {
+    resetQuestionPool();
+    setSlMap(generateSlMap());
     setG((prev) => ({
       ...prev,
       currentIdx: 0,
-      usedQ: {},
+      usedQ: new Set(),
       players: prev.players.map((p) => ({ ...p, pos: 0 })),
     }));
     setRevealedSL(new Set());
@@ -321,7 +428,7 @@ export default function SlipperySlopeGame() {
     setTopicHint(null);
     setTopicLoading(false);
     setScreen("game");
-  }, []);
+  }, [resetQuestionPool]);
 
   /* ══════════════════════════════════
      Clean up lobby interval
@@ -345,19 +452,28 @@ export default function SlipperySlopeGame() {
     setScreen("win");
   }
 
-  function animateMove(playerIdx: number, from: number, to: number, done: () => void) {
+  function animateMove(
+    playerIdx: number,
+    from: number,
+    to: number,
+    done: (landedPos: number) => void,
+  ) {
+    from = clampPos(from);
+    to = clampPos(to);
     if (from === to) {
       setG((prev) => {
         const players = [...prev.players];
         players[playerIdx] = { ...players[playerIdx], pos: to };
         return { ...prev, players };
       });
-      done();
+      done(to);
       return;
     }
     const step = to > from ? 1 : -1;
     const steps: number[] = [];
-    for (let s = from + step; to > from ? s <= to : s >= to; s += step) steps.push(s);
+    for (let s = from + step; to > from ? s <= to : s >= to; s += step) {
+      steps.push(clampPos(s));
+    }
     let i = 0;
     const HOP_MS = to > from ? Math.max(60, 180 - steps.length * 8) : 100;
     setHopAnimating(true);
@@ -365,10 +481,10 @@ export default function SlipperySlopeGame() {
     function hop() {
       if (i >= steps.length) {
         setHopAnimating(false);
-        done();
+        done(to);
         return;
       }
-      const pos = steps[i];
+      const pos = clampPos(steps[i]);
       setHoppingCell(pos);
       setG((prev) => {
         const players = [...prev.players];
@@ -381,14 +497,16 @@ export default function SlipperySlopeGame() {
     setTimeout(hop, 500);
   }
 
-  function checkSL() {
-    const playerIdx = G.currentIdx;
-    const pos = G.players[playerIdx].pos;
-    if (SL_MAP[pos] !== undefined && !revealedSL.has(pos)) {
-      const newRevealed = new Set(revealedSL);
+  function checkSL(landedPos: number) {
+    const playerIdx = gRef.current.currentIdx;
+    const playerName = gRef.current.players[playerIdx]?.name ?? "Player";
+    const pos = landedPos;
+
+    if (slMapRef.current[pos] !== undefined && !revealedSLRef.current.has(pos)) {
+      const newRevealed = new Set(revealedSLRef.current);
       newRevealed.add(pos);
       setRevealedSL(newRevealed);
-      const dest = SL_MAP[pos];
+      const dest = slMapRef.current[pos];
       const isSnake = dest < pos;
       const diff = Math.abs(dest - pos);
       setSlLine({ from: pos, to: dest, isSnake });
@@ -396,13 +514,13 @@ export default function SlipperySlopeGame() {
       if (isSnake) {
         setSlToast({
           h: `\u{1F40D} SNAKE! Slide down ${diff} squares`,
-          b: `${G.players[playerIdx].name} lands on a snake at sq.${pos} -> drops to sq.${dest}`,
+          b: `${playerName} lands on a snake at sq.${pos} → drops to sq.${dest}`,
           isSnake: true,
         });
       } else {
         setSlToast({
           h: `\u{1FA9C} LADDER! Climb up ${diff} squares`,
-          b: `${G.players[playerIdx].name} hits a ladder at sq.${pos} -> jumps to sq.${dest}`,
+          b: `${playerName} hits a ladder at sq.${pos} → jumps to sq.${dest}`,
           isSnake: false,
         });
       }
@@ -412,7 +530,7 @@ export default function SlipperySlopeGame() {
         setPoppedCell(dest);
         setG((prev) => {
           const players = [...prev.players];
-          players[playerIdx] = { ...players[playerIdx], pos: dest };
+          players[playerIdx] = { ...players[playerIdx], pos: clampPos(dest) };
           return { ...prev, players };
         });
         setTimeout(() => setPoppedCell(null), 400);
@@ -420,20 +538,10 @@ export default function SlipperySlopeGame() {
           setTimeout(() => triggerWin(playerIdx), 1200);
           return;
         }
-        setTimeout(() => {
-          setG((prev) => {
-            const nextIdx = (prev.currentIdx + 1) % prev.players.length;
-            startTurnRef.current?.({ ...prev, currentIdx: nextIdx });
-            return { ...prev, currentIdx: nextIdx };
-          });
-        }, 2000);
+        advanceToNextTurn(2000);
       }, 2200);
     } else {
-      setG((prev) => {
-        const nextIdx = (prev.currentIdx + 1) % prev.players.length;
-        startTurnRef.current?.({ ...prev, currentIdx: nextIdx });
-        return { ...prev, currentIdx: nextIdx };
-      });
+      advanceToNextTurn();
     }
   }
 
@@ -443,9 +551,9 @@ export default function SlipperySlopeGame() {
     const from = g.players[g.currentIdx].pos;
     let to: number;
     if (correct) {
-      to = Math.min(50, g.players[g.currentIdx].pos + wager);
+      to = clampPos(g.players[g.currentIdx].pos + wager);
     } else {
-      to = Math.max(0, g.players[g.currentIdx].pos - Math.floor(wager / 2));
+      to = applyPenalty(g.players[g.currentIdx].pos, Math.floor(wager / 2));
     }
     if (to >= 50) {
       animateMove(g.currentIdx, from, to, () => setTimeout(() => triggerWin(g.currentIdx), 600));
@@ -468,8 +576,10 @@ export default function SlipperySlopeGame() {
     const p = g.players[g.currentIdx];
     if (p.isHuman) {
       setPhase("wager");
-      const { q } = getQ(g.cat, 5, { ...g.usedQ });
-      setCurrentQ(q);
+      const picked = pickQuestion(questions, 5, new Set(g.usedQ));
+      if (picked) {
+        setCurrentQ(picked.q);
+      }
       setTopicHint(null);
       setTopicLoading(true);
     } else {
@@ -485,7 +595,23 @@ export default function SlipperySlopeGame() {
     checkSLRef.current = checkSL;
     triggerWinRef.current = triggerWin;
     animateMoveRef.current = animateMove;
+    gRef.current = G;
+    revealedSLRef.current = revealedSL;
+    slMapRef.current = slMap;
   });
+
+  function advanceToNextTurn(delayMs = 1800) {
+    setTimeout(() => {
+      setG((prev) => {
+        const nextG = {
+          ...prev,
+          currentIdx: (prev.currentIdx + 1) % prev.players.length,
+        };
+        queueMicrotask(() => startTurnRef.current?.(nextG));
+        return nextG;
+      });
+    }, delayMs);
+  }
 
   /* ══════════════════════════════════
      EFFECT: Start first turn on game screen
@@ -493,26 +619,85 @@ export default function SlipperySlopeGame() {
 
   const gameStarted = useRef(false);
   useEffect(() => {
-    if (screen === "game" && !gameStarted.current) {
+    if (screen !== "game") {
+      gameStarted.current = false;
+      return;
+    }
+
+    if (fetchError) return;
+
+    if (questions.length === 0) {
+      if (!loadingRef.current) {
+        setQuestionsLoading(true);
+        void fetchMoreQuestions(G.cat);
+      }
+      return;
+    }
+
+    if (!gameStarted.current) {
       gameStarted.current = true;
       startTurn(G);
     }
-    if (screen !== "game") {
-      gameStarted.current = false;
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screen]);
+  }, [screen, questions.length, fetchError, G.cat]);
+
+  useEffect(() => {
+    if (screen !== "game" || fetchError) return;
+    const remaining = questions.length - G.usedQ.size;
+    if (remaining <= 8) {
+      void fetchMoreQuestions(G.cat);
+    }
+  }, [screen, questions.length, G.usedQ.size, G.cat, fetchError, fetchMoreQuestions]);
+
+  /* Measure cell centers so snake/ladder lines align with the grid */
+  useLayoutEffect(() => {
+    const grid = boardGridRef.current;
+    if (!grid || screen !== "game" || questions.length === 0) return;
+
+    const measure = () => {
+      const rect = grid.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+
+      const centers: Record<number, { x: number; y: number }> = {};
+      for (let n = 1; n <= 50; n++) {
+        const el = grid.querySelector(`#ss-cell-${n}`);
+        if (!el) continue;
+        const r = el.getBoundingClientRect();
+        centers[n] = {
+          x: r.left + r.width / 2 - rect.left,
+          y: r.top + r.height / 2 - rect.top,
+        };
+      }
+      setCellCenters(centers);
+      setGridSize({ w: rect.width, h: rect.height });
+    };
+
+    const scheduleMeasure = () => {
+      requestAnimationFrame(() => requestAnimationFrame(measure));
+    };
+
+    scheduleMeasure();
+    const ro = new ResizeObserver(scheduleMeasure);
+    ro.observe(grid);
+    return () => ro.disconnect();
+  }, [screen, questions.length]);
+
+  function slEndpoint(n: number): { x: number; y: number } | null {
+    return cellCenters[n] ?? null;
+  }
 
   /* ══════════════════════════════════
      QUESTION FLOW
      ══════════════════════════════════ */
 
   function askQuestion(wager: number) {
+    const picked = pickQuestion(questions, wager, new Set(G.usedQ));
+    if (!picked) return;
+
     setPhase("question");
-    const { q, usedQ } = getQ(G.cat, wager, { ...G.usedQ });
-    setCurrentQ(q);
+    setCurrentQ(picked.q);
     setCurrentW(wager);
-    setG((prev) => ({ ...prev, usedQ }));
+    setG((prev) => ({ ...prev, usedQ: picked.usedQ }));
     setAnswered("idle");
     setSelectedAnswer(null);
     startTimer(30);
@@ -545,11 +730,12 @@ export default function SlipperySlopeGame() {
     const pen = Math.floor(currentW / 2);
     const p = G.players[G.currentIdx];
     const from = p.pos;
-    const to = Math.max(0, p.pos - pen);
+    const to = applyPenalty(p.pos, pen);
+    const actualPen = from - to;
     setToast({
       id: "ans",
       cls: "ss-toast ss-toast-time",
-      h: `\u23F1 Time's up! -${pen} squares`,
+      h: `\u23F1 Time's up! -${actualPen} squares`,
       b: `The answer was: ${currentQ.a[currentQ.c]}`,
     });
     setSelectedAnswer(currentQ.c);
@@ -567,7 +753,7 @@ export default function SlipperySlopeGame() {
     setAnswered(idx === q.c ? "correct" : "wrong");
 
     if (idx === q.c) {
-      const to = Math.min(50, p.pos + w);
+      const to = clampPos(p.pos + w);
       setToast({
         id: "ans",
         cls: "ss-toast ss-toast-ok",
@@ -581,11 +767,12 @@ export default function SlipperySlopeGame() {
       }
     } else {
       const pen = Math.floor(w / 2);
-      const to = Math.max(0, p.pos - pen);
+      const to = applyPenalty(p.pos, pen);
+      const actualPen = from - to;
       setToast({
         id: "ans",
         cls: "ss-toast ss-toast-bad",
-        h: `\u2717 Wrong! -${pen} squares`,
+        h: `\u2717 Wrong! -${actualPen} squares`,
         b: `Correct: "${q.a[q.c]}" - ${p.name} slides to ${to}`,
       });
       setSelectedAnswer(q.c);
@@ -609,11 +796,10 @@ export default function SlipperySlopeGame() {
 
   useEffect(() => {
     if (phase === "wager" && currentQ && G.players[G.currentIdx]?.isHuman) {
-      const categoryName = CATS.find((c) => c.id === G.cat)?.name || "trivia";
       const timeout = setTimeout(() => {
         setTopicLoading(false);
-        setTopicHint(categoryName);
-      }, 1200);
+        setTopicHint(wagerTopicHint(G.cat, currentQ));
+      }, 800);
       return () => clearTimeout(timeout);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -647,20 +833,6 @@ export default function SlipperySlopeGame() {
         <nav className="ss-nav">
           <div className="ss-logo" style={{ color: "var(--ss-text)" }}>
             <span style={{ color: "var(--ss-lime)" }}>slippery</span>slope
-          </div>
-          <div className="ss-nav-pills">
-            <button className={`ss-npill ${screen === "home" ? "active" : ""}`} onClick={goHome}>
-              Home
-            </button>
-            <button className={`ss-npill ${screen === "solo-setup" ? "active" : ""}`} onClick={goSolo}>
-              Solo
-            </button>
-            <button
-              className={`ss-npill ${screen === "multi-home" || screen === "create-room" || screen === "join-room" || screen === "lobby" ? "active" : ""}`}
-              onClick={() => setScreen("multi-home")}
-            >
-              Multiplayer
-            </button>
           </div>
         </nav>
       )}
@@ -1000,7 +1172,52 @@ export default function SlipperySlopeGame() {
       )}
 
       {/* ════ GAME ════ */}
-      {screen === "game" && (
+      {screen === "game" && (questionsLoading || fetchError || questions.length === 0) && (
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "2rem",
+            textAlign: "center",
+          }}
+        >
+          <div>
+            {fetchError ? (
+              <>
+                <p style={{ color: "var(--ss-muted)", marginBottom: "1rem" }}>{fetchError}</p>
+                <button
+                  className="ss-btn ss-btn-lime"
+                  onClick={() => {
+                    setQuestionsLoading(true);
+                    void fetchMoreQuestions(G.cat);
+                  }}
+                >
+                  Try again
+                </button>
+              </>
+            ) : (
+              <>
+                <div
+                  style={{
+                    width: "28px",
+                    height: "28px",
+                    border: "3px solid var(--ss-border)",
+                    borderTopColor: "var(--ss-lime)",
+                    borderRadius: "50%",
+                    animation: "spin 0.7s linear infinite",
+                    margin: "0 auto 1rem",
+                  }}
+                />
+                <p style={{ color: "var(--ss-muted)" }}>Loading trivia questions…</p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {screen === "game" && !questionsLoading && !fetchError && questions.length > 0 && (
         <div
           className="ss-game-layout"
           style={{
@@ -1031,31 +1248,29 @@ export default function SlipperySlopeGame() {
                   </span>
                 </div>
               </div>
-              <div style={{ position: "relative" }}>
-                <div className="ss-grid">
-                  {buildBoardRows()
-                    .flat()
-                    .map((n) => {
-                      const hasSnake =
-                        revealedSL.has(n) && SL_MAP[n] !== undefined && SL_MAP[n] < n;
-                      const hasLadder =
-                        revealedSL.has(n) && SL_MAP[n] !== undefined && SL_MAP[n] > n;
+              <div className="ss-board-grid-wrap">
+                <div className="ss-grid" ref={boardGridRef}>
+                  {BOARD_ROWS.flat().map((n) => {
+                      const slDest = slMap[n];
+                      const isRevealed = revealedSL.has(n);
+                      const isSnakeHead = slDest !== undefined && slDest < n && isRevealed;
+                      const isLadderHead = slDest !== undefined && slDest > n && isRevealed;
                       const isGoal = n === 50;
                       const classNames = [
                         "ss-gcell",
                         isGoal ? "goal-cell" : "",
-                        hasSnake ? "revealed-snake" : "",
-                        hasLadder ? "revealed-ladder" : "",
+                        isSnakeHead ? "revealed-snake" : "",
+                        isLadderHead ? "revealed-ladder" : "",
                       ]
                         .filter(Boolean)
                         .join(" ");
-                      const tokensHere = G.players.filter((p) => p.pos === n);
+                      const tokensHere = G.players.filter((p) => boardSquare(p.pos) === n);
                       return (
                         <div key={n} id={`ss-cell-${n}`} className={classNames}>
                           <span className="ss-cell-num">{n}</span>
-                          {(hasSnake || hasLadder) && (
-                            <span className={hasSnake ? "ss-snake-icon" : "ss-ladder-icon"}>
-                              {hasSnake ? "\u{1F40D}" : "\u{1FA9C}"}
+                          {(isSnakeHead || isLadderHead) && (
+                            <span className={isSnakeHead ? "ss-snake-icon" : "ss-ladder-icon"}>
+                              {isSnakeHead ? "\u{1F40D}" : "\u{1FA9C}"}
                             </span>
                           )}
                           {tokensHere.length > 0 && (
@@ -1063,7 +1278,7 @@ export default function SlipperySlopeGame() {
                               {tokensHere.map((tp, ti) => (
                                 <div
                                   key={ti}
-                                  className={`ss-tok ${hoppingCell === n ? "ss-tok-hopping" : ""} ${poppedCell === n ? "ss-popped" : ""}`}
+                                  className={`ss-tok ${tp.pos === 0 ? "ss-tok-start" : ""} ${hoppingCell === n ? "ss-tok-hopping" : ""} ${poppedCell === n ? "ss-popped" : ""}`}
                                   style={{ background: tp.color }}
                                 />
                               ))}
@@ -1073,28 +1288,37 @@ export default function SlipperySlopeGame() {
                       );
                     })}
                 </div>
-                {slLine && (
+                {gridSize && (
                   <svg
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      height: "100%",
-                      pointerEvents: "none",
-                      zIndex: 10,
-                    }}
+                    id="ss-sl-overlay"
+                    viewBox={`0 0 ${gridSize.w} ${gridSize.h}`}
+                    preserveAspectRatio="none"
                   >
-                    <line
-                      x1="50%"
-                      y1="20%"
-                      x2="50%"
-                      y2="80%"
-                      stroke={slLine.isSnake ? "#f87171" : "#b5f23d"}
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      className="ss-sl-line"
-                    />
+                    {Object.entries(slMap).map(([from, to]) => {
+                      const fromN = Number(from);
+                      const toN = to;
+                      const isRevealed = revealedSL.has(fromN);
+                      const active = slLine?.from === fromN && slLine?.to === toN;
+                      if (!isRevealed && !active) return null;
+                      const a = slEndpoint(fromN);
+                      const b = slEndpoint(toN);
+                      if (!a || !b) return null;
+                      const isSnake = toN < fromN;
+                      return (
+                        <line
+                          key={from}
+                          x1={a.x}
+                          y1={a.y}
+                          x2={b.x}
+                          y2={b.y}
+                          stroke={isSnake ? "#f87171" : "#b5f23d"}
+                          strokeWidth={active ? 3 : 2}
+                          strokeLinecap="round"
+                          opacity={active ? 1 : 0.75}
+                          className={active ? "ss-sl-line" : undefined}
+                        />
+                      );
+                    })}
                   </svg>
                 )}
               </div>
@@ -1107,6 +1331,11 @@ export default function SlipperySlopeGame() {
               </div>
               <div className="ss-turn-player" style={{ color: G.players[G.currentIdx]?.color }}>
                 {G.players[G.currentIdx]?.name}
+              </div>
+              <div className="ss-turn-pos">
+                {G.players[G.currentIdx]?.pos === 0
+                  ? "At the start — square 1"
+                  : `On square ${G.players[G.currentIdx]?.pos}`}
               </div>
 
               {/* WAGER PHASE — HUMAN */}
@@ -1127,7 +1356,7 @@ export default function SlipperySlopeGame() {
                             flexShrink: 0,
                           }}
                         />
-                        Thinking of a topic\u2026
+                        Thinking of a topic…
                       </div>
                     ) : topicHint ? (
                       <div className="ss-topic-question">
@@ -1303,9 +1532,9 @@ export default function SlipperySlopeGame() {
                   />
                 </div>
                 <div className="ss-ppos">
-                  <span>Sq. {p.pos}</span>
+                  <span>{p.pos === 0 ? "Start" : `Sq. ${p.pos}`}</span>
                   <span style={{ color: "var(--ss-muted)" }}>
-                    {p.pos >= 50 ? "WINNER!" : `${50 - p.pos} to go`}
+                    {p.pos >= 50 ? "WINNER!" : `${50 - Math.max(p.pos, 0)} to go`}
                   </span>
                 </div>
               </div>

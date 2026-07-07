@@ -507,9 +507,13 @@ export default function StimGames() {
                   zIndex: 2,
                 }}
               >
-                <span
+                <Link
+                  href="/brain-dead"
                   className="stim-text-link"
                   style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
                     fontSize: "10px",
                     fontWeight: 600,
                     letterSpacing: "0.18em",
@@ -519,7 +523,7 @@ export default function StimGames() {
                 >
                   All modes
                   <span style={{ fontSize: "12px" }}>&#8594;</span>
-                </span>
+                </Link>
                 <Link
                   href="/brain-dead/daily"
                   className="stim-text-link"
@@ -545,111 +549,83 @@ export default function StimGames() {
               display: "block",
             }}
           >
-            <div
-              style={{
-                height: "100%",
-                background: "var(--ag-surface)",
-                border: "1px solid var(--ag-border)",
-                borderRadius: "10px",
-                padding: "28px 24px",
-                position: "relative",
-                overflow: "hidden",
-                cursor: "pointer",
-                transition: "transform 0.2s, border-color 0.2s",
-                display: "flex",
-                flexDirection: "column",
-              }}
-              className="stim-hero-card"
+            <Link
+              href="/anyguessr/daily"
+              style={{ textDecoration: "none", display: "block", height: "100%" }}
             >
-              <GameCardStreak gameId="anyguessr" accentColor="var(--ag-accent)" />
-              <Link
-                href="/anyguessr"
-                aria-label="AnyGuessr — All modes"
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  zIndex: 1,
-                }}
-              />
               <div
                 style={{
-                  fontSize: "9px",
-                  fontWeight: 600,
-                  letterSpacing: "0.32em",
-                  textTransform: "uppercase",
-                  color: "var(--ag-accent)",
-                  marginBottom: "8px",
-                }}
-              >
-                Daily Trivia
-              </div>
-              <h2
-                style={{
-                  fontSize: "clamp(24px, 4vw, 32px)",
-                  fontWeight: 800,
-                  lineHeight: 0.95,
-                  color: "var(--ag-text)",
-                  margin: "0 0 6px",
-                  letterSpacing: "-0.02em",
-                }}
-              >
-                AnyGuessr
-              </h2>
-              <p style={{ ...modeHintStyle, margin: "0 0 10px", color: "var(--ag-muted)" }}>
-                Solo · Daily + Infinite
-              </p>
-              <p
-                style={{
-                  fontSize: "12px",
-                  color: "var(--ag-muted)",
-                  lineHeight: 1.55,
-                  margin: "0 0 20px",
-                  fontWeight: 300,
-                  flex: 1,
-                }}
-              >
-                Five daily rounds — each a different country. Landmark, language, person, food, environment. Score points by how close your guess is.
-              </p>
-              <div
-                style={{
-                  display: "flex",
-                  gap: "16px",
-                  flexWrap: "wrap",
-                  alignItems: "center",
+                  height: "100%",
+                  background: "var(--ag-surface)",
+                  border: "1px solid var(--ag-border)",
+                  borderRadius: "10px",
+                  padding: "28px 24px",
                   position: "relative",
-                  zIndex: 2,
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  transition: "transform 0.2s, border-color 0.2s",
+                  display: "flex",
+                  flexDirection: "column",
                 }}
+                className="stim-hero-card"
               >
-                <Link
-                  href="/anyguessr/daily"
-                  className="stim-text-link"
+                <GameCardStreak gameId="anyguessr" accentColor="var(--ag-accent)" />
+                <div
                   style={{
-                    fontSize: "10px",
+                    fontSize: "9px",
                     fontWeight: 600,
-                    letterSpacing: "0.18em",
+                    letterSpacing: "0.32em",
                     textTransform: "uppercase",
                     color: "var(--ag-accent)",
+                    marginBottom: "8px",
                   }}
                 >
-                  Today&apos;s puzzle
-                  <span style={{ fontSize: "12px" }}>&#8594;</span>
-                </Link>
-                <Link
-                  href="/anyguessr/infinite"
+                  Daily Trivia
+                </div>
+                <h2
+                  style={{
+                    fontSize: "clamp(24px, 4vw, 32px)",
+                    fontWeight: 800,
+                    lineHeight: 0.95,
+                    color: "var(--ag-text)",
+                    margin: "0 0 6px",
+                    letterSpacing: "-0.02em",
+                  }}
+                >
+                  AnyGuessr
+                </h2>
+                <p style={{ ...modeHintStyle, margin: "0 0 10px", color: "var(--ag-muted)" }}>
+                  Solo · Daily
+                </p>
+                <p
+                  style={{
+                    fontSize: "12px",
+                    color: "var(--ag-muted)",
+                    lineHeight: 1.55,
+                    margin: "0 0 20px",
+                    fontWeight: 300,
+                    flex: 1,
+                  }}
+                >
+                  Five daily rounds — each a different country. Landmark, language, person, food, environment. Score points by how close your guess is.
+                </p>
+                <div
                   className="stim-text-link"
                   style={{
                     fontSize: "10px",
                     fontWeight: 600,
                     letterSpacing: "0.14em",
                     textTransform: "uppercase",
-                    color: "var(--ag-muted)",
+                    color: "var(--ag-accent)",
+                    position: "relative",
+                    zIndex: 2,
                   }}
                 >
-                  Infinite
+                  Play today&apos;s puzzle
                   <span style={{ fontSize: "12px" }}>&#8594;</span>
-                </Link>
+                </div>
               </div>
-            </div>
+            </Link>
           </div>
 
           {/* Slippery Slope */}

@@ -6,6 +6,11 @@ test("sound toggle is visible on hub", async ({ page }) => {
   await expect(toggle).toBeVisible();
 });
 
+test("sound starts muted by default", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "Unmute sounds" })).toBeVisible();
+});
+
 test("sound toggle persists label after click", async ({ page }) => {
   await page.goto("/");
   await page.locator("body").click({ position: { x: 10, y: 10 } });

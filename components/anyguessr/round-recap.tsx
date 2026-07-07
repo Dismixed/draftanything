@@ -96,9 +96,19 @@ export default function RoundRecap({ recap, totalScore, onContinue }: Props) {
       >
         <StatBlock
           label="Distance"
-          value={recap.exact ? "0 km" : formatDistanceKm(recap.distanceKm)}
+          value={
+            recap.surrendered
+              ? "—"
+              : recap.exact
+                ? "0 km"
+                : formatDistanceKm(recap.distanceKm)
+          }
         />
-        <StatBlock label="Round score" value={`+${recap.roundScore}`} highlight />
+        <StatBlock
+          label="Round score"
+          value={recap.surrendered ? "0" : `+${recap.roundScore}`}
+          highlight={!recap.surrendered}
+        />
       </div>
 
       <p
@@ -108,8 +118,14 @@ export default function RoundRecap({ recap, totalScore, onContinue }: Props) {
           margin: "0 0 16px",
         }}
       >
-        You guessed <strong style={{ color: "var(--ag-text)" }}>{recap.guess}</strong>
-        {recap.exact ? " — spot on!" : ""}
+        {recap.surrendered ? (
+          <>You gave up on this round.</>
+        ) : (
+          <>
+            You guessed <strong style={{ color: "var(--ag-text)" }}>{recap.guess}</strong>
+            {recap.exact ? " — spot on!" : ""}
+          </>
+        )}
       </p>
 
       <button type="button" onClick={onContinue} style={primaryBtnStyle}>

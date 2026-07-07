@@ -20,25 +20,13 @@ export default function Results({
   embedded?: boolean;
 }) {
   const store = useAnyGuessrStore();
-  const isDaily = store.mode === "daily";
-  const isInfinite = store.mode === "infinite";
-
   const isWin = store.status === "won";
-  const isSurrendered = isInfinite && store.status === "surrendered";
 
-  const dailyScore = useCountUp(
-    isDaily ? store.totalScore : 0,
-    isDaily && (scoreActive ?? isWin),
+  const displayScore = useCountUp(
+    store.totalScore,
+    scoreActive ?? isWin,
     900,
   );
-  const infiniteScore = useCountUp(
-    isInfinite && isWin ? store.score : 0,
-    isInfinite && (scoreActive ?? isWin),
-    900,
-  );
-  const displayScore = isDaily ? dailyScore : infiniteScore;
-
-  const nextLabel = isDaily ? "Come back tomorrow" : "Play next round";
 
   return (
     <div
@@ -62,81 +50,36 @@ export default function Results({
           marginBottom: "12px",
         }}
       >
-        {isDaily ? "Daily Complete" : isSurrendered ? "Surrendered" : "Solved"}
+        Daily Complete
       </div>
-
-      {isInfinite && (
-        <div
-          style={{
-            fontSize: "clamp(28px, 7vw, 40px)",
-            fontWeight: 800,
-            color: "var(--ag-text)",
-            letterSpacing: "-0.02em",
-            marginBottom: "4px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "14px",
-          }}
-        >
-          {store.flagUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={store.flagUrl}
-              alt=""
-              style={{ width: "44px", height: "30px", borderRadius: "4px", objectFit: "cover" }}
-            />
-          ) : null}
-          <span>{store.answer ?? "—"}</span>
-        </div>
-      )}
 
       <div style={{ margin: "20px 0", display: "flex", flexDirection: "column", gap: "10px" }}>
         <StatRow label="Total Score" value={`${displayScore}`} highlight={isWin} />
 
-        {isDaily &&
-          store.roundResults.map((round) => (
-            <DailyRoundRow key={round.roundIndex} round={round} />
-          ))}
-
-        {isInfinite && (
-          <>
-            <StatRow label="Guesses Made" value={`${store.guesses.length}`} />
-            <StatRow
-              label="Clues Revealed"
-              value={`${store.revealedCount} / ${store.totalClues}`}
-            />
-          </>
-        )}
+        {store.roundResults.map((round) => (
+          <DailyRoundRow key={round.roundIndex} round={round} />
+        ))}
       </div>
 
       <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
-        {isInfinite ? (
-          <button onClick={() => store.nextRound()} style={primaryBtnStyle}>
-            Play Infinite
-          </button>
-        ) : (
-          <Link href="/" style={{ textDecoration: "none" }}>
-            <button style={primaryBtnStyle}>Back home</button>
-          </Link>
-        )}
-        <Link href="/anyguessr/infinite" style={{ textDecoration: "none" }}>
-          <button style={secondaryBtnStyle}>Infinite</button>
+        <Link href="/" style={{ textDecoration: "none" }}>
+          <button style={primaryBtnStyle}>Back home</button>
+        </Link>
+        <Link href="/anyguessr/daily" style={{ textDecoration: "none" }}>
+          <button style={secondaryBtnStyle}>View results</button>
         </Link>
       </div>
 
-      {isDaily && (
-        <div
-          style={{
-            marginTop: "18px",
-            fontSize: "10px",
-            color: "var(--ag-muted)",
-            opacity: 0.7,
-          }}
-        >
-          {nextLabel} · {getDateString()}
-        </div>
-      )}
+      <div
+        style={{
+          marginTop: "18px",
+          fontSize: "10px",
+          color: "var(--ag-muted)",
+          opacity: 0.7,
+        }}
+      >
+        Come back tomorrow · {getDateString()}
+      </div>
     </div>
   );
 }
@@ -151,15 +94,18 @@ function DailyRoundRow({
     flagUrl?: string;
     roundScore: number;
     exact: boolean;
+    surrendered?: boolean;
     distanceKm: number;
   };
 }) {
   const label =
     DAILY_CLUE_TYPE_LABEL[round.clueType as keyof typeof DAILY_CLUE_TYPE_LABEL] ??
     round.clueType;
-  const scoreLabel = round.exact
-    ? `+${round.roundScore}`
-    : `+${round.roundScore} · ${formatDistanceKm(round.distanceKm)}`;
+  const scoreLabel = round.surrendered
+    ? "0"
+    : round.exact
+      ? `+${round.roundScore}`
+      : `+${round.roundScore} · ${formatDistanceKm(round.distanceKm)}`;
 
   return (
     <div

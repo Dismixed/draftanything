@@ -9,6 +9,10 @@ const CLUE_TYPE_LABEL: Record<string, string> = {
   food: "Food",
   written_language: "Written Language",
   landmark: "Landmark",
+  flag: "Flag",
+  currency: "Currency",
+  jersey: "Jersey",
+  brand: "Brand",
   audio: "Spoken Language",
 };
 

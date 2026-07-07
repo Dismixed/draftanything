@@ -3,6 +3,7 @@ import {
   DAILY_MAX_ROUND_SCORE,
   DAILY_ROUND_COUNT,
   formatDistanceKm,
+  maxDailyLookbackDays,
   pickDailyPuzzles,
   scoreFromDistanceKm,
 } from "@/lib/anyguessr/daily";
@@ -73,12 +74,22 @@ describe("map projection", () => {
 });
 
 describe("pickDailyPuzzles", () => {
-  const pool = Array.from({ length: 12 }, (_, i) => ({
+  const pool = Array.from({ length: 18 }, (_, i) => ({
     id: `puzzle-${i}`,
-    clues: [],
+    clues: [
+      { type: "flag", content: `flag-${i}` },
+      { type: "currency", content: `currency-${i}` },
+      { type: "jersey", content: `jersey-${i}` },
+      { type: "brand", content: `brand-${i}` },
+      { type: "landmark", content: `landmark-${i}` },
+      { type: "written_language", content: `greeting-${i}` },
+      { type: "person", content: `person-${i}` },
+      { type: "food", content: `food-${i}` },
+      { type: "environment", content: `environment-${i}` },
+    ],
   }));
 
-  it("picks five unique puzzles deterministically per date", () => {
+  it("picks nine unique puzzles deterministically per date", () => {
     const a = pickDailyPuzzles(pool, "2026-06-25");
     const b = pickDailyPuzzles(pool, "2026-06-25");
     expect(a).toHaveLength(DAILY_ROUND_COUNT);
@@ -90,5 +101,26 @@ describe("pickDailyPuzzles", () => {
     const a = pickDailyPuzzles(pool, "2026-06-25").map((p) => p.id);
     const b = pickDailyPuzzles(pool, "2026-06-26").map((p) => p.id);
     expect(a).not.toEqual(b);
+  });
+
+  it("avoids countries used on the prior day when the pool allows", () => {
+    const prior = pickDailyPuzzles(pool, "2026-06-24", {}).map((p) => p.id);
+    const today = pickDailyPuzzles(pool, "2026-06-25").map((p) => p.id);
+    expect(today.some((id) => prior.includes(id))).toBe(false);
+  });
+
+  it("avoids repeating the same language clue text on consecutive days", () => {
+    const priorLanguage = pickDailyPuzzles(pool, "2026-06-24", {})[5].clues.find(
+      (clue) => clue.type === "written_language",
+    )?.content;
+    const todayLanguage = pickDailyPuzzles(pool, "2026-06-25")[5].clues.find(
+      (clue) => clue.type === "written_language",
+    )?.content;
+    expect(todayLanguage).not.toBe(priorLanguage);
+  });
+
+  it("computes lookback from pool size", () => {
+    expect(maxDailyLookbackDays(18)).toBe(1);
+    expect(maxDailyLookbackDays(35)).toBe(2);
   });
 });

@@ -5,10 +5,11 @@ export type CategoryId =
   | "sports"
   | "movies"
   | "music"
+  | "arts"
   | "science"
   | "history"
   | "food"
-  | "tech"
+  | "culture"
   | "geography"
   | "random";
 
