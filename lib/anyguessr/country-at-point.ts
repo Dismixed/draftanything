@@ -2,6 +2,14 @@ import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
 import { point } from "@turf/helpers";
 
 type CountryFeature = GeoJSON.Feature<GeoJSON.Geometry, GeoJSON.GeoJsonProperties>;
+type PolygonCountryFeature = GeoJSON.Feature<
+  GeoJSON.Polygon | GeoJSON.MultiPolygon,
+  GeoJSON.GeoJsonProperties
+>;
+
+function isPolygonCountryFeature(feature: CountryFeature): feature is PolygonCountryFeature {
+  return feature.geometry?.type === "Polygon" || feature.geometry?.type === "MultiPolygon";
+}
 
 function isValidCca3(value: unknown): value is string {
   return typeof value === "string" && value.length === 3 && value !== "-99";
@@ -26,9 +34,9 @@ export function lookupCca3AtPoint(
   let match: string | null = null;
 
   for (const feature of geojson.features) {
-    if (!feature.geometry) continue;
-    if (!booleanPointInPolygon(pt, feature as CountryFeature)) continue;
-    const cca3 = cca3FromFeature(feature as CountryFeature);
+    if (!isPolygonCountryFeature(feature)) continue;
+    if (!booleanPointInPolygon(pt, feature)) continue;
+    const cca3 = cca3FromFeature(feature);
     if (cca3) match = cca3;
   }
 

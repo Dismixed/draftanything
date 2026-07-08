@@ -2,6 +2,7 @@ import "server-only";
 
 import { z } from "zod/v4";
 import { generateJson } from "@/features/ai/gemini";
+import type { SeedClueType } from "./seed-types";
 
 const ClueTypeEnum = z.enum([
   "currency",
@@ -26,7 +27,7 @@ const ProposalSchema = z.object({
 });
 
 export interface ProposedSeedEntry {
-  clue_type: (typeof SEED_CLUE_TYPES)[number];
+  clue_type: SeedClueType;
   wiki_title: string | null;
   text_content: string | null;
   notes?: string | null;

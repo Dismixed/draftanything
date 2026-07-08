@@ -1,22 +1,26 @@
 import { NextResponse } from "next/server";
+import { unstable_cache } from "next/cache";
 import type { TransformedQuestion } from "@/lib/brain-dead/trivia-api";
 import { fetchDailyQuestions } from "@/lib/brain-dead/trivia-api";
 
-/* ------------------------------------------------------------------ */
-/*  In-memory cache: same 15 questions for everyone on a given day     */
-/* ------------------------------------------------------------------ */
+const DAILY_QUESTION_COUNT = 15;
+const ONE_DAY_SECONDS = 60 * 60 * 24;
 
-const dailyCache = new Map<string, TransformedQuestion[]>();
+function getCachedDailyQuestions(today: string) {
+  return unstable_cache(
+    async (): Promise<{ questions: TransformedQuestion[]; error?: string }> =>
+      fetchDailyQuestions(DAILY_QUESTION_COUNT),
+    ["brain-dead-daily", today],
+    {
+      revalidate: ONE_DAY_SECONDS,
+      tags: [`brain-dead-daily-${today}`],
+    },
+  )();
+}
 
 export async function GET() {
   const today = new Date().toISOString().slice(0, 10);
-
-  const cached = dailyCache.get(today);
-  if (cached) {
-    return NextResponse.json({ questions: cached });
-  }
-
-  const { questions, error } = await fetchDailyQuestions(15);
+  const { questions, error } = await getCachedDailyQuestions(today);
 
   if (error || !questions.length) {
     return NextResponse.json(
@@ -24,8 +28,6 @@ export async function GET() {
       { status: 502 },
     );
   }
-
-  dailyCache.set(today, questions);
 
   return NextResponse.json({ questions });
 }
