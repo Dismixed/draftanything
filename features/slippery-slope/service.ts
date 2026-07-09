@@ -1,11 +1,13 @@
 import "server-only";
 
 import type { Question } from "@/components/slippery-slope/data";
-import { generateSlMap } from "@/components/slippery-slope/data";
+import { DEFAULT_PLAYER_EMOJIS, generateSlMap } from "@/components/slippery-slope/data";
 import { fetchQuestions } from "@/lib/brain-dead/trivia-api";
 import { AppError } from "@/lib/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { pickQuestionFromPool } from "./game-logic";
+import { resolveWagerTopicHint } from "./topic-hint";
+import { enrichQuestionsWithTopics } from "./topic";
 import type {
   CreateSsRoomInput,
   SsLastEvent,
@@ -40,6 +42,7 @@ interface DbPlayer {
   display_name: string;
   seat: number;
   color_index: number;
+  emoji: string;
   position: number;
 }
 
@@ -52,6 +55,9 @@ function mapRpcError(msg: string): never {
   }
   if (msg.includes("NAME_TAKEN")) {
     throw new AppError("NAME_TAKEN", "This display name is already taken in this room");
+  }
+  if (msg.includes("EMOJI_TAKEN")) {
+    throw new AppError("NAME_TAKEN", "That emoji is already taken by another player");
   }
   if (msg.includes("NOT_HOST")) {
     throw new AppError("NOT_HOST", "Only the host can perform this action");
@@ -87,6 +93,7 @@ function sanitizeQuestion(
     a: question.a,
     d: question.d,
     cat: question.cat,
+    topic: question.topic,
   };
 
   if (phase === "WIN" || lastEvent) {
@@ -98,6 +105,27 @@ function sanitizeQuestion(
   }
 
   return { ...base, c: question.c };
+}
+
+function computeWagerTopicHint(room: DbRoom): string | null {
+  if (room.phase !== "PLAYING" || room.turn_phase !== "WAGER") {
+    return null;
+  }
+
+  if (room.current_question) {
+    return resolveWagerTopicHint(room.category, room.current_question);
+  }
+
+  const preview = pickQuestionFromPool(
+    room.question_pool,
+    5,
+    room.used_question_indices,
+  );
+  if (preview) {
+    return resolveWagerTopicHint(room.category, preview.question);
+  }
+
+  return resolveWagerTopicHint(room.category, { cat: room.category });
 }
 
 function buildProjection(
@@ -126,6 +154,7 @@ function buildProjection(
       room.phase,
       room.last_event,
     ),
+    wagerTopicHint: computeWagerTopicHint(room),
     slMap: room.sl_map ?? {},
     winnerPlayerId: room.winner_player_id,
     lastEvent: room.last_event,
@@ -136,6 +165,7 @@ function buildProjection(
       displayName: p.display_name,
       seat: p.seat,
       colorIndex: p.color_index,
+      emoji: p.emoji || DEFAULT_PLAYER_EMOJIS[p.seat - 1] || "🎯",
       position: p.position,
       isHost: p.guest_id === room.host_guest_id,
     })),
@@ -187,7 +217,7 @@ async function fetchPlayers(roomId: string): Promise<DbPlayer[]> {
   const db = createAdminClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (db.from as any)("ss_players")
-    .select("id, guest_id, display_name, seat, color_index, position")
+    .select("id, guest_id, display_name, seat, color_index, emoji, position")
     .eq("room_id", roomId)
     .is("removed_at", null)
     .order("seat");
@@ -304,6 +334,21 @@ export async function leaveSsRoom(roomId: string, guestId: string): Promise<void
   if (error) mapRpcError(error.message ?? "");
 }
 
+export async function updateSsPlayerEmoji(
+  roomId: string,
+  guestId: string,
+  emoji: string,
+): Promise<SsRoomProjection> {
+  const db = createAdminClient();
+  const { error } = await (db.rpc as any)("update_ss_player_emoji", {
+    p_room_id: roomId,
+    p_guest_id: guestId,
+    p_emoji: emoji,
+  });
+  if (error) mapRpcError(error.message ?? "");
+  return getSsRoom(roomId, guestId);
+}
+
 export async function startSsGame(roomId: string, guestId: string): Promise<SsRoomProjection> {
   const db = createAdminClient();
   const room = await fetchRoomRow(roomId);
@@ -322,14 +367,19 @@ export async function startSsGame(roomId: string, guestId: string): Promise<SsRo
     );
   }
 
+  const questions = await enrichQuestionsWithTopics(
+    result.questions,
+    room.category,
+  );
+
   const slMap = generateSlMap();
-  const seenIds = result.questions.map((q) => q.id).filter(Boolean);
+  const seenIds = questions.map((q) => q.id).filter(Boolean);
 
   const { error } = await (db.rpc as any)("start_ss_game", {
       p_room_id: roomId,
       p_host_guest_id: guestId,
       p_sl_map: slMap,
-      p_question_pool: result.questions,
+      p_question_pool: questions,
       p_question_token: result.token,
       p_seen_question_ids: seenIds,
   });

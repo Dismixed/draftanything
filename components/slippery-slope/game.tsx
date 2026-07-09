@@ -16,6 +16,7 @@ import {
   type Question,
 } from "./data";
 import { appendUniqueQuestions } from "@/lib/brain-dead/trivia-api";
+import { resolveWagerTopicHint } from "@/features/slippery-slope/topic-hint";
 
 /* ══════════════════════════════════
    Types
@@ -74,13 +75,6 @@ function pickQuestion(
   const nextUsed = new Set(usedQ);
   nextUsed.add(pick.i);
   return { q: pick.q, usedQ: nextUsed };
-}
-
-function wagerTopicHint(gameCat: string, question: Question): string {
-  if (gameCat === "general" || gameCat === "random") {
-    return question.cat;
-  }
-  return CATS.find((c) => c.id === gameCat)?.name ?? question.cat;
 }
 
 function clampPos(pos: number): number {
@@ -752,10 +746,17 @@ export default function SlipperySlopeGame() {
 
   useEffect(() => {
     if (phase === "wager" && currentQ && G.players[G.currentIdx]?.isHuman) {
+      if (currentQ.topic || G.cat === "general" || G.cat === "random") {
+        setTopicLoading(false);
+        setTopicHint(resolveWagerTopicHint(G.cat, currentQ));
+        return;
+      }
+
+      setTopicLoading(true);
       const timeout = setTimeout(() => {
         setTopicLoading(false);
-        setTopicHint(wagerTopicHint(G.cat, currentQ));
-      }, 800);
+        setTopicHint(resolveWagerTopicHint(G.cat, currentQ));
+      }, 400);
       return () => clearTimeout(timeout);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

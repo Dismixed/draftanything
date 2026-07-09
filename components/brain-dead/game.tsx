@@ -25,6 +25,7 @@ import { fireConfetti } from "@/lib/motion/confetti";
 import { triggerAnimation } from "@/lib/motion/trigger-class";
 import { GameBackLink } from "@/components/ui/game-back-link";
 import { SoundToggle } from "@/components/ui/sound-toggle";
+import { OtherDailies } from "@/components/daily/other-dailies";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
 
 type Screen = "played" | "game" | "result";
@@ -627,6 +628,10 @@ export default function BrainDeadGame({
         )}
 
         {isDaily && <WinStreakLine gameId="brain-dead" accentColor="var(--bd-primary)" />}
+
+        {isDaily && (
+          <OtherDailies currentGameId="brain-dead" accentColor="var(--bd-primary)" />
+        )}
 
         <div
           style={{

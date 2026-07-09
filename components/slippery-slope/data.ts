@@ -3,11 +3,13 @@
    ══════════════════════════════════ */
 
 export interface Question {
+  id?: string;
   q: string;
   a: string[];
   c: number; // correct index
   d: number; // difficulty 1-4
-  cat: string; // OpenTDB subcategory label
+  cat: string; // broad trivia API category label
+  topic?: string; // AI sub-topic for wager hints
 }
 
 export interface Player {
@@ -27,6 +29,17 @@ export type Category = {
 export const PCOLORS = [
   "#b5f23d", "#2dd4bf", "#fb923c", "#a78bfa", "#f472b6", "#60a5fa",
 ];
+
+/** Default emoji per seat (1-indexed) */
+export const DEFAULT_PLAYER_EMOJIS = ["🎯", "🐸", "🦊", "🐙", "🦄", "🐼"] as const;
+
+/** Pickable emoji tokens in the lobby */
+export const PLAYER_EMOJIS = [
+  "🎯", "🐸", "🦊", "🐙", "🦄", "🐼",
+  "🐯", "🐨", "🦁", "🐧", "🦋", "🐢",
+  "🚀", "⭐", "🔥", "💎", "🎮", "🍕",
+  "👻", "🤖", "👽", "🎃", "🌈", "⚡",
+] as const;
 
 export const LETTERS = ["A", "B", "C", "D"];
 

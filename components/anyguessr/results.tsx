@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { OtherDailies } from "@/components/daily/other-dailies";
 import { DAILY_CLUE_TYPE_LABEL, formatDistanceKm } from "@/lib/anyguessr/daily";
 import { useCountUp } from "@/lib/motion/count-up";
 import { useAnyGuessrStore } from "@/lib/anyguessr/store";
@@ -69,6 +70,8 @@ export default function Results({
           <button style={secondaryBtnStyle}>View results</button>
         </Link>
       </div>
+
+      <OtherDailies currentGameId="anyguessr" accentColor="var(--ag-accent)" />
 
       <div
         style={{

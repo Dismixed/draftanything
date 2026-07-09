@@ -45,11 +45,16 @@ export const submitAnswerSchema = z.object({
   timedOut: z.boolean().optional().default(false),
 });
 
+export const updateSsPlayerEmojiSchema = z.object({
+  emoji: z.string().min(1).max(8),
+});
+
 export interface SsPlayerProjection {
   id: string;
   displayName: string;
   seat: number;
   colorIndex: number;
+  emoji: string;
   position: number;
   isHost: boolean;
 }
@@ -59,6 +64,7 @@ export interface SsQuestionProjection {
   a: string[];
   d: number;
   cat: string;
+  topic?: string;
   /** Correct index — only exposed after answer resolves */
   c?: number;
 }
@@ -87,6 +93,8 @@ export interface SsRoomProjection {
   currentSeat: number | null;
   currentWager: number | null;
   currentQuestion: SsQuestionProjection | null;
+  /** Specific sub-topic hint during wager phase (category-specific games). */
+  wagerTopicHint: string | null;
   slMap: Record<string, number>;
   winnerPlayerId: string | null;
   lastEvent: SsLastEvent | null;

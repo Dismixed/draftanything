@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { enrichQuestionsWithTopics } from "@/features/slippery-slope/topic";
 import { fetchQuestions } from "@/lib/brain-dead/trivia-api";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const count = Number(searchParams.get("count")) || 20;
-  const category = searchParams.get("category");
+  const category = searchParams.get("category") ?? "general";
   const token = searchParams.get("token") || "";
   const seenIds = searchParams.get("seen")?.split(",").filter(Boolean) ?? [];
 
@@ -17,8 +18,10 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const questions = await enrichQuestionsWithTopics(result.questions, category);
+
   return NextResponse.json({
-    questions: result.questions,
+    questions,
     token: result.token,
   });
 }

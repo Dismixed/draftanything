@@ -7,7 +7,6 @@ import {
   parseSlMap,
 } from "./board-utils";
 import {
-  CATS,
   DCLASS,
   DLABEL,
   LETTERS,
@@ -15,18 +14,17 @@ import {
   WCLASS,
   wagerToDiff,
 } from "./data";
-import type { SsRoomProjection } from "@/features/slippery-slope/schema";
-import { useLiveSsProjection } from "@/features/slippery-slope/store";
+import type {
+  SsLastEvent,
+  SsQuestionProjection,
+  SsRoomProjection,
+} from "@/features/slippery-slope/schema";
+import { useLiveSsProjection, useSlipperySlopeStore } from "@/features/slippery-slope/store";
 import { useSlipperyRoom } from "@/features/slippery-slope/use-slippery-room";
 
 interface MultiplayerGameProps {
   initial: SsRoomProjection;
   myPlayerId: string;
-}
-
-function wagerTopicHint(category: string, questionCat: string): string {
-  if (category === "general" || category === "random") return questionCat;
-  return CATS.find((c) => c.id === category)?.name ?? questionCat;
 }
 
 export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
@@ -46,10 +44,22 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
 
   const [selectedWager, setSelectedWager] = useState<number | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [answered, setAnswered] = useState<"idle" | "correct" | "wrong" | "timeout">("idle");
+  const [answered, setAnswered] = useState<"idle" | "pending" | "correct" | "wrong" | "timeout">("idle");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ h: string; b: string; cls: string } | null>(null);
+  const [activeQuestion, setActiveQuestion] = useState<SsQuestionProjection | null>(
+    initial.currentQuestion,
+  );
+  const [opponentReveal, setOpponentReveal] = useState<SsLastEvent | null>(null);
+  const [revealedSL, setRevealedSL] = useState<Set<number>>(() => {
+    const revealed = new Set<number>();
+    if (initial.lastEvent?.slDest != null) {
+      revealed.add(initial.lastEvent.to);
+    }
+    return revealed;
+  });
+  const [slLine, setSlLine] = useState<{ from: number; to: number } | null>(null);
   const [timerPct, setTimerPct] = useState(100);
   const [timerText, setTimerText] = useState("");
   const [timerColor, setTimerColor] = useState("var(--ss-lime)");
@@ -65,6 +75,12 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
   useEffect(() => {
     turnSeqRef.current = room.turnSeq;
   }, [room.turnSeq]);
+
+  useEffect(() => {
+    if (room.currentQuestion) {
+      setActiveQuestion(room.currentQuestion);
+    }
+  }, [room.currentQuestion]);
 
   const submitAnswer = useCallback(
     async (answerIndex: number | null, timedOut = false) => {
@@ -84,14 +100,33 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
         if (!res.ok) {
           const data = await res.json();
           setError(data.message ?? "Failed to submit answer");
+          setAnswered("idle");
+          setSelectedAnswer(null);
+          return;
+        }
+
+        const projection = (await res.json()) as SsRoomProjection;
+        useSlipperySlopeStore.getState().setProjection(projection);
+        const ev = projection.lastEvent;
+        if (ev?.playerId === myPlayerId) {
+          setAnswered(
+            ev.outcome === "correct"
+              ? "correct"
+              : ev.outcome === "timeout"
+                ? "timeout"
+                : "wrong",
+          );
+          if (ev.answerIndex !== null) setSelectedAnswer(ev.answerIndex);
         }
       } catch {
         setError("Network error");
+        setAnswered("idle");
+        setSelectedAnswer(null);
       } finally {
         setSubmitting(false);
       }
     },
-    [room.roomId, submitting],
+    [room.roomId, submitting, myPlayerId],
   );
 
   const clearTimer = useCallback(() => {
@@ -107,12 +142,31 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
       if (key !== lastEventKeyRef.current) {
         lastEventKeyRef.current = key;
         const ev = room.lastEvent;
+        if (ev.slDest != null) {
+          setRevealedSL((prev) => {
+            if (prev.has(ev.to)) return prev;
+            const next = new Set(prev);
+            next.add(ev.to);
+            return next;
+          });
+          setSlLine({ from: ev.to, to: ev.slDest });
+          setTimeout(() => setSlLine(null), 2200);
+        }
+        if (ev.playerId !== myPlayerId) {
+          setOpponentReveal(ev);
+        }
         const slNote =
           ev.slDest !== null && ev.slDest !== ev.to
             ? ev.slDest < ev.to
               ? ` Snake to ${ev.slDest}!`
               : ` Ladder to ${ev.slDest}!`
             : "";
+        const pickNote =
+          ev.answerIndex !== null && activeQuestion
+            ? ` Picked ${LETTERS[ev.answerIndex]}: ${activeQuestion.a[ev.answerIndex]}.`
+            : ev.outcome === "timeout"
+              ? " Ran out of time."
+              : "";
         const cls =
           ev.outcome === "correct"
             ? "ss-toast ss-toast-ok"
@@ -127,13 +181,16 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
               : ev.outcome === "timeout"
                 ? `⏱ Time's up for ${ev.playerName}`
                 : `✗ ${ev.playerName} wrong`,
-          b: `Moved ${ev.from} → ${ev.final}.${slNote}`,
+          b: `Moved ${ev.from} → ${ev.final}.${pickNote}${slNote}`,
         });
-        const t = setTimeout(() => setToast(null), 4000);
+        const t = setTimeout(() => {
+          setToast(null);
+          setOpponentReveal(null);
+        }, 4000);
         return () => clearTimeout(t);
       }
     }
-  }, [room.lastEvent, room.turnSeq]);
+  }, [room.lastEvent, room.turnSeq, myPlayerId, activeQuestion]);
 
   useEffect(() => {
     setSelectedWager(null);
@@ -221,10 +278,8 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
   function resolveAnswer(idx: number) {
     if (!room.currentQuestion || answered !== "idle") return;
     clearTimer();
-    const correct = room.currentQuestion.c;
-    const isCorrect = correct !== undefined && idx === correct;
     setSelectedAnswer(idx);
-    setAnswered(isCorrect ? "correct" : "wrong");
+    setAnswered("pending");
     void submitAnswer(idx, false);
   }
 
@@ -263,7 +318,7 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
             .map((p, i) => (
               <div key={p.id} className="ss-srow">
                 <span className="ss-srank">{i + 1}</span>
-                <span className="ss-sdot" style={{ background: PCOLORS[p.colorIndex] }} />
+                <span className="ss-semoji" aria-hidden="true">{p.emoji}</span>
                 <span className="ss-sname">{p.displayName}</span>
                 <span className="ss-spos">sq.{p.position}</span>
               </div>
@@ -277,12 +332,16 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
   }
 
   const q = room.currentQuestion;
-  const topicHint =
-    room.turnPhase === "WAGER"
+  const showingOpponentReveal = opponentReveal !== null;
+  const displayQuestion =
+    room.turnPhase === "QUESTION" && q
       ? q
-        ? wagerTopicHint(room.category, q.cat)
-        : (CATS.find((c) => c.id === room.category)?.name ?? room.category)
-      : null;
+      : showingOpponentReveal && activeQuestion
+        ? { ...activeQuestion, c: opponentReveal.correctIndex }
+        : null;
+  const displayWager =
+    room.turnPhase === "QUESTION" ? room.currentWager : opponentReveal?.wager ?? room.currentWager;
+  const topicHint = room.turnPhase === "WAGER" ? room.wagerTopicHint : null;
 
   return (
     <div
@@ -306,8 +365,9 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
               <div className="ss-grid" ref={boardGridRef}>
                 {BOARD_ROWS.flat().map((n) => {
                   const slDest = slMap[n];
-                  const isSnakeHead = slDest !== undefined && slDest < n;
-                  const isLadderHead = slDest !== undefined && slDest > n;
+                  const isRevealed = revealedSL.has(n);
+                  const isSnakeHead = slDest !== undefined && slDest < n && isRevealed;
+                  const isLadderHead = slDest !== undefined && slDest > n && isRevealed;
                   const tokensHere = room.players.filter((p) => boardSquare(p.position) === n);
                   return (
                     <div
@@ -331,11 +391,9 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
                       {tokensHere.length > 0 && (
                         <div className="ss-token-wrap">
                           {tokensHere.map((tp) => (
-                            <div
-                              key={tp.id}
-                              className="ss-tok"
-                              style={{ background: PCOLORS[tp.colorIndex] }}
-                            />
+                            <span key={tp.id} className="ss-tok-em" title={tp.displayName}>
+                              {tp.emoji}
+                            </span>
                           ))}
                         </div>
                       )}
@@ -351,9 +409,14 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
                 >
                   {Object.entries(slMap).map(([from, to]) => {
                     const fromN = Number(from);
+                    const toN = to;
+                    const isRevealed = revealedSL.has(fromN);
+                    const active = slLine?.from === fromN && slLine?.to === toN;
+                    if (!isRevealed && !active) return null;
                     const a = cellCenters[fromN];
-                    const b = cellCenters[to];
+                    const b = cellCenters[toN];
                     if (!a || !b) return null;
+                    const isSnake = toN < fromN;
                     return (
                       <line
                         key={from}
@@ -361,10 +424,11 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
                         y1={a.y}
                         x2={b.x}
                         y2={b.y}
-                        stroke={to < fromN ? "#f87171" : "#b5f23d"}
-                        strokeWidth={2}
+                        stroke={isSnake ? "#f87171" : "#b5f23d"}
+                        strokeWidth={active ? 3 : 2}
                         strokeLinecap="round"
-                        opacity={0.75}
+                        opacity={active ? 1 : 0.75}
+                        className={active ? "ss-sl-line" : undefined}
                       />
                     );
                   })}
@@ -439,22 +503,22 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
               </>
             )}
 
-            {room.turnPhase === "WAGER" && !isMyTurn && (
+            {room.turnPhase === "WAGER" && !isMyTurn && !showingOpponentReveal && (
               <p style={{ color: "var(--ss-muted)", fontSize: "0.85rem", marginTop: "0.75rem" }}>
                 Waiting for {currentPlayer?.displayName} to pick a wager…
               </p>
             )}
 
-            {room.turnPhase === "QUESTION" && q && (
+            {displayQuestion && (
               <>
                 <div className="ss-qcard">
                   <div className="ss-qmeta">
-                    <span className="ss-qlabel">Wager: {room.currentWager}</span>
-                    <span className={`ss-diff-pip ${DCLASS[wagerToDiff(room.currentWager ?? 5)]}`}>
-                      {DLABEL[wagerToDiff(room.currentWager ?? 5)]}
+                    <span className="ss-qlabel">Wager: {displayWager}</span>
+                    <span className={`ss-diff-pip ${DCLASS[wagerToDiff(displayWager ?? 5)]}`}>
+                      {DLABEL[wagerToDiff(displayWager ?? 5)]}
                     </span>
                   </div>
-                  {isMyTurn && (
+                  {isMyTurn && !showingOpponentReveal && (
                     <div className="ss-qtimer-row">
                       <div className="ss-tbar-bg">
                         <div className="ss-tbar" style={{ width: `${timerPct}%`, background: timerColor }} />
@@ -462,19 +526,34 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
                       <div className="ss-ttxt">{timerText}</div>
                     </div>
                   )}
-                  <div className="ss-qtext">{q.q}</div>
+                  <div className="ss-qtext">{displayQuestion.q}</div>
                   <div className="ss-agrid">
-                    {q.a.map((ans, i) => {
-                      const correctIdx = room.lastEvent?.correctIndex ?? q.c;
-                      const showCorrect = answered !== "idle" && correctIdx !== undefined && i === correctIdx;
+                    {displayQuestion.a.map((ans, i) => {
+                      const myResolved =
+                        answered === "correct" || answered === "wrong" || answered === "timeout";
+                      const opponentResolved = showingOpponentReveal && opponentReveal !== null;
+                      const correctIdx = opponentResolved
+                        ? opponentReveal.correctIndex
+                        : myResolved
+                          ? (room.lastEvent?.correctIndex ?? displayQuestion.c)
+                          : undefined;
+                      const pickedIdx = opponentResolved
+                        ? opponentReveal.answerIndex
+                        : selectedAnswer;
+                      const showCorrect = correctIdx !== undefined && i === correctIdx;
                       const showWrong =
-                        answered === "wrong" && i === selectedAnswer && i !== correctIdx;
+                        opponentResolved
+                          ? opponentReveal.outcome === "wrong" &&
+                            pickedIdx !== null &&
+                            i === pickedIdx
+                          : answered === "wrong" && i === selectedAnswer;
+                      const showPending = !opponentResolved && answered === "pending" && i === selectedAnswer;
                       return (
                         <button
                           key={i}
                           type="button"
-                          className={`ss-abtn ${showCorrect ? "correct" : ""} ${showWrong ? "wrong" : ""}`}
-                          disabled={!isMyTurn || answered !== "idle" || submitting}
+                          className={`ss-abtn ${showCorrect ? "correct" : ""} ${showWrong ? "wrong" : ""} ${showPending ? "pending" : ""}`}
+                          disabled={!isMyTurn || answered !== "idle" || submitting || showingOpponentReveal}
                           onClick={() => resolveAnswer(i)}
                         >
                           <span className="ss-aletter">{LETTERS[i]}</span>
@@ -484,9 +563,37 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
                     })}
                   </div>
                 </div>
-                {!isMyTurn && (
+                {!isMyTurn && !showingOpponentReveal && (
                   <p style={{ color: "var(--ss-muted)", fontSize: "0.85rem", marginTop: "0.5rem" }}>
                     {currentPlayer?.displayName} is answering…
+                  </p>
+                )}
+                {showingOpponentReveal && opponentReveal && (
+                  <p style={{ color: "var(--ss-muted)", fontSize: "0.85rem", marginTop: "0.5rem" }}>
+                    {opponentReveal.outcome === "timeout" ? (
+                      <>
+                        {opponentReveal.playerName} ran out of time. Answer was{" "}
+                        <span style={{ color: "var(--ss-lime)" }}>
+                          {LETTERS[opponentReveal.correctIndex]}:{" "}
+                          {activeQuestion?.a[opponentReveal.correctIndex]}
+                        </span>
+                      </>
+                    ) : opponentReveal.answerIndex !== null ? (
+                      <>
+                        {opponentReveal.playerName} picked{" "}
+                        <span
+                          style={{
+                            color:
+                              opponentReveal.outcome === "correct"
+                                ? "var(--ss-lime)"
+                                : "var(--ss-red)",
+                          }}
+                        >
+                          {LETTERS[opponentReveal.answerIndex]}:{" "}
+                          {activeQuestion?.a[opponentReveal.answerIndex]}
+                        </span>
+                      </>
+                    ) : null}
                   </p>
                 )}
               </>
@@ -509,7 +616,7 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
               .map((p, i) => (
                 <div key={p.id} className="ss-srow">
                   <span className="ss-srank">{i + 1}</span>
-                  <span className="ss-sdot" style={{ background: PCOLORS[p.colorIndex] }} />
+                  <span className="ss-semoji" aria-hidden="true">{p.emoji}</span>
                   <span className="ss-sname">
                     {p.displayName}
                     {p.id === myPlayerId ? " (you)" : ""}

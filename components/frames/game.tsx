@@ -35,6 +35,7 @@ import type {
 import { fireConfetti } from "@/lib/motion/confetti";
 import { useSound } from "@/lib/audio/sound-context";
 import { SoundToggle } from "@/components/ui/sound-toggle";
+import { OtherDailies } from "@/components/daily/other-dailies";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
 
 type Screen = "home" | "played" | "game" | "results";
@@ -749,6 +750,10 @@ export default function FramesGame() {
             </button>
           </div>
         ) : null}
+
+        <WinStreakLine gameId="frames" accentColor="#a855f7" />
+
+        <OtherDailies currentGameId="frames" accentColor="#a855f7" />
 
         <div
           style={{

@@ -10,6 +10,7 @@ import { fireConfetti } from "@/lib/motion/confetti";
 import { triggerAnimation } from "@/lib/motion/trigger-class";
 import { SoundToggle } from "@/components/ui/sound-toggle";
 import TutorialModal from "./tutorial-modal";
+import { OtherDailies } from "@/components/daily/other-dailies";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
 import { recordDailyCompletion } from "@/lib/streak/storage";
 
@@ -804,6 +805,10 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                 >
                   {mode === "daily" && (
                     <WinStreakLine gameId="chainlink" accentColor="#6aaa64" />
+                  )}
+
+                  {mode === "daily" && (
+                    <OtherDailies currentGameId="chainlink" accentColor="#6aaa64" />
                   )}
 
                   <Link

@@ -2,10 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CATS } from "./data";
+import { CATS, PLAYER_EMOJIS } from "./data";
 import type { SsRoomProjection } from "@/features/slippery-slope/schema";
 import { useLeaveSsLobbyOnExit } from "@/features/slippery-slope/use-leave-lobby";
-import { PCOLORS } from "./data";
 
 interface SlipperySlopeLobbyProps {
   initial: SsRoomProjection;
@@ -20,8 +19,13 @@ export function SlipperySlopeLobby({ initial, myPlayerId }: SlipperySlopeLobbyPr
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("connecting");
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emojiSaving, setEmojiSaving] = useState(false);
 
   const isHost = room.hostPlayerId === myPlayerId;
+  const myPlayer = room.players.find((p) => p.id === myPlayerId);
+  const takenEmojis = new Set(
+    room.players.filter((p) => p.id !== myPlayerId).map((p) => p.emoji),
+  );
   const playerCount = room.players.length;
   const canStart = isHost && playerCount >= 2;
   const categoryLabel =
@@ -103,6 +107,30 @@ export function SlipperySlopeLobby({ initial, myPlayerId }: SlipperySlopeLobbyPr
       await navigator.clipboard.writeText(room.roomCode);
     } catch {
       // ignore
+    }
+  }
+
+  async function handleEmojiPick(emoji: string) {
+    if (emojiSaving || myPlayer?.emoji === emoji) return;
+    if (takenEmojis.has(emoji)) return;
+    setEmojiSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/slippery-slope/${room.roomId}/emoji`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emoji }),
+      });
+      if (res.ok) {
+        setRoom(await res.json());
+      } else {
+        const data = await res.json();
+        setError(data.message ?? "Failed to update emoji");
+      }
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setEmojiSaving(false);
     }
   }
 
@@ -223,16 +251,33 @@ export function SlipperySlopeLobby({ initial, myPlayerId }: SlipperySlopeLobbyPr
             <div className="ss-plist">
               {room.players.map((p) => (
                 <div key={p.id} className="ss-prow">
-                  <div
-                    className="ss-pdot"
-                    style={{ background: PCOLORS[p.colorIndex] ?? PCOLORS[0] }}
-                  />
+                  <span className="ss-pemoji" aria-hidden="true">{p.emoji}</span>
                   <span className="ss-pname">{p.displayName}</span>
                   <span className={p.isHost ? "ss-ptag ss-ptag-host" : "ss-ptag"}>
                     {p.isHost ? "HOST" : ""}
                   </span>
                 </div>
               ))}
+            </div>
+            <div className="ss-divider" />
+            <p className="ss-emoji-label">Pick your token</p>
+            <div className="ss-emoji-grid">
+              {PLAYER_EMOJIS.map((em) => {
+                const taken = takenEmojis.has(em);
+                const selected = myPlayer?.emoji === em;
+                return (
+                  <button
+                    key={em}
+                    type="button"
+                    className={`ss-embtn ${selected ? "sel" : ""} ${taken ? "taken" : ""}`}
+                    disabled={emojiSaving || taken}
+                    onClick={() => void handleEmojiPick(em)}
+                    title={taken ? "Taken by another player" : undefined}
+                  >
+                    {em}
+                  </button>
+                );
+              })}
             </div>
             <div className="ss-divider" />
             {error && (
