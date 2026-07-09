@@ -307,6 +307,19 @@ describe("daily usage index", () => {
     }
   });
 
+  it("admin today-only mode marks at most nine clues for one date", async () => {
+    const { computeDailyUsageIndex } = await import("@/lib/anyguessr/daily-usage");
+
+    const usage = computeDailyUsageIndex(pool, {
+      endDate: "2026-07-09",
+      lookbackDays: 0,
+    });
+    const allDates = Object.values(usage).flat();
+
+    expect(allDates).toHaveLength(9);
+    expect(new Set(allDates)).toEqual(new Set(["2026-07-09"]));
+  });
+
   it("returns no rotation dates when the pool cannot fill daily rounds", async () => {
     const { computeDailyUsageIndex } = await import("@/lib/anyguessr/daily-usage");
 

@@ -257,20 +257,13 @@ export default function AdminAnyGuessrPage() {
     }
   }
 
-  function formatDailyRotation(dates: string[] | undefined): string {
+  function formatTodaysDaily(dates: string[] | undefined): string {
     if (!dates || dates.length === 0) return "—";
-    const today = new Date().toISOString().slice(0, 10);
-    const latest = dates[dates.length - 1];
-    if (dates.length === 1) {
-      return latest === today ? "Today" : latest;
-    }
-    const countLabel = `${dates.length}×`;
-    if (latest === today) return `Today · ${countLabel}`;
-    return `${countLabel} · last ${latest}`;
+    return "Today";
   }
 
-  const dailyRotationTitle =
-    "Dates this clue is in the daily picker window (algorithmic schedule — not how many times players played it). Hover a cell for the full list.";
+  const todaysDailyTitle =
+    "This clue is in today's daily puzzle (9 countries, one per round). Not player history — recomputed on each page load.";
 
   async function resolveImages(entry: SeedEntry) {
     setBusy(true);
@@ -554,7 +547,7 @@ export default function AdminAnyGuessrPage() {
                       <th style={thStyle}>Clue</th>
                       <th style={thStyle}>Status</th>
                       <th style={thStyle}>Images</th>
-                      <th style={thStyle} title={dailyRotationTitle}>Rotation</th>
+                      <th style={thStyle} title={todaysDailyTitle}>Today</th>
                       <th style={thStyle} />
                     </tr>
                   </thead>
@@ -567,9 +560,9 @@ export default function AdminAnyGuessrPage() {
                           <span style={{ color: STATUS_COLORS[e.status] ?? "#9aa0a6" }}>{e.status}</span>
                         </td>
                         <td style={tdStyle}>{e.image_candidates.length}</td>
-                        <td style={tdStyle} title={(e.daily_dates ?? []).join(", ") || dailyRotationTitle}>
+                        <td style={tdStyle} title={e.daily_dates?.length ? todaysDailyTitle : undefined}>
                           {e.daily_dates && e.daily_dates.length > 0 ? (
-                            <span style={{ color: "#c9b458" }}>{formatDailyRotation(e.daily_dates)}</span>
+                            <span style={{ color: "#c9b458" }}>{formatTodaysDaily(e.daily_dates)}</span>
                           ) : (
                             <span style={{ color: "#787c7e" }}>—</span>
                           )}
@@ -603,10 +596,7 @@ export default function AdminAnyGuessrPage() {
                 </h3>
                 {selected.daily_dates && selected.daily_dates.length > 0 && (
                   <p style={{ margin: "0 0 10px", fontSize: "12px", color: "#c9b458" }}>
-                    In daily rotation: {selected.daily_dates.join(", ")}
-                    <span style={{ display: "block", color: "#9aa0a6", marginTop: "4px" }}>
-                      Picker schedule for the current pool — not player play history.
-                    </span>
+                    In today&apos;s daily puzzle
                   </p>
                 )}
                 <label style={labelStyle}>
@@ -767,7 +757,7 @@ export default function AdminAnyGuessrPage() {
                   <div style={{ fontSize: "12px", color: "#9aa0a6", marginBottom: "8px" }}>
                     {entry.clue_type} · {entry.image_candidates.length} image{entry.image_candidates.length === 1 ? "" : "s"}
                     {entry.daily_dates && entry.daily_dates.length > 0 && (
-                      <span style={{ color: "#c9b458" }}> · rotation {formatDailyRotation(entry.daily_dates)}</span>
+                      <span style={{ color: "#c9b458" }}> · today&apos;s daily</span>
                     )}
                   </div>
 

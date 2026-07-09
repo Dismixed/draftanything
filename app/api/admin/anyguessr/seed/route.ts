@@ -45,7 +45,8 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const dailyUsage = computeDailyUsageIndex(puzzleRows);
+    // Today only — rotation is computed live, not stored (nothing to reset in DB).
+    const dailyUsage = computeDailyUsageIndex(puzzleRows, { lookbackDays: 0 });
     const entriesWithUsage = entries.map((entry) => ({
       ...entry,
       daily_dates: dailyUsageForSeedEntry(
