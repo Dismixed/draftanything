@@ -102,7 +102,7 @@ async function fetchDailyPuzzle(): Promise<ClientDailyPuzzle> {
   const res = await fetch("/api/anyguessr/daily");
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error ?? "Failed to fetch daily puzzle");
+    throw new Error(err.error ?? (res.status === 404 ? "No puzzle available" : "Failed to fetch daily puzzle"));
   }
   return res.json();
 }
@@ -142,10 +142,14 @@ export const useAnyGuessrStore = create<AnyGuessrStore>()(
           });
         } catch (err) {
           console.error("anyguessr init failed:", err);
+          const message =
+            err instanceof Error && err.message === "No puzzle available"
+              ? "No daily puzzle is available right now. Check back soon."
+              : "Couldn't load a puzzle. Try again.";
           set({
             ...buildInitialState(),
             loading: false,
-            feedback: { type: "info", message: "Couldn't load a puzzle. Try again." },
+            feedback: { type: "info", message },
           });
         }
       },

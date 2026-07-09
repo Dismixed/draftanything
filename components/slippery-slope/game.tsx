@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { ROOM_CODE_LENGTH } from "@/features/room/schema";
 import {
   CATS,
   DCLASS,
@@ -25,7 +27,6 @@ type Screen_ =
   | "multi-home"
   | "create-room"
   | "join-room"
-  | "lobby"
   | "game"
   | "win";
 
@@ -45,11 +46,6 @@ interface GameState {
 /* ══════════════════════════════════
    Helpers
    ══════════════════════════════════ */
-
-function genCode(): string {
-  const c = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  return Array.from({ length: 4 }, () => c[Math.floor(Math.random() * c.length)]).join("");
-}
 
 function matchesDifficulty(q: Question, diff: number): boolean {
   if (diff === 4) return q.d >= 3;
@@ -119,6 +115,7 @@ const BOARD_ROWS = buildBoardRows();
    ══════════════════════════════════ */
 
 export default function SlipperySlopeGame() {
+  const router = useRouter();
   const [screen, setScreen] = useState<Screen_>("home");
   const [G, setG] = useState<GameState>({
     mode: null,
@@ -143,7 +140,9 @@ export default function SlipperySlopeGame() {
   const [jrName, setJrName] = useState("");
   const [jrCode, setJrCode] = useState("");
   const [jrErr, setJrErr] = useState("");
-  const [lobbyJoined, setLobbyJoined] = useState(1);
+  const [crErr, setCrErr] = useState("");
+  const [crSubmitting, setCrSubmitting] = useState(false);
+  const [jrSubmitting, setJrSubmitting] = useState(false);
 
   /* Game phase state */
   const [phase, setPhase] = useState<Phase>("wager");
@@ -180,7 +179,6 @@ export default function SlipperySlopeGame() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const lobbyIvRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   /*
    * Refs for cross-referenced game functions.
@@ -268,7 +266,6 @@ export default function SlipperySlopeGame() {
 
   const goHome = useCallback(() => {
     clearTimerFn();
-    if (lobbyIvRef.current) clearInterval(lobbyIvRef.current);
     setScreen("home");
   }, []);
 
@@ -312,99 +309,68 @@ export default function SlipperySlopeGame() {
      ROOM / MULTIPLAYER
      ══════════════════════════════════ */
 
-  const createRoom = useCallback(() => {
-    if (!crName.trim()) return;
-    const code = genCode();
-    const players: Player[] = [
-      { name: crName.trim(), color: PCOLORS[0], pos: 0, isHuman: true, joined: true },
-    ];
-    for (let i = 1; i < crCount; i++) {
-      players.push({ name: `Player ${i + 1}`, color: PCOLORS[i], pos: 0, isHuman: false, joined: false });
+  const createRoom = useCallback(async () => {
+    if (!crName.trim() || crSubmitting) return;
+    setCrErr("");
+    setCrSubmitting(true);
+    try {
+      await fetch("/api/guest", { method: "POST" });
+      const res = await fetch("/api/slippery-slope/rooms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: crName.trim(),
+          category: crCat,
+          maxPlayers: crCount,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCrErr(data.message ?? data.error ?? "Failed to create room");
+        return;
+      }
+      router.push(`/slippery-slope/${data.roomCode}`);
+    } catch {
+      setCrErr("Network error. Please try again.");
+    } finally {
+      setCrSubmitting(false);
     }
-    setG((prev) => ({
-      ...prev,
-      mode: "multi",
-      roomCode: code,
-      cat: crCat,
-      totalPlayers: crCount,
-      players,
-      currentIdx: 0,
-      usedQ: new Set(),
-    }));
-    setLobbyJoined(1);
-    setScreen("lobby");
+  }, [crName, crCat, crCount, crSubmitting, router]);
 
-    if (lobbyIvRef.current) clearInterval(lobbyIvRef.current);
-    let joined = 1;
-    lobbyIvRef.current = setInterval(() => {
-      joined++;
-      setLobbyJoined(joined);
-      if (joined >= crCount) {
-        if (lobbyIvRef.current) clearInterval(lobbyIvRef.current);
-        lobbyIvRef.current = null;
-      }
-    }, 1200 + Math.random() * 1500);
-  }, [crName, crCat, crCount]);
-
-  const joinRoom = useCallback(() => {
-    if (!jrName.trim()) { setJrErr("Enter a name"); return; }
-    if (jrCode.trim().length !== 4) { setJrErr("Enter a valid 4-letter code."); return; }
+  const joinRoom = useCallback(async () => {
+    if (!jrName.trim()) {
+      setJrErr("Enter a name");
+      return;
+    }
+    if (jrCode.trim().length !== ROOM_CODE_LENGTH) {
+      setJrErr(`Enter a valid ${ROOM_CODE_LENGTH}-character code.`);
+      return;
+    }
+    if (jrSubmitting) return;
     setJrErr("");
-
-    const players: Player[] = [
-      { name: "Host", color: PCOLORS[0], pos: 0, isHuman: false, joined: true },
-      { name: jrName.trim(), color: PCOLORS[1], pos: 0, isHuman: true, joined: true },
-      { name: "Player 3", color: PCOLORS[2], pos: 0, isHuman: false, joined: false },
-      { name: "Player 4", color: PCOLORS[3], pos: 0, isHuman: false, joined: false },
-    ];
-    setG((prev) => ({
-      ...prev,
-      mode: "multi",
-      roomCode: jrCode.trim().toUpperCase(),
-      cat: "general",
-      totalPlayers: 4,
-      players,
-      currentIdx: 0,
-      usedQ: new Set(),
-    }));
-    setLobbyJoined(2);
-    setScreen("lobby");
-
-    if (lobbyIvRef.current) clearInterval(lobbyIvRef.current);
-    let joined = 2;
-    lobbyIvRef.current = setInterval(() => {
-      joined++;
-      setLobbyJoined(joined);
-      if (joined >= 4) {
-        if (lobbyIvRef.current) clearInterval(lobbyIvRef.current);
-        lobbyIvRef.current = null;
+    setJrSubmitting(true);
+    try {
+      await fetch("/api/guest", { method: "POST" });
+      const res = await fetch(
+        `/api/slippery-slope/by-code/${jrCode.trim().toUpperCase()}/join`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ displayName: jrName.trim() }),
+        },
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        setJrErr(data.message ?? data.error ?? "Failed to join room");
+        return;
       }
-    }, 1500 + Math.random() * 1000);
-  }, [jrName, jrCode]);
-
-  const startMulti = useCallback(() => {
-    resetQuestionPool();
-    setSlMap(generateSlMap());
-    setG((prev) => ({
-      ...prev,
-      currentIdx: 0,
-      usedQ: new Set(),
-      players: prev.players.map((p) => ({ ...p, pos: 0, joined: true })),
-    }));
-    setRevealedSL(new Set());
-    setPhase("wager");
-    setToast(null);
-    setSlToast(null);
-    setSlLine(null);
-    setCurrentQ(null);
-    setCurrentW(0);
-    setSelectedWager(null);
-    setSelectedAnswer(null);
-    setAnswered("idle");
-    setTopicHint(null);
-    setTopicLoading(false);
-    setScreen("game");
-  }, [resetQuestionPool]);
+      router.push(`/slippery-slope/${data.roomCode}`);
+    } catch {
+      setJrErr("Network error. Please try again.");
+    } finally {
+      setJrSubmitting(false);
+    }
+  }, [jrName, jrCode, jrSubmitting, router]);
 
   const playAgain = useCallback(() => {
     resetQuestionPool();
@@ -429,16 +395,6 @@ export default function SlipperySlopeGame() {
     setTopicLoading(false);
     setScreen("game");
   }, [resetQuestionPool]);
-
-  /* ══════════════════════════════════
-     Clean up lobby interval
-     ══════════════════════════════════ */
-
-  useEffect(() => {
-    return () => {
-      if (lobbyIvRef.current) clearInterval(lobbyIvRef.current);
-    };
-  }, []);
 
   /* ══════════════════════════════════
      GAME LOGIC FUNCTIONS
@@ -990,8 +946,24 @@ export default function SlipperySlopeGame() {
                   ))}
                 </div>
               </div>
-              <button className="ss-btn ss-btn-lime" style={{ width: "100%" }} onClick={createRoom}>
-                Create Room →
+              <p
+                style={{
+                  fontSize: "0.8rem",
+                  color: "var(--ss-red)",
+                  minHeight: "1.2em",
+                  marginBottom: "0.6rem",
+                  fontFamily: "'Syne Mono', monospace",
+                }}
+              >
+                {crErr}
+              </p>
+              <button
+                className="ss-btn ss-btn-lime"
+                style={{ width: "100%" }}
+                disabled={crSubmitting}
+                onClick={createRoom}
+              >
+                {crSubmitting ? "Creating…" : "Create Room →"}
               </button>
               <button
                 className="ss-btn ss-btn-ghost ss-btn-sm"
@@ -1037,8 +1009,8 @@ export default function SlipperySlopeGame() {
                 <label className="ss-flabel">Room Code</label>
                 <input
                   className="ss-inp"
-                  placeholder="ABCD"
-                  maxLength={4}
+                  placeholder="ABC123"
+                  maxLength={ROOM_CODE_LENGTH}
                   style={{
                     textTransform: "uppercase",
                     fontFamily: "'Syne', sans-serif",
@@ -1062,8 +1034,13 @@ export default function SlipperySlopeGame() {
               >
                 {jrErr}
               </p>
-              <button className="ss-btn ss-btn-lime" style={{ width: "100%" }} onClick={joinRoom}>
-                Join →
+              <button
+                className="ss-btn ss-btn-lime"
+                style={{ width: "100%" }}
+                disabled={jrSubmitting}
+                onClick={joinRoom}
+              >
+                {jrSubmitting ? "Joining…" : "Join →"}
               </button>
               <button
                 className="ss-btn ss-btn-ghost ss-btn-sm"
@@ -1071,100 +1048,6 @@ export default function SlipperySlopeGame() {
                 onClick={() => setScreen("multi-home")}
               >
                 ← Back
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ LOBBY ═══ */}
-      {screen === "lobby" && (
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "2rem",
-            textAlign: "center",
-          }}
-        >
-          <div className="ss-lobby-wrap">
-            <div className="ss-card">
-              <p className="ss-eyebrow">Room Code</p>
-              <div className="ss-code-block">{G.roomCode}</div>
-              <p className="ss-code-hint">Share this with your friends</p>
-              <div className="ss-divider" />
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginBottom: "0.65rem",
-                }}
-              >
-                <span
-                  style={{
-                    fontFamily: "'Syne Mono', monospace",
-                    fontSize: "0.68rem",
-                    color: "var(--ss-muted)",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.1em",
-                  }}
-                >
-                  Players
-                </span>
-                <span
-                  style={{
-                    fontFamily: "'Syne Mono', monospace",
-                    fontSize: "0.68rem",
-                    color: "var(--ss-muted)",
-                  }}
-                >
-                  {lobbyJoined} / {G.totalPlayers}
-                </span>
-              </div>
-              <div className="ss-plist">
-                {G.players.map((p, i) => (
-                  <div key={i} className="ss-prow">
-                    <div
-                      className="ss-pdot"
-                      style={{
-                        background: p.joined || lobbyJoined > i ? p.color : "var(--ss-border)",
-                      }}
-                    />
-                    <span className="ss-pname">
-                      {lobbyJoined > i || p.joined ? p.name : `Player ${i + 1}`}
-                    </span>
-                    <span
-                      className={
-                        i === 0
-                          ? "ss-ptag ss-ptag-host"
-                          : lobbyJoined <= i && !p.joined
-                            ? "ss-ptag ss-ptag-wait"
-                            : "ss-ptag"
-                      }
-                    >
-                      {i === 0 ? "HOST" : lobbyJoined <= i && !p.joined ? "waiting\u2026" : ""}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <div className="ss-divider" />
-              <button
-                className="ss-btn ss-btn-lime"
-                style={{ width: "100%", marginBottom: "0.65rem" }}
-                disabled={lobbyJoined < 2}
-                onClick={startMulti}
-              >
-                Start Game →
-              </button>
-              <button
-                className="ss-btn ss-btn-ghost ss-btn-sm"
-                style={{ width: "100%" }}
-                onClick={goHome}
-              >
-                Cancel
               </button>
             </div>
           </div>

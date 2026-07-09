@@ -199,6 +199,135 @@ export async function importSeedFileToDb(
   return { imported };
 }
 
+function isSeedClueType(value: string): value is (typeof SEED_CLUE_TYPES)[number] {
+  return (SEED_CLUE_TYPES as readonly string[]).includes(value);
+}
+
+function parsePuzzleImageCandidates(raw: unknown): ImageCandidate[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((item) => !!item && typeof item === "object")
+    .map((item) => item as Record<string, unknown>)
+    .filter((item) => typeof item.image_url === "string")
+    .map((item) => ({
+      image_url: item.image_url as string,
+      thumb_url: typeof item.thumb_url === "string" ? item.thumb_url : undefined,
+      wiki_title: typeof item.label === "string" ? item.label : undefined,
+      source: typeof item.source === "string" ? item.source : undefined,
+      source_url: typeof item.source_url === "string" ? item.source_url : undefined,
+      license: typeof item.license === "string" ? item.license : undefined,
+      artist: typeof item.artist === "string" ? item.artist : undefined,
+      credit: typeof item.credit === "string" ? item.credit : undefined,
+    }));
+}
+
+function fallbackPuzzleImageCandidate(metadata: Record<string, unknown>): ImageCandidate[] {
+  if (typeof metadata.image_url !== "string") return [];
+  return [
+    {
+      image_url: metadata.image_url,
+      thumb_url:
+        typeof metadata.thumb_url === "string" ? metadata.thumb_url : metadata.image_url,
+      wiki_title: typeof metadata.label === "string" ? metadata.label : undefined,
+      source: typeof metadata.source === "string" ? metadata.source : undefined,
+      source_url: typeof metadata.source_url === "string" ? metadata.source_url : undefined,
+      license: typeof metadata.license === "string" ? metadata.license : undefined,
+      artist: typeof metadata.artist === "string" ? metadata.artist : undefined,
+      credit: typeof metadata.credit === "string" ? metadata.credit : undefined,
+    },
+  ];
+}
+
+export async function hydrateSeedEntriesFromPuzzles(
+  db: SupabaseClient<Database>,
+): Promise<{ hydrated: number; countries: number }> {
+  const [existingRows, puzzleRows] = await Promise.all([
+    listSeedEntries(db, { limit: 5000 }),
+    db
+      .from("ag_puzzles")
+      .select("answer_id,answer,clues,updated_at,status")
+      .eq("answer_type", "country")
+      .in("status", ["approved", "published"])
+      .order("updated_at", { ascending: false }),
+  ]);
+
+  if (puzzleRows.error) throw new Error(puzzleRows.error.message);
+
+  const existingByKey = new Map(existingRows.map((row) => [`${row.cca3}:${row.clue_type}`, row]));
+  const latestByCca3 = new Map<
+    string,
+    { country: string; clues: unknown[] }
+  >();
+
+  for (const row of puzzleRows.data ?? []) {
+    const cca3 = row.answer_id;
+    if (!cca3 || latestByCca3.has(cca3)) continue;
+    latestByCca3.set(cca3, {
+      country: row.answer,
+      clues: Array.isArray(row.clues) ? row.clues : [],
+    });
+  }
+
+  let hydrated = 0;
+  for (const [cca3, payload] of latestByCca3) {
+    for (const clue of payload.clues) {
+      if (!clue || typeof clue !== "object") continue;
+      const clueRow = clue as Record<string, unknown>;
+      const clueType = typeof clueRow.type === "string" ? clueRow.type : "";
+      if (!isSeedClueType(clueType)) continue;
+
+      const content = typeof clueRow.content === "string" ? clueRow.content : null;
+      const metadata =
+        clueRow.metadata && typeof clueRow.metadata === "object"
+          ? (clueRow.metadata as Record<string, unknown>)
+          : {};
+
+      const fromOptions = parsePuzzleImageCandidates(metadata.image_options);
+      const imageCandidates =
+        fromOptions.length > 0 ? fromOptions : fallbackPuzzleImageCandidate(metadata);
+
+      const key = `${cca3}:${clueType}`;
+      const existing = existingByKey.get(key);
+      const mergedCandidates =
+        imageCandidates.length > 0 ? imageCandidates : (existing?.image_candidates ?? []);
+      const selectedCandidateIndex =
+        existing && mergedCandidates.length === existing.image_candidates.length
+          ? existing.selected_candidate_index
+          : 0;
+      const nextStatus =
+        existing?.status === "approved" || existing?.status === "rejected"
+          ? existing.status
+          : mergedCandidates.length > 0
+            ? "needs_review"
+            : (existing?.status ?? "draft");
+
+      await upsertSeedEntry(db, {
+        cca3,
+        country_common: existing?.country_common ?? payload.country,
+        clue_type: clueType,
+        wiki_title:
+          clueType === "written_language"
+            ? existing?.wiki_title ?? null
+            : (content ?? existing?.wiki_title ?? null),
+        text_content:
+          clueType === "written_language"
+            ? (content ?? existing?.text_content ?? null)
+            : (existing?.text_content ?? null),
+        status: nextStatus,
+        image_candidates: mergedCandidates,
+        selected_candidate_index: selectedCandidateIndex,
+        vision_pass: existing?.vision_pass ?? null,
+        vision_notes: existing?.vision_notes ?? null,
+        proposed_by: existing?.proposed_by ?? "puzzle_hydrate",
+        notes: existing?.notes ?? null,
+      });
+      hydrated++;
+    }
+  }
+
+  return { hydrated, countries: latestByCca3.size };
+}
+
 export interface CountrySeedBundle {
   cca3: string;
   common: string;

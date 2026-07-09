@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkAdmin } from "@/lib/chainlink/admin-guard";
-import { importSeedFileToDb, listSeedEntries } from "@/lib/anyguessr/seed-db";
+import {
+  hydrateSeedEntriesFromPuzzles,
+  importSeedFileToDb,
+  listSeedEntries,
+} from "@/lib/anyguessr/seed-db";
 
 export async function GET(req: NextRequest) {
   const admin = await checkAdmin();
@@ -26,12 +30,18 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json().catch(() => ({}));
-    if (body.action !== "import") {
-      return NextResponse.json({ error: "Unknown action" }, { status: 400 });
-    }
     const db = createAdminClient();
-    const result = await importSeedFileToDb(db);
-    return NextResponse.json(result);
+
+    if (body.action === "import") {
+      const result = await importSeedFileToDb(db);
+      return NextResponse.json(result);
+    }
+    if (body.action === "hydrate_from_puzzles") {
+      const result = await hydrateSeedEntriesFromPuzzles(db);
+      return NextResponse.json(result);
+    }
+
+    return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   } catch (err) {
     console.error("anyguessr seed import failed:", err);
     return NextResponse.json({ error: "Failed to import seed" }, { status: 500 });

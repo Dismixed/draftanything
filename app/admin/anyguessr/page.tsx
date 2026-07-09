@@ -40,7 +40,7 @@ const STATUS_COLORS: Record<string, string> = {
   rejected: "#ff6b6b",
 };
 
-type Tab = "seed" | "aliases" | "ops";
+type Tab = "seed" | "gallery" | "aliases" | "ops";
 
 export default function AdminAnyGuessrPage() {
   const [tab, setTab] = useState<Tab>("seed");
@@ -51,6 +51,7 @@ export default function AdminAnyGuessrPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [countryFilter, setCountryFilter] = useState("");
   const [selected, setSelected] = useState<SeedEntry | null>(null);
+  const [manualImageUrl, setManualImageUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [coverage, setCoverage] = useState<CoverageGap[]>([]);
@@ -116,6 +117,29 @@ export default function AdminAnyGuessrPage() {
     }
   }
 
+  async function hydrateFromPuzzles() {
+    setBusy(true);
+    setMessage(null);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/anyguessr/seed", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "hydrate_from_puzzles" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Hydration failed");
+      setMessage(
+        `Hydrated ${data.hydrated ?? 0} clue rows from ${data.countries ?? 0} puzzles`,
+      );
+      await fetchEntries();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Hydration failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function runGenerate() {
     setBusy(true);
     setMessage(null);
@@ -174,7 +198,63 @@ export default function AdminAnyGuessrPage() {
     }
   }
 
-  async function patchEntry(id: string, patch: Record<string, unknown>) {
+  async function resolveAllImages() {
+    const targets = entries.filter((entry) => entry.clue_type !== "written_language");
+    if (targets.length === 0) {
+      setMessage("No image-based entries found in the current list.");
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    setMessage(null);
+    try {
+      let successCount = 0;
+      let failureCount = 0;
+
+      for (const entry of targets) {
+        try {
+          const res = await fetch(`/api/admin/anyguessr/seed/${entry.id}/images`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ useVision: true }),
+          });
+          if (!res.ok) {
+            failureCount += 1;
+            continue;
+          }
+          successCount += 1;
+        } catch {
+          failureCount += 1;
+        }
+      }
+
+      setMessage(
+        `Fetched images for ${successCount}/${targets.length} entries` +
+          (failureCount > 0 ? ` (${failureCount} failed)` : ""),
+      );
+      await fetchEntries();
+      if (selected) {
+        const updatedSelected = targets.find((entry) => entry.id === selected.id);
+        if (updatedSelected) {
+          const res = await fetch(`/api/admin/anyguessr/seed/${selected.id}`);
+          if (res.ok) {
+            const data = await res.json();
+            setSelected(data.entry ?? null);
+          }
+        }
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function patchEntry(
+    id: string,
+    patch: Record<string, unknown>,
+    options?: { refreshList?: boolean },
+  ) {
+    const refreshList = options?.refreshList ?? true;
     setBusy(true);
     try {
       const res = await fetch(`/api/admin/anyguessr/seed/${id}`, {
@@ -185,11 +265,49 @@ export default function AdminAnyGuessrPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Update failed");
       setSelected(data.entry);
-      await fetchEntries();
+      if (refreshList) {
+        await fetchEntries();
+      } else {
+        setEntries((prev) => prev.map((entry) => (entry.id === data.entry.id ? data.entry : entry)));
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Update failed");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function addImageUrlToSelected() {
+    if (!selected) return;
+    const imageUrl = manualImageUrl.trim();
+    if (!imageUrl) return;
+
+    try {
+      // Ensure URL is valid before writing it to seed entry candidates.
+      const parsed = new URL(imageUrl);
+      const normalized = parsed.toString();
+      const existing = selected.image_candidates ?? [];
+      const existingIndex = existing.findIndex((candidate) => candidate.image_url === normalized);
+      const nextCandidates =
+        existingIndex >= 0
+          ? existing
+          : [...existing, { image_url: normalized, thumb_url: normalized }];
+      const nextSelectedIndex =
+        existingIndex >= 0 ? existingIndex : nextCandidates.length - 1;
+
+      await patchEntry(selected.id, {
+        image_candidates: nextCandidates,
+        selected_candidate_index: nextSelectedIndex,
+        status: "needs_review",
+      });
+      setManualImageUrl("");
+      setMessage(
+        existingIndex >= 0
+          ? "Image already existed; selected it."
+          : "Added image URL and selected it.",
+      );
+    } catch {
+      setError("Please enter a valid image URL (https://...)");
     }
   }
 
@@ -250,7 +368,7 @@ export default function AdminAnyGuessrPage() {
       )}
 
       <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
-        {(["seed", "aliases", "ops"] as Tab[]).map((t) => (
+        {(["seed", "gallery", "aliases", "ops"] as Tab[]).map((t) => (
           <button
             key={t}
             type="button"
@@ -287,6 +405,12 @@ export default function AdminAnyGuessrPage() {
             </select>
             <button type="button" disabled={busy} onClick={() => void runImport()} style={btnStyle}>
               Import seed.ts
+            </button>
+            <button type="button" disabled={busy} onClick={() => void hydrateFromPuzzles()} style={btnStyle}>
+              Sync from ag_puzzles
+            </button>
+            <button type="button" disabled={busy || loading || entries.length === 0} onClick={() => void resolveAllImages()} style={btnStyle}>
+              Fetch all images
             </button>
             <select
               defaultValue=""
@@ -391,6 +515,29 @@ export default function AdminAnyGuessrPage() {
                     Reject
                   </button>
                 </div>
+                {selected.clue_type !== "written_language" && (
+                  <div style={{ marginBottom: "12px" }}>
+                    <label style={labelStyle}>
+                      Add image URL
+                      <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
+                        <input
+                          value={manualImageUrl}
+                          onChange={(ev) => setManualImageUrl(ev.target.value)}
+                          placeholder="https://..."
+                          style={{ ...inputStyle, marginTop: 0 }}
+                        />
+                        <button
+                          type="button"
+                          disabled={busy || !manualImageUrl.trim()}
+                          style={btnStyle}
+                          onClick={() => void addImageUrlToSelected()}
+                        >
+                          Add URL
+                        </button>
+                      </div>
+                    </label>
+                  </div>
+                )}
                 {selected.vision_notes && (
                   <pre style={{ fontSize: "11px", color: "#9aa0a6", whiteSpace: "pre-wrap" }}>{selected.vision_notes}</pre>
                 )}
@@ -399,7 +546,13 @@ export default function AdminAnyGuessrPage() {
                     <button
                       key={c.image_url}
                       type="button"
-                      onClick={() => void patchEntry(selected.id, { selected_candidate_index: i })}
+                      onClick={() =>
+                        void patchEntry(
+                          selected.id,
+                          { selected_candidate_index: i },
+                          { refreshList: false },
+                        )
+                      }
                       style={{ border: selected.selected_candidate_index === i ? "2px solid #6aaa64" : "1px solid #3a3a3c", borderRadius: "8px", padding: 0, overflow: "hidden", background: "#121213", cursor: "pointer" }}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -411,6 +564,99 @@ export default function AdminAnyGuessrPage() {
             )}
           </div>
         </>
+      )}
+
+      {tab === "gallery" && (
+        <div>
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "16px" }}>
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={selectStyle}>
+              <option value="">All statuses</option>
+              {Object.keys(STATUS_COLORS).map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+            <select value={countryFilter} onChange={(e) => setCountryFilter(e.target.value)} style={selectStyle}>
+              <option value="">All countries</option>
+              {countries.map((c) => (
+                <option key={c.cca3} value={c.cca3}>{c.name}</option>
+              ))}
+            </select>
+            <button type="button" disabled={busy || loading || entries.length === 0} onClick={() => void resolveAllImages()} style={btnStyle}>
+              Fetch all images
+            </button>
+            <button type="button" disabled={busy} onClick={() => void hydrateFromPuzzles()} style={btnStyle}>
+              Sync from ag_puzzles
+            </button>
+          </div>
+
+          {loading ? (
+            <p style={{ color: "#9aa0a6" }}>Loading gallery…</p>
+          ) : entries.length === 0 ? (
+            <p style={{ color: "#9aa0a6" }}>No seed entries match current filters.</p>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "12px" }}>
+              {entries.map((entry) => (
+                <div
+                  key={entry.id}
+                  style={{
+                    border: "1px solid #3a3a3c",
+                    borderRadius: "10px",
+                    background: "#1c1c1e",
+                    padding: "12px",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "8px", marginBottom: "8px" }}>
+                    <strong style={{ fontSize: "14px" }}>{entry.country_common}</strong>
+                    <span style={{ color: STATUS_COLORS[entry.status] ?? "#9aa0a6", fontSize: "12px" }}>
+                      {entry.status}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "12px", color: "#9aa0a6", marginBottom: "8px" }}>
+                    {entry.clue_type} · {entry.image_candidates.length} image{entry.image_candidates.length === 1 ? "" : "s"}
+                  </div>
+
+                  {entry.image_candidates.length === 0 ? (
+                    <p style={{ fontSize: "12px", color: "#9aa0a6", margin: 0 }}>No images yet.</p>
+                  ) : (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "6px" }}>
+                      {entry.image_candidates.map((candidate, index) => (
+                        <button
+                          key={`${entry.id}-${candidate.image_url}-${index}`}
+                          type="button"
+                          onClick={() => setSelected(entry)}
+                          title={candidate.image_url}
+                          style={{
+                            border:
+                              entry.selected_candidate_index === index
+                                ? "2px solid #6aaa64"
+                                : "1px solid #3a3a3c",
+                            borderRadius: "8px",
+                            padding: 0,
+                            overflow: "hidden",
+                            background: "#121213",
+                            cursor: "pointer",
+                          }}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={candidate.thumb_url ?? candidate.image_url}
+                            alt=""
+                            style={{
+                              width: "100%",
+                              height: "74px",
+                              objectFit: "cover",
+                              display: "block",
+                            }}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {tab === "aliases" && (

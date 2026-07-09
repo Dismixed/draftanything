@@ -106,7 +106,7 @@ export default function AnyGuessrGame() {
     void store.submitDailyGuess(name);
   };
 
-  const isLoading = loading || store.dailyRounds.length === 0;
+  const isLoading = loading || (store.dailyRounds.length === 0 && !feedback);
 
   if (isLoading) {
     return (
@@ -190,6 +190,24 @@ export default function AnyGuessrGame() {
           </span>
         </div>
       </header>
+
+      {feedback && !dailyRound && (
+        <div
+          style={{
+            textAlign: "center",
+            padding: "10px 12px",
+            marginBottom: "16px",
+            fontSize: "12px",
+            fontWeight: 500,
+            color: "var(--ag-muted)",
+            background: "var(--ag-surface-hi)",
+            border: "1px solid var(--ag-border)",
+            borderRadius: "8px",
+          }}
+        >
+          {feedback.message}
+        </div>
+      )}
 
       <div style={{ marginBottom: "16px" }}>
         {dailyRound ? (
