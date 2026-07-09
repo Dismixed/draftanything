@@ -197,6 +197,8 @@ export function collectRecentClueContents<T extends DailyPickSource>(
     const picks = pickDailyPuzzlesBare(approved, prevDate);
     for (let i = 0; i < DAILY_ROUND_CLUE_TYPES.length; i++) {
       const clueType = DAILY_ROUND_CLUE_TYPES[i];
+      // Flag clues all share the same internal label ("national flag") — dedupe by image URL instead.
+      if (clueType === "flag") continue;
       const content = clueContentForType(picks[i], clueType);
       if (content) {
         contents.get(clueType)!.add(normalizeClueContent(content));
@@ -266,7 +268,7 @@ function isExcludedCandidate(
   if (!isDailyCluePlayable(clueType, clue)) return true;
 
   const content = clue.content;
-  if (content) {
+  if (content && clueType !== "flag") {
     const normalized = normalizeClueContent(content);
     if (options?.excludeClueContents?.get(clueType)?.has(normalized)) return true;
     if (usedContentsByType.get(clueType)?.has(normalized)) return true;
@@ -301,12 +303,43 @@ function pickDailyPuzzlesBare<T extends DailyPickSource>(
   const picks: T[] = [];
 
   for (const clueType of DAILY_ROUND_CLUE_TYPES) {
-    let found = false;
-    for (let attempt = 0; attempt < approved.length; attempt++) {
-      const idx = dateRoundHash(date, clueType, attempt) % approved.length;
-      const candidate = approved[idx];
+    const candidate = pickCandidateForRound(
+      approved,
+      date,
+      clueType,
+      usedIds,
+      usedContentsByType,
+      options,
+    );
+    if (!candidate) {
+      throw new Error(`Could not pick ${DAILY_ROUND_COUNT} unique daily puzzles`);
+    }
+
+    usedIds.add(candidate.id);
+    const content = clueContentForType(candidate, clueType);
+    if (content && clueType !== "flag") {
+      usedContentsByType
+        .get(clueType)!
+        .add(normalizeClueContent(content));
+    }
+    picks.push(candidate);
+  }
+
+  return picks;
+}
+
+function pickCandidateForRound<T extends DailyPickSource>(
+  approved: T[],
+  date: string,
+  clueType: DailyRoundClueType,
+  usedIds: Set<string>,
+  usedContentsByType: Map<string, Set<string>>,
+  options?: DailyPickOptions,
+): T | null {
+  const tryPick = (pool: T[]) => {
+    for (const candidate of pool) {
       if (
-        isExcludedCandidate(
+        !isExcludedCandidate(
           candidate,
           clueType,
           date,
@@ -315,26 +348,27 @@ function pickDailyPuzzlesBare<T extends DailyPickSource>(
           options,
         )
       ) {
-        continue;
+        return candidate;
       }
+    }
+    return null;
+  };
 
-      usedIds.add(candidate.id);
-      const content = clueContentForType(candidate, clueType);
-      if (content) {
-        usedContentsByType
-          .get(clueType)!
-          .add(normalizeClueContent(content));
-      }
-      picks.push(candidate);
-      found = true;
-      break;
-    }
-    if (!found) {
-      throw new Error(`Could not pick ${DAILY_ROUND_COUNT} unique daily puzzles`);
-    }
+  const hashedPool = Array.from({ length: approved.length }, (_, attempt) => {
+    const idx = dateRoundHash(date, clueType, attempt) % approved.length;
+    return approved[idx];
+  });
+  const seen = new Set<string>();
+  const ordered = hashedPool.filter((candidate) => {
+    if (seen.has(candidate.id)) return false;
+    seen.add(candidate.id);
+    return true;
+  });
+  for (const candidate of approved) {
+    if (!seen.has(candidate.id)) ordered.push(candidate);
   }
 
-  return picks;
+  return tryPick(ordered);
 }
 
 /** Deterministically pick N unique puzzles for a daily session. */
@@ -343,7 +377,23 @@ export function pickDailyPuzzles<T extends DailyPickSource>(
   date: string,
   options?: DailyPickOptions,
 ): T[] {
-  return pickDailyPuzzlesBare(approved, date, resolveDailyPickOptions(approved, date, options));
+  const resolved =
+    options !== undefined
+      ? options
+      : resolveDailyPickOptions(approved, date, options);
+
+  try {
+    return pickDailyPuzzlesBare(approved, date, resolved);
+  } catch (err) {
+    if (!resolved) throw err;
+    try {
+      return pickDailyPuzzlesBare(approved, date, {
+        excludeIds: resolved.excludeIds,
+      });
+    } catch {
+      return pickDailyPuzzlesBare(approved, date, undefined);
+    }
+  }
 }
 
 function dateRoundHash(date: string, clueType: string, attempt: number): number {

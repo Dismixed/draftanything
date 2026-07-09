@@ -161,6 +161,28 @@ describe("pickDailyPuzzles", () => {
     const picks = pickDailyPuzzles([brokenJersey, ...pool], "2026-07-09");
     expect(picks[2].id).not.toBe("broken-jersey");
   });
+
+  it("still picks a flag round when every flag clue shares the same label text", () => {
+    const sharedLabelPool = pool.map((puzzle, index) => ({
+      ...puzzle,
+      clues: puzzle.clues.map((clue) =>
+        clue.type === "flag"
+          ? {
+              ...clue,
+              content: "national flag",
+              metadata: {
+                image_url: `https://example.com/flag-${index}.jpg`,
+                thumb_url: `https://example.com/flag-${index}.jpg`,
+              },
+            }
+          : clue,
+      ),
+    }));
+
+    expect(() => pickDailyPuzzles(sharedLabelPool, "2026-07-09")).not.toThrow();
+    const flagRound = pickDailyPuzzles(sharedLabelPool, "2026-07-09")[0];
+    expect(flagRound.clues.find((clue) => clue.type === "flag")?.metadata?.image_url).toBeTruthy();
+  });
 });
 
 describe("daily clue playability", () => {
