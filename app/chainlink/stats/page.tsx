@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SHOW_AUTH_UI } from "@/lib/auth/config";
 
 interface Stats {
   totalAttempts: number;
@@ -90,23 +91,25 @@ export default function ChainlinkStatsPage() {
               <Heatmap dates={stats.dailyHistory} />
             </section>
 
-            <div
-              style={{
-                textAlign: "center",
-                fontSize: "12px",
-                color: "#565758",
-                padding: "16px",
-                borderTop: "1px solid #3a3a3c",
-              }}
-            >
-              <a
-                href="/auth"
-                style={{ color: "#c9b458", textDecoration: "underline" }}
+            {SHOW_AUTH_UI ? (
+              <div
+                style={{
+                  textAlign: "center",
+                  fontSize: "12px",
+                  color: "#565758",
+                  padding: "16px",
+                  borderTop: "1px solid #3a3a3c",
+                }}
               >
-                Sign in
-              </a>{" "}
-              to track your stats across devices
-            </div>
+                <a
+                  href="/auth"
+                  style={{ color: "#c9b458", textDecoration: "underline" }}
+                >
+                  Sign in
+                </a>{" "}
+                to track your stats across devices
+              </div>
+            ) : null}
           </>
         ) : (
           <div style={{ textAlign: "center", color: "#787c7e", padding: "40px 0" }}>

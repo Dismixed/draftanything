@@ -568,6 +568,10 @@ export default function FramesGame() {
           >
             View Leaderboard
           </Link>
+
+          <WinStreakLine gameId="frames" accentColor="#a855f7" />
+
+          <OtherDailies currentGameId="frames" accentColor="#a855f7" />
         </div>
       </div>
 

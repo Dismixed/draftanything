@@ -74,6 +74,8 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
   const timeoutSentRef = useRef(false);
   const lastEventKeyRef = useRef<string | null>(null);
   const turnSeqRef = useRef(room.turnSeq);
+  const activeQuestionRef = useRef(activeQuestion);
+  activeQuestionRef.current = activeQuestion;
 
   useEffect(() => {
     turnSeqRef.current = room.turnSeq;
@@ -173,8 +175,8 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
               : ` Ladder to ${ev.slDest}!`
             : "";
         const pickNote =
-          ev.answerIndex !== null && activeQuestion
-            ? ` Picked ${LETTERS[ev.answerIndex]}: ${activeQuestion.a[ev.answerIndex]}.`
+          ev.answerIndex !== null && activeQuestionRef.current
+            ? ` Picked ${LETTERS[ev.answerIndex]}: ${activeQuestionRef.current.a[ev.answerIndex]}.`
             : ev.outcome === "timeout"
               ? " Ran out of time."
               : "";
@@ -201,13 +203,14 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
         return () => clearTimeout(t);
       }
     }
-  }, [room.lastEvent, room.turnSeq, myPlayerId, activeQuestion]);
+  }, [room.lastEvent, room.turnSeq, myPlayerId]);
 
   useEffect(() => {
     setSelectedWager(null);
     setSelectedAnswer(null);
     setAnswered("idle");
     setError(null);
+    setOpponentReveal(null);
     timeoutSentRef.current = false;
   }, [room.turnSeq, room.turnPhase]);
 

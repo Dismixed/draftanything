@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useRouter } from "next/navigation";
 
 import { SignInForm } from "@/components/auth/sign-in-form";
 import { SignUpForm } from "@/components/auth/sign-up-form";
+import { SHOW_AUTH_UI } from "@/lib/auth/config";
 
 type Tab = "sign-in" | "sign-up";
 
@@ -22,7 +24,18 @@ const tabStyle = (active: boolean): React.CSSProperties => ({
 });
 
 function AuthPageInner() {
+  const router = useRouter();
   const [tab, setTab] = useState<Tab>("sign-in");
+
+  useEffect(() => {
+    if (!SHOW_AUTH_UI) {
+      router.replace("/");
+    }
+  }, [router]);
+
+  if (!SHOW_AUTH_UI) {
+    return null;
+  }
 
   return (
     <main

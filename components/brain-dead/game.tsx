@@ -463,6 +463,13 @@ export default function BrainDeadGame({
             </Link>
           </div>
         </div>
+
+        {isDaily && (
+          <>
+            <WinStreakLine gameId="brain-dead" accentColor="var(--bd-primary)" />
+            <OtherDailies currentGameId="brain-dead" accentColor="var(--bd-primary)" />
+          </>
+        )}
       </div>,
       { sound: false },
     );

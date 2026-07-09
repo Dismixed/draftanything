@@ -2,7 +2,29 @@
 
 import Link from "next/link";
 import { useStreak } from "@/lib/streak/context";
-import type { DailyGameId } from "@/lib/streak/types";
+import {
+  DAILY_GAMES,
+  GAME_META,
+  type DailyGameId,
+  type GameStreakInfo,
+} from "@/lib/streak/types";
+
+function getOtherDailies(
+  currentGameId: DailyGameId,
+  streaks: GameStreakInfo[],
+): GameStreakInfo[] {
+  if (streaks.length > 0) {
+    return streaks.filter((game) => game.id !== currentGameId);
+  }
+
+  return DAILY_GAMES.filter((id) => id !== currentGameId).map((id) => ({
+    id,
+    label: GAME_META[id].label,
+    href: GAME_META[id].href,
+    currentStreak: 0,
+    playedToday: false,
+  }));
+}
 
 export function OtherDailies({
   currentGameId,
@@ -12,7 +34,7 @@ export function OtherDailies({
   accentColor?: string;
 }) {
   const { streaks } = useStreak();
-  const others = streaks.filter((game) => game.id !== currentGameId);
+  const others = getOtherDailies(currentGameId, streaks);
 
   if (others.length === 0) return null;
 

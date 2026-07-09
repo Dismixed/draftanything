@@ -721,23 +721,36 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                   Come back tomorrow for a new puzzle!
                 </div>
 
-                <Link
-                  href="/"
+                <div
                   style={{
-                    display: "inline-block",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "28px",
                     marginTop: "8px",
-                    textDecoration: "none",
-                    background: "#565758",
-                    color: "#ffffff",
-                    padding: "10px 24px",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    borderRadius: "6px",
-                    letterSpacing: "0.04em",
                   }}
                 >
-                  &larr; Back
-                </Link>
+                  {mode === "daily" && (
+                    <OtherDailies currentGameId="chainlink" accentColor="#6aaa64" />
+                  )}
+
+                  <Link
+                    href="/"
+                    style={{
+                      display: "inline-block",
+                      textDecoration: "none",
+                      background: "#565758",
+                      color: "#ffffff",
+                      padding: "10px 24px",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      borderRadius: "6px",
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    &larr; Back
+                  </Link>
+                </div>
               </div>
             </div>
           )}

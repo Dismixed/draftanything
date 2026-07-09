@@ -4,16 +4,16 @@ import { z } from "zod/v4";
 import { generateJson } from "@/features/ai/gemini";
 import { categoryDisplayName } from "./topic-hint";
 
-const BATCH_SIZE = 15;
+const BATCH_SIZE = 8;
 const MAX_CONCURRENT_BATCHES = 2;
+const MAX_CONCURRENT_SINGLES = 6;
 
 const batchTopicsSchema = z.object({
-  topics: z.array(
-    z.object({
-      id: z.string(),
-      topic: z.string().min(2).max(60),
-    }),
-  ),
+  topics: z.array(z.string().min(2).max(60)),
+});
+
+const singleTopicSchema = z.object({
+  topic: z.string().min(2).max(60),
 });
 
 const topicCache = new Map<string, string>();
@@ -28,29 +28,68 @@ function needsAiTopic(category: string): boolean {
 
 function buildBatchPrompt(
   category: string,
-  questions: Array<{ id: string; q: string }>,
+  questions: Array<{ q: string }>,
 ): { system: string; user: string } {
   const categoryName = categoryDisplayName(category);
-  const lines = questions.map((q, i) => `${i + 1}. [${q.id}] ${q.q}`);
+  const lines = questions.map((q, i) => `${i + 1}. ${q.q}`);
 
   return {
     system: [
       "You label trivia questions with a specific sub-topic for a wagering game.",
       `The game category is "${categoryName}".`,
-      "For each question, return a short, specific topic label (2-5 words) that tells a player what niche the question is about.",
+      "Return exactly one short, specific topic label (2-5 words) per question, in the same order.",
       "Examples for Sports: NBA, Olympic Swimming, Premier League, Formula 1.",
       "Examples for Movies: 80s Action Films, Disney Animation, Horror Classics.",
-      "Be specific to the question content, not the broad category.",
-      "Do not repeat the broad category name alone.",
+      "Be specific to each question's content. Do not use the broad category name alone.",
       "Return JSON only.",
     ].join(" "),
     user: [
       `Categorize these ${categoryName} trivia questions:`,
       ...lines,
       "",
-      "Return one topic per question id.",
+      `Return exactly ${questions.length} topics in a JSON array called "topics".`,
     ].join("\n"),
   };
+}
+
+function buildSinglePrompt(
+  category: string,
+  question: string,
+): { system: string; user: string } {
+  const categoryName = categoryDisplayName(category);
+
+  return {
+    system: [
+      "You label a trivia question with a specific sub-topic for a wagering game.",
+      `The game category is "${categoryName}".`,
+      "Return one short, specific topic label (2-5 words).",
+      "Be specific to the question content, not the broad category name alone.",
+      "Return JSON only.",
+    ].join(" "),
+    user: `Question: ${question}`,
+  };
+}
+
+async function categorizeSingle(
+  category: string,
+  question: string,
+): Promise<string | null> {
+  const prompt = buildSinglePrompt(category, question);
+
+  try {
+    const ai = await generateJson({
+      systemPrompt: prompt.system,
+      userPrompt: prompt.user,
+      schema: singleTopicSchema,
+      schemaName: "trivia_topic_single",
+      maxOutputTokens: 64,
+      timeoutMs: 8_000,
+    });
+    return ai.topic.trim() || null;
+  } catch (err) {
+    console.warn("[slippery-slope/topic] single categorization failed:", err);
+    return null;
+  }
 }
 
 async function categorizeBatch(
@@ -60,7 +99,10 @@ async function categorizeBatch(
   const result = new Map<string, string>();
   if (!questions.length) return result;
 
-  const prompt = buildBatchPrompt(category, questions);
+  const prompt = buildBatchPrompt(
+    category,
+    questions.map((q) => ({ q: q.q })),
+  );
 
   try {
     const ai = await generateJson({
@@ -68,15 +110,21 @@ async function categorizeBatch(
       userPrompt: prompt.user,
       schema: batchTopicsSchema,
       schemaName: "trivia_topics_batch",
-      maxOutputTokens: Math.min(2048, 64 + questions.length * 32),
-      timeoutMs: 12_000,
+      maxOutputTokens: Math.min(1024, 32 + questions.length * 24),
+      timeoutMs: 15_000,
     });
 
-    for (const entry of ai.topics) {
-      const topic = entry.topic.trim();
+    if (ai.topics.length !== questions.length) {
+      throw new Error(
+        `expected ${questions.length} topics, got ${ai.topics.length}`,
+      );
+    }
+
+    for (let i = 0; i < questions.length; i++) {
+      const topic = ai.topics[i]?.trim();
       if (!topic) continue;
-      result.set(entry.id, topic);
-      topicCache.set(cacheKey(category, entry.id), topic);
+      result.set(questions[i].id, topic);
+      topicCache.set(cacheKey(category, questions[i].id), topic);
     }
   } catch (err) {
     console.warn("[slippery-slope/topic] batch categorization failed:", err);
@@ -104,6 +152,27 @@ async function runBatches<T, R>(
   return results;
 }
 
+async function runWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+
+  async function worker() {
+    while (next < items.length) {
+      const index = next++;
+      results[index] = await fn(items[index]);
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, () => worker()),
+  );
+  return results;
+}
+
 export interface TopicEnrichableQuestion {
   id?: string;
   q: string;
@@ -128,7 +197,7 @@ export async function enrichQuestionsWithTopics<T extends TopicEnrichableQuestio
 
   for (const q of questions) {
     const id = q.id ?? q.q;
-    if (q.topic) {
+    if (q.topic && q.topic !== categoryDisplayName(category) && q.topic !== q.cat) {
       prefilled.set(id, q.topic);
       topicCache.set(cacheKey(category, id), q.topic);
       continue;
@@ -155,14 +224,32 @@ export async function enrichQuestionsWithTopics<T extends TopicEnrichableQuestio
     }
   }
 
+  const stillMissing = uncached.filter((q) => !fresh.has(q.id));
+  if (stillMissing.length) {
+    const singles = await runWithConcurrency(
+      stillMissing,
+      MAX_CONCURRENT_SINGLES,
+      async (q) => {
+        const topic = await categorizeSingle(category, q.q);
+        return { id: q.id, topic };
+      },
+    );
+
+    for (const entry of singles) {
+      if (!entry.topic) continue;
+      fresh.set(entry.id, entry.topic);
+      topicCache.set(cacheKey(category, entry.id), entry.topic);
+    }
+  }
+
   const fallback = categoryDisplayName(category);
 
   return questions.map((q) => {
     const id = q.id ?? q.q;
     const topic =
-      q.topic ??
       prefilled.get(id) ??
       fresh.get(id) ??
+      q.topic ??
       fallback;
     return { ...q, topic };
   });

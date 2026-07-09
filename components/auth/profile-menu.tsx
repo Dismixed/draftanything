@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { SHOW_AUTH_UI } from "@/lib/auth/config";
 import { ProfileMenuClient } from "./profile-menu-client";
 
 export async function ProfileMenu() {
@@ -6,7 +7,7 @@ export async function ProfileMenu() {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    return <ProfileMenuClient variant="signed-out" />;
+    return SHOW_AUTH_UI ? <ProfileMenuClient variant="signed-out" /> : null;
   }
 
   return (
