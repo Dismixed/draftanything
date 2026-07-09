@@ -265,7 +265,7 @@ export async function generatePuzzleForBundle(
       answer_id: bundle.cca3,
       alt_answers: altNormalised,
       region: meta?.region ?? bundle.region,
-      flag_url: flagImage,
+      flag_url: flagImage ?? undefined,
       clues,
       difficulty: "medium",
       metadata: {

@@ -63,7 +63,7 @@ export function dailySessionId(date: string): string {
 export function isDailyCluePlayable(
   clueType: DailyRoundClueType,
   clue: Clue | undefined,
-): boolean {
+): clue is Clue {
   if (!clue || clue.type !== clueType) return false;
 
   if (clueType === "written_language") {

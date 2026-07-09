@@ -11,8 +11,8 @@ import {
 import {
   computeDailyUsageIndex,
   dailyUsageForSeedEntry,
+  type DailyPickRow,
 } from "@/lib/anyguessr/daily-usage";
-import type { Clue } from "@/lib/anyguessr/types";
 
 export async function GET(req: NextRequest) {
   const admin = await checkAdmin();
@@ -36,11 +36,7 @@ export async function GET(req: NextRequest) {
 
     if (puzzleErr) throw puzzleErr;
 
-    const puzzleRows = (puzzles ?? []).map((row) => ({
-      id: row.id as string,
-      answer_id: row.answer_id as string | null,
-      clues: (row.clues ?? []) as Clue[],
-    }));
+    const puzzleRows = (puzzles ?? []) as unknown as DailyPickRow[];
 
     const puzzleIdByCca3: Record<string, string> = {};
     for (const row of puzzleRows) {
