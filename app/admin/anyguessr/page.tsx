@@ -577,7 +577,19 @@ export default function AdminAnyGuessrPage() {
             </div>
 
             {selected && (
-              <div style={{ border: "1px solid #3a3a3c", borderRadius: "10px", padding: "14px", background: "#1c1c1e" }}>
+              <div
+                style={{
+                  border: "1px solid #3a3a3c",
+                  borderRadius: "10px",
+                  padding: "14px",
+                  background: "#1c1c1e",
+                  position: "sticky",
+                  top: "24px",
+                  alignSelf: "start",
+                  height: "calc(100dvh - 48px)",
+                  overflowY: "auto",
+                }}
+              >
                 <h3 style={{ margin: "0 0 8px", fontSize: "16px" }}>
                   {selected.country_common} · {selected.clue_type}
                 </h3>
