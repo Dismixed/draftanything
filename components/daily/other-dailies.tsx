@@ -28,10 +28,8 @@ function getOtherDailies(
 
 export function OtherDailies({
   currentGameId,
-  accentColor = "var(--gold)",
 }: {
   currentGameId: DailyGameId;
-  accentColor?: string;
 }) {
   const { streaks } = useStreak();
   const others = getOtherDailies(currentGameId, streaks);
@@ -67,46 +65,50 @@ export function OtherDailies({
           gap: "8px",
         }}
       >
-        {others.map((game) => (
-          <Link
-            key={game.id}
-            href={game.href}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "12px",
-              padding: "10px 14px",
-              borderRadius: "8px",
-              border: "1px solid var(--border, rgba(255,255,255,0.12))",
-              background: "var(--panel, rgba(255,255,255,0.04))",
-              textDecoration: "none",
-              color: "inherit",
-              transition: "border-color 0.15s ease, background 0.15s ease",
-            }}
-          >
-            <span
+        {others.map((game) => {
+          const theme = GAME_META[game.id].theme;
+
+          return (
+            <Link
+              key={game.id}
+              href={game.href}
               style={{
-                fontSize: "13px",
-                fontWeight: 600,
-                color: "var(--text, #f5f5f5)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "12px",
+                padding: "10px 14px",
+                borderRadius: "8px",
+                border: `1px solid ${theme.border}`,
+                background: theme.background,
+                textDecoration: "none",
+                color: "inherit",
+                transition: "border-color 0.15s ease, box-shadow 0.15s ease",
               }}
             >
-              {game.label}
-            </span>
-            <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 600,
-                letterSpacing: "0.04em",
-                color: game.playedToday ? "var(--text-dim, #787c7e)" : accentColor,
-                whiteSpace: "nowrap",
-              }}
-            >
-              {game.playedToday ? "Done" : "Play →"}
-            </span>
-          </Link>
-        ))}
+              <span
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  color: theme.text,
+                }}
+              >
+                {game.label}
+              </span>
+              <span
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  letterSpacing: "0.04em",
+                  color: game.playedToday ? "var(--text-dim, #787c7e)" : theme.accent,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {game.playedToday ? "Done" : "Play →"}
+              </span>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

@@ -256,7 +256,7 @@ function buildPlayablePuzzle(
     startWord: words[0],
     wordLengths: words.map((w) => w.length),
     firstLetters: words.slice(1).map((w) => w[0]),
-    maxHints: 3,
+    maxHints: 4,
     difficulty,
     words,
   };

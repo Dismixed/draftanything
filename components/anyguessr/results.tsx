@@ -71,7 +71,7 @@ export default function Results({
         </Link>
       </div>
 
-      <OtherDailies currentGameId="anyguessr" accentColor="var(--ag-accent)" />
+      <OtherDailies currentGameId="anyguessr" />
 
       <div
         style={{

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useChainlinkStore } from "@/lib/chainlink/store";
 import { formatPair, getDateString } from "@/lib/chainlink/puzzles";
@@ -25,8 +25,8 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function displayChar(ch: string, i: number): string {
-  return i === 0 ? ch.toUpperCase() : ch;
+function displayChar(ch: string): string {
+  return ch.toLowerCase();
 }
 
 function unrevealedSlotIndex(revealedLetters: boolean[], position: number): number {
@@ -119,7 +119,7 @@ function WordRow({
     // Build the full word: first letter + hint-revealed letters + typed remainder
     const typed = localGuess.trim();
     let typedIdx = 0;
-    let fullGuess = word[0].toUpperCase();
+    let fullGuess = word[0].toLowerCase();
     for (let i = 1; i < word.length; i++) {
       if (revealedLetters[i]) {
         fullGuess += word[i];
@@ -138,6 +138,7 @@ function WordRow({
       setLocalGuess("");
     } else if (result === "incorrect") {
       play("wrong");
+      setLocalGuess("");
       setWrongFlash(true);
       triggerAnimation(rowRef.current, "anim-shake", 450);
       triggerAnimation(rowRef.current, "anim-flash-red", 500);
@@ -249,7 +250,7 @@ function WordRow({
               }}
             >
               {chars.map((ch, i) => (
-                <span key={i} style={letterStyle(i)}>{displayChar(ch, i)}</span>
+                <span key={i} style={letterStyle(i)}>{displayChar(ch)}</span>
               ))}
             </span>
           ) : status === "active" && onSubmitGuess ? (
@@ -274,7 +275,7 @@ function WordRow({
                   flexShrink: 0,
                 }}
               >
-                {word[0].toUpperCase()}
+                {word[0].toLowerCase()}
               </span>
 
               {/* Remaining letters — hints, typed chars, or underscores */}
@@ -291,7 +292,7 @@ function WordRow({
                         color: "#c9b458",
                       }}
                     >
-                      {ch}
+                      {ch.toLowerCase()}
                     </span>
                   );
                 }
@@ -308,7 +309,7 @@ function WordRow({
                       opacity: typed ? 1 : 0.5,
                     }}
                   >
-                    {typed ?? "_"}
+                    {typed?.toLowerCase() ?? "_"}
                   </span>
                 );
               })}
@@ -318,7 +319,7 @@ function WordRow({
                 ref={inputRef}
                 type="text"
                 value={localGuess}
-                onChange={(e) => setLocalGuess(e.target.value.slice(0, unrevealedCount))}
+                onChange={(e) => setLocalGuess(e.target.value.toLowerCase().slice(0, unrevealedCount))}
                 onKeyDown={handleLocalKeyDown}
                 autoComplete="off"
                 spellCheck={false}
@@ -357,7 +358,7 @@ function WordRow({
                       color: show && i !== 0 ? "#c9b458" : undefined,
                     }}
                   >
-                    {show ? displayChar(ch, i) : "_"}
+                    {show ? displayChar(ch) : "_"}
                     {i < word.length - 1 && " "}
                   </span>
                 );
@@ -433,7 +434,6 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
     feedback,
     justSolvedIndex,
     submitGuess,
-    useHint: storeUseHint,
     clearFeedback,
     clearJustSolved,
     initPuzzle,
@@ -544,15 +544,14 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
     }
   }, [justSolvedIndex, clearJustSolved]);
 
-  const handleHint = useCallback(() => {
-    play("ui.tap");
-    const result = storeUseHint();
-    if (result) {
+  useEffect(() => {
+    if (feedback?.type === "hint") {
       play("hint");
       setHintAnim(true);
-      setTimeout(() => setHintAnim(false), 600);
+      const timer = setTimeout(() => setHintAnim(false), 600);
+      return () => clearTimeout(timer);
     }
-  }, [storeUseHint, play]);
+  }, [feedback, play]);
 
   if (loading || puzzleWords.length === 0) {
     return (
@@ -603,36 +602,26 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
             {`Daily Puzzle · ${formatDate(date || getDateString())}`}
           </div>
 
-          {/* Hint button */}
+          {/* Mistakes remaining */}
           {gameStatus === "playing" && (
-            <div style={{ display: "flex", justifyContent: "center", marginTop: "8px" }}>
-              <button
-                onClick={handleHint}
-                disabled={hintsRemaining <= 0}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                marginTop: "8px",
+              }}
+            >
+              <span
                 style={{
-                  width: "auto",
-                  padding: "10px 20px",
-                  fontSize: "13px",
+                  fontSize: "12px",
                   fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  background: "#565758",
-                  color: "#ffffff",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: hintsRemaining > 0 ? "pointer" : "not-allowed",
-                  opacity: hintsRemaining > 0 ? 1 : 0.4,
+                  color: hintsRemaining <= 1 ? "#ff6b6b" : "#787c7e",
+                  letterSpacing: "0.04em",
                   animation: hintAnim ? "cl-hint-pulse 0.4s ease" : undefined,
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 18h6" />
-                  <path d="M10 22h4" />
-                  <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14" />
-                </svg>
-                Hint ({hintsRemaining})
-              </button>
+                {hintsRemaining} {hintsRemaining === 1 ? "try" : "tries"} left
+              </span>
             </div>
           )}
 
@@ -693,10 +682,10 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
               >
                 <div style={{ fontSize: "32px", marginBottom: "8px" }}>&#10007;</div>
                 <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#ff6b6b", margin: "0 0 8px" }}>
-                  Out of Hints
+                  Game Over
                 </h2>
                 <p style={{ fontSize: "12px", color: "#787c7e", margin: "0 0 20px" }}>
-                  The full chain was:
+                  Wrong a fourth time and you&apos;re out. The full chain was:
                 </p>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "center", marginBottom: "20px" }}>
@@ -731,7 +720,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                   }}
                 >
                   {mode === "daily" && (
-                    <OtherDailies currentGameId="chainlink" accentColor="#6aaa64" />
+                    <OtherDailies currentGameId="chainlink" />
                   )}
 
                   <Link
@@ -821,7 +810,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                   )}
 
                   {mode === "daily" && (
-                    <OtherDailies currentGameId="chainlink" accentColor="#6aaa64" />
+                    <OtherDailies currentGameId="chainlink" />
                   )}
 
                   <Link

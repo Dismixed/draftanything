@@ -27,6 +27,7 @@ import { GameBackLink } from "@/components/ui/game-back-link";
 import { SoundToggle } from "@/components/ui/sound-toggle";
 import { OtherDailies } from "@/components/daily/other-dailies";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
+import DailyIntroModal from "@/components/brain-dead/daily-intro-modal";
 
 type Screen = "played" | "game" | "result";
 
@@ -60,6 +61,7 @@ export default function BrainDeadGame({
   const [todayScore, setTodayScore] = useState(0);
   const [scoreFloat, setScoreFloat] = useState<number | null>(null);
   const [questionAnim, setQuestionAnim] = useState<"in" | "out" | null>(null);
+  const [showIntro, setShowIntro] = useState(mode === "daily");
 
   const [fetchError, setFetchError] = useState<string | null>(null);
   const loadingRef = useRef(false);
@@ -263,11 +265,11 @@ export default function BrainDeadGame({
   }, [isDaily, category]);
 
   useEffect(() => {
-    if (screen === "game" && q && answered === "idle") {
+    if (screen === "game" && q && answered === "idle" && !showIntro) {
       startTimer();
     }
     return clearIntervalTimer;
-  }, [screen, qi, q, answered, startTimer, clearIntervalTimer]);
+  }, [screen, qi, q, answered, showIntro, startTimer, clearIntervalTimer]);
 
   const handleAnswer = (idx: number) => {
     if (!q || answered !== "idle") return;
@@ -467,7 +469,7 @@ export default function BrainDeadGame({
         {isDaily && (
           <>
             <WinStreakLine gameId="brain-dead" accentColor="var(--bd-primary)" />
-            <OtherDailies currentGameId="brain-dead" accentColor="var(--bd-primary)" />
+            <OtherDailies currentGameId="brain-dead" />
           </>
         )}
       </div>,
@@ -637,7 +639,7 @@ export default function BrainDeadGame({
         {isDaily && <WinStreakLine gameId="brain-dead" accentColor="var(--bd-primary)" />}
 
         {isDaily && (
-          <OtherDailies currentGameId="brain-dead" accentColor="var(--bd-primary)" />
+          <OtherDailies currentGameId="brain-dead" />
         )}
 
         <div
@@ -737,6 +739,15 @@ export default function BrainDeadGame({
 
   return gameShell(
     <>
+      {isDaily && showIntro && (
+        <DailyIntroModal
+          onStart={() => {
+            play("ui.tap");
+            setShowIntro(false);
+          }}
+        />
+      )}
+
       <div
         style={{
           display: "flex",

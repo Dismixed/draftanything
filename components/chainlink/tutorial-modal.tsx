@@ -165,12 +165,11 @@ export default function TutorialModal() {
                     marginBottom: "4px",
                   }}
                 >
-                  Stuck? Use a Hint
+                  Stuck? Wrong Guesses Help
                 </div>
                 <p style={{ fontSize: "12px", color: "#787c7e", margin: 0, lineHeight: 1.6 }}>
-                  Wrong guesses won&apos;t reveal letters — only hints do. Each hint reveals one
-                  letter of the current word. You get 3 hints for the whole puzzle; use them all
-                  without finishing and you lose.
+                  Each wrong guess reveals one letter of the current word. You can be wrong three
+                  times — wrong a fourth time and you lose.
                 </p>
               </div>
             </div>

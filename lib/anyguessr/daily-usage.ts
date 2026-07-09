@@ -1,6 +1,8 @@
 import type { Clue } from "./types";
 import {
+  canFillDailyRounds,
   DAILY_ROUND_CLUE_TYPES,
+  maxDailyLookbackDays,
   pickDailyPuzzles,
 } from "./daily";
 
@@ -10,7 +12,7 @@ export interface DailyPickRow {
   clues: Clue[];
 }
 
-/** `${puzzleId}:${clueType}` → ISO dates when that clue was shown in daily. */
+/** `${puzzleId}:${clueType}` → ISO dates in the daily picker window (not play history). */
 export type DailyUsageIndex = Record<string, string[]>;
 
 function parseDateUTC(date: string): Date {
@@ -32,12 +34,13 @@ export function computeDailyUsageIndex(
   options?: { endDate?: string; lookbackDays?: number },
 ): DailyUsageIndex {
   const endDate = options?.endDate ?? formatDateUTC(new Date());
-  const lookbackDays = options?.lookbackDays ?? 120;
+  const lookbackDays =
+    options?.lookbackDays ?? maxDailyLookbackDays(puzzles.length);
   const index: DailyUsageIndex = {};
 
-  if (puzzles.length === 0) return index;
+  if (puzzles.length === 0 || !canFillDailyRounds(puzzles)) return index;
 
-  for (let offset = 0; offset < lookbackDays; offset++) {
+  for (let offset = 0; offset <= lookbackDays; offset++) {
     const date = formatDateUTC(addDaysUTC(parseDateUTC(endDate), -offset));
     try {
       const picks = pickDailyPuzzles(puzzles, date);

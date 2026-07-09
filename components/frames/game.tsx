@@ -571,7 +571,7 @@ export default function FramesGame() {
 
           <WinStreakLine gameId="frames" accentColor="#a855f7" />
 
-          <OtherDailies currentGameId="frames" accentColor="#a855f7" />
+          <OtherDailies currentGameId="frames" />
         </div>
       </div>
 
@@ -757,7 +757,7 @@ export default function FramesGame() {
 
         <WinStreakLine gameId="frames" accentColor="#a855f7" />
 
-        <OtherDailies currentGameId="frames" accentColor="#a855f7" />
+        <OtherDailies currentGameId="frames" />
 
         <div
           style={{

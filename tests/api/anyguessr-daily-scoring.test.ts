@@ -260,3 +260,64 @@ describe("daily clue playability", () => {
     expect(canFillDailyRounds(partialPool)).toBe(false);
   });
 });
+
+describe("daily usage index", () => {
+  function imageClue(type: string, content: string): Clue {
+    const url = `https://example.com/${type}-${content}.jpg`;
+    return {
+      type,
+      content,
+      metadata: { image_url: url, thumb_url: url },
+    };
+  }
+
+  const cca3Pool = [
+    "JPN", "FRA", "ITA", "EGY", "BRA", "IND", "CHN", "MEX", "ESP",
+    "GBR", "USA", "RUS", "DEU", "KOR", "THA", "GRC", "TUR", "PRT",
+  ];
+
+  const pool = Array.from({ length: 18 }, (_, i) => ({
+    id: `puzzle-${i}`,
+    answer_id: cca3Pool[i],
+    clues: [
+      imageClue("flag", `flag-${i}`),
+      imageClue("currency", `currency-${i}`),
+      imageClue("jersey", `jersey-${i}`),
+      imageClue("brand", `brand-${i}`),
+      imageClue("landmark", `landmark-${i}`),
+      { type: "written_language", content: `greeting-${i}` },
+      imageClue("person", `person-${i}`),
+      imageClue("food", `food-${i}`),
+      imageClue("environment", `environment-${i}`),
+    ],
+  }));
+
+  it("limits rotation dates to the daily picker window, not 120 days", async () => {
+    const { computeDailyUsageIndex } = await import("@/lib/anyguessr/daily-usage");
+
+    const usage = computeDailyUsageIndex(pool, { endDate: "2026-07-09" });
+    const allDates = Object.values(usage).flat();
+
+    expect(allDates.length).toBeGreaterThan(0);
+    expect(
+      allDates.every((date) => date >= "2026-07-08" && date <= "2026-07-09"),
+    ).toBe(true);
+    for (const dates of Object.values(usage)) {
+      expect(dates.length).toBeLessThanOrEqual(maxDailyLookbackDays(pool.length) + 1);
+    }
+  });
+
+  it("returns no rotation dates when the pool cannot fill daily rounds", async () => {
+    const { computeDailyUsageIndex } = await import("@/lib/anyguessr/daily-usage");
+
+    const usage = computeDailyUsageIndex([
+      {
+        id: "partial",
+        answer_id: "JPN",
+        clues: [imageClue("flag", "only")],
+      },
+    ]);
+
+    expect(usage).toEqual({});
+  });
+});
