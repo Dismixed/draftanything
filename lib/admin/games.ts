@@ -42,6 +42,14 @@ export const ADMIN_GAMES: AdminGame[] = [
     description: "Word ladder content — admin tools coming soon.",
     accent: "#6aaa64",
   },
+  {
+    id: "frames",
+    name: "Frames",
+    playHref: "/frames/daily",
+    adminHref: null,
+    description: "Daily movie, song, show, and album frame puzzles.",
+    accent: "#a855f7",
+  },
 ];
 
 export function getAdminGame(id: string): AdminGame | undefined {

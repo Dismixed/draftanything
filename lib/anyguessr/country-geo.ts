@@ -36,6 +36,13 @@ export function getNameForCca3(cca3: string): string | null {
   return byCca3.get(cca3)?.name ?? null;
 }
 
+/** Static flag image URL derived from bundled country metadata. */
+export function getFlagUrlForCca3(cca3: string): string | null {
+  const cca2 = byCca3.get(cca3)?.cca2;
+  if (!cca2) return null;
+  return `https://flagcdn.com/w320/${cca2.toLowerCase()}.png`;
+}
+
 export function getLatLngForIso2(iso2: string): [number, number] | null {
   return byCca2.get(iso2.toUpperCase())?.latlng ?? null;
 }

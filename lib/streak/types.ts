@@ -1,4 +1,4 @@
-export const DAILY_GAMES = ["chainlink", "brain-dead", "anyguessr"] as const;
+export const DAILY_GAMES = ["chainlink", "brain-dead", "anyguessr", "frames"] as const;
 
 export type DailyGameId = (typeof DAILY_GAMES)[number];
 
@@ -32,4 +32,5 @@ export const GAME_META: Record<
   chainlink: { label: "Chainlink", href: "/chainlink/daily" },
   "brain-dead": { label: "Brain Dead", href: "/brain-dead/daily" },
   anyguessr: { label: "AnyGuessr", href: "/anyguessr/daily" },
+  frames: { label: "Frames", href: "/frames/daily" },
 };

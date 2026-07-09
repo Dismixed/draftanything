@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { SEED } from "@/lib/anyguessr/seed";
+import { ADMIN_CLUE_TYPES } from "@/lib/anyguessr/seed-types";
 
 interface SeedEntry {
   id: string;
@@ -17,6 +18,7 @@ interface SeedEntry {
   vision_pass: boolean | null;
   vision_notes: string | null;
   notes: string | null;
+  daily_dates?: string[];
 }
 
 interface AliasRow {
@@ -50,23 +52,30 @@ export default function AdminAnyGuessrPage() {
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("");
   const [countryFilter, setCountryFilter] = useState("");
+  const [clueTypeFilter, setClueTypeFilter] = useState("");
   const [selected, setSelected] = useState<SeedEntry | null>(null);
   const [manualImageUrl, setManualImageUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [coverage, setCoverage] = useState<CoverageGap[]>([]);
+  const [readiness, setReadiness] = useState<{
+    totalCountries: number;
+    readyCountries: number;
+    blocked: Array<{ cca3: string; country: string; missing: string[] }>;
+  } | null>(null);
 
   const [aliasCca3, setAliasCca3] = useState("NLD");
   const [aliasText, setAliasText] = useState("");
 
   const countries = useMemo(() => SEED.map((s) => ({ cca3: s.cca3, name: s.common })), []);
 
-  const fetchEntries = useCallback(async () => {
-    setLoading(true);
+  const fetchEntries = useCallback(async (options?: { silent?: boolean }) => {
+    if (!options?.silent) setLoading(true);
     try {
       const params = new URLSearchParams();
       if (statusFilter) params.set("status", statusFilter);
       if (countryFilter) params.set("cca3", countryFilter);
+      if (clueTypeFilter) params.set("clue_type", clueTypeFilter);
       const res = await fetch(`/api/admin/anyguessr/seed?${params}`);
       if (res.status === 403) {
         setError("Session expired — refresh the page or sign in again.");
@@ -80,9 +89,9 @@ export default function AdminAnyGuessrPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load");
     } finally {
-      setLoading(false);
+      if (!options?.silent) setLoading(false);
     }
-  }, [statusFilter, countryFilter]);
+  }, [statusFilter, countryFilter, clueTypeFilter]);
 
   const fetchAliases = useCallback(async () => {
     const res = await fetch("/api/admin/anyguessr/aliases");
@@ -97,6 +106,46 @@ export default function AdminAnyGuessrPage() {
     void fetchAliases();
   }, [fetchEntries, fetchAliases]);
 
+  async function approveAllFlagsWithImages() {
+    setBusy(true);
+    setMessage(null);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/anyguessr/seed", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "approve_flags_with_images" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Bulk approve failed");
+      setMessage(
+        `Approved ${data.approved} flag${data.approved === 1 ? "" : "s"} with images` +
+          (data.skipped > 0 ? ` (${data.skipped} skipped)` : ""),
+      );
+      setEntries((prev) =>
+        prev.map((entry) =>
+          entry.clue_type === "flag" &&
+          entry.image_candidates.length > 0 &&
+          entry.status !== "rejected"
+            ? { ...entry, status: "approved" }
+            : entry,
+        ),
+      );
+      setSelected((prev) =>
+        prev?.clue_type === "flag" &&
+        prev.image_candidates.length > 0 &&
+        prev.status !== "rejected"
+          ? { ...prev, status: "approved" }
+          : prev,
+      );
+      await fetchEntries({ silent: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Bulk approve failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function runImport() {
     setBusy(true);
     setMessage(null);
@@ -109,7 +158,7 @@ export default function AdminAnyGuessrPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Import failed");
       setMessage(`Imported ${data.imported} seed rows from seed.ts`);
-      await fetchEntries();
+      await fetchEntries({ silent: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Import failed");
     } finally {
@@ -132,7 +181,7 @@ export default function AdminAnyGuessrPage() {
       setMessage(
         `Hydrated ${data.hydrated ?? 0} clue rows from ${data.countries ?? 0} puzzles`,
       );
-      await fetchEntries();
+      await fetchEntries({ silent: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Hydration failed");
     } finally {
@@ -144,12 +193,22 @@ export default function AdminAnyGuessrPage() {
     setBusy(true);
     setMessage(null);
     setCoverage([]);
+    setReadiness(null);
     try {
       const res = await fetch("/api/admin/anyguessr/generate", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Generate failed");
       const g = data.generate;
-      setMessage(`Generated ${g.succeeded}/${g.total} puzzles`);
+      setReadiness(g.readiness ?? null);
+      if (g.total === 0) {
+        const ready = g.readiness?.readyCountries ?? 0;
+        const total = g.readiness?.totalCountries ?? 0;
+        setMessage(
+          `Generated 0/0 — no countries are fully approved yet (${ready}/${total} ready). Approve all 9 clue types per country in the Seed tab, then try again.`,
+        );
+      } else {
+        setMessage(`Generated ${g.succeeded}/${g.total} puzzles`);
+      }
       setCoverage(g.coverage?.gaps ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Generate failed");
@@ -170,12 +229,39 @@ export default function AdminAnyGuessrPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Propose failed");
       setMessage(`LLM proposed ${data.entries?.length ?? 0} entries for ${cca3}`);
-      await fetchEntries();
+      await fetchEntries({ silent: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Propose failed");
     } finally {
       setBusy(false);
     }
+  }
+
+  async function sourceFlagFromCdn(entry: SeedEntry) {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/admin/anyguessr/seed/${entry.id}/images`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ useVision: false }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Flag source failed");
+      setSelected(data.entry);
+      setMessage(`Sourced flag from flagcdn for ${entry.country_common}`);
+      await fetchEntries({ silent: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Flag source failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function formatDailyUsage(dates: string[] | undefined): string {
+    if (!dates || dates.length === 0) return "—";
+    const latest = dates[dates.length - 1];
+    if (dates.length === 1) return latest;
+    return `${latest} (+${dates.length - 1})`;
   }
 
   async function resolveImages(entry: SeedEntry) {
@@ -190,7 +276,7 @@ export default function AdminAnyGuessrPage() {
       if (!res.ok) throw new Error(data.error ?? "Image resolve failed");
       setSelected(data.entry);
       setMessage(`Found ${data.candidateCount} candidates for ${entry.country_common} / ${entry.clue_type}`);
-      await fetchEntries();
+      await fetchEntries({ silent: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Image resolve failed");
     } finally {
@@ -233,7 +319,7 @@ export default function AdminAnyGuessrPage() {
         `Fetched images for ${successCount}/${targets.length} entries` +
           (failureCount > 0 ? ` (${failureCount} failed)` : ""),
       );
-      await fetchEntries();
+      await fetchEntries({ silent: true });
       if (selected) {
         const updatedSelected = targets.find((entry) => entry.id === selected.id);
         if (updatedSelected) {
@@ -254,7 +340,7 @@ export default function AdminAnyGuessrPage() {
     patch: Record<string, unknown>,
     options?: { refreshList?: boolean },
   ) {
-    const refreshList = options?.refreshList ?? true;
+    const refreshList = options?.refreshList ?? false;
     setBusy(true);
     try {
       const res = await fetch(`/api/admin/anyguessr/seed/${id}`, {
@@ -264,11 +350,22 @@ export default function AdminAnyGuessrPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Update failed");
-      setSelected(data.entry);
+      const updated = data.entry as SeedEntry;
+      setSelected((prev) =>
+        prev?.id === updated.id
+          ? { ...updated, daily_dates: prev.daily_dates ?? updated.daily_dates }
+          : updated,
+      );
       if (refreshList) {
-        await fetchEntries();
+        await fetchEntries({ silent: true });
       } else {
-        setEntries((prev) => prev.map((entry) => (entry.id === data.entry.id ? data.entry : entry)));
+        setEntries((prev) =>
+          prev.map((entry) =>
+            entry.id === updated.id
+              ? { ...updated, daily_dates: entry.daily_dates ?? updated.daily_dates }
+              : entry,
+          ),
+        );
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Update failed");
@@ -352,7 +449,7 @@ export default function AdminAnyGuessrPage() {
   return (
     <AdminShell
       title="AnyGuessr"
-      subtitle="Review seed entries, resolve images, manage aliases, and regenerate puzzles."
+      subtitle="Approve every clue (including flags) before generating puzzles. flagcdn is used only to source flag images in admin."
       maxWidth={1100}
     >
       {error && (
@@ -403,6 +500,12 @@ export default function AdminAnyGuessrPage() {
                 <option key={c.cca3} value={c.cca3}>{c.name}</option>
               ))}
             </select>
+            <select value={clueTypeFilter} onChange={(e) => setClueTypeFilter(e.target.value)} style={selectStyle}>
+              <option value="">All clue types</option>
+              {ADMIN_CLUE_TYPES.map((clueType) => (
+                <option key={clueType} value={clueType}>{clueType}</option>
+              ))}
+            </select>
             <button type="button" disabled={busy} onClick={() => void runImport()} style={btnStyle}>
               Import seed.ts
             </button>
@@ -411,6 +514,9 @@ export default function AdminAnyGuessrPage() {
             </button>
             <button type="button" disabled={busy || loading || entries.length === 0} onClick={() => void resolveAllImages()} style={btnStyle}>
               Fetch all images
+            </button>
+            <button type="button" disabled={busy} onClick={() => void approveAllFlagsWithImages()} style={btnStyle}>
+              Approve all flags with images
             </button>
             <select
               defaultValue=""
@@ -440,6 +546,7 @@ export default function AdminAnyGuessrPage() {
                       <th style={thStyle}>Clue</th>
                       <th style={thStyle}>Status</th>
                       <th style={thStyle}>Images</th>
+                      <th style={thStyle}>Daily</th>
                       <th style={thStyle} />
                     </tr>
                   </thead>
@@ -452,6 +559,13 @@ export default function AdminAnyGuessrPage() {
                           <span style={{ color: STATUS_COLORS[e.status] ?? "#9aa0a6" }}>{e.status}</span>
                         </td>
                         <td style={tdStyle}>{e.image_candidates.length}</td>
+                        <td style={tdStyle} title={(e.daily_dates ?? []).join(", ") || undefined}>
+                          {e.daily_dates && e.daily_dates.length > 0 ? (
+                            <span style={{ color: "#c9b458" }}>{formatDailyUsage(e.daily_dates)}</span>
+                          ) : (
+                            <span style={{ color: "#787c7e" }}>—</span>
+                          )}
+                        </td>
                         <td style={tdStyle}>
                           <button type="button" style={linkBtn} onClick={() => setSelected(e)}>Open</button>
                         </td>
@@ -467,6 +581,11 @@ export default function AdminAnyGuessrPage() {
                 <h3 style={{ margin: "0 0 8px", fontSize: "16px" }}>
                   {selected.country_common} · {selected.clue_type}
                 </h3>
+                {selected.daily_dates && selected.daily_dates.length > 0 && (
+                  <p style={{ margin: "0 0 10px", fontSize: "12px", color: "#c9b458" }}>
+                    Used in daily: {selected.daily_dates.join(", ")}
+                  </p>
+                )}
                 <label style={labelStyle}>
                   Wikipedia title
                   <input
@@ -506,8 +625,13 @@ export default function AdminAnyGuessrPage() {
                     Save
                   </button>
                   <button type="button" disabled={busy} style={btnStyle} onClick={() => void resolveImages(selected)}>
-                    Fetch images
+                    {selected.clue_type === "flag" ? "Source from flagcdn" : "Fetch images"}
                   </button>
+                  {selected.clue_type === "flag" && (
+                    <button type="button" disabled={busy} style={btnStyle} onClick={() => void sourceFlagFromCdn(selected)}>
+                      Refresh flagcdn
+                    </button>
+                  )}
                   <button type="button" disabled={busy} style={btnStyle} onClick={() => void patchEntry(selected.id, { status: "approved" })}>
                     Approve
                   </button>
@@ -581,6 +705,12 @@ export default function AdminAnyGuessrPage() {
                 <option key={c.cca3} value={c.cca3}>{c.name}</option>
               ))}
             </select>
+            <select value={clueTypeFilter} onChange={(e) => setClueTypeFilter(e.target.value)} style={selectStyle}>
+              <option value="">All clue types</option>
+              {ADMIN_CLUE_TYPES.map((clueType) => (
+                <option key={clueType} value={clueType}>{clueType}</option>
+              ))}
+            </select>
             <button type="button" disabled={busy || loading || entries.length === 0} onClick={() => void resolveAllImages()} style={btnStyle}>
               Fetch all images
             </button>
@@ -613,6 +743,9 @@ export default function AdminAnyGuessrPage() {
                   </div>
                   <div style={{ fontSize: "12px", color: "#9aa0a6", marginBottom: "8px" }}>
                     {entry.clue_type} · {entry.image_candidates.length} image{entry.image_candidates.length === 1 ? "" : "s"}
+                    {entry.daily_dates && entry.daily_dates.length > 0 && (
+                      <span style={{ color: "#c9b458" }}> · daily {formatDailyUsage(entry.daily_dates)}</span>
+                    )}
                   </div>
 
                   {entry.image_candidates.length === 0 ? (
@@ -687,8 +820,32 @@ export default function AdminAnyGuessrPage() {
             {busy ? "Running…" : "Generate all puzzles"}
           </button>
           <p style={{ color: "#9aa0a6", fontSize: "13px", marginBottom: "16px" }}>
-            Regenerates puzzles from approved seed entries (with seed.ts fallback). Returns a coverage report of missing images.
+            Builds <code style={{ color: "#c9b458" }}>ag_puzzles</code> rows from countries where all 9 clue types are <strong style={{ color: "#e8e8e8", fontWeight: 600 }}>approved</strong> in the Seed tab (flag, currency, jersey, brand, landmark, language, person, food, environment). Each approved country becomes one playable puzzle in the daily pool.
           </p>
+          {readiness && (
+            <div style={{ marginBottom: "16px", fontSize: "13px", color: "#9aa0a6" }}>
+              <div>
+                Ready for generation:{" "}
+                <span style={{ color: readiness.readyCountries > 0 ? "#6aaa64" : "#c9b458" }}>
+                  {readiness.readyCountries}/{readiness.totalCountries} countries
+                </span>
+              </div>
+              {readiness.blocked.length > 0 && (
+                <ul style={{ margin: "8px 0 0", paddingLeft: "18px" }}>
+                  {readiness.blocked.map((row) => (
+                    <li key={row.cca3} style={{ marginBottom: "4px" }}>
+                      <strong style={{ color: "#e8e8e8" }}>{row.country}</strong>:{" "}
+                      {row.missing.slice(0, 4).join(", ")}
+                      {row.missing.length > 4 ? ` +${row.missing.length - 4} more` : ""}
+                    </li>
+                  ))}
+                  {readiness.totalCountries - readiness.readyCountries > readiness.blocked.length && (
+                    <li>…and {readiness.totalCountries - readiness.readyCountries - readiness.blocked.length} more</li>
+                  )}
+                </ul>
+              )}
+            </div>
+          )}
           {coverage.length > 0 && (
             <div style={{ border: "1px solid #3a3a3c", borderRadius: "10px", overflow: "hidden" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>

@@ -93,7 +93,8 @@ function WordRow({
   const unrevealedCount = (word.length - 1) - revealedLetters.filter(Boolean).length;
 
   const [localGuess, setLocalGuess] = useState("");
-  const [shake, setShake] = useState(false);
+  const [wrongFlash, setWrongFlash] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const rowRef = useRef<HTMLDivElement>(null);
   const { play } = useSound();
@@ -107,35 +108,41 @@ function WordRow({
   // Clear local input when word changes
   useEffect(() => {
     setLocalGuess("");
-    setShake(false);
+    setWrongFlash(false);
+    setSubmitting(false);
   }, [word]);
 
-  const handleLocalKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && localGuess.trim() && onSubmitGuess) {
-      // Build the full word: first letter + hint-revealed letters + typed remainder
-      const typed = localGuess.trim();
-      let typedIdx = 0;
-      let fullGuess = word[0].toUpperCase();
-      for (let i = 1; i < word.length; i++) {
-        if (revealedLetters[i]) {
-          fullGuess += word[i];
-        } else {
-          fullGuess += typed[typedIdx] ?? "";
-          typedIdx++;
-        }
+  const handleLocalKeyDown = async (e: React.KeyboardEvent) => {
+    if (e.key !== "Enter" || !localGuess.trim() || !onSubmitGuess || submitting) return;
+
+    // Build the full word: first letter + hint-revealed letters + typed remainder
+    const typed = localGuess.trim();
+    let typedIdx = 0;
+    let fullGuess = word[0].toUpperCase();
+    for (let i = 1; i < word.length; i++) {
+      if (revealedLetters[i]) {
+        fullGuess += word[i];
+      } else {
+        fullGuess += typed[typedIdx] ?? "";
+        typedIdx++;
       }
-      const result = onSubmitGuess(fullGuess);
-      if (result === "correct") {
-        play("correct");
-        setLocalGuess("");
-      } else if (result === "incorrect") {
-        play("wrong");
-        setShake(true);
-        triggerAnimation(rowRef.current, "anim-flash-red", 450);
-        setTimeout(() => setShake(false), 500);
-      } else if (result === "already-solved") {
-        play("ui.tap");
-      }
+    }
+
+    setSubmitting(true);
+    const result = await onSubmitGuess(fullGuess);
+    setSubmitting(false);
+
+    if (result === "correct") {
+      play("correct");
+      setLocalGuess("");
+    } else if (result === "incorrect") {
+      play("wrong");
+      setWrongFlash(true);
+      triggerAnimation(rowRef.current, "anim-shake", 450);
+      triggerAnimation(rowRef.current, "anim-flash-red", 500);
+      window.setTimeout(() => setWrongFlash(false), 1400);
+    } else if (result === "already-solved") {
+      play("ui.tap");
     }
   };
 
@@ -198,20 +205,25 @@ function WordRow({
           gap: "6px",
           padding: "14px 18px",
           background:
-            status === "active"
-              ? "#1a1a1b"
-              : status === "solved"
-                ? "#6aaa64"
-                : "#3a3a3c",
+            wrongFlash
+              ? "rgba(255, 107, 107, 0.1)"
+              : status === "active"
+                ? "#1a1a1b"
+                : status === "solved"
+                  ? "#6aaa64"
+                  : "#3a3a3c",
           border: `2px solid ${
-            status === "active"
-              ? "#c9b458"
-              : status === "solved"
-                ? "#6aaa64"
-                : "#3a3a3c"
+            wrongFlash
+              ? "#ff6b6b"
+              : status === "active"
+                ? "#c9b458"
+                : status === "solved"
+                  ? "#6aaa64"
+                  : "#3a3a3c"
           }`,
           borderRadius: "6px",
-          transition: "border-color 0.3s ease, background 0.3s ease",
+          transition: "border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease",
+          boxShadow: wrongFlash ? "0 0 0 1px rgba(255, 107, 107, 0.35), 0 0 20px rgba(255, 107, 107, 0.15)" : "none",
           position: "relative",
         }}
       >
@@ -248,7 +260,6 @@ function WordRow({
                 width: "100%",
                 position: "relative",
                 cursor: "text",
-                animation: shake ? "cl-shake 0.4s ease" : undefined,
               }}
               onClick={() => inputRef.current?.focus()}
             >
@@ -354,7 +365,29 @@ function WordRow({
           )}
         </div>
 
-        {status === "active" && attemptsCount > 0 && !onSubmitGuess && (
+        {status === "active" && wrongFlash && (
+          <div
+            className="anim-pop-in"
+            style={{
+              marginLeft: "auto",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+              fontSize: "11px",
+              fontWeight: 700,
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+              color: "#ff6b6b",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+            }}
+          >
+            <span aria-hidden="true">&#10007;</span>
+            Not quite
+          </div>
+        )}
+
+        {status === "active" && attemptsCount > 0 && !onSubmitGuess && !wrongFlash && (
           <div
             style={{
               marginLeft: "auto",
@@ -569,16 +602,38 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
             {`Daily Puzzle · ${formatDate(date || getDateString())}`}
           </div>
 
-          {/* Hints row */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", marginTop: "8px" }}>
-            {gameStatus === "playing" && (
-              <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 14px" }}>
-                <span style={{ fontSize: "13px", fontWeight: 700, color: "#c9b458" }}>
-                  Hints: {hintsRemaining}
-                </span>
-              </div>
-            )}
-          </div>
+          {/* Hint button */}
+          {gameStatus === "playing" && (
+            <div style={{ display: "flex", justifyContent: "center", marginTop: "8px" }}>
+              <button
+                onClick={handleHint}
+                disabled={hintsRemaining <= 0}
+                style={{
+                  width: "auto",
+                  padding: "10px 20px",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  background: "#565758",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "6px",
+                  cursor: hintsRemaining > 0 ? "pointer" : "not-allowed",
+                  opacity: hintsRemaining > 0 ? 1 : 0.4,
+                  animation: hintAnim ? "cl-hint-pulse 0.4s ease" : undefined,
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 18h6" />
+                  <path d="M10 22h4" />
+                  <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14" />
+                </svg>
+                Hint ({hintsRemaining})
+              </button>
+            </div>
+          )}
 
         </header>
 
@@ -609,39 +664,6 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
               />
             ))}
           </div>
-
-          {/* ---- Hint button ---- */}
-          {gameStatus === "playing" && (
-            <div style={{ display: "flex", justifyContent: "center", marginTop: "16px" }}>
-              <button
-                onClick={handleHint}
-                disabled={hintsRemaining <= 0}
-                style={{
-                  width: "auto",
-                  padding: "10px 20px",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  background: "#565758",
-                  color: "#ffffff",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: hintsRemaining > 0 ? "pointer" : "not-allowed",
-                  opacity: hintsRemaining > 0 ? 1 : 0.4,
-                  animation: hintAnim ? "cl-hint-pulse 0.4s ease" : undefined,
-                }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 18h6" />
-                  <path d="M10 22h4" />
-                  <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14" />
-                </svg>
-                Hint ({hintsRemaining})
-              </button>
-            </div>
-          )}
 
           {showFailOverlay && (
             <div

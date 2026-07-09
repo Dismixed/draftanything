@@ -19,6 +19,7 @@ function emptyStore(): StreakStore {
       chainlink: { playDates: [] },
       "brain-dead": { playDates: [] },
       anyguessr: { playDates: [] },
+      frames: { playDates: [] },
     },
   };
 }

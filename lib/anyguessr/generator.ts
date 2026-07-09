@@ -16,9 +16,11 @@ import { expandAltAnswers } from "./country-aliases";
 import { resolveImageCandidates, resolveTitlesToCandidates } from "./image-sourcing";
 import {
   buildCoverageReport,
+  getGenerationReadiness,
   imageAltsFor,
   loadCountrySeedBundles,
   type CountrySeedBundle,
+  type GenerationReadiness,
 } from "./seed-db";
 import type { GenerateCoverageReport, ImageCandidate, SeedEntryRow } from "./seed-types";
 import type { AnswerType, Clue, ClueImageOption } from "./types";
@@ -40,10 +42,11 @@ export interface GenerateAllResult {
   failed: number;
   results: GenerateResult[];
   coverage: GenerateCoverageReport;
+  readiness: GenerationReadiness;
 }
 
 const REST_COUNTRIES_ALL_URL =
-  "https://restcountries.com/v3.1/all?fields=cca3,name,region,flags,altSpellings,demonyms,languages,currencies";
+  "https://restcountries.com/v3.1/all?fields=cca3,name,region,altSpellings,demonyms,languages,currencies";
 
 interface RestCurrency {
   name: string;
@@ -54,7 +57,6 @@ interface RestCountry {
   cca3: string;
   name: { common: string; official: string };
   region: string;
-  flags: { png?: string; svg?: string; alt?: string };
   altSpellings?: string[];
   languages?: Record<string, string>;
   currencies?: Record<string, RestCurrency>;
@@ -131,21 +133,6 @@ function buildTextClue(type: string, text: string, difficultyRank: number): Clue
   };
 }
 
-function buildFlagClue(meta: RestCountry | undefined, difficultyRank: number): Clue {
-  const imageUrl = meta?.flags?.svg ?? meta?.flags?.png;
-  return {
-    type: "flag",
-    content: "",
-    difficulty_rank: difficultyRank,
-    metadata: {
-      image_url: imageUrl,
-      thumb_url: meta?.flags?.png ?? imageUrl,
-      alt_text: meta?.flags?.alt ?? "national flag",
-      hide_label: true,
-    },
-  };
-}
-
 function currencyTextFromMeta(meta: RestCountry | undefined): string {
   const entries = Object.entries(meta?.currencies ?? {});
   if (entries.length === 0) return "?";
@@ -196,7 +183,10 @@ async function buildClueForEntry(
     return { clue: buildTextClue("written_language", text, rank) };
   }
 
-  const label = entry.wiki_title ?? entry.clue_type;
+  const label =
+    entry.clue_type === "flag"
+      ? "national flag"
+      : (entry.wiki_title ?? entry.clue_type);
   const candidates = await candidatesForEntry(bundle, entry);
   if (candidates.length === 0) {
     if (entry.clue_type === "currency") {
@@ -238,23 +228,20 @@ export async function generatePuzzleForBundle(
 ): Promise<GenerateResult> {
   const meta = restCountries.find((c) => c.cca3 === bundle.cca3);
   const gaps: GenerateCoverageReport["gaps"] = [];
+  const clues: Clue[] = [];
 
-  const clues: Clue[] = [buildFlagClue(meta, CLUE_RANKS.flag)];
-  if (!clues[0].metadata?.image_url) {
-    gaps.push({
-      cca3: bundle.cca3,
-      country: bundle.common,
-      clueType: "flag",
-      issue: "missing_image",
-    });
-  }
-
-  for (const entry of bundle.entries) {
+  for (const entry of [...bundle.entries].sort(
+    (a, b) => (CLUE_RANKS[a.clue_type] ?? 99) - (CLUE_RANKS[b.clue_type] ?? 99),
+  )) {
     const rank = CLUE_RANKS[entry.clue_type] ?? 5;
     const built = await buildClueForEntry(bundle, entry, meta, rank);
     clues.push(built.clue);
     if (built.gap) gaps.push(built.gap);
   }
+
+  const flagClue = clues.find((c) => c.type === "flag");
+  const flagImage =
+    flagClue?.metadata?.image_url ?? flagClue?.metadata?.thumb_url ?? null;
 
   const env = clues.find((c) => c.type === "environment");
   const funFact =
@@ -278,7 +265,7 @@ export async function generatePuzzleForBundle(
       answer_id: bundle.cca3,
       alt_answers: altNormalised,
       region: meta?.region ?? bundle.region,
-      flag_url: meta?.flags?.png ?? meta?.flags?.svg,
+      flag_url: flagImage,
       clues,
       difficulty: "medium",
       metadata: {
@@ -315,6 +302,7 @@ export async function generateAll(
   options?: { limit?: number },
 ): Promise<GenerateAllResult> {
   const rest = await fetchRestCountries();
+  const readiness = await getGenerationReadiness(db);
   const bundles = await loadCountrySeedBundles(db);
   const slice = options?.limit ? bundles.slice(0, options.limit) : bundles;
 
@@ -336,6 +324,7 @@ export async function generateAll(
     failed: slice.length - succeeded,
     results,
     coverage,
+    readiness,
   };
 }
 

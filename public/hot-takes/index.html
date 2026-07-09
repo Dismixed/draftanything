@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hot Takes — Daily Tier Game</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root{
+    --bg: #0b0b0e;
+    --surface: #16161c;
+    --surface-2: #1e1e26;
+    --line: #2a2a34;
+    --text: #f5f4f2;
+    --text-dim: #9a98a3;
+    --heat-s: #ff7a7a;
+    --heat-a: #ffab6b;
+    --heat-b: #ffd966;
+    --heat-c: #e8ff70;
+    --heat-d: #aaff70;
+    --accent: #ff5a36;
+    --accent-2: #ff2e63;
+    --radius: 14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 15% 0%, rgba(255,90,54,0.12), transparent 40%),
+      radial-gradient(circle at 85% 10%, rgba(255,46,99,0.10), transparent 45%),
+      var(--bg);
+    color:var(--text);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    min-height:100vh;
+    padding-bottom:40px;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:22px 20px 0;}
+
+  /* header */
+  header{display:flex;flex-direction:column;gap:6px;margin-bottom:18px;}
+  .eyebrow{
+    font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--text-dim);font-weight:600;
+  }
+  .eyebrow span{color:var(--accent);}
+  h1{
+    margin:0;
+    font-size:40px;
+    font-weight:900;
+    letter-spacing:-0.02em;
+    line-height:1;
+    font-style:italic;
+  }
+  .word-hot{color:#ffffff;}
+  .word-takes{color:#ff3b3b;}
+  .sub{color:var(--text-dim);font-size:15px;margin-top:4px;}
+  .meta-row{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap;}
+  .pill{
+    background:var(--surface);border:1px solid var(--line);
+    border-radius:999px;padding:6px 14px;font-size:13px;color:var(--text-dim);
+    display:flex;align-items:center;gap:6px;
+  }
+  .pill b{color:var(--text);font-weight:600;}
+
+  /* standalone action bar — separate from the tray */
+  .action-bar{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px 16px;margin-bottom:16px;display:flex;gap:10px;align-items:center;
+  }
+  .action-bar .btn-primary{flex:2;}
+  .action-bar .btn-ghost{flex:1;}
+
+  /* game area: board left, tray right */
+  .game-area{display:grid;grid-template-columns:1fr 250px;gap:16px;align-items:start;}
+
+  .board{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;}
+  .tier-row{display:flex;border-bottom:1px solid var(--line);min-height:92px;}
+  .tier-row:last-child{border-bottom:none;}
+  .tier-label{
+    width:70px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+    font-size:24px;font-weight:900;font-style:italic;color:#1a1a1a;
+  }
+  .tier-S .tier-label{background:var(--heat-s);}
+  .tier-A .tier-label{background:var(--heat-a);}
+  .tier-B .tier-label{background:var(--heat-b);}
+  .tier-C .tier-label{background:var(--heat-c);}
+  .tier-D .tier-label{background:var(--heat-d);}
+  .tier-list{
+    flex:1;display:flex;flex-wrap:wrap;align-content:flex-start;align-items:flex-start;gap:12px 8px;
+    padding:14px 12px;min-height:92px;
+  }
+  .tier-list.drag-over{background:rgba(255,90,54,0.06);}
+
+  .item{
+    width:56px;
+    display:flex;flex-direction:column;align-items:center;gap:5px;
+    cursor:grab;user-select:none;
+    transition:transform .12s ease;
+  }
+  .item:active{cursor:grabbing;}
+  .item.sortable-chosen{transform:scale(1.08);}
+  .item .icon-box{
+    width:52px;height:52px;border-radius:10px;background:var(--surface-2);
+    border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    font-size:24px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.3);
+  }
+  .item .label{
+    font-size:9px;color:var(--text-dim);white-space:nowrap;font-weight:500;
+    text-align:center;
+  }
+
+  .tray-panel{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;display:flex;flex-direction:column;gap:14px;position:sticky;top:16px;
+  }
+  .tray-title{font-size:12px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;font-weight:600;}
+  .tray-list{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 4px;justify-items:center;align-content:flex-start;min-height:400px;}
+
+  /* actions */
+  .actions{display:flex;gap:10px;flex-wrap:wrap;}
+  button{
+    font-family:inherit;font-weight:700;font-size:14px;
+    border:none;border-radius:10px;padding:13px 20px;cursor:pointer;
+    transition:opacity .15s ease, transform .1s ease;
+  }
+  button:active{transform:scale(0.98);}
+  .btn-primary{
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    color:#fff;flex:1;min-width:140px;
+  }
+  .btn-primary:disabled{opacity:.35;cursor:not-allowed;}
+  .btn-ghost{background:var(--surface-2);border:1px solid var(--line);color:var(--text);}
+  .btn-ghost:hover{background:#26262f;}
+
+  /* results */
+  .results{display:none;margin-top:26px;}
+  .results.show{display:block;}
+  .results h2{font-size:20px;font-weight:800;font-style:italic;margin:0 0 4px;}
+  .results .sub{margin-bottom:16px;}
+
+  .result-actions{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;
+    gap:16px;flex-wrap:wrap;
+  }
+  .result-actions .download-btn{min-width:170px;}
+  .share-row{display:flex;align-items:center;gap:10px;}
+  .share-label{font-size:12px;color:var(--text-dim);margin-right:2px;}
+  .icon-btn{
+    width:42px;height:42px;border-radius:50%;
+    background:var(--surface-2);border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    padding:0;cursor:pointer;transition:transform .12s ease, background .15s ease;
+  }
+  .icon-btn:hover{transform:translateY(-2px);}
+  .icon-btn svg{width:19px;height:19px;}
+  .icon-btn.messages:hover{background:#2ecc71;}
+  .icon-btn.twitter:hover{background:#111;border-color:#555;}
+  .icon-btn.instagram:hover{background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);}
+  .icon-btn.tiktok:hover{background:#111;border-color:#555;}
+  .icon-btn.soon{opacity:.55;}
+
+  .score-banner{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px;margin-bottom:18px;display:flex;align-items:center;gap:16px;
+  }
+  .score-num{font-size:36px;font-weight:900;font-style:italic;background:linear-gradient(90deg,#fff,var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .score-text{color:var(--text-dim);font-size:14px;line-height:1.4;}
+
+  .consensus-item{
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    padding:12px 14px;margin-bottom:8px;
+  }
+  .consensus-top{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .consensus-top .icon{font-size:20px;}
+  .consensus-top .name{font-weight:600;font-size:14px;flex:1;}
+  .consensus-top .yourpick{font-size:11px;color:var(--text-dim);}
+  .consensus-top .yourpick b{color:var(--accent);}
+  .bars{display:flex;height:20px;border-radius:6px;overflow:hidden;gap:2px;}
+  .bar{position:relative;display:flex;align-items:center;justify-content:center;min-width:2px;}
+  .bar span{font-size:9px;font-weight:700;}
+  .bar.you{outline:2px solid #fff;outline-offset:-2px;}
+
+  footer{text-align:center;color:var(--text-dim);font-size:12px;margin-top:30px;}
+  footer .brand{color:var(--text);font-weight:700;font-style:italic;}
+
+  @media (max-width:760px){
+    .action-bar{flex-direction:column;}
+    .action-bar button{width:100%;}
+    .game-area{grid-template-columns:1fr;}
+    .tray-panel{position:static;}
+    .tray-list{grid-template-columns:repeat(5,1fr);min-height:240px;}
+    h1{font-size:32px;}
+    .tier-label{width:54px;font-size:19px;}
+    .item{width:48px;}
+    .item .icon-box{width:44px;height:44px;font-size:20px;}
+    .result-actions{flex-direction:column;align-items:stretch;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Tier Game · <span>Solo · Daily</span></div>
+    <h1><span class="word-hot">Hot</span> <span class="word-takes">Takes</span></h1>
+    <div class="sub">Fifteen items, one ranking. Drag them S to D, then see if you're right — or just controversial.</div>
+    <div class="meta-row">
+      <div class="pill">🍕 Today's category: <b id="categoryName">Pizza Toppings</b></div>
+      <div class="pill" id="dateChip">—</div>
+    </div>
+  </header>
+
+  <div class="action-bar">
+    <button class="btn-primary" id="submitBtn" disabled>Lock in my ranking</button>
+    <button class="btn-ghost" id="shuffleBtn">Shuffle tray</button>
+  </div>
+
+  <div class="game-area">
+    <div class="board" id="board">
+      <div class="tier-row tier-S"><div class="tier-label">S</div><div class="tier-list" data-tier="S"></div></div>
+      <div class="tier-row tier-A"><div class="tier-label">A</div><div class="tier-list" data-tier="A"></div></div>
+      <div class="tier-row tier-B"><div class="tier-label">B</div><div class="tier-list" data-tier="B"></div></div>
+      <div class="tier-row tier-C"><div class="tier-label">C</div><div class="tier-list" data-tier="C"></div></div>
+      <div class="tier-row tier-D"><div class="tier-label">D</div><div class="tier-list" data-tier="D"></div></div>
+    </div>
+
+    <div class="tray-panel">
+      <div class="tray-title">Drag into your tiers</div>
+      <div class="tray-list" id="tray" data-tier="tray"></div>
+    </div>
+  </div>
+
+  <div class="results" id="results">
+    <h2>How you stack up</h2>
+    <div class="sub">Here's how everyone else ranked today's category.</div>
+
+    <div class="result-actions">
+      <button class="btn-primary download-btn" id="downloadBtn">Download image</button>
+      <div class="share-row">
+        <span class="share-label">Share:</span>
+        <button class="icon-btn messages" id="shareMessages" title="Share via Messages">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        </button>
+        <button class="icon-btn twitter" id="shareX" title="Share to X">
+          <svg viewBox="0 0 24 24" fill="#fff"><path d="M18.9 2H22l-7.6 8.7L23 22h-6.9l-5.4-6.6L4.5 22H1.4l8.1-9.3L1 2h7l4.9 6.1L18.9 2zm-1.2 18h1.9L7.4 3.9H5.4L17.7 20z"/></svg>
+        </button>
+        <button class="icon-btn instagram soon" id="shareInstagram" title="Share to Instagram (coming soon)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg>
+        </button>
+        <button class="icon-btn tiktok soon" id="shareTikTok" title="Share to TikTok (coming soon)">
+          <svg viewBox="0 0 24 24" fill="#fff"><path d="M16.6 5.8a4.3 4.3 0 0 1-3.4-4.2h-3.4v14.6a2.6 2.6 0 1 1-1.8-2.5V10.3a5.9 5.9 0 1 0 5.2 5.9V9.5a7.6 7.6 0 0 0 4.4 1.4V7.5a4.3 4.3 0 0 1-1-1.7z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="score-banner">
+      <div class="score-num" id="agreeScore">—</div>
+      <div class="score-text">average agreement with the crowd across your 15 picks. <span id="hottestTake"></span></div>
+    </div>
+
+    <div id="consensusList"></div>
+  </div>
+
+  <footer>Part of the <span class="brand">Stim Games</span> daily lineup</footer>
+</div>
+
+<script>
+/* ---------- Daily category ---------- */
+// Fallback used if /api/daily-category isn't available (e.g. viewing this file standalone).
+const FALLBACK_CATEGORY = {
+  name: "Pizza Toppings",
+  emoji: "🍕",
+  items: [
+    {id:"pepperoni", label:"Pepperoni", icon:"🍕"},
+    {id:"mushroom", label:"Mushroom", icon:"🍄"},
+    {id:"pineapple", label:"Pineapple", icon:"🍍"},
+    {id:"olives", label:"Olives", icon:"🫒"},
+    {id:"onion", label:"Onion", icon:"🧅"},
+    {id:"pepper", label:"Bell Pepper", icon:"🫑"},
+    {id:"sausage", label:"Sausage", icon:"🌭"},
+    {id:"bacon", label:"Bacon", icon:"🥓"},
+    {id:"jalapeno", label:"Jalapeño", icon:"🌶️"},
+    {id:"garlic", label:"Garlic", icon:"🧄"},
+    {id:"spinach", label:"Spinach", icon:"🥬"},
+    {id:"anchovy", label:"Anchovy", icon:"🐟"},
+    {id:"tomato", label:"Tomato", icon:"🍅"},
+    {id:"corn", label:"Corn", icon:"🌽"},
+    {id:"pesto", label:"Pesto", icon:"🌿"}
+  ]
+};
+
+async function loadCategory(){
+  try{
+    const res = await fetch('/api/daily-category');
+    if(!res.ok) throw new Error('bad response');
+    const data = await res.json();
+    if(!data.items || data.items.length !== 15) throw new Error('bad shape');
+    return data;
+  }catch(err){
+    console.warn('Using fallback category — /api/daily-category not available:', err.message);
+    return FALLBACK_CATEGORY;
+  }
+}
+
+/* ---------- Mock crowd consensus (swap for real backend aggregation) ---------- */
+function seedRandom(seed){
+  let s = seed;
+  return function(){ s = (s*9301+49297)%233280; return s/233280; };
+}
+function generateConsensus(items){
+  const out = {};
+  items.forEach((it, idx) => {
+    const rnd = seedRandom(idx*13+7);
+    const weights = ["S","A","B","C","D"].map(()=>Math.pow(rnd(),2.2));
+    const sum = weights.reduce((a,b)=>a+b,0);
+    const pct = weights.map(w=>Math.round((w/sum)*100));
+    let diff = 100 - pct.reduce((a,b)=>a+b,0);
+    pct[0]+=diff;
+    out[it.id] = {S:pct[0],A:pct[1],B:pct[2],C:pct[3],D:pct[4]};
+  });
+  return out;
+}
+
+let CATEGORY, CONSENSUS;
+
+const submitBtn = document.getElementById('submitBtn');
+const tray = document.getElementById('tray');
+function checkComplete(){
+  const remaining = tray.children.length;
+  submitBtn.disabled = remaining !== 0;
+  submitBtn.textContent = remaining === 0
+    ? "Lock in my ranking"
+    : `Lock in my ranking (${remaining} left)`;
+}
+
+async function init(){
+  CATEGORY = await loadCategory();
+  CONSENSUS = generateConsensus(CATEGORY.items);
+
+  document.getElementById('categoryName').textContent = CATEGORY.name;
+  document.getElementById('dateChip').textContent = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+
+  CATEGORY.items.forEach(it=>{
+    const el = document.createElement('div');
+    el.className='item';
+    el.dataset.id = it.id;
+    el.innerHTML = `<div class="icon-box">${it.icon}</div><span class="label">${it.label}</span>`;
+    tray.appendChild(el);
+  });
+
+  const lists = document.querySelectorAll('.tier-list, .tray-list');
+  lists.forEach(list=>{
+    new Sortable(list, {
+      group:'tiers',
+      animation:150,
+      ghostClass:'sortable-ghost',
+      onEnd: checkComplete
+    });
+  });
+
+  checkComplete();
+}
+init();
+
+document.getElementById('shuffleBtn').addEventListener('click', ()=>{
+  const arr = Array.from(tray.children);
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    tray.insertBefore(arr[j], arr[i]);
+  }
+});
+
+/* ---------- Submit / results ---------- */
+let lastShareText = '';
+
+document.getElementById('submitBtn').addEventListener('click', ()=>{
+  const picks = {};
+  document.querySelectorAll('.tier-list').forEach(list=>{
+    const tier = list.dataset.tier;
+    Array.from(list.children).forEach(el=>{ picks[el.dataset.id] = tier; });
+  });
+
+  let totalAgree = 0;
+  let hottest = {id:null, pct:101};
+  const listEl = document.getElementById('consensusList');
+  listEl.innerHTML = '';
+
+  CATEGORY.items.forEach(it=>{
+    const yourTier = picks[it.id];
+    const dist = CONSENSUS[it.id];
+    totalAgree += dist[yourTier];
+    if(dist[yourTier] < hottest.pct){ hottest = {id:it.id, pct:dist[yourTier], label:it.label}; }
+
+    const row = document.createElement('div');
+    row.className='consensus-item';
+    const barsHtml = ["S","A","B","C","D"].map(t=>{
+      const w = dist[t];
+      const colorMap = {S:'var(--heat-s)',A:'var(--heat-a)',B:'var(--heat-b)',C:'var(--heat-c)',D:'var(--heat-d)'};
+      const youClass = t===yourTier ? 'you' : '';
+      return `<div class="bar ${youClass}" style="width:${w}%;background:${colorMap[t]}">${w>=10?`<span style="color:#1a1a1a">${w}%</span>`:''}</div>`;
+    }).join('');
+
+    row.innerHTML = `
+      <div class="consensus-top">
+        <div class="icon">${it.icon}</div>
+        <div class="name">${it.label}</div>
+        <div class="yourpick">you said <b>${yourTier}</b> · ${dist[yourTier]}% agree</div>
+      </div>
+      <div class="bars">${barsHtml}</div>
+    `;
+    listEl.appendChild(row);
+  });
+
+  const avg = Math.round(totalAgree / CATEGORY.items.length);
+  document.getElementById('agreeScore').textContent = avg + '%';
+  document.getElementById('hottestTake').textContent = hottest.id
+    ? `Your hottest take: ${hottest.label} in ${picks[hottest.id]} tier (only ${hottest.pct}% agree).`
+    : '';
+
+  lastShareText = `🔥 Hot Takes — ${CATEGORY.name}\nI'm ${avg}% aligned with the crowd today. Think you can do better?`;
+
+  document.getElementById('results').classList.add('show');
+  document.getElementById('results').scrollIntoView({behavior:'smooth', block:'start'});
+});
+
+/* ---------- Download image ---------- */
+document.getElementById('downloadBtn').addEventListener('click', ()=>{
+  html2canvas(document.getElementById('board'), {backgroundColor:'#0b0b0e', scale:2}).then(canvas=>{
+    const link = document.createElement('a');
+    link.download = `hot-takes-${CATEGORY.name.replace(/\s+/g,'-').toLowerCase()}.png`;
+    link.href = canvas.toDataURL();
+    link.click();
+  });
+});
+
+/* ---------- Share targets ---------- */
+document.getElementById('shareMessages').addEventListener('click', ()=>{
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const sep = isIOS ? '&' : '?';
+  window.location.href = `sms:${sep}body=${encodeURIComponent(lastShareText)}`;
+});
+
+document.getElementById('shareX').addEventListener('click', ()=>{
+  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(lastShareText)}`, '_blank');
+});
+
+document.getElementById('shareInstagram').addEventListener('click', ()=>{
+  alert('Instagram sharing is coming soon — for now, download the image and post it manually.');
+});
+
+document.getElementById('shareTikTok').addEventListener('click', ()=>{
+  alert('TikTok sharing is coming soon — for now, download the image and post it manually.');
+});
+</script>
+</body>
+</html>

@@ -11,7 +11,8 @@ import type {
   SeedEntryRow,
   SeedEntryStatus,
 } from "./seed-types";
-import { SEED_CLUE_TYPES } from "./seed-types";
+import { ADMIN_CLUE_TYPES, SEED_CLUE_TYPES } from "./seed-types";
+import { getFlagUrlForCca3 } from "./country-geo";
 
 function parseCandidates(raw: unknown): ImageCandidate[] {
   if (!Array.isArray(raw)) return [];
@@ -45,17 +46,18 @@ function rowToSeedEntry(row: Record<string, unknown>): SeedEntryRow {
 
 export async function listSeedEntries(
   db: SupabaseClient<Database>,
-  filters?: { status?: string; cca3?: string; limit?: number },
+  filters?: { status?: string; cca3?: string; clueType?: string; limit?: number },
 ): Promise<SeedEntryRow[]> {
   let query = db
     .from("ag_seed_entries")
     .select("*")
     .order("country_common", { ascending: true })
     .order("clue_type", { ascending: true })
-    .limit(filters?.limit ?? 500);
+    .limit(filters?.limit ?? 5000);
 
   if (filters?.status) query = query.eq("status", filters.status);
   if (filters?.cca3) query = query.eq("cca3", filters.cca3);
+  if (filters?.clueType) query = query.eq("clue_type", filters.clueType);
 
   const { data, error } = await query;
   if (error) throw new Error(error.message);
@@ -181,17 +183,38 @@ function textForSeedField(seed: SeedEntry, clueType: string): string | null {
 export async function importSeedFileToDb(
   db: SupabaseClient<Database>,
 ): Promise<{ imported: number }> {
+  const existingRows = await listSeedEntries(db, { limit: 5000 });
+  const existingByKey = new Map(
+    existingRows.map((row) => [`${row.cca3}:${row.clue_type}`, row]),
+  );
+
   let imported = 0;
   for (const seed of SEED) {
-    for (const clueType of SEED_CLUE_TYPES) {
+    for (const clueType of ADMIN_CLUE_TYPES) {
+      const key = `${seed.cca3}:${clueType}`;
+      const existing = existingByKey.get(key);
+      const flagUrl =
+        clueType === "flag" ? getFlagUrlForCca3(seed.cca3) : null;
+      const defaultFlagCandidates = flagUrl
+        ? [{ image_url: flagUrl, thumb_url: flagUrl, source: "flagcdn" }]
+        : [];
+
       await upsertSeedEntry(db, {
         cca3: seed.cca3,
         country_common: seed.common,
         clue_type: clueType,
-        wiki_title: wikiTitleForSeedField(seed, clueType),
-        text_content: textForSeedField(seed, clueType),
-        status: "draft",
-        proposed_by: "seed_import",
+        wiki_title: existing?.wiki_title ?? wikiTitleForSeedField(seed, clueType),
+        text_content: existing?.text_content ?? textForSeedField(seed, clueType),
+        status: existing?.status ?? "draft",
+        image_candidates:
+          existing && existing.image_candidates.length > 0
+            ? existing.image_candidates
+            : defaultFlagCandidates,
+        selected_candidate_index: existing?.selected_candidate_index ?? 0,
+        vision_pass: existing?.vision_pass ?? null,
+        vision_notes: existing?.vision_notes ?? null,
+        proposed_by: existing?.proposed_by ?? "seed_import",
+        notes: existing?.notes ?? null,
       });
       imported++;
     }
@@ -199,8 +222,67 @@ export async function importSeedFileToDb(
   return { imported };
 }
 
-function isSeedClueType(value: string): value is (typeof SEED_CLUE_TYPES)[number] {
-  return (SEED_CLUE_TYPES as readonly string[]).includes(value);
+/** Create any missing per-country clue rows (e.g. flag after an older import). */
+export async function ensureMissingSeedEntries(
+  db: SupabaseClient<Database>,
+): Promise<{ created: number }> {
+  const existingRows = await listSeedEntries(db, { limit: 5000 });
+  const existingKeys = new Set(
+    existingRows.map((row) => `${row.cca3}:${row.clue_type}`),
+  );
+
+  let created = 0;
+  for (const seed of SEED) {
+    for (const clueType of ADMIN_CLUE_TYPES) {
+      const key = `${seed.cca3}:${clueType}`;
+      if (existingKeys.has(key)) continue;
+
+      const flagUrl =
+        clueType === "flag" ? getFlagUrlForCca3(seed.cca3) : null;
+      await upsertSeedEntry(db, {
+        cca3: seed.cca3,
+        country_common: seed.common,
+        clue_type: clueType,
+        wiki_title: wikiTitleForSeedField(seed, clueType),
+        text_content: textForSeedField(seed, clueType),
+        status: "draft",
+        image_candidates: flagUrl
+          ? [{ image_url: flagUrl, thumb_url: flagUrl, source: "flagcdn" }]
+          : [],
+        proposed_by: "seed_ensure",
+      });
+      created++;
+    }
+  }
+  return { created };
+}
+
+/** Approve every flag seed row that already has at least one image candidate. */
+export async function approveFlagsWithImages(
+  db: SupabaseClient<Database>,
+): Promise<{ approved: number; skipped: number }> {
+  const flags = await listSeedEntries(db, { clueType: "flag", limit: 5000 });
+  let approved = 0;
+  let skipped = 0;
+
+  for (const entry of flags) {
+    if (entry.image_candidates.length === 0 || entry.status === "rejected") {
+      skipped++;
+      continue;
+    }
+    if (entry.status === "approved") {
+      skipped++;
+      continue;
+    }
+    await updateSeedEntry(db, entry.id, { status: "approved" });
+    approved++;
+  }
+
+  return { approved, skipped };
+}
+
+function isSeedClueType(value: string): value is (typeof ADMIN_CLUE_TYPES)[number] {
+  return (ADMIN_CLUE_TYPES as readonly string[]).includes(value);
 }
 
 function parsePuzzleImageCandidates(raw: unknown): ImageCandidate[] {
@@ -336,7 +418,7 @@ export interface CountrySeedBundle {
   entries: SeedEntryRow[];
 }
 
-/** Seed bundles for generation — SEED.ts countries with approved DB overrides. */
+/** Seed bundles for generation — only countries with every clue type approved in admin. */
 export async function loadCountrySeedBundles(
   db: SupabaseClient<Database>,
 ): Promise<CountrySeedBundle[]> {
@@ -346,34 +428,71 @@ export async function loadCountrySeedBundles(
   const rows = (data ?? []).map((row) => rowToSeedEntry(row as Record<string, unknown>));
   const byKey = new Map(rows.map((r) => [`${r.cca3}:${r.clue_type}`, r]));
 
-  return SEED.map((seed) => ({
-    cca3: seed.cca3,
-    common: seed.common,
-    region: seed.region,
-    capital: seed.capital,
-    entries: SEED_CLUE_TYPES.map((clueType) => {
+  const bundles: CountrySeedBundle[] = [];
+  for (const seed of SEED) {
+    const entries: SeedEntryRow[] = [];
+    let complete = true;
+    for (const clueType of ADMIN_CLUE_TYPES) {
       const dbRow = byKey.get(`${seed.cca3}:${clueType}`);
-      if (dbRow?.status === "approved") return dbRow;
+      if (!dbRow || dbRow.status !== "approved") {
+        complete = false;
+        break;
+      }
+      entries.push(dbRow);
+    }
+    if (!complete) continue;
+    bundles.push({
+      cca3: seed.cca3,
+      common: seed.common,
+      region: seed.region,
+      capital: seed.capital,
+      entries,
+    });
+  }
+  return bundles;
+}
 
-      return {
-        id: `${seed.cca3}-${clueType}`,
-        cca3: seed.cca3,
-        country_common: seed.common,
-        clue_type: clueType,
-        wiki_title: wikiTitleForSeedField(seed, clueType),
-        text_content: textForSeedField(seed, clueType),
-        status: "approved" as const,
-        image_candidates: dbRow?.image_candidates ?? [],
-        selected_candidate_index: dbRow?.selected_candidate_index ?? 0,
-        vision_pass: dbRow?.vision_pass ?? null,
-        vision_notes: dbRow?.vision_notes ?? null,
-        proposed_by: dbRow?.proposed_by ?? "seed_file",
-        notes: dbRow?.notes ?? null,
-        created_at: dbRow?.created_at ?? "",
-        updated_at: dbRow?.updated_at ?? "",
-      };
-    }),
-  }));
+export interface GenerationReadiness {
+  totalCountries: number;
+  readyCountries: number;
+  /** Countries missing one or more approved clues — first few for display. */
+  blocked: Array<{ cca3: string; country: string; missing: string[] }>;
+}
+
+export async function getGenerationReadiness(
+  db: SupabaseClient<Database>,
+): Promise<GenerationReadiness> {
+  const { data, error } = await db.from("ag_seed_entries").select("*");
+  if (error) throw new Error(error.message);
+
+  const rows = (data ?? []).map((row) => rowToSeedEntry(row as Record<string, unknown>));
+  const byKey = new Map(rows.map((r) => [`${r.cca3}:${r.clue_type}`, r]));
+
+  const blocked: GenerationReadiness["blocked"] = [];
+  let readyCountries = 0;
+
+  for (const seed of SEED) {
+    const missing: string[] = [];
+    for (const clueType of ADMIN_CLUE_TYPES) {
+      const dbRow = byKey.get(`${seed.cca3}:${clueType}`);
+      if (!dbRow) {
+        missing.push(`${clueType} (missing row)`);
+      } else if (dbRow.status !== "approved") {
+        missing.push(`${clueType} (${dbRow.status})`);
+      }
+    }
+    if (missing.length === 0) {
+      readyCountries++;
+    } else if (blocked.length < 8) {
+      blocked.push({ cca3: seed.cca3, country: seed.common, missing });
+    }
+  }
+
+  return {
+    totalCountries: SEED.length,
+    readyCountries,
+    blocked,
+  };
 }
 
 export function imageAltsFor(cca3: string, clueType: string): string[] {
@@ -460,7 +579,7 @@ export function buildCoverageReport(
   const gaps: GenerateCoverageReport["gaps"] = [...(puzzleGaps ?? [])];
 
   for (const bundle of bundles) {
-    for (const clueType of SEED_CLUE_TYPES) {
+    for (const clueType of ADMIN_CLUE_TYPES) {
       const entry = bundle.entries.find((e) => e.clue_type === clueType);
       if (!entry) {
         gaps.push({
@@ -487,6 +606,17 @@ export function buildCoverageReport(
             country: bundle.common,
             clueType,
             issue: "missing_text",
+          });
+        }
+        continue;
+      }
+      if (clueType === "flag") {
+        if (entry.image_candidates.length === 0) {
+          gaps.push({
+            cca3: bundle.cca3,
+            country: bundle.common,
+            clueType,
+            issue: "missing_image",
           });
         }
         continue;

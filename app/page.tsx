@@ -5,13 +5,6 @@ import { GameCardStreak } from "@/components/streak/streak-notifier";
 
 const GAMES = [
   {
-    name: "Frames",
-    description:
-      "See a single frame from a movie, show, or book — guess what it's from.",
-    icon: "▣",
-    status: "coming-soon" as const,
-  },
-  {
     name: "Would You Rather",
     description: "Pick a side. Defend your choice.",
     icon: "VS",
@@ -628,6 +621,95 @@ export default function StimGames() {
             </Link>
           </div>
 
+          {/* Hot Takes */}
+          <div
+            style={{
+              flex: "1 1 280px",
+              display: "block",
+            }}
+          >
+            <Link
+              href="/hot-takes"
+              style={{ textDecoration: "none", display: "block", height: "100%" }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  background: "#16161c",
+                  border: "1px solid #2a2a34",
+                  borderRadius: "14px",
+                  padding: "28px 24px",
+                  position: "relative",
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  transition: "transform 0.2s, border-color 0.2s",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+                className="stim-hero-card"
+              >
+                <div
+                  style={{
+                    fontSize: "9px",
+                    fontWeight: 600,
+                    letterSpacing: "0.32em",
+                    textTransform: "uppercase",
+                    color: "#ff5a36",
+                    marginBottom: "8px",
+                  }}
+                >
+                  Tier Game
+                </div>
+                <h2
+                  style={{
+                    fontSize: "clamp(24px, 4vw, 32px)",
+                    fontWeight: 900,
+                    fontStyle: "italic",
+                    lineHeight: 0.95,
+                    color: "#f5f4f2",
+                    margin: "0 0 6px",
+                    letterSpacing: "-0.02em",
+                  }}
+                >
+                  Hot{" "}
+                  <span style={{ color: "#ff3b3b" }}>
+                    Takes
+                  </span>
+                </h2>
+                <p style={{ ...modeHintStyle, margin: "0 0 10px", color: "#9a98a3" }}>
+                  Solo · Daily
+                </p>
+                <p
+                  style={{
+                    fontSize: "12px",
+                    color: "#9a98a3",
+                    lineHeight: 1.55,
+                    margin: "0 0 20px",
+                    fontWeight: 300,
+                    flex: 1,
+                  }}
+                >
+                  Rank fifteen items S to D, then see how your takes compare to everyone else.
+                </p>
+                <div
+                  className="stim-text-link"
+                  style={{
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    color: "#ff5a36",
+                    position: "relative",
+                    zIndex: 2,
+                  }}
+                >
+                  Play today&apos;s category
+                  <span style={{ fontSize: "12px" }}>&#8594;</span>
+                </div>
+              </div>
+            </Link>
+          </div>
+
           {/* Slippery Slope */}
           <div
             style={{
@@ -708,6 +790,92 @@ export default function StimGames() {
                   }}
                 >
                   Play Slippery Slope
+                  <span style={{ fontSize: "12px" }}>&#8594;</span>
+                </div>
+              </div>
+            </Link>
+          </div>
+
+          {/* Frames */}
+          <div
+            style={{
+              flex: "1 1 280px",
+              display: "block",
+            }}
+          >
+            <Link
+              href="/frames/daily"
+              style={{ textDecoration: "none", display: "block", height: "100%" }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  background: "#130f1e",
+                  border: "1px solid #2d2550",
+                  borderRadius: "14px",
+                  padding: "28px 24px",
+                  position: "relative",
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  transition: "transform 0.2s, border-color 0.2s",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+                className="stim-hero-card"
+              >
+                <GameCardStreak gameId="frames" accentColor="#a855f7" />
+                <div
+                  style={{
+                    fontSize: "9px",
+                    fontWeight: 600,
+                    letterSpacing: "0.32em",
+                    textTransform: "uppercase",
+                    color: "#a855f7",
+                    marginBottom: "8px",
+                  }}
+                >
+                  Daily Trivia
+                </div>
+                <h2
+                  style={{
+                    fontFamily: '"Space Mono", monospace',
+                    fontSize: "clamp(24px, 4vw, 32px)",
+                    fontWeight: 700,
+                    lineHeight: 0.95,
+                    color: "#f0eaff",
+                    margin: "0 0 6px",
+                    letterSpacing: "-0.04em",
+                  }}
+                >
+                  <span style={{ color: "#a855f7" }}>Fra</span>mes
+                </h2>
+                <p style={{ ...modeHintStyle, margin: "0 0 10px", color: "#6b5f8a" }}>
+                  Solo · Daily
+                </p>
+                <p
+                  style={{
+                    fontSize: "12px",
+                    color: "#6b5f8a",
+                    lineHeight: 1.55,
+                    margin: "0 0 20px",
+                    flex: 1,
+                  }}
+                >
+                  Four rounds — movie frame, song snippet, TV frame, album cover. One shot a day.
+                </p>
+                <div
+                  className="stim-text-link"
+                  style={{
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    color: "#a855f7",
+                    position: "relative",
+                    zIndex: 2,
+                  }}
+                >
+                  Play today&apos;s puzzle
                   <span style={{ fontSize: "12px" }}>&#8594;</span>
                 </div>
               </div>

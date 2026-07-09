@@ -2,10 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkAdmin } from "@/lib/chainlink/admin-guard";
 import {
+  approveFlagsWithImages,
+  ensureMissingSeedEntries,
   hydrateSeedEntriesFromPuzzles,
   importSeedFileToDb,
   listSeedEntries,
 } from "@/lib/anyguessr/seed-db";
+import {
+  computeDailyUsageIndex,
+  dailyUsageForSeedEntry,
+} from "@/lib/anyguessr/daily-usage";
+import type { Clue } from "@/lib/anyguessr/types";
 
 export async function GET(req: NextRequest) {
   const admin = await checkAdmin();
@@ -15,9 +22,45 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status") ?? undefined;
     const cca3 = searchParams.get("cca3") ?? undefined;
+    const clueType = searchParams.get("clue_type") ?? undefined;
     const db = createAdminClient();
-    const entries = await listSeedEntries(db, { status, cca3, limit: 500 });
-    return NextResponse.json({ entries });
+    await ensureMissingSeedEntries(db);
+    const entries = await listSeedEntries(db, { status, cca3, clueType, limit: 5000 });
+
+    const { data: puzzles, error: puzzleErr } = await db
+      .from("ag_puzzles")
+      .select("id, answer_id, clues")
+      .in("status", ["approved", "published"])
+      .order("id", { ascending: true })
+      .limit(500);
+
+    if (puzzleErr) throw puzzleErr;
+
+    const puzzleRows = (puzzles ?? []).map((row) => ({
+      id: row.id as string,
+      answer_id: row.answer_id as string | null,
+      clues: (row.clues ?? []) as Clue[],
+    }));
+
+    const puzzleIdByCca3: Record<string, string> = {};
+    for (const row of puzzleRows) {
+      if (row.answer_id && !puzzleIdByCca3[row.answer_id]) {
+        puzzleIdByCca3[row.answer_id] = row.id;
+      }
+    }
+
+    const dailyUsage = computeDailyUsageIndex(puzzleRows);
+    const entriesWithUsage = entries.map((entry) => ({
+      ...entry,
+      daily_dates: dailyUsageForSeedEntry(
+        dailyUsage,
+        puzzleIdByCca3,
+        entry.cca3,
+        entry.clue_type,
+      ),
+    }));
+
+    return NextResponse.json({ entries: entriesWithUsage, puzzleIdByCca3 });
   } catch (err) {
     console.error("anyguessr seed list failed:", err);
     return NextResponse.json({ error: "Failed to list seed entries" }, { status: 500 });
@@ -38,6 +81,11 @@ export async function POST(req: NextRequest) {
     }
     if (body.action === "hydrate_from_puzzles") {
       const result = await hydrateSeedEntriesFromPuzzles(db);
+      return NextResponse.json(result);
+    }
+    if (body.action === "approve_flags_with_images") {
+      await ensureMissingSeedEntries(db);
+      const result = await approveFlagsWithImages(db);
       return NextResponse.json(result);
     }
 

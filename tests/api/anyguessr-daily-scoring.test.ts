@@ -2,11 +2,14 @@ import { describe, expect, it } from "vitest";
 import {
   DAILY_MAX_ROUND_SCORE,
   DAILY_ROUND_COUNT,
+  canFillDailyRounds,
   formatDistanceKm,
+  isDailyCluePlayable,
   maxDailyLookbackDays,
   pickDailyPuzzles,
   scoreFromDistanceKm,
 } from "@/lib/anyguessr/daily";
+import type { Clue } from "@/lib/anyguessr/types";
 import { haversineKm, resolveGuessToCca3, distanceBetweenCountriesKm } from "@/lib/anyguessr/country-geo";
 import { boundsForPoints, equirectangularViewBox, projectLatLng } from "@/lib/anyguessr/map-projection";
 
@@ -74,18 +77,33 @@ describe("map projection", () => {
 });
 
 describe("pickDailyPuzzles", () => {
+  const cca3Pool = [
+    "JPN", "FRA", "ITA", "EGY", "BRA", "IND", "CHN", "MEX", "ESP",
+    "GBR", "USA", "RUS", "DEU", "KOR", "THA", "GRC", "TUR", "PRT",
+  ];
+
+  function imageClue(type: string, content: string): Clue {
+    const url = `https://example.com/${type}-${content}.jpg`;
+    return {
+      type,
+      content,
+      metadata: { image_url: url, thumb_url: url },
+    };
+  }
+
   const pool = Array.from({ length: 18 }, (_, i) => ({
     id: `puzzle-${i}`,
+    answer_id: cca3Pool[i],
     clues: [
-      { type: "flag", content: `flag-${i}` },
-      { type: "currency", content: `currency-${i}` },
-      { type: "jersey", content: `jersey-${i}` },
-      { type: "brand", content: `brand-${i}` },
-      { type: "landmark", content: `landmark-${i}` },
+      imageClue("flag", `flag-${i}`),
+      imageClue("currency", `currency-${i}`),
+      imageClue("jersey", `jersey-${i}`),
+      imageClue("brand", `brand-${i}`),
+      imageClue("landmark", `landmark-${i}`),
       { type: "written_language", content: `greeting-${i}` },
-      { type: "person", content: `person-${i}` },
-      { type: "food", content: `food-${i}` },
-      { type: "environment", content: `environment-${i}` },
+      imageClue("person", `person-${i}`),
+      imageClue("food", `food-${i}`),
+      imageClue("environment", `environment-${i}`),
     ],
   }));
 
@@ -122,5 +140,101 @@ describe("pickDailyPuzzles", () => {
   it("computes lookback from pool size", () => {
     expect(maxDailyLookbackDays(18)).toBe(1);
     expect(maxDailyLookbackDays(35)).toBe(2);
+  });
+
+  it("skips puzzles with empty image clues for a round", () => {
+    const brokenJersey = {
+      id: "broken-jersey",
+      answer_id: "NLD",
+      clues: [
+        imageClue("flag", "x"),
+        imageClue("currency", "x"),
+        { type: "jersey", content: "" },
+        imageClue("brand", "x"),
+        imageClue("landmark", "x"),
+        { type: "written_language", content: "hello" },
+        imageClue("person", "x"),
+        imageClue("food", "x"),
+        imageClue("environment", "x"),
+      ],
+    };
+    const picks = pickDailyPuzzles([brokenJersey, ...pool], "2026-07-09");
+    expect(picks[2].id).not.toBe("broken-jersey");
+  });
+});
+
+describe("daily clue playability", () => {
+  it("requires text for written_language", () => {
+    expect(
+      isDailyCluePlayable("written_language", {
+        type: "written_language",
+        content: "  ",
+      }),
+    ).toBe(false);
+    expect(
+      isDailyCluePlayable("written_language", {
+        type: "written_language",
+        content: "Hallo",
+      }),
+    ).toBe(true);
+  });
+
+  it("accepts currency clues with image or text", () => {
+    expect(
+      isDailyCluePlayable("currency", {
+        type: "currency",
+        content: "",
+        metadata: {
+          image_url: "https://example.com/yen.jpg",
+        },
+      }),
+    ).toBe(true);
+    expect(
+      isDailyCluePlayable("currency", {
+        type: "currency",
+        content: "¥",
+      }),
+    ).toBe(true);
+    expect(
+      isDailyCluePlayable("currency", {
+        type: "currency",
+        content: "",
+      }),
+    ).toBe(false);
+  });
+
+  it("requires images for flag clues", () => {
+    expect(
+      isDailyCluePlayable("flag", {
+        type: "flag",
+        content: "",
+        metadata: { alt_text: "national flag" },
+      }),
+    ).toBe(false);
+    expect(
+      isDailyCluePlayable("flag", {
+        type: "flag",
+        content: "",
+        metadata: {
+          image_url: "https://flagcdn.com/w320/fr.png",
+        },
+      }),
+    ).toBe(true);
+  });
+
+  it("requires playable coverage for every daily round type", () => {
+    const partialPool = [
+      {
+        id: "only-flag",
+        clues: [
+          {
+            type: "flag",
+            content: "",
+            metadata: { image_url: "https://example.com/flag.jpg" },
+          },
+        ],
+      },
+    ];
+    expect(canFillDailyRounds(partialPool)).toBe(false);
   });
 });

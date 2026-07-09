@@ -11,8 +11,8 @@ import type {
 } from "./types";
 import {
   buildDailyRoundsFromPuzzles,
+  canFillDailyRounds,
   dailySessionId,
-  DAILY_ROUND_CLUE_TYPES,
   DAILY_ROUND_COUNT,
   pickDailyPuzzles,
   scoreFromDistanceKm,
@@ -37,11 +37,6 @@ interface AgPuzzleRow {
   difficulty: string | null;
   metadata: Record<string, unknown> | null;
   status: string;
-}
-
-function hasRequiredDailyClues(row: AgPuzzleRow): boolean {
-  const availableTypes = new Set((row.clues ?? []).map((clue) => clue.type));
-  return DAILY_ROUND_CLUE_TYPES.every((type) => availableTypes.has(type));
 }
 
 /* ------------------------------------------------------------------ */
@@ -143,12 +138,9 @@ export async function getDailyPuzzle(
   if (!approved || approved.length < DAILY_ROUND_COUNT) return null;
 
   const rows = approved as unknown as AgPuzzleRow[];
-  const eligibleRows = rows.filter(hasRequiredDailyClues);
-  if (eligibleRows.length < DAILY_ROUND_COUNT) {
-    return null;
-  }
+  if (!canFillDailyRounds(rows)) return null;
 
-  const picked = pickDailyPuzzles(eligibleRows, targetDate);
+  const picked = pickDailyPuzzles(rows, targetDate);
 
   const clientPuzzle: ClientDailyPuzzle = {
     id: dailySessionId(targetDate),

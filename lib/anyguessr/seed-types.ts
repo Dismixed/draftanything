@@ -1,4 +1,4 @@
-/** Clue types stored in ag_seed_entries (excludes auto-generated flag). */
+/** Image/text clue types from seed.ts (excludes auto-managed flag). */
 export const SEED_CLUE_TYPES = [
   "currency",
   "jersey",
@@ -9,6 +9,9 @@ export const SEED_CLUE_TYPES = [
   "food",
   "environment",
 ] as const;
+
+/** All clue types authored in the admin panel (flag + seed types). */
+export const ADMIN_CLUE_TYPES = ["flag", ...SEED_CLUE_TYPES] as const;
 
 export type SeedClueType = (typeof SEED_CLUE_TYPES)[number];
 

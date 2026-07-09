@@ -1,6 +1,7 @@
 import type { Clue, ClientDailyRound } from "./types";
 import {
   dailyImageUrlForClue,
+  getImageOptions,
   isImageClueType,
   pickImageVariantIndex,
   redactClueForClient,
@@ -58,8 +59,48 @@ export function dailySessionId(date: string): string {
   return `daily-${date}`;
 }
 
+/** True when a clue can be shown in daily mode (has image or text as required). */
+export function isDailyCluePlayable(
+  clueType: DailyRoundClueType,
+  clue: Clue | undefined,
+): boolean {
+  if (!clue || clue.type !== clueType) return false;
+
+  if (clueType === "written_language") {
+    return clue.content.trim().length > 0;
+  }
+
+  if (clueType === "currency") {
+    return (
+      getImageOptions(clue).length > 0 || clue.content.trim().length > 0
+    );
+  }
+
+  if (isImageClueType(clueType)) {
+    return getImageOptions(clue).length > 0;
+  }
+
+  return clue.content.trim().length > 0;
+}
+
+/** True when the approved pool can assign a playable clue to every daily round. */
+export function canFillDailyRounds<T extends DailyPickSource>(
+  approved: T[],
+): boolean {
+  if (approved.length < DAILY_ROUND_COUNT) return false;
+
+  return DAILY_ROUND_CLUE_TYPES.every((clueType) =>
+    approved.some((puzzle) =>
+      isDailyCluePlayable(
+        clueType,
+        puzzle.clues?.find((c) => c.type === clueType),
+      ),
+    ),
+  );
+}
+
 export function buildDailyRound(
-  puzzle: { id: string; clues: Clue[] },
+  puzzle: DailyPickSource,
   clueType: DailyRoundClueType,
   roundIndex: number,
   date: string,
@@ -222,7 +263,7 @@ function isExcludedCandidate(
   if (options?.excludeIds?.has(candidate.id)) return true;
 
   const clue = candidate.clues.find((entry) => entry.type === clueType);
-  if (!clue) return true;
+  if (!isDailyCluePlayable(clueType, clue)) return true;
 
   const content = clue.content;
   if (content) {

@@ -313,6 +313,113 @@ export type Database = {
           },
         ]
       }
+      daily_frames_puzzles: {
+        Row: {
+          created_at: string
+          id: string
+          publish_date: string
+          puzzle_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          publish_date: string
+          puzzle_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          publish_date?: string
+          puzzle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_frames_puzzles_puzzle_id_fkey"
+            columns: ["puzzle_id"]
+            isOneToOne: false
+            referencedRelation: "frames_puzzles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      frames_leaderboard: {
+        Row: {
+          created_at: string
+          display_name: string
+          guest_id: string | null
+          id: string
+          is_legacy: boolean
+          play_date: string
+          score: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          guest_id?: string | null
+          id?: string
+          is_legacy?: boolean
+          play_date: string
+          score: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          guest_id?: string | null
+          id?: string
+          is_legacy?: boolean
+          play_date?: string
+          score?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "frames_leaderboard_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guest_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "frames_leaderboard_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      frames_puzzles: {
+        Row: {
+          album: Json
+          created_at: string
+          id: string
+          movie: Json
+          show: Json
+          song: Json
+          status: string
+        }
+        Insert: {
+          album: Json
+          created_at?: string
+          id?: string
+          movie: Json
+          show: Json
+          song: Json
+          status?: string
+        }
+        Update: {
+          album?: Json
+          created_at?: string
+          id?: string
+          movie?: Json
+          show?: Json
+          song?: Json
+          status?: string
+        }
+        Relationships: []
+      }
       chain_phrases: {
         Row: {
           category: string | null

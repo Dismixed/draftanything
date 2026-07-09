@@ -108,6 +108,13 @@ export default function AnyGuessrGame() {
 
   const isLoading = loading || (store.dailyRounds.length === 0 && !feedback);
 
+  const dailyUnavailable =
+    !loading &&
+    store.dailyRounds.length === 0 &&
+    feedback?.type === "info" &&
+    (feedback.message.includes("isn't ready") ||
+      feedback.message.includes("No daily puzzle"));
+
   if (isLoading) {
     return (
       <div style={{ width: "100%", maxWidth: "560px", margin: "0 auto" }}>
@@ -125,6 +132,55 @@ export default function AnyGuessrGame() {
           }}
         >
           Loading puzzle…
+        </div>
+      </div>
+    );
+  }
+
+  if (dailyUnavailable) {
+    return (
+      <div style={{ width: "100%", maxWidth: "560px", margin: "0 auto" }}>
+        <header style={{ position: "relative", marginBottom: "24px" }}>
+          <GameBackLink color="var(--ag-muted)" />
+        </header>
+        <div
+          style={{
+            minHeight: "320px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "16px",
+            padding: "24px",
+            textAlign: "center",
+            background: "var(--ag-surface)",
+            border: "1px solid var(--ag-border)",
+            borderRadius: "14px",
+          }}
+        >
+          <div style={{ fontSize: "15px", fontWeight: 600, color: "var(--ag-text)" }}>
+            No daily puzzle today
+          </div>
+          <p style={{ margin: 0, fontSize: "13px", lineHeight: 1.5, color: "var(--ag-muted)", maxWidth: "360px" }}>
+            {feedback?.message ??
+              "There aren't enough approved countries in the puzzle pool yet."}
+          </p>
+          <button
+            type="button"
+            onClick={() => void initPuzzle()}
+            style={{
+              marginTop: "4px",
+              padding: "10px 18px",
+              borderRadius: "8px",
+              border: "1px solid var(--ag-border)",
+              background: "var(--ag-surface-hi)",
+              color: "var(--ag-text)",
+              cursor: "pointer",
+              fontSize: "13px",
+            }}
+          >
+            Try again
+          </button>
         </div>
       </div>
     );
