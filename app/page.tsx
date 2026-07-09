@@ -92,19 +92,6 @@ export default function StimGames() {
               display: "block",
             }}
           />
-          <div
-            style={{
-              fontSize: "9px",
-              fontWeight: 600,
-              letterSpacing: "0.42em",
-              textTransform: "uppercase",
-              color: "var(--gold)",
-              opacity: 0.7,
-              marginBottom: "10px",
-            }}
-          >
-            Party games for any crowd
-          </div>
           <h1
             style={{
               fontFamily: '"Playfair Display", serif',

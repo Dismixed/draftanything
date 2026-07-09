@@ -63,6 +63,9 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
   const [timerPct, setTimerPct] = useState(100);
   const [timerText, setTimerText] = useState("");
   const [timerColor, setTimerColor] = useState("var(--ss-lime)");
+  const [topicHint, setTopicHint] = useState<string | null>(
+    initial.turnPhase === "WAGER" ? initial.wagerTopicHint : null,
+  );
 
   const boardGridRef = useRef<HTMLDivElement>(null);
   const [cellCenters, setCellCenters] = useState<Record<number, { x: number; y: number }>>({});
@@ -75,6 +78,14 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
   useEffect(() => {
     turnSeqRef.current = room.turnSeq;
   }, [room.turnSeq]);
+
+  useEffect(() => {
+    if (room.turnPhase !== "WAGER") {
+      setTopicHint(null);
+      return;
+    }
+    setTopicHint(room.wagerTopicHint);
+  }, [room.turnPhase, room.turnSeq, room.wagerTopicHint]);
 
   useEffect(() => {
     if (room.currentQuestion) {
@@ -341,7 +352,6 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
         : null;
   const displayWager =
     room.turnPhase === "QUESTION" ? room.currentWager : opponentReveal?.wager ?? room.currentWager;
-  const topicHint = room.turnPhase === "WAGER" ? room.wagerTopicHint : null;
 
   return (
     <div

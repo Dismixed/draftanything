@@ -17,6 +17,7 @@ import {
 } from "./data";
 import { appendUniqueQuestions } from "@/lib/brain-dead/trivia-api";
 import { resolveWagerTopicHint } from "@/features/slippery-slope/topic-hint";
+import { PREVIEW_WAGER } from "@/features/slippery-slope/game-logic";
 
 /* ══════════════════════════════════
    Types
@@ -57,7 +58,8 @@ function pickQuestion(
   pool: Question[],
   wager: number,
   usedQ: Set<number>,
-): { q: Question; usedQ: Set<number> } | null {
+  seed?: number,
+): { q: Question; index: number; usedQ: Set<number> } | null {
   if (!pool.length) return null;
 
   const d = wagerToDiff(wager);
@@ -71,10 +73,14 @@ function pickQuestion(
 
   if (!cands.length) return null;
 
-  const pick = cands[Math.floor(Math.random() * cands.length)];
+  const pickIndex =
+    seed === undefined
+      ? Math.floor(Math.random() * cands.length)
+      : ((seed % cands.length) + cands.length) % cands.length;
+  const pick = cands[pickIndex];
   const nextUsed = new Set(usedQ);
   nextUsed.add(pick.i);
-  return { q: pick.q, usedQ: nextUsed };
+  return { q: pick.q, index: pick.i, usedQ: nextUsed };
 }
 
 function clampPos(pos: number): number {
@@ -173,6 +179,8 @@ export default function SlipperySlopeGame() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const wagerTurnRef = useRef(0);
+  const previewIndexRef = useRef<number | null>(null);
 
   /*
    * Refs for cross-referenced game functions.
@@ -526,12 +534,23 @@ export default function SlipperySlopeGame() {
     const p = g.players[g.currentIdx];
     if (p.isHuman) {
       setPhase("wager");
-      const picked = pickQuestion(questions, 5, new Set(g.usedQ));
+      wagerTurnRef.current += 1;
+      const picked = pickQuestion(
+        questions,
+        PREVIEW_WAGER,
+        new Set(g.usedQ),
+        wagerTurnRef.current,
+      );
       if (picked) {
+        previewIndexRef.current = picked.index;
         setCurrentQ(picked.q);
+        setTopicHint(resolveWagerTopicHint(g.cat, picked.q));
+        setTopicLoading(!picked.q.topic && g.cat !== "general" && g.cat !== "random");
+      } else {
+        previewIndexRef.current = null;
+        setTopicHint(null);
+        setTopicLoading(true);
       }
-      setTopicHint(null);
-      setTopicLoading(true);
     } else {
       setPhase("wait");
       const w = Math.floor(Math.random() * 10) + 1;
@@ -641,13 +660,28 @@ export default function SlipperySlopeGame() {
      ══════════════════════════════════ */
 
   function askQuestion(wager: number) {
-    const picked = pickQuestion(questions, wager, new Set(G.usedQ));
-    if (!picked) return;
+    let q: Question;
+    let nextUsed: Set<number>;
+
+    if (previewIndexRef.current !== null) {
+      const idx = previewIndexRef.current;
+      const preview = questions[idx];
+      if (!preview) return;
+      q = preview;
+      nextUsed = new Set(G.usedQ);
+      nextUsed.add(idx);
+      previewIndexRef.current = null;
+    } else {
+      const picked = pickQuestion(questions, wager, new Set(G.usedQ));
+      if (!picked) return;
+      q = picked.q;
+      nextUsed = picked.usedQ;
+    }
 
     setPhase("question");
-    setCurrentQ(picked.q);
+    setCurrentQ(q);
     setCurrentW(wager);
-    setG((prev) => ({ ...prev, usedQ: picked.usedQ }));
+    setG((prev) => ({ ...prev, usedQ: nextUsed }));
     setAnswered("idle");
     setSelectedAnswer(null);
     startTimer(30);
@@ -745,20 +779,14 @@ export default function SlipperySlopeGame() {
      ══════════════════════════════════ */
 
   useEffect(() => {
-    if (phase === "wager" && currentQ && G.players[G.currentIdx]?.isHuman) {
-      if (currentQ.topic || G.cat === "general" || G.cat === "random") {
-        setTopicLoading(false);
-        setTopicHint(resolveWagerTopicHint(G.cat, currentQ));
-        return;
-      }
+    if (phase !== "wager" || !currentQ || !G.players[G.currentIdx]?.isHuman) return;
+    if (currentQ.topic || G.cat === "general" || G.cat === "random") return;
 
-      setTopicLoading(true);
-      const timeout = setTimeout(() => {
-        setTopicLoading(false);
-        setTopicHint(resolveWagerTopicHint(G.cat, currentQ));
-      }, 400);
-      return () => clearTimeout(timeout);
-    }
+    const timeout = setTimeout(() => {
+      setTopicLoading(false);
+      setTopicHint(resolveWagerTopicHint(G.cat, currentQ));
+    }, 400);
+    return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, currentQ, G.currentIdx, G.cat]);
 

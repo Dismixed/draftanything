@@ -1,6 +1,9 @@
 import type { Question } from "@/components/slippery-slope/data";
 import { wagerToDiff } from "@/components/slippery-slope/data";
 
+/** Wager used to pick the preview question shown during the wager phase. */
+export const PREVIEW_WAGER = 5;
+
 function matchesDifficulty(q: Question, diff: number): boolean {
   if (diff === 4) return q.d >= 3;
   return q.d === diff;
@@ -10,6 +13,7 @@ export function pickQuestionFromPool(
   pool: Question[],
   wager: number,
   usedIndices: number[],
+  seed?: number,
 ): { question: Question; index: number } | null {
   if (!pool.length) return null;
 
@@ -26,7 +30,11 @@ export function pickQuestionFromPool(
 
   if (!cands.length) return null;
 
-  const pick = cands[Math.floor(Math.random() * cands.length)];
+  const pickIndex =
+    seed === undefined
+      ? Math.floor(Math.random() * cands.length)
+      : ((seed % cands.length) + cands.length) % cands.length;
+  const pick = cands[pickIndex];
   return { question: pick.q, index: pick.i };
 }
 

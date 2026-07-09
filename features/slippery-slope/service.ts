@@ -5,7 +5,7 @@ import { DEFAULT_PLAYER_EMOJIS, generateSlMap } from "@/components/slippery-slop
 import { fetchQuestions } from "@/lib/brain-dead/trivia-api";
 import { AppError } from "@/lib/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { pickQuestionFromPool } from "./game-logic";
+import { pickQuestionFromPool, PREVIEW_WAGER } from "./game-logic";
 import { resolveWagerTopicHint } from "./topic-hint";
 import { enrichQuestionsWithTopics } from "./topic";
 import type {
@@ -118,8 +118,9 @@ function computeWagerTopicHint(room: DbRoom): string | null {
 
   const preview = pickQuestionFromPool(
     room.question_pool,
-    5,
+    PREVIEW_WAGER,
     room.used_question_indices,
+    room.turn_seq,
   );
   if (preview) {
     return resolveWagerTopicHint(room.category, preview.question);
@@ -400,8 +401,9 @@ export async function submitSsWager(
 
   const picked = pickQuestionFromPool(
     room.question_pool,
-    wager,
+    PREVIEW_WAGER,
     room.used_question_indices,
+    turnSeq,
   );
 
   if (!picked) {
