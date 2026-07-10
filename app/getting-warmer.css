@@ -1,4 +1,4 @@
-.gw-page {
+:root {
   --gw-bg: #0a0705;
   --gw-surface: #150e08;
   --gw-surface-2: #1d130a;
@@ -12,7 +12,9 @@
   --gw-danger: #ff4d4d;
   --gw-success: #39ff8f;
   --gw-radius: 14px;
+}
 
+.gw-page {
   min-height: 100vh;
   background:
     radial-gradient(
@@ -578,7 +580,9 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(10, 7, 5, 0.92);
+  background: rgba(10, 7, 5, 0.96);
+  color: var(--gw-ink);
+  font-family: "Inter", sans-serif;
   overflow-y: auto;
 }
 
@@ -592,6 +596,7 @@
   border: 1px solid rgba(255, 107, 26, 0.3);
   border-radius: var(--gw-radius);
   padding: 24px 20px 28px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
 }
 
 .gw-results-eyebrow {
