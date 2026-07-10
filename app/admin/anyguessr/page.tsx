@@ -60,6 +60,8 @@ export default function AdminAnyGuessrPage() {
   const [coverage, setCoverage] = useState<CoverageGap[]>([]);
   const [readiness, setReadiness] = useState<{
     totalCountries: number;
+    countriesWithApprovedClues: number;
+    fullyReadyCountries: number;
     readyCountries: number;
     blocked: Array<{ cca3: string; country: string; missing: string[] }>;
   } | null>(null);
@@ -201,10 +203,10 @@ export default function AdminAnyGuessrPage() {
       const g = data.generate;
       setReadiness(g.readiness ?? null);
       if (g.total === 0) {
-        const ready = g.readiness?.readyCountries ?? 0;
+        const withClues = g.readiness?.countriesWithApprovedClues ?? 0;
         const total = g.readiness?.totalCountries ?? 0;
         setMessage(
-          `Generated 0/0 — no countries are fully approved yet (${ready}/${total} ready). Approve all 9 clue types per country in the Seed tab, then try again.`,
+          `Generated 0/0 — no approved clues yet (${withClues}/${total} countries have at least one approved clue). Approve clues in the Seed tab, then try again.`,
         );
       } else {
         setMessage(`Generated ${g.succeeded}/${g.total} puzzles`);
@@ -263,7 +265,7 @@ export default function AdminAnyGuessrPage() {
   }
 
   const todaysDailyTitle =
-    "This clue is in today's daily puzzle (9 countries, one per round). Not player history — recomputed on each page load.";
+    "This clue is in today's daily puzzle (10 countries, one per round). Not player history — recomputed on each page load.";
 
   async function resolveImages(entry: SeedEntry) {
     setBusy(true);
@@ -833,14 +835,19 @@ export default function AdminAnyGuessrPage() {
             {busy ? "Running…" : "Generate all puzzles"}
           </button>
           <p style={{ color: "#9aa0a6", fontSize: "13px", marginBottom: "16px" }}>
-            Builds <code style={{ color: "#c9b458" }}>ag_puzzles</code> rows from countries where all 9 clue types are <strong style={{ color: "#e8e8e8", fontWeight: 600 }}>approved</strong> in the Seed tab (flag, currency, jersey, brand, landmark, language, person, food, environment). Each approved country becomes one playable puzzle in the daily pool.
+            Builds <code style={{ color: "#c9b458" }}>ag_puzzles</code> rows from any country with at least one <strong style={{ color: "#e8e8e8", fontWeight: 600 }}>approved</strong> clue in the Seed tab. Only approved clues are included — a country does not need all 9 clue types done. Daily play pulls individual clue types from across the pool.
           </p>
           {readiness && (
             <div style={{ marginBottom: "16px", fontSize: "13px", color: "#9aa0a6" }}>
               <div>
-                Ready for generation:{" "}
-                <span style={{ color: readiness.readyCountries > 0 ? "#6aaa64" : "#c9b458" }}>
-                  {readiness.readyCountries}/{readiness.totalCountries} countries
+                With approved clues:{" "}
+                <span style={{ color: readiness.countriesWithApprovedClues > 0 ? "#6aaa64" : "#c9b458" }}>
+                  {readiness.countriesWithApprovedClues}/{readiness.totalCountries} countries
+                </span>
+                {" · "}
+                Fully complete:{" "}
+                <span style={{ color: readiness.fullyReadyCountries > 0 ? "#6aaa64" : "#787c7e" }}>
+                  {readiness.fullyReadyCountries}/{readiness.totalCountries}
                 </span>
               </div>
               {readiness.blocked.length > 0 && (
@@ -852,8 +859,8 @@ export default function AdminAnyGuessrPage() {
                       {row.missing.length > 4 ? ` +${row.missing.length - 4} more` : ""}
                     </li>
                   ))}
-                  {readiness.totalCountries - readiness.readyCountries > readiness.blocked.length && (
-                    <li>…and {readiness.totalCountries - readiness.readyCountries - readiness.blocked.length} more</li>
+                  {readiness.totalCountries - readiness.fullyReadyCountries > readiness.blocked.length && (
+                    <li>…and {readiness.totalCountries - readiness.fullyReadyCountries - readiness.blocked.length} more</li>
                   )}
                 </ul>
               )}

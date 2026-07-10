@@ -10,6 +10,7 @@
   --ag-muted: #707790;
   --ag-accent: #e0a858;
   --ag-accent-dim: rgba(224, 168, 88, 0.18);
+  --ag-brand: #5d8f56;
 }
 .ag-game-page { background: var(--ag-bg); min-height: 100vh; }
 @keyframes ag-flash-kf {

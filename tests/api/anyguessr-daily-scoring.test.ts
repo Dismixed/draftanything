@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  DAILY_EXACT_MATCH_KM,
   DAILY_MAX_ROUND_SCORE,
   DAILY_ROUND_COUNT,
+  DAILY_SCORE_DECAY_KM,
   canFillDailyRounds,
   formatDistanceKm,
   isDailyCluePlayable,
@@ -20,10 +22,17 @@ describe("AnyGuessr daily scoring", () => {
   });
 
   it("decays score with distance", () => {
-    const mid = scoreFromDistanceKm(2500);
+    const mid = scoreFromDistanceKm(DAILY_SCORE_DECAY_KM);
     const far = scoreFromDistanceKm(8000);
     expect(mid).toBeGreaterThan(far);
     expect(far).toBeGreaterThanOrEqual(0);
+  });
+
+  it("awards full round score within the exact-match radius", () => {
+    expect(scoreFromDistanceKm(DAILY_EXACT_MATCH_KM)).toBe(DAILY_MAX_ROUND_SCORE);
+    expect(scoreFromDistanceKm(DAILY_EXACT_MATCH_KM + 1)).toBeLessThan(
+      DAILY_MAX_ROUND_SCORE,
+    );
   });
 
   it("formats distances for display", () => {
@@ -80,6 +89,7 @@ describe("pickDailyPuzzles", () => {
   const cca3Pool = [
     "JPN", "FRA", "ITA", "EGY", "BRA", "IND", "CHN", "MEX", "ESP",
     "GBR", "USA", "RUS", "DEU", "KOR", "THA", "GRC", "TUR", "PRT",
+    "NLD", "SWE",
   ];
 
   function imageClue(type: string, content: string): Clue {
@@ -91,7 +101,7 @@ describe("pickDailyPuzzles", () => {
     };
   }
 
-  const pool = Array.from({ length: 18 }, (_, i) => ({
+  const pool = Array.from({ length: 20 }, (_, i) => ({
     id: `puzzle-${i}`,
     answer_id: cca3Pool[i],
     clues: [
@@ -104,10 +114,11 @@ describe("pickDailyPuzzles", () => {
       imageClue("person", `person-${i}`),
       imageClue("food", `food-${i}`),
       imageClue("environment", `environment-${i}`),
+      imageClue("wildlife", `wildlife-${i}`),
     ],
   }));
 
-  it("picks nine unique puzzles deterministically per date", () => {
+  it("picks ten unique puzzles deterministically per date", () => {
     const a = pickDailyPuzzles(pool, "2026-06-25");
     const b = pickDailyPuzzles(pool, "2026-06-25");
     expect(a).toHaveLength(DAILY_ROUND_COUNT);
@@ -138,7 +149,7 @@ describe("pickDailyPuzzles", () => {
   });
 
   it("computes lookback from pool size", () => {
-    expect(maxDailyLookbackDays(18)).toBe(1);
+    expect(maxDailyLookbackDays(20)).toBe(1);
     expect(maxDailyLookbackDays(35)).toBe(2);
   });
 
@@ -156,6 +167,7 @@ describe("pickDailyPuzzles", () => {
         imageClue("person", "x"),
         imageClue("food", "x"),
         imageClue("environment", "x"),
+        imageClue("wildlife", "x"),
       ],
     };
     const picks = pickDailyPuzzles([brokenJersey, ...pool], "2026-07-09");
@@ -259,6 +271,49 @@ describe("daily clue playability", () => {
     ];
     expect(canFillDailyRounds(partialPool)).toBe(false);
   });
+
+  it("fills daily rounds from countries with only one approved clue each", () => {
+    const clueTypes = [
+      "flag",
+      "currency",
+      "jersey",
+      "brand",
+      "landmark",
+      "written_language",
+      "person",
+      "food",
+      "environment",
+      "wildlife",
+    ] as const;
+    const cca3s = ["JPN", "FRA", "ITA", "EGY", "BRA", "IND", "CHN", "MEX", "ESP", "GBR"];
+
+    const partialPool = clueTypes.map((clueType, i) => ({
+      id: `partial-${i}`,
+      answer_id: cca3s[i],
+      clues: [
+        clueType === "written_language"
+          ? { type: "written_language", content: `greeting-${i}` }
+          : {
+              type: clueType,
+              content: `${clueType}-${i}`,
+              metadata: {
+                image_url: `https://example.com/${clueType}-${i}.jpg`,
+                thumb_url: `https://example.com/${clueType}-${i}.jpg`,
+              },
+            },
+      ],
+    }));
+
+    expect(canFillDailyRounds(partialPool)).toBe(true);
+    const picks = pickDailyPuzzles(partialPool, "2026-07-10");
+    expect(picks).toHaveLength(DAILY_ROUND_COUNT);
+    expect(new Set(picks.map((p) => p.id)).size).toBe(DAILY_ROUND_COUNT);
+    for (let i = 0; i < DAILY_ROUND_COUNT; i++) {
+      const clueType = clueTypes[i];
+      const clue = picks[i].clues.find((c) => c.type === clueType);
+      expect(isDailyCluePlayable(clueType, clue)).toBe(true);
+    }
+  });
 });
 
 describe("daily usage index", () => {
@@ -274,9 +329,10 @@ describe("daily usage index", () => {
   const cca3Pool = [
     "JPN", "FRA", "ITA", "EGY", "BRA", "IND", "CHN", "MEX", "ESP",
     "GBR", "USA", "RUS", "DEU", "KOR", "THA", "GRC", "TUR", "PRT",
+    "NLD", "SWE",
   ];
 
-  const pool = Array.from({ length: 18 }, (_, i) => ({
+  const pool = Array.from({ length: 20 }, (_, i) => ({
     id: `puzzle-${i}`,
     answer_id: cca3Pool[i],
     clues: [
@@ -289,6 +345,7 @@ describe("daily usage index", () => {
       imageClue("person", `person-${i}`),
       imageClue("food", `food-${i}`),
       imageClue("environment", `environment-${i}`),
+      imageClue("wildlife", `wildlife-${i}`),
     ],
   }));
 
@@ -307,7 +364,7 @@ describe("daily usage index", () => {
     }
   });
 
-  it("admin today-only mode marks at most nine clues for one date", async () => {
+  it("admin today-only mode marks at most ten clues for one date", async () => {
     const { computeDailyUsageIndex } = await import("@/lib/anyguessr/daily-usage");
 
     const usage = computeDailyUsageIndex(pool, {
@@ -316,7 +373,7 @@ describe("daily usage index", () => {
     });
     const allDates = Object.values(usage).flat();
 
-    expect(allDates).toHaveLength(9);
+    expect(allDates).toHaveLength(10);
     expect(new Set(allDates)).toEqual(new Set(["2026-07-09"]));
   });
 

@@ -219,6 +219,7 @@ const CLUE_RANKS: Record<string, number> = {
   food: 7,
   written_language: 8,
   landmark: 9,
+  wildlife: 10,
 };
 
 export async function generatePuzzleForBundle(
@@ -239,9 +240,30 @@ export async function generatePuzzleForBundle(
     if (built.gap) gaps.push(built.gap);
   }
 
+  if (clues.length === 0) {
+    return {
+      cca3: bundle.cca3,
+      country: bundle.common,
+      puzzleId: "",
+      clues: 0,
+      ok: false,
+      error: "No approved clues",
+      gaps,
+    };
+  }
+
+  const { data: existing } = await db
+    .from("ag_puzzles")
+    .select("flag_url")
+    .eq("answer_type", "country")
+    .eq("answer", bundle.common)
+    .maybeSingle();
+
   const flagClue = clues.find((c) => c.type === "flag");
   const flagImage =
-    flagClue?.metadata?.image_url ?? flagClue?.metadata?.thumb_url ?? null;
+    flagClue?.metadata?.image_url ??
+    flagClue?.metadata?.thumb_url ??
+    (typeof existing?.flag_url === "string" ? existing.flag_url : null);
 
   const env = clues.find((c) => c.type === "environment");
   const funFact =

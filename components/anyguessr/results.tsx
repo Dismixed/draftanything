@@ -54,8 +54,18 @@ export default function Results({
         Daily Complete
       </div>
 
-      <div style={{ margin: "20px 0", display: "flex", flexDirection: "column", gap: "10px" }}>
-        <StatRow label="Total Score" value={`${displayScore}`} highlight={isWin} />
+      <div
+        style={{
+          margin: "20px 0",
+          display: embedded ? "grid" : "flex",
+          flexDirection: embedded ? undefined : "column",
+          gridTemplateColumns: embedded ? "repeat(auto-fill, minmax(200px, 1fr))" : undefined,
+          gap: "10px",
+        }}
+      >
+        <div style={embedded ? { gridColumn: "1 / -1" } : undefined}>
+          <StatRow label="Total Score" value={`${displayScore}`} highlight={isWin} />
+        </div>
 
         {store.roundResults.map((round) => (
           <DailyRoundRow key={round.roundIndex} round={round} />

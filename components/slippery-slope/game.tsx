@@ -817,7 +817,7 @@ export default function SlipperySlopeGame() {
       {screen !== "game" && (
         <nav className="ss-nav">
           <div className="ss-logo" style={{ color: "var(--ss-text)" }}>
-            <span style={{ color: "var(--ss-lime)" }}>slippery</span>slope
+            slippery<span style={{ color: "var(--ss-lime)" }}>slope</span>
           </div>
         </nav>
       )}

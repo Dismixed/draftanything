@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { GameBackLink } from "@/components/ui/game-back-link";
+import { GameTitle } from "@/components/ui/game-title";
 import {
   formatScore,
   formatStreak,
@@ -57,7 +58,9 @@ export default function BrainDeadPage() {
         <header style={{ position: "relative", marginBottom: "32px" }}>
           <GameBackLink color="var(--bd-text-muted)" />
           <div style={{ textAlign: "center" }}>
-          <h1
+          <GameTitle
+            game="brain-dead"
+            as="h1"
             style={{
               fontSize: "22px",
               fontWeight: 700,
@@ -65,9 +68,7 @@ export default function BrainDeadPage() {
               margin: "0 0 4px",
               letterSpacing: "-0.5px",
             }}
-          >
-            Brain Dead
-          </h1>
+          />
           <p
             style={{
               fontSize: "11px",

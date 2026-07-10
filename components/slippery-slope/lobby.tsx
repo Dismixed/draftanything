@@ -175,7 +175,7 @@ export function SlipperySlopeLobby({ initial, myPlayerId }: SlipperySlopeLobbyPr
     >
       <nav className="ss-nav">
         <div className="ss-logo" style={{ color: "var(--ss-text)" }}>
-          <span style={{ color: "var(--ss-lime)" }}>slippery</span>slope
+          slippery<span style={{ color: "var(--ss-lime)" }}>slope</span>
         </div>
         <div
           style={{

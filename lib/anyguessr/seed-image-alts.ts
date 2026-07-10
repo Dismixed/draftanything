@@ -11,7 +11,8 @@ export type SeedImageField =
   | "landmark"
   | "jersey"
   | "brand"
-  | "currency";
+  | "currency"
+  | "wildlife";
 
 export const SEED_IMAGE_ALTS: Partial<
   Record<string, Partial<Record<SeedImageField, string[]>>>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useStreak } from "@/lib/streak/context";
+import { GameTitle } from "@/components/ui/game-title";
 import {
   DAILY_GAMES,
   GAME_META,
@@ -86,15 +87,14 @@ export function OtherDailies({
                 transition: "border-color 0.15s ease, box-shadow 0.15s ease",
               }}
             >
-              <span
+              <GameTitle
+                game={game.id}
                 style={{
                   fontSize: "13px",
                   fontWeight: 600,
                   color: theme.text,
                 }}
-              >
-                {game.label}
-              </span>
+              />
               <span
                 style={{
                   fontSize: "11px",

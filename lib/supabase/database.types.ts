@@ -313,7 +313,7 @@ export type Database = {
           },
         ]
       }
-      daily_frames_puzzles: {
+      daily_freezeframes_puzzles: {
         Row: {
           created_at: string
           id: string
@@ -334,15 +334,44 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "daily_frames_puzzles_puzzle_id_fkey"
+            foreignKeyName: "daily_freezeframes_puzzles_puzzle_id_fkey"
             columns: ["puzzle_id"]
             isOneToOne: false
-            referencedRelation: "frames_puzzles"
+            referencedRelation: "freezeframes_puzzles"
             referencedColumns: ["id"]
           },
         ]
       }
-      frames_leaderboard: {
+      daily_getting_warmer_puzzles: {
+        Row: {
+          created_at: string
+          id: string
+          publish_date: string
+          puzzle_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          publish_date: string
+          puzzle_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          publish_date?: string
+          puzzle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_getting_warmer_puzzles_puzzle_id_fkey"
+            columns: ["puzzle_id"]
+            isOneToOne: false
+            referencedRelation: "getting_warmer_puzzles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ball_knowledge_leaderboard: {
         Row: {
           created_at: string
           display_name: string
@@ -375,14 +404,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "frames_leaderboard_guest_id_fkey"
+            foreignKeyName: "ball_knowledge_leaderboard_guest_id_fkey"
             columns: ["guest_id"]
             isOneToOne: false
             referencedRelation: "guest_sessions"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "frames_leaderboard_user_id_fkey"
+            foreignKeyName: "ball_knowledge_leaderboard_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -390,7 +419,127 @@ export type Database = {
           },
         ]
       }
-      frames_puzzles: {
+      getting_warmer_leaderboard: {
+        Row: {
+          created_at: string
+          display_name: string
+          guest_id: string | null
+          id: string
+          is_legacy: boolean
+          play_date: string
+          score: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          guest_id?: string | null
+          id?: string
+          is_legacy?: boolean
+          play_date: string
+          score: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          guest_id?: string | null
+          id?: string
+          is_legacy?: boolean
+          play_date?: string
+          score?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "getting_warmer_leaderboard_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guest_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "getting_warmer_leaderboard_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      getting_warmer_puzzles: {
+        Row: {
+          answer: string
+          clues: Json
+          created_at: string
+          id: string
+          status: string
+        }
+        Insert: {
+          answer: string
+          clues?: Json
+          created_at?: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          answer?: string
+          clues?: Json
+          created_at?: string
+          id?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      freezeframes_leaderboard: {
+        Row: {
+          created_at: string
+          display_name: string
+          guest_id: string | null
+          id: string
+          is_legacy: boolean
+          play_date: string
+          score: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          guest_id?: string | null
+          id?: string
+          is_legacy?: boolean
+          play_date: string
+          score: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          guest_id?: string | null
+          id?: string
+          is_legacy?: boolean
+          play_date?: string
+          score?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "freezeframes_leaderboard_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guest_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "freezeframes_leaderboard_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      freezeframes_puzzles: {
         Row: {
           album: Json
           created_at: string
@@ -419,6 +568,201 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      freezeframes_seed_entries: {
+        Row: {
+          album_name: string | null
+          answer: string | null
+          artist: string | null
+          audio: string | null
+          created_at: string
+          external_id: string | null
+          external_source: string | null
+          hint: string | null
+          id: string
+          img: string | null
+          metadata: Json
+          notes: string | null
+          puzzle_id: string | null
+          query_title: string
+          resolve_notes: string | null
+          round_key: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          album_name?: string | null
+          answer?: string | null
+          artist?: string | null
+          audio?: string | null
+          created_at?: string
+          external_id?: string | null
+          external_source?: string | null
+          hint?: string | null
+          id?: string
+          img?: string | null
+          metadata?: Json
+          notes?: string | null
+          puzzle_id?: string | null
+          query_title: string
+          resolve_notes?: string | null
+          round_key: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          album_name?: string | null
+          answer?: string | null
+          artist?: string | null
+          audio?: string | null
+          created_at?: string
+          external_id?: string | null
+          external_source?: string | null
+          hint?: string | null
+          id?: string
+          img?: string | null
+          metadata?: Json
+          notes?: string | null
+          puzzle_id?: string | null
+          query_title?: string
+          resolve_notes?: string | null
+          round_key?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "freezeframes_seed_entries_puzzle_id_fkey"
+            columns: ["puzzle_id"]
+            isOneToOne: false
+            referencedRelation: "freezeframes_puzzles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hot_takes_categories: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          proposed_by: string | null
+          slug: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          proposed_by?: string | null
+          slug: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          proposed_by?: string | null
+          slug?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      hot_takes_items: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          image_candidates: Json
+          image_source: string | null
+          image_url: string | null
+          label: string
+          notes: string | null
+          selected_candidate_index: number
+          slug: string
+          sort_order: number
+          status: string
+          updated_at: string
+          wiki_title: string | null
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          image_candidates?: Json
+          image_source?: string | null
+          image_url?: string | null
+          label: string
+          notes?: string | null
+          selected_candidate_index?: number
+          slug: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          wiki_title?: string | null
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          image_candidates?: Json
+          image_source?: string | null
+          image_url?: string | null
+          label?: string
+          notes?: string | null
+          selected_candidate_index?: number
+          slug?: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          wiki_title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hot_takes_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "hot_takes_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hot_takes_schedule: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          publish_date: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          publish_date: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          publish_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hot_takes_schedule_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "hot_takes_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       chain_phrases: {
         Row: {

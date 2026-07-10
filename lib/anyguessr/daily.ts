@@ -18,13 +18,18 @@ export const DAILY_ROUND_CLUE_TYPES = [
   "person",
   "food",
   "environment",
+  "wildlife",
 ] as const;
 
 export type DailyRoundClueType = (typeof DAILY_ROUND_CLUE_TYPES)[number];
 
 export const DAILY_ROUND_COUNT = DAILY_ROUND_CLUE_TYPES.length;
-export const DAILY_MAX_ROUND_SCORE = 200;
+export const DAILY_MAX_ROUND_SCORE = 100;
 export const DAILY_MAX_TOTAL_SCORE = DAILY_MAX_ROUND_SCORE * DAILY_ROUND_COUNT;
+/** Within this distance, the guess earns full round points. */
+export const DAILY_EXACT_MATCH_KM = 75;
+/** Larger values decay points more slowly with distance. */
+export const DAILY_SCORE_DECAY_KM = 4500;
 
 export const DAILY_CLUE_TYPE_LABEL: Record<DailyRoundClueType, string> = {
   flag: "Flag",
@@ -36,16 +41,19 @@ export const DAILY_CLUE_TYPE_LABEL: Record<DailyRoundClueType, string> = {
   person: "Person",
   food: "Food",
   environment: "Environment",
+  wildlife: "Wildlife",
 };
 
 /**
- * Points decay with geographic distance. Exact match (≤25 km) earns full round score.
+ * Points decay with geographic distance. Close guesses (≤75 km) earn full round score.
  */
 export function scoreFromDistanceKm(distanceKm: number): number {
-  if (distanceKm <= 25) return DAILY_MAX_ROUND_SCORE;
+  if (distanceKm <= DAILY_EXACT_MATCH_KM) return DAILY_MAX_ROUND_SCORE;
   return Math.max(
     0,
-    Math.round(DAILY_MAX_ROUND_SCORE * Math.exp(-distanceKm / 2500)),
+    Math.round(
+      DAILY_MAX_ROUND_SCORE * Math.exp(-distanceKm / DAILY_SCORE_DECAY_KM),
+    ),
   );
 }
 

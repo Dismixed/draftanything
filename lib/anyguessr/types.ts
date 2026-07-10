@@ -179,4 +179,4 @@ export interface DailyRoundRecap {
 /*  Persisted client slice (zustand persist)                          */
 /* ------------------------------------------------------------------ */
 
-export const STORAGE_VERSION = "anyguessr-v6";
+export const STORAGE_VERSION = "anyguessr-v7";

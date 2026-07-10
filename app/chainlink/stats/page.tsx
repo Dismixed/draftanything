@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { SHOW_AUTH_UI } from "@/lib/auth/config";
+import { GameTitle } from "@/components/ui/game-title";
 
 interface Stats {
   totalAttempts: number;
@@ -39,7 +40,10 @@ export default function ChainlinkStatsPage() {
       }}
     >
       <div style={{ width: "100%", maxWidth: "560px" }}>
-        <h1
+        <GameTitle
+          game="chainlink"
+          as="h1"
+          suffix=" Stats"
           style={{
             fontSize: "clamp(24px, 5vw, 32px)",
             fontWeight: 700,
@@ -48,9 +52,7 @@ export default function ChainlinkStatsPage() {
             letterSpacing: "-0.02em",
             textAlign: "center",
           }}
-        >
-          Chainlink Stats
-        </h1>
+        />
 
         {loading ? (
           <div style={{ textAlign: "center", color: "#787c7e", padding: "40px 0" }}>

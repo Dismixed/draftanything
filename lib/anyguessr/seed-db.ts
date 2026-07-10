@@ -167,6 +167,8 @@ function wikiTitleForSeedField(seed: SeedEntry, clueType: string): string | null
       return seed.brand;
     case "currency":
       return seed.currency;
+    case "wildlife":
+      return seed.wildlife;
     case "written_language":
       return null;
     default:
@@ -418,7 +420,7 @@ export interface CountrySeedBundle {
   entries: SeedEntryRow[];
 }
 
-/** Seed bundles for generation — only countries with every clue type approved in admin. */
+/** Seed bundles for generation — any country with at least one approved clue. */
 export async function loadCountrySeedBundles(
   db: SupabaseClient<Database>,
 ): Promise<CountrySeedBundle[]> {
@@ -431,16 +433,11 @@ export async function loadCountrySeedBundles(
   const bundles: CountrySeedBundle[] = [];
   for (const seed of SEED) {
     const entries: SeedEntryRow[] = [];
-    let complete = true;
     for (const clueType of ADMIN_CLUE_TYPES) {
       const dbRow = byKey.get(`${seed.cca3}:${clueType}`);
-      if (!dbRow || dbRow.status !== "approved") {
-        complete = false;
-        break;
-      }
-      entries.push(dbRow);
+      if (dbRow?.status === "approved") entries.push(dbRow);
     }
-    if (!complete) continue;
+    if (entries.length === 0) continue;
     bundles.push({
       cca3: seed.cca3,
       common: seed.common,
@@ -454,6 +451,11 @@ export async function loadCountrySeedBundles(
 
 export interface GenerationReadiness {
   totalCountries: number;
+  /** Countries with at least one approved clue (eligible for generation). */
+  countriesWithApprovedClues: number;
+  /** Countries with all clue types approved. */
+  fullyReadyCountries: number;
+  /** @deprecated Use fullyReadyCountries */
   readyCountries: number;
   /** Countries missing one or more approved clues — first few for display. */
   blocked: Array<{ cca3: string; country: string; missing: string[] }>;
@@ -469,20 +471,25 @@ export async function getGenerationReadiness(
   const byKey = new Map(rows.map((r) => [`${r.cca3}:${r.clue_type}`, r]));
 
   const blocked: GenerationReadiness["blocked"] = [];
-  let readyCountries = 0;
+  let countriesWithApprovedClues = 0;
+  let fullyReadyCountries = 0;
 
   for (const seed of SEED) {
     const missing: string[] = [];
+    let approvedCount = 0;
     for (const clueType of ADMIN_CLUE_TYPES) {
       const dbRow = byKey.get(`${seed.cca3}:${clueType}`);
       if (!dbRow) {
         missing.push(`${clueType} (missing row)`);
       } else if (dbRow.status !== "approved") {
         missing.push(`${clueType} (${dbRow.status})`);
+      } else {
+        approvedCount++;
       }
     }
+    if (approvedCount > 0) countriesWithApprovedClues++;
     if (missing.length === 0) {
-      readyCountries++;
+      fullyReadyCountries++;
     } else if (blocked.length < 8) {
       blocked.push({ cca3: seed.cca3, country: seed.common, missing });
     }
@@ -490,7 +497,9 @@ export async function getGenerationReadiness(
 
   return {
     totalCountries: SEED.length,
-    readyCountries,
+    countriesWithApprovedClues,
+    fullyReadyCountries,
+    readyCountries: fullyReadyCountries,
     blocked,
   };
 }

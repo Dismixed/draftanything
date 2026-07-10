@@ -11,6 +11,14 @@ export interface AdminGame {
 
 export const ADMIN_GAMES: AdminGame[] = [
   {
+    id: "hot-takes",
+    name: "Hot Takes",
+    playHref: "/hot-takes",
+    adminHref: "/admin/hot-takes",
+    description: "Category curation, item icons, and daily tier-list scheduling.",
+    accent: "#ff3b3b",
+  },
+  {
     id: "chainlink",
     name: "Chainlink",
     playHref: "/chainlink/daily",
@@ -43,12 +51,20 @@ export const ADMIN_GAMES: AdminGame[] = [
     accent: "#6aaa64",
   },
   {
-    id: "frames",
-    name: "Frames",
-    playHref: "/frames/daily",
-    adminHref: null,
-    description: "Daily movie, song, show, and album frame puzzles.",
+    id: "freezeframes",
+    name: "FreezeFrames",
+    playHref: "/freezeframes/daily",
+    adminHref: "/admin/freezeframes",
+    description: "Seed sourcing, puzzle bundling, and daily scheduling for movie/song/show/album rounds.",
     accent: "#a855f7",
+  },
+  {
+    id: "getting-warmer",
+    name: "Getting Warmer",
+    playHref: "/getting-warmer/daily",
+    adminHref: "/admin/getting-warmer",
+    description: "Daily word puzzles with clue chains and AI-generated hints.",
+    accent: "#ff6b1a",
   },
 ];
 

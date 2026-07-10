@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Getting Warmer — Daily Word Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0705;
+    --surface:#150e08;
+    --surface-2:#1d130a;
+    --cold-slate:#26313d;
+    --cold-slate-text:#7c8a99;
+    --ember:#7a3410;
+    --orange:#ff6b1a;
+    --orange-bright:#ffb347;
+    --white-hot:#fff3e0;
+    --ink:#fff3e8;
+    --ink-dim:#c9a893;
+    --danger:#ff4d4d;
+    --success:#39ff8f;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse 900px 500px at 50% -10%, rgba(255,107,26,0.14), transparent 60%),
+      radial-gradient(ellipse 700px 400px at 85% 100%, rgba(255,107,26,0.07), transparent 60%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    display:flex;
+    justify-content:center;
+    padding:32px 16px 64px;
+  }
+  .app{ width:100%; max-width:520px; }
+
+  header{ text-align:center; margin-bottom:22px; }
+  .badge{
+    display:inline-flex; align-items:center; gap:6px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--ink-dim);
+    background:var(--surface);
+    border:1px solid rgba(255,107,26,0.25);
+    padding:5px 12px; border-radius:999px;
+    margin-bottom:14px;
+  }
+  .badge .dot{ width:6px; height:6px; border-radius:50%; background:var(--orange); box-shadow:0 0 8px var(--orange); }
+  h1{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:56px;
+    letter-spacing:.03em;
+    margin:0;
+    line-height:.95;
+  }
+  h1 .word-getting{ color:var(--white-hot); }
+  h1 .word-warmer{
+    color:var(--white-hot);
+    text-shadow:
+      0 0 6px rgba(255,179,71,.55),
+      0 0 26px rgba(255,107,26,.55),
+      0 0 60px rgba(255,107,26,.25);
+  }
+  .sub{ font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--ink-dim); margin-top:8px; }
+
+  .stats{
+    display:flex; justify-content:space-between; align-items:center;
+    background:var(--surface); border:1px solid rgba(255,107,26,.15);
+    border-radius:var(--radius); padding:12px 16px; margin-bottom:18px;
+    font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink-dim);
+  }
+  .stats b{ color:var(--orange-bright); font-size:14px; }
+
+  .card{
+    background:var(--surface);
+    border:1px solid rgba(255,107,26,.18);
+    border-radius:20px;
+    padding:22px 20px 20px;
+    box-shadow:0 20px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.03);
+  }
+
+  .clues{ display:flex; flex-direction:column; gap:9px; margin-bottom:18px; }
+  .clue{
+    display:flex; align-items:center; gap:12px;
+    padding:12px 14px; border-radius:11px;
+    background:var(--cold-slate); border:1px solid rgba(255,255,255,.04);
+    color:var(--cold-slate-text);
+    font-family:'IBM Plex Mono',monospace; font-size:14px;
+    opacity:.55;
+  }
+  .clue .num{
+    width:22px; height:22px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,.06); font-size:11px; flex-shrink:0;
+  }
+  .clue.active{
+    opacity:1; color:var(--ink);
+    background:linear-gradient(135deg, rgba(255,107,26,.12), rgba(255,107,26,.04));
+    border-color:rgba(255,150,60,.4);
+    box-shadow:0 0 0 1px rgba(255,150,60,.15) inset, 0 0 22px rgba(255,107,26,.18);
+  }
+  .clue.active .num{
+    background:var(--orange); color:#1a0a02; font-weight:700;
+    box-shadow:0 0 12px rgba(255,107,26,.7);
+  }
+  .clue.ignite{ animation: ignite .55s ease-out; }
+  @keyframes ignite{
+    0%{ transform:scale(.94); box-shadow:none; }
+    45%{ transform:scale(1.02); }
+    100%{ transform:scale(1); }
+  }
+
+  .input-row{ display:flex; gap:10px; margin-bottom:6px; }
+  #guessInput{
+    flex:1; background:var(--surface-2); border:1.5px solid rgba(255,107,26,.25);
+    border-radius:11px; padding:14px 16px; color:var(--ink);
+    font-family:'Inter',sans-serif; font-size:16px; font-weight:600;
+    outline:none; transition:border-color .2s, box-shadow .2s;
+  }
+  #guessInput:focus{ border-color:var(--orange); box-shadow:0 0 0 3px rgba(255,107,26,.18); }
+  #guessInput.shake{ animation:shake .35s; border-color:var(--danger); }
+  @keyframes shake{
+    0%,100%{ transform:translateX(0); }
+    25%{ transform:translateX(-6px); }
+    75%{ transform:translateX(6px); }
+  }
+  #guessBtn{
+    background:linear-gradient(135deg,var(--orange),#e0530a);
+    color:#190a02; border:none; border-radius:11px;
+    padding:0 22px; font-family:'Inter',sans-serif; font-weight:800; font-size:14px;
+    letter-spacing:.02em; cursor:pointer;
+    box-shadow:0 4px 18px rgba(255,107,26,.35);
+    transition:transform .15s, box-shadow .15s;
+  }
+  #guessBtn:hover{ transform:translateY(-1px); box-shadow:0 6px 22px rgba(255,107,26,.5); }
+  #guessBtn:disabled{ opacity:.4; cursor:not-allowed; transform:none; }
+
+  .secondary-row{ display:flex; justify-content:flex-end; margin-top:8px; }
+  #giveUpBtn{
+    background:none; border:1px solid rgba(255,255,255,.12);
+    color:var(--cold-slate-text); font-family:'IBM Plex Mono',monospace; font-size:11.5px;
+    padding:7px 13px; border-radius:8px; cursor:pointer;
+  }
+  #giveUpBtn:hover{ color:var(--danger); border-color:rgba(255,77,77,.4); }
+  #giveUpBtn:disabled{ opacity:.3; cursor:not-allowed; }
+
+  .feedback{
+    min-height:20px; font-family:'IBM Plex Mono',monospace; font-size:12.5px;
+    color:var(--ink-dim); margin-top:10px; text-align:center;
+  }
+  .feedback.warm{ color:var(--orange-bright); }
+  .feedback.win{ color:var(--success); }
+  .feedback.lose{ color:var(--danger); }
+
+  .past-guesses{ display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .past-guess{
+    font-family:'IBM Plex Mono',monospace; font-size:11px;
+    padding:4px 9px; border-radius:999px; background:rgba(255,77,77,.1);
+    border:1px solid rgba(255,77,77,.3); color:#ff8a8a; text-transform:uppercase;
+  }
+
+  .result{
+    display:none; text-align:center; margin-top:6px;
+    padding:20px 16px; border-radius:14px;
+    background:linear-gradient(160deg, rgba(255,107,26,.14), rgba(255,107,26,.02));
+    border:1px solid rgba(255,150,60,.35);
+  }
+  .result.show{ display:block; }
+  .result .answer{
+    font-family:'Bebas Neue',sans-serif; font-size:34px; letter-spacing:.03em;
+    color:var(--white-hot); text-shadow:0 0 20px rgba(255,150,60,.6); margin:2px 0 8px;
+  }
+  .result .score{ font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--ink-dim); }
+  .result .score b{ color:var(--orange-bright); font-size:22px; display:block; margin:4px 0; }
+  .share-emoji-row{ display:flex; justify-content:center; margin-top:14px; }
+  .share-emoji{
+    font-family:'IBM Plex Mono',monospace; font-size:13px;
+    background:var(--surface-2); border:1px solid rgba(255,107,26,.25);
+    border-radius:9px; padding:9px 14px; letter-spacing:.15em;
+  }
+  .share-icons{ display:flex; gap:10px; justify-content:center; margin-top:14px; }
+  .share-icon-btn{
+    width:44px; height:44px; border-radius:50%;
+    background:var(--surface-2); border:1.5px solid rgba(255,150,60,.3);
+    color:var(--ink-dim); cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:transform .15s, border-color .15s, color .15s;
+  }
+  .share-icon-btn svg{ width:19px; height:19px; }
+  .share-icon-btn:hover{ transform:translateY(-2px); border-color:var(--orange); color:var(--orange-bright); }
+  #downloadBtn{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; margin-top:12px;
+    background:linear-gradient(135deg,var(--orange),#e0530a);
+    color:#190a02; border:none; border-radius:11px;
+    padding:12px; font-family:'Inter',sans-serif; font-weight:800; font-size:13.5px;
+    letter-spacing:.02em; cursor:pointer;
+    box-shadow:0 4px 18px rgba(255,107,26,.3);
+    transition:transform .15s, box-shadow .15s;
+  }
+  #downloadBtn:hover{ transform:translateY(-1px); box-shadow:0 6px 22px rgba(255,107,26,.45); }
+  #downloadBtn svg{ width:16px; height:16px; }
+  .share-toast{
+    text-align:center; font-family:'IBM Plex Mono',monospace; font-size:11px;
+    color:var(--orange-bright); margin-top:9px; min-height:14px; opacity:0;
+    transition:opacity .3s ease;
+  }
+  .share-toast.show{ opacity:1; }
+
+  .leaderboard{ margin-top:22px; }
+  .lb-head{
+    display:flex; justify-content:space-between; align-items:baseline;
+    margin-bottom:10px;
+  }
+  .lb-head h2{
+    font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:.03em;
+    color:var(--ink); margin:0;
+  }
+  .lb-head span{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-dim); }
+  .lb-row{
+    display:flex; align-items:center; gap:10px;
+    padding:9px 12px; border-radius:9px; margin-bottom:4px;
+    font-family:'IBM Plex Mono',monospace; font-size:13px;
+    background:var(--surface);
+  }
+  .lb-row.me{ background:rgba(255,107,26,.14); border:1px solid rgba(255,150,60,.4); }
+  .lb-rank{ width:20px; color:var(--ink-dim); }
+  .lb-name{ flex:1; color:var(--ink); }
+  .lb-score{ color:var(--orange-bright); font-weight:600; }
+
+  .demo-controls{ margin-top:26px; text-align:center; }
+  .demo-controls button{
+    background:none; border:1px dashed rgba(255,255,255,.15);
+    color:var(--cold-slate-text); font-family:'IBM Plex Mono',monospace; font-size:11px;
+    padding:8px 14px; border-radius:8px; cursor:pointer;
+  }
+  .demo-controls button:hover{ color:var(--ink-dim); border-color:rgba(255,255,255,.3); }
+  .demo-note{ font-family:'IBM Plex Mono',monospace; font-size:10px; color:#5a564f; margin-top:8px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="badge"><span class="dot"></span> Word Game · Solo · Daily</div>
+    <h1><span class="word-getting">GETTING</span> <span class="word-warmer">WARMER</span></h1>
+    <div class="sub">Two clues to start. Guess wrong, get one more. Unlimited guesses.</div>
+  </header>
+
+  <div class="stats">
+    <div>DAY <b id="dayNum">—</b></div>
+    <div>STREAK <b id="streakNum">0</b></div>
+    <div>GUESSES <b id="attemptNum">0</b></div>
+  </div>
+
+  <div class="card">
+    <div class="clues" id="clues"></div>
+
+    <div class="input-row">
+      <input id="guessInput" type="text" placeholder="Type your guess..." autocomplete="off">
+      <button id="guessBtn">GUESS</button>
+    </div>
+    <div class="secondary-row">
+      <button id="giveUpBtn">Give up</button>
+    </div>
+    <div class="feedback" id="feedback"></div>
+    <div class="past-guesses" id="pastGuesses"></div>
+
+    <div class="result" id="result">
+      <div class="sub" id="resultLabel">TODAY'S WORD WAS</div>
+      <div class="answer" id="resultAnswer">—</div>
+      <div class="score">
+        <b id="resultScore">0</b>
+        points
+      </div>
+      <div class="share-emoji-row">
+        <div class="share-emoji" id="shareEmoji">❄️❄️🔥</div>
+      </div>
+      <div class="share-icons">
+        <button class="share-icon-btn" id="shareX" title="Share to X" aria-label="Share to X">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l16 16M20 4L4 20"/></svg>
+        </button>
+        <button class="share-icon-btn" id="shareInstagram" title="Share to Instagram" aria-label="Share to Instagram">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1"/></svg>
+        </button>
+        <button class="share-icon-btn" id="shareTiktok" title="Share to TikTok" aria-label="Share to TikTok">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4v10.5a3.5 3.5 0 1 1-3-3.46"/><path d="M13 4c0 2.5 2 4.5 4.5 4.5V11C15 11 13 9.5 13 7.5"/></svg>
+        </button>
+        <button class="share-icon-btn" id="shareMessages" title="Share via Messages" aria-label="Share via Messages">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.4 8.5 8.5 0 0 1-4-1L3 20l1.1-5.5A8.38 8.38 0 0 1 4 11.5 8.5 8.5 0 1 1 21 11.5z"/></svg>
+        </button>
+      </div>
+      <div class="share-toast" id="shareToast"></div>
+      <button id="downloadBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 19h16"/></svg>
+        Download results
+      </button>
+    </div>
+  </div>
+
+  <div class="leaderboard">
+    <div class="lb-head">
+      <h2>Today's Leaderboard</h2>
+      <span id="lbCount">— players</span>
+    </div>
+    <div id="lbRows"></div>
+  </div>
+
+  <div class="demo-controls">
+    <button id="shuffleBtn">↻ Try another puzzle (demo)</button>
+    <div class="demo-note">Prototype: puzzle picks by date, leaderboard is simulated. No backend wired up yet.</div>
+  </div>
+
+</div>
+
+<script>
+const PUZZLES = [
+  { answer:"WATERMELON", clues:["Refreshing","Heavy","Seeds","Striped","Summer fruit"] },
+  { answer:"FLASHLIGHT", clues:["Reliable","Portable","Beam","Batteries","Power outage"] },
+  { answer:"UMBRELLA",   clues:["Shelter","Folds","Handle","Puddles","Rain"] },
+  { answer:"TELESCOPE",  clues:["Curiosity","Magnify","Lens","Night sky","Stars"] },
+  { answer:"PINEAPPLE",  clues:["Exotic","Spiky","Crown","Tropical","Fruit"] },
+  { answer:"HOURGLASS",  clues:["Patience","Narrow","Flip","Sand","Timer"] },
+  { answer:"FIREPLACE",  clues:["Cozy","Mantel","Crackle","Logs","Chimney"] },
+  { answer:"SUNFLOWER",  clues:["Devotion","Turns","Seeds","Yellow","Petals"] },
+  { answer:"SNOW GLOBE", clues:["Nostalgia","Shake","Glass","Miniature","Winter scene"] },
+  { answer:"LIGHTHOUSE", clues:["Guidance","Warning","Coast","Beacon","Sailor"] }
+];
+
+const MOCK_NAMES = ["jkramer","wordwiz","nadia_p","cold_brew_fan","theo","mvasquez","luna22","dbarton","pxlplum","greta.k","ryankelly","soleil","hmontoya"];
+
+function normalize(str){
+  return str.toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+// Clues are endless: the first N (from the authored list) are concept clues.
+// After those run out, every further wrong guess reveals one more letter of
+// the answer instead, so the puzzle always keeps giving you something new
+// and is guaranteed to become solvable the longer you keep guessing.
+function getClueText(puzzle, index){
+  if(index < puzzle.clues.length){
+    return puzzle.clues[index];
+  }
+  const revealCount = index - puzzle.clues.length + 1;
+  let letterIdx = 0;
+  const masked = puzzle.answer.split('').map(ch=>{
+    if(ch === ' ') return '  ';
+    letterIdx++;
+    return (letterIdx <= revealCount ? ch : '_') + ' ';
+  }).join('').trim();
+  return 'Letters so far: ' + masked;
+}
+
+function dayIndexFromDate(){
+  const epoch = new Date(2025,0,1).getTime();
+  return Math.floor((Date.now()-epoch)/86400000);
+}
+
+let state = {};
+
+function newGame(puzzleIndexOverride){
+  const dayIdx = dayIndexFromDate();
+  const puzzleIdx = puzzleIndexOverride !== undefined ? puzzleIndexOverride : (dayIdx % PUZZLES.length);
+  state = {
+    dayIdx,
+    puzzle: PUZZLES[puzzleIdx],
+    attempt: 0,
+    revealedClues: 2,
+    guesses: [],
+    finished: false
+  };
+  document.getElementById('dayNum').textContent = dayIdx + 1;
+  document.getElementById('result').classList.remove('show');
+  document.getElementById('pastGuesses').innerHTML = '';
+  document.getElementById('guessInput').value = '';
+  document.getElementById('guessInput').disabled = false;
+  document.getElementById('guessBtn').disabled = false;
+  document.getElementById('giveUpBtn').disabled = false;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback';
+  renderClues(false);
+  renderAttempt();
+  renderLeaderboard(null);
+  document.getElementById('guessInput').focus();
+}
+
+function renderAttempt(){
+  document.getElementById('attemptNum').textContent = state.attempt;
+}
+
+function renderClues(justIgnited){
+  const wrap = document.getElementById('clues');
+  wrap.innerHTML = '';
+  for(let i=0;i<state.revealedClues;i++){
+    const div = document.createElement('div');
+    div.className = 'clue active' + ((justIgnited && i === state.revealedClues-1) ? ' ignite' : '');
+    div.innerHTML = '<div class="num">' + (i+1) + '</div><div>' + getClueText(state.puzzle, i) + '</div>';
+    wrap.appendChild(div);
+  }
+}
+
+function renderLeaderboard(myScore){
+  const rows = [];
+  let seed = state.dayIdx * 37 + 11;
+  function rnd(){ seed = (seed*9301+49297)%233280; return seed/233280; }
+  for(let i=0;i<8;i++){
+    const attempts = 1 + Math.floor(rnd()*8);
+    const score = Math.max(100 - (attempts-1)*15, 10);
+    rows.push({ name: MOCK_NAMES[Math.floor(rnd()*MOCK_NAMES.length)] + Math.floor(rnd()*99), score, me:false });
+  }
+  if(myScore !== null){
+    rows.push({ name:'you', score: myScore, me:true });
+  }
+  rows.sort((a,b)=>b.score-a.score || (rnd()-0.5));
+  const container = document.getElementById('lbRows');
+  container.innerHTML = '';
+  rows.slice(0,9).forEach((r,i)=>{
+    const div = document.createElement('div');
+    div.className = 'lb-row' + (r.me ? ' me' : '');
+    div.innerHTML = '<div class="lb-rank">' + (i+1) + '</div><div class="lb-name">' + (r.me ? 'you' : r.name) + '</div><div class="lb-score">' + r.score + '</div>';
+    container.appendChild(div);
+  });
+  document.getElementById('lbCount').textContent = (rows.length + 340) + ' players';
+}
+
+function submitGuess(){
+  if(state.finished) return;
+  const input = document.getElementById('guessInput');
+  const val = input.value.trim();
+  if(!val) return;
+
+  const guessNorm = normalize(val);
+  const answerNorm = normalize(state.puzzle.answer);
+  const correct = guessNorm === answerNorm;
+
+  state.attempt += 1;
+
+  if(correct){
+    finishGame(true, false);
+    return;
+  }
+
+  const chip = document.createElement('div');
+  chip.className = 'past-guess';
+  chip.textContent = val.toUpperCase();
+  document.getElementById('pastGuesses').appendChild(chip);
+  input.value = '';
+  input.classList.add('shake');
+  setTimeout(()=>input.classList.remove('shake'), 350);
+
+  state.revealedClues += 1;
+  renderClues(true);
+  renderAttempt();
+
+  const fb = document.getElementById('feedback');
+  fb.textContent = '🔥 Getting warmer — new clue unlocked';
+  fb.className = 'feedback warm';
+}
+
+function finishGame(won, gaveUp){
+  state.finished = true;
+  document.getElementById('guessInput').disabled = true;
+  document.getElementById('guessBtn').disabled = true;
+  document.getElementById('giveUpBtn').disabled = true;
+
+  const fb = document.getElementById('feedback');
+  let score = 0;
+
+  if(won){
+    score = Math.max(100 - (state.attempt-1)*15, 10);
+    fb.textContent = '🔥 Nailed it in ' + state.attempt + ' ' + (state.attempt===1?'guess':'guesses');
+    fb.className = 'feedback win';
+    document.getElementById('resultLabel').textContent = 'YOU GOT IT';
+  } else {
+    score = 0;
+    fb.textContent = gaveUp ? '🏳️ Gave up' : '❄️ Out of guesses';
+    fb.className = 'feedback lose';
+    document.getElementById('resultLabel').textContent = "TODAY'S WORD WAS";
+  }
+
+  document.getElementById('resultAnswer').textContent = state.puzzle.answer;
+  document.getElementById('resultScore').textContent = score;
+  document.getElementById('result').classList.add('show');
+
+  const usedForIcons = Math.min(state.attempt, 6);
+  let emojis = '';
+  for(let i=0;i<usedForIcons;i++){
+    const isLast = i === usedForIcons - 1;
+    emojis += isLast ? (won ? '🔥' : '💀') : '❄️';
+  }
+  if(state.attempt > 6) emojis = '…' + emojis;
+  document.getElementById('shareEmoji').textContent = emojis;
+
+  const streakEl = document.getElementById('streakNum');
+  streakEl.textContent = won ? ((parseInt(streakEl.textContent)||0) + 1) : 0;
+
+  renderLeaderboard(score);
+}
+
+document.getElementById('guessBtn').addEventListener('click', submitGuess);
+document.getElementById('guessInput').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter') submitGuess();
+});
+document.getElementById('giveUpBtn').addEventListener('click', ()=>{
+  if(state.finished) return;
+  finishGame(false, true);
+});
+function buildShareText(){
+  return 'Getting Warmer — Day ' + (state.dayIdx+1) + '\n' + document.getElementById('shareEmoji').textContent + '\n' + document.getElementById('resultScore').textContent + ' pts';
+}
+
+function showToast(msg){
+  const toast = document.getElementById('shareToast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>toast.classList.remove('show'), 2200);
+}
+
+document.getElementById('shareX').addEventListener('click', ()=>{
+  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(buildShareText()), '_blank');
+});
+document.getElementById('shareMessages').addEventListener('click', ()=>{
+  window.open('sms:?&body=' + encodeURIComponent(buildShareText()));
+});
+document.getElementById('shareInstagram').addEventListener('click', ()=>{
+  navigator.clipboard.writeText(buildShareText()).then(()=>{
+    showToast('Copied — paste it into Instagram');
+    window.open('https://instagram.com', '_blank');
+  });
+});
+document.getElementById('shareTiktok').addEventListener('click', ()=>{
+  navigator.clipboard.writeText(buildShareText()).then(()=>{
+    showToast('Copied — paste it into TikTok');
+    window.open('https://tiktok.com', '_blank');
+  });
+});
+
+document.getElementById('downloadBtn').addEventListener('click', ()=>{
+  const w = 600, h = 760;
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+
+  const bg = ctx.createRadialGradient(w/2, 40, 40, w/2, h/2, h);
+  bg.addColorStop(0, '#1d1006');
+  bg.addColorStop(1, '#0a0705');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#fff3e0';
+  ctx.font = '600 15px monospace';
+  ctx.fillText('WORD GAME · SOLO · DAILY', w/2, 70);
+
+  ctx.font = '64px sans-serif';
+  ctx.fillStyle = '#fff3e0';
+  ctx.fillText('GETTING', w/2, 150);
+  ctx.shadowColor = 'rgba(255,107,26,0.8)';
+  ctx.shadowBlur = 30;
+  ctx.fillText('WARMER', w/2, 220);
+  ctx.shadowBlur = 0;
+
+  ctx.font = '16px monospace';
+  ctx.fillStyle = '#c9a893';
+  ctx.fillText('Day ' + (state.dayIdx+1), w/2, 270);
+
+  ctx.font = '54px sans-serif';
+  ctx.fillText(document.getElementById('shareEmoji').textContent, w/2, 360);
+
+  ctx.font = '600 20px monospace';
+  ctx.fillStyle = '#c9a893';
+  ctx.fillText(document.getElementById('resultLabel').textContent, w/2, 440);
+
+  ctx.font = '46px sans-serif';
+  ctx.fillStyle = '#ffb347';
+  ctx.fillText(document.getElementById('resultAnswer').textContent, w/2, 500);
+
+  ctx.font = '800 34px sans-serif';
+  ctx.fillStyle = '#fff3e0';
+  ctx.fillText(document.getElementById('resultScore').textContent + ' pts', w/2, 570);
+
+  ctx.font = '13px monospace';
+  ctx.fillStyle = '#5a564f';
+  ctx.fillText('stimgames.com/getting-warmer', w/2, h - 40);
+
+  canvas.toBlob((blob)=>{
+    const link = document.createElement('a');
+    link.download = 'getting-warmer-day-' + (state.dayIdx+1) + '.png';
+    link.href = URL.createObjectURL(blob);
+    link.click();
+  });
+});
+document.getElementById('shuffleBtn').addEventListener('click', ()=>{
+  const randomIdx = Math.floor(Math.random()*PUZZLES.length);
+  newGame(randomIdx);
+});
+
+newGame();
+</script>
+</body>
+</html>

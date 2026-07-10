@@ -13,6 +13,7 @@ const ClueTypeEnum = z.enum([
   "person",
   "food",
   "environment",
+  "wildlife",
 ]);
 
 const ProposalSchema = z.object({
@@ -50,6 +51,7 @@ export async function proposeSeedEntriesWithLlm(options: {
       "For currency prefer a banknote/coin article title, not just the currency code.",
       "For jersey use the most iconic national sports kit article (football unless another sport dominates).",
       "For brand pick a company strongly associated with the country, not a global multinational.",
+      "For wildlife pick the national animal, an endemic species, or the most iconic wild animal with a strong Wikipedia lead photo.",
       "Return exactly one entry per clue type.",
     ].join(" "),
     userPrompt: JSON.stringify(options, null, 2),

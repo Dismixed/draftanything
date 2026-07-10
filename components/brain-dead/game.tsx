@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { CategoryId, GameMode, Question } from "@/lib/brain-dead/types";
 import { appendUniqueQuestions } from "@/lib/brain-dead/trivia-api";
 import {
@@ -59,6 +60,7 @@ export default function BrainDeadGame({
   const [submitting, setSubmitting] = useState(false);
   const [countdown, setCountdown] = useState("");
   const [todayScore, setTodayScore] = useState(0);
+  const [todayCorrect, setTodayCorrect] = useState(0);
   const [scoreFloat, setScoreFloat] = useState<number | null>(null);
   const [questionAnim, setQuestionAnim] = useState<"in" | "out" | null>(null);
   const [showIntro, setShowIntro] = useState(mode === "daily");
@@ -72,13 +74,19 @@ export default function BrainDeadGame({
   const lastTickSecondRef = useRef<number | null>(null);
   const timeoutSoundPlayedRef = useRef(false);
   const resultCelebratedRef = useRef(false);
+  const screenRef = useRef<Screen>("game");
 
   const startTimeRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const advanceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const router = useRouter();
   const isDaily = mode === "daily";
   const q = questions[qi];
+
+  useEffect(() => {
+    screenRef.current = screen;
+  }, [screen]);
 
   const clearIntervalTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -191,7 +199,9 @@ export default function BrainDeadGame({
           .filter((id: string | undefined): id is string => Boolean(id));
         seenIdsRef.current = recordSeenQuestionIds(category, incomingIds);
 
-        setQuestions((prev) => appendUniqueQuestions(prev, data.questions));
+        if (screenRef.current === "game") {
+          setQuestions((prev) => appendUniqueQuestions(prev, data.questions));
+        }
         tokenRef.current = data.token ?? tokenRef.current;
       } else if (initial) {
         setFetchError("No new questions available. Try a different category.");
@@ -234,6 +244,7 @@ export default function BrainDeadGame({
       const played = getDailyPlayed();
       if (played) {
         setTodayScore(played.score);
+        setTodayCorrect(played.correct);
         setCountdown(getCountdownText());
         setScreen("played");
         const iv = setInterval(() => setCountdown(getCountdownText()), 1000);
@@ -361,9 +372,52 @@ export default function BrainDeadGame({
       : 0;
   const result = getResultCopy(correct);
 
-  const gameShell = (children: React.ReactNode, options?: { sound?: boolean; padTop?: boolean }) => (
+  const freeplayBackHref = "/brain-dead/freeplay";
+  const resultNavBtnStyle: React.CSSProperties = {
+    background: "var(--bd-surface)",
+    border: "1px solid var(--bd-border)",
+    color: "var(--bd-text-muted)",
+    padding: "10px 24px",
+    fontFamily: "inherit",
+    fontSize: "12px",
+    fontWeight: 600,
+    borderRadius: "8px",
+    cursor: "pointer",
+  };
+
+  const gameShell = (
+    children: React.ReactNode,
+    options?: { sound?: boolean; padTop?: boolean; useRouterBack?: boolean },
+  ) => (
     <div style={{ width: "100%", maxWidth: "480px", margin: "0 auto", position: "relative" }}>
-      <GameBackLink color="var(--bd-text-muted)" />
+      {options?.useRouterBack ? (
+        <div style={{ position: "absolute", top: 0, left: 0 }}>
+          <button
+            type="button"
+            onClick={() => router.push(isDaily ? "/brain-dead" : freeplayBackHref)}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              fontSize: "11px",
+              fontWeight: 500,
+              color: "var(--bd-text-muted)",
+              background: "transparent",
+              border: "none",
+              padding: "4px 0",
+              cursor: "pointer",
+              fontFamily: "inherit",
+            }}
+          >
+            &larr; Back
+          </button>
+        </div>
+      ) : (
+        <GameBackLink
+          href={isDaily ? "/brain-dead" : freeplayBackHref}
+          color="var(--bd-text-muted)"
+        />
+      )}
       {options?.sound !== false && (
         <div style={{ position: "absolute", top: 0, right: 0, zIndex: 2 }}>
           <SoundToggle />
@@ -397,7 +451,7 @@ export default function BrainDeadGame({
             style={{
               fontSize: "18px",
               fontWeight: 700,
-              margin: "0 0 16px",
+              margin: "0 0 20px",
               color: "var(--bd-text)",
             }}
           >
@@ -405,17 +459,65 @@ export default function BrainDeadGame({
           </h2>
           <div
             style={{
-              fontSize: "40px",
-              fontWeight: 700,
-              color: "var(--bd-primary)",
-              lineHeight: 1,
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "8px",
+              marginBottom: "20px",
             }}
           >
-            {todayScore}
+            {[
+              { val: todayCorrect, lbl: "Correct" },
+              { val: todayScore, lbl: "Score" },
+            ].map(({ val, lbl }) => (
+              <div
+                key={lbl}
+                style={{
+                  background: "var(--bd-bg)",
+                  border: "1px solid var(--bd-border)",
+                  borderRadius: "8px",
+                  padding: "12px",
+                  textAlign: "center",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "20px",
+                    fontWeight: 700,
+                    color: "var(--bd-primary)",
+                    lineHeight: 1,
+                  }}
+                >
+                  {val}
+                </div>
+                <div
+                  style={{
+                    fontSize: "10px",
+                    color: "var(--bd-text-muted)",
+                    marginTop: "2px",
+                  }}
+                >
+                  {lbl}
+                </div>
+              </div>
+            ))}
           </div>
-          <div style={{ color: "var(--bd-text-muted)", fontSize: "12px", marginTop: "8px" }}>
-            your score today
-          </div>
+          <Link
+            href="/brain-dead/leaderboard"
+            style={{
+              display: "inline-block",
+              background: "var(--bd-primary)",
+              color: "#fff",
+              border: "none",
+              padding: "10px 24px",
+              fontSize: "12px",
+              fontWeight: 700,
+              borderRadius: "8px",
+              textDecoration: "none",
+              marginBottom: "20px",
+            }}
+          >
+            View Leaderboard
+          </Link>
           <div
             style={{
               width: "40px",
@@ -616,27 +718,36 @@ export default function BrainDeadGame({
           </div>
         )}
 
-        {submitted && (
-          <Link
-            href="/brain-dead/leaderboard"
+        {(submitted || isDaily) && (
+          <div
             style={{
-              display: "inline-block",
-              background: "var(--bd-primary)",
-              color: "#fff",
-              border: "none",
-              padding: "12px 28px",
-              fontSize: "13px",
-              fontWeight: 700,
-              borderRadius: "8px",
-              textDecoration: "none",
-              marginBottom: "16px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "20px",
             }}
           >
-            View Leaderboard
-          </Link>
+            {submitted && (
+              <Link
+                href="/brain-dead/leaderboard"
+                style={{
+                  display: "inline-block",
+                  background: "var(--bd-primary)",
+                  color: "#fff",
+                  border: "none",
+                  padding: "12px 28px",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  borderRadius: "8px",
+                  textDecoration: "none",
+                }}
+              >
+                View Leaderboard
+              </Link>
+            )}
+            {isDaily && <WinStreakLine gameId="brain-dead" accentColor="var(--bd-primary)" />}
+          </div>
         )}
-
-        {isDaily && <WinStreakLine gameId="brain-dead" accentColor="var(--bd-primary)" />}
 
         {isDaily && (
           <OtherDailies currentGameId="brain-dead" />
@@ -656,57 +767,29 @@ export default function BrainDeadGame({
               <button
                 type="button"
                 onClick={handleFreeplayRestart}
-                style={{
-                  background: "var(--bd-surface)",
-                  border: "1px solid var(--bd-border)",
-                  color: "var(--bd-text-muted)",
-                  padding: "10px 24px",
-                  fontFamily: "inherit",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                }}
+                style={resultNavBtnStyle}
               >
                 Play Again
               </button>
-              <Link
-                href="/brain-dead/freeplay"
-                style={{
-                  textDecoration: "none",
-                  background: "var(--bd-surface)",
-                  border: "1px solid var(--bd-border)",
-                  color: "var(--bd-text-muted)",
-                  padding: "10px 24px",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  borderRadius: "8px",
-                  display: "inline-block",
-                }}
+              <button
+                type="button"
+                onClick={() => router.push(freeplayBackHref)}
+                style={resultNavBtnStyle}
               >
                 Change Category
-              </Link>
+              </button>
             </>
           )}
-          <Link
-            href="/"
-            style={{
-              textDecoration: "none",
-              background: "var(--bd-surface)",
-              border: "1px solid var(--bd-border)",
-              color: "var(--bd-text-muted)",
-              padding: "10px 24px",
-              fontSize: "12px",
-              fontWeight: 600,
-              borderRadius: "8px",
-              display: "inline-block",
-            }}
+          <button
+            type="button"
+            onClick={() => router.push("/")}
+            style={resultNavBtnStyle}
           >
             Home
-          </Link>
+          </button>
         </div>
       </div>,
-      { sound: false },
+      { sound: false, useRouterBack: !isDaily },
     );
   }
 

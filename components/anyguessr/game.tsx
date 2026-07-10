@@ -7,7 +7,10 @@ import { useAnyGuessrStore } from "@/lib/anyguessr/store";
 import { useSound } from "@/lib/audio/sound-context";
 import { fireConfetti } from "@/lib/motion/confetti";
 import { GameBackLink } from "@/components/ui/game-back-link";
+import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
 import { SoundToggle } from "@/components/ui/sound-toggle";
+import { GameTitle } from "@/components/ui/game-title";
+import { isHowItWorksSeen, markHowItWorksSeen } from "@/lib/game-how-it-works";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
 import ClueCard from "./clue-card";
 import CountryPicker from "./country-picker";
@@ -39,6 +42,9 @@ export default function AnyGuessrGame() {
   const [pickerKey, setPickerKey] = useState(0);
   const [showResultsOverlay, setShowResultsOverlay] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [showHowItWorks, setShowHowItWorks] = useState(
+    () => !isHowItWorksSeen("anyguessr"),
+  );
 
   const loading = store.loading;
   const date = store.date;
@@ -163,7 +169,7 @@ export default function AnyGuessrGame() {
           </div>
           <p style={{ margin: 0, fontSize: "13px", lineHeight: 1.5, color: "var(--ag-muted)", maxWidth: "360px" }}>
             {feedback?.message ??
-              "There aren't enough approved countries in the puzzle pool yet."}
+              "The puzzle pool can't fill all ten daily rounds yet."}
           </p>
           <button
             type="button"
@@ -200,7 +206,9 @@ export default function AnyGuessrGame() {
         <div style={{ position: "absolute", top: 0, right: 0 }}>
           <SoundToggle />
         </div>
-        <h1
+        <GameTitle
+          game="anyguessr"
+          as="h1"
           style={{
             fontSize: "clamp(26px, 5.5vw, 34px)",
             fontWeight: 800,
@@ -208,9 +216,7 @@ export default function AnyGuessrGame() {
             margin: 0,
             letterSpacing: "-0.02em",
           }}
-        >
-          AnyGuessr
-        </h1>
+        />
         <p
           style={{
             fontSize: "11px",
@@ -219,7 +225,7 @@ export default function AnyGuessrGame() {
             letterSpacing: "0.04em",
           }}
         >
-          Nine countries — one clue each. Score by how close you guess.
+          Ten countries — one clue each. Score by how close you guess.
         </p>
 
         <div
@@ -427,7 +433,7 @@ export default function AnyGuessrGame() {
               overflowY: "auto",
             }}
           >
-            <div style={{ width: "100%", maxWidth: "440px" }}>
+            <div style={{ width: "100%", maxWidth: "680px" }}>
               <Results scoreActive embedded />
               {status === "won" && (
                 <WinStreakLine gameId="anyguessr" accentColor="var(--ag-accent)" />
@@ -436,9 +442,48 @@ export default function AnyGuessrGame() {
           </div>,
           document.body,
         )}
+
+      {showHowItWorks && (
+        <GameHowItWorksModal
+          subtitle={`${DAILY_ROUND_COUNT} rounds · One puzzle a day`}
+          rules={ANYGUESSR_HOW_IT_WORKS}
+          onDismiss={() => {
+            markHowItWorksSeen("anyguessr");
+            setShowHowItWorks(false);
+            play("ui.tap");
+          }}
+          theme={{
+            overlay: "rgba(7, 9, 15, 0.92)",
+            surface: "var(--ag-surface)",
+            border: "var(--ag-border)",
+            accent: "var(--ag-accent)",
+            text: "var(--ag-text)",
+            textMuted: "var(--ag-muted)",
+          }}
+        />
+      )}
     </div>
   );
 }
+
+const ANYGUESSR_HOW_IT_WORKS = [
+  {
+    title: "Ten Cultural Clues",
+    body: "Each round shows a different clue — flag, currency, jersey, landmark, food, and more. Everyone gets the same puzzle today.",
+  },
+  {
+    title: "Pin a Country",
+    body: "Tap the map and pick the country you think matches the clue. You get one guess per round.",
+  },
+  {
+    title: "Closer Is Better",
+    body: "Points depend on how close your guess is. Nail it and you earn full round points; far-off guesses still earn partial credit.",
+  },
+  {
+    title: "One Shot Per Day",
+    body: "Play through all ten rounds once, then come back tomorrow for a fresh set of countries.",
+  },
+] as const;
 
 function ScorePill({ value }: { value: number }) {
   return (

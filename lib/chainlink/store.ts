@@ -27,6 +27,13 @@ function revealNextLetter(
   return { position: pick, letter: word[pick], newRevealed: wordRevealed };
 }
 
+function isWordFullyRevealed(word: string, revealed: boolean[]): boolean {
+  for (let i = 1; i < word.length; i++) {
+    if (!revealed[i]) return false;
+  }
+  return true;
+}
+
 /* ------------------------------------------------------------------ */
 /*  API Puzzle type that comes from the server                        */
 /* ------------------------------------------------------------------ */
@@ -80,12 +87,14 @@ interface ChainlinkStore {
   gameStatus: GameStatus;
   startTime: number;
   loading: boolean;
+  loadError: string | null;
 
   feedback: { type: FeedbackType; message: string } | null;
   justSolvedIndex: number | null;
 
   initPuzzle: (mode?: GameMode) => Promise<void>;
   submitGuess: (guess: string) => Promise<"correct" | "incorrect" | "already-solved">;
+  useHint: () => { letter: string; position: number; solved: boolean } | null;
   clearFeedback: () => void;
   clearJustSolved: () => void;
   resetGame: () => Promise<void>;
@@ -137,6 +146,16 @@ function isToday(dateStr: string): boolean {
   return dateStr === getDateString();
 }
 
+function isResumableDailyState(s: PersistedData): boolean {
+  return (
+    s.mode === "daily" &&
+    !!s.puzzleId &&
+    isToday(s.date) &&
+    s.puzzleWords.length > 0 &&
+    (s.gameStatus === "playing" || s.gameStatus === "completed" || s.gameStatus === "failed")
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /*  API helpers                                                        */
 /* ------------------------------------------------------------------ */
@@ -156,7 +175,39 @@ async function fetchDailyPuzzle(): Promise<ApiPlayablePuzzle> {
 
 export const useChainlinkStore = create<ChainlinkStore>()(
   persist(
-    (set, get) => ({
+    (set, get) => {
+      const markWordSolved = (idx: number, attempts: string[][], guess: string) => {
+        const state = get();
+        const newStatuses = [...state.wordStatuses];
+        newStatuses[idx] = "solved";
+
+        const nextIndex = idx + 1;
+        let newGameStatus: GameStatus = state.gameStatus;
+        if (nextIndex < state.puzzleWords.length) {
+          newStatuses[nextIndex] = "active";
+        } else {
+          newGameStatus = "completed";
+        }
+
+        set({
+          wordStatuses: newStatuses,
+          wordAttempts: attempts,
+          currentWordIndex: Math.min(nextIndex, state.puzzleWords.length - 1),
+          gameStatus: newGameStatus,
+          feedback: { type: "correct", message: "Correct!" },
+          justSolvedIndex: idx,
+        });
+
+        if (state.puzzleId) {
+          fetch("/api/chain/guess", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ puzzleId: state.puzzleId, position: idx, guess }),
+          }).catch(() => {});
+        }
+      };
+
+      return {
       puzzleId: null,
       puzzleWords: [],
       mode: "daily" as GameMode,
@@ -169,22 +220,28 @@ export const useChainlinkStore = create<ChainlinkStore>()(
       gameStatus: "playing",
       startTime: 0,
       loading: false,
+      loadError: null,
 
       feedback: null,
       justSolvedIndex: null,
 
       initPuzzle: async (_mode?: GameMode) => {
-        const { date, puzzleId } = get();
+        const state = get();
+        if (isResumableDailyState(state)) {
+          set({ loadError: null });
+          return;
+        }
         try {
-          if (puzzleId && date && isToday(date)) {
-            return;
-          }
-          set({ loading: true });
+          set({ loading: true, loadError: null });
           const puzzle = await fetchDailyPuzzle();
-          set({ ...buildStateFromPuzzle(puzzle, "daily"), feedback: null, justSolvedIndex: null, loading: false });
+          set({ ...buildStateFromPuzzle(puzzle, "daily"), feedback: null, justSolvedIndex: null, loading: false, loadError: null });
         } catch (err) {
           console.error("Failed to init puzzle:", err);
-          set({ loading: false });
+          const message =
+            err instanceof Error && err.message.includes("No puzzle")
+              ? "No puzzle scheduled for today."
+              : "Couldn't load today's puzzle. Check your connection and try again.";
+          set({ loading: false, loadError: message });
         }
       },
 
@@ -203,34 +260,7 @@ export const useChainlinkStore = create<ChainlinkStore>()(
         newAttempts[idx] = [...newAttempts[idx], guess.trim()];
 
         if (normalizedGuess === normalizedTarget) {
-          const newStatuses = [...state.wordStatuses];
-          newStatuses[idx] = "solved";
-
-          const nextIndex = idx + 1;
-          let newGameStatus: GameStatus = state.gameStatus;
-          if (nextIndex < state.puzzleWords.length) {
-            newStatuses[nextIndex] = "active";
-          } else {
-            newGameStatus = "completed";
-          }
-
-          set({
-            wordStatuses: newStatuses,
-            wordAttempts: newAttempts,
-            currentWordIndex: Math.min(nextIndex, state.puzzleWords.length - 1),
-            gameStatus: newGameStatus,
-            feedback: { type: "correct", message: "Correct!" },
-            justSolvedIndex: idx,
-          });
-
-          if (state.puzzleId) {
-            fetch("/api/chain/guess", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ puzzleId: state.puzzleId, position: idx, guess }),
-            }).catch(() => {});
-          }
-
+          markWordSolved(idx, newAttempts, guess.trim());
           return "correct";
         }
 
@@ -241,6 +271,16 @@ export const useChainlinkStore = create<ChainlinkStore>()(
         const newRevealed = [...state.revealedLetters];
         if (reveal) {
           newRevealed[idx] = reveal.newRevealed;
+        }
+
+        if (reveal && isWordFullyRevealed(word, reveal.newRevealed)) {
+          set({
+            wordAttempts: newAttempts,
+            revealedLetters: newRevealed,
+            hintsRemaining: newMistakesRemaining,
+          });
+          markWordSolved(idx, newAttempts, word);
+          return "correct";
         }
 
         if (newMistakesRemaining <= 0) {
@@ -282,6 +322,56 @@ export const useChainlinkStore = create<ChainlinkStore>()(
         return "incorrect";
       },
 
+      useHint: () => {
+        const state = get();
+        if (state.gameStatus !== "playing" || !state.puzzleWords.length) return null;
+        if (state.hintsRemaining <= 0) return null;
+
+        const idx = state.currentWordIndex;
+        if (state.wordStatuses[idx] !== "active") return null;
+
+        const word = state.puzzleWords[idx];
+        const revealed = state.revealedLetters[idx] ?? [];
+        const reveal = revealNextLetter(word, revealed);
+        if (!reveal) return null;
+
+        const newHintsRemaining = state.hintsRemaining - 1;
+        const newRevealed = [...state.revealedLetters];
+        newRevealed[idx] = reveal.newRevealed;
+
+        if (isWordFullyRevealed(word, reveal.newRevealed)) {
+          set({
+            revealedLetters: newRevealed,
+            hintsRemaining: newHintsRemaining,
+          });
+          markWordSolved(idx, state.wordAttempts, word);
+          return { letter: reveal.letter, position: reveal.position, solved: true };
+        }
+
+        if (newHintsRemaining <= 0) {
+          set({
+            revealedLetters: newRevealed,
+            hintsRemaining: 0,
+            gameStatus: "failed",
+            feedback: {
+              type: "incorrect",
+              message: `Letter "${reveal.letter.toLowerCase()}" revealed — game over.`,
+            },
+          });
+        } else {
+          set({
+            revealedLetters: newRevealed,
+            hintsRemaining: newHintsRemaining,
+            feedback: {
+              type: "hint",
+              message: `Hint: letter "${reveal.letter.toLowerCase()}" revealed.`,
+            },
+          });
+        }
+
+        return { letter: reveal.letter, position: reveal.position, solved: false };
+      },
+
       clearFeedback: () => set({ feedback: null }),
       clearJustSolved: () => set({ justSolvedIndex: null }),
 
@@ -290,7 +380,8 @@ export const useChainlinkStore = create<ChainlinkStore>()(
         const puzzle = await fetchDailyPuzzle();
         set({ ...buildStateFromPuzzle(puzzle, "daily") });
       },
-    }),
+    };
+    },
     {
       name: "chainlink-v3",
       partialize: (state): PersistedData => ({

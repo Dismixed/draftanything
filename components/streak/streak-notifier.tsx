@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { DailyGameId } from "@/lib/streak/types";
 import { useStreak } from "@/lib/streak/context";
+import { GameTitle } from "@/components/ui/game-title";
 
 function formatStreak(days: number): string {
   return `${days} day${days === 1 ? "" : "s"}`;
@@ -11,9 +12,11 @@ function formatStreak(days: number): string {
 export function GameCardStreak({
   gameId,
   accentColor,
+  inline = false,
 }: {
   gameId: DailyGameId;
   accentColor: string;
+  inline?: boolean;
 }) {
   const { streaks } = useStreak();
   const game = streaks.find((s) => s.id === gameId);
@@ -24,9 +27,9 @@ export function GameCardStreak({
   return (
     <div
       style={{
-        position: "absolute",
-        top: "12px",
-        right: "12px",
+        ...(inline
+          ? {}
+          : { position: "absolute", top: "12px", right: "12px", zIndex: 2 }),
         display: "inline-flex",
         alignItems: "center",
         gap: "4px",
@@ -42,8 +45,8 @@ export function GameCardStreak({
           : "1px solid var(--border)",
         borderRadius: "999px",
         padding: "4px 10px",
-        zIndex: 2,
         opacity: active ? 1 : 0.7,
+        flexShrink: 0,
       }}
       title={
         streak > 0
@@ -54,9 +57,7 @@ export function GameCardStreak({
       <span aria-hidden style={{ fontSize: "11px", lineHeight: 1 }}>
         &#128293;
       </span>
-      <span>
-        {streak > 0 ? formatStreak(streak) : "No streak"}
-      </span>
+      <span>{streak > 0 ? formatStreak(streak) : "No streak"}</span>
     </div>
   );
 }
@@ -187,7 +188,7 @@ export function StreakBadge() {
               e.currentTarget.style.color = "var(--text-dim)";
             }}
           >
-            <span>{game.label}</span>
+            <GameTitle game={game.id} />
             <span style={{ color: game.currentStreak > 0 ? "var(--gold)" : "var(--text-dim)" }}>
               {game.currentStreak > 0 ? formatStreak(game.currentStreak) : "—"}
             </span>

@@ -498,6 +498,10 @@ body {
   transition-duration: 0.08s;
 }
 
+.stim-party-card:hover {
+  box-shadow: 0 10px 48px rgba(0, 0, 0, 0.35);
+}
+
 /* Brain Dead answer buttons */
 .bd-answer-btn {
   -webkit-tap-highlight-color: transparent;
@@ -659,6 +663,71 @@ body {
 @keyframes cl-hint-pulse {
   0%, 100% { box-shadow: 0 0 0 rgba(201,180,88,0); }
   50%      { box-shadow: 0 0 12px rgba(201,180,88,0.25); }
+}
+
+/* Chainlink home-page preview */
+.chainlink-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+
+.chainlink-preview-segment {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chainlink-preview-tile {
+  padding: 7px 16px;
+  border: 1.5px solid;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  font-family: "JetBrains Mono", monospace;
+  text-align: center;
+  min-width: 76px;
+  flex-shrink: 0;
+}
+
+.chainlink-preview-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.chainlink-preview-link-v {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .chainlink-preview {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .chainlink-preview-segment {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .chainlink-preview-tile {
+    min-width: 88px;
+    width: 100%;
+    max-width: 120px;
+  }
+
+  .chainlink-preview-link-h {
+    display: none;
+  }
+
+  .chainlink-preview-link-v {
+    display: block;
+  }
 }
 
 /* ── Shared game juice keyframes ── */

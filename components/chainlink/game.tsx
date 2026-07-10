@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useChainlinkStore } from "@/lib/chainlink/store";
 import { formatPair, getDateString } from "@/lib/chainlink/puzzles";
@@ -9,6 +9,7 @@ import { useSound } from "@/lib/audio/sound-context";
 import { fireConfetti } from "@/lib/motion/confetti";
 import { triggerAnimation } from "@/lib/motion/trigger-class";
 import { SoundToggle } from "@/components/ui/sound-toggle";
+import { GameTitle } from "@/components/ui/game-title";
 import TutorialModal from "./tutorial-modal";
 import { OtherDailies } from "@/components/daily/other-dailies";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
@@ -25,8 +26,9 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function displayChar(ch: string): string {
-  return ch.toLowerCase();
+function displayChar(ch: string, index: number): string {
+  const lower = ch.toLowerCase();
+  return index === 0 ? lower.charAt(0).toUpperCase() : lower;
 }
 
 function unrevealedSlotIndex(revealedLetters: boolean[], position: number): number {
@@ -250,7 +252,7 @@ function WordRow({
               }}
             >
               {chars.map((ch, i) => (
-                <span key={i} style={letterStyle(i)}>{displayChar(ch)}</span>
+                <span key={i} style={letterStyle(i)}>{displayChar(ch, i)}</span>
               ))}
             </span>
           ) : status === "active" && onSubmitGuess ? (
@@ -275,7 +277,7 @@ function WordRow({
                   flexShrink: 0,
                 }}
               >
-                {word[0].toLowerCase()}
+                {displayChar(word[0], 0)}
               </span>
 
               {/* Remaining letters — hints, typed chars, or underscores */}
@@ -322,6 +324,8 @@ function WordRow({
                 onChange={(e) => setLocalGuess(e.target.value.toLowerCase().slice(0, unrevealedCount))}
                 onKeyDown={handleLocalKeyDown}
                 autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
                 spellCheck={false}
                 aria-label={`Guess remaining letters for ${word}`}
                 style={{
@@ -358,7 +362,7 @@ function WordRow({
                       color: show && i !== 0 ? "#c9b458" : undefined,
                     }}
                   >
-                    {show ? displayChar(ch) : "_"}
+                    {show ? displayChar(ch, i) : "_"}
                     {i < word.length - 1 && " "}
                   </span>
                 );
@@ -424,6 +428,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
   const {
     puzzleWords,
     loading,
+    loadError,
     date,
     wordStatuses,
     wordAttempts,
@@ -434,6 +439,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
     feedback,
     justSolvedIndex,
     submitGuess,
+    useHint: storeUseHint,
     clearFeedback,
     clearJustSolved,
     initPuzzle,
@@ -459,6 +465,17 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
       return useChainlinkStore.persist.onFinishHydration(hydrate);
     }
   }, [mode, initPuzzle]);
+
+  // Retry if hydration stalls (common on mobile dev over LAN).
+  useEffect(() => {
+    if (puzzleWords.length > 0 || loading || loadError) return;
+    const timer = window.setTimeout(() => {
+      if (useChainlinkStore.getState().puzzleWords.length === 0) {
+        void initPuzzle(mode);
+      }
+    }, 4000);
+    return () => window.clearTimeout(timer);
+  }, [puzzleWords.length, loading, loadError, mode, initPuzzle]);
 
   useEffect(() => {
     if (!isComplete || completeCelebratedRef.current) return;
@@ -493,6 +510,9 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
   useEffect(() => {
     if (!isFailed || savedFailRef.current) return;
     savedFailRef.current = true;
+    if (mode === "daily") {
+      recordDailyCompletion("chainlink");
+    }
     fetch("/api/chain/attempt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -553,6 +573,52 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
     }
   }, [feedback, play]);
 
+  const handleHint = useCallback(() => {
+    play("ui.tap");
+    const result = storeUseHint();
+    if (result?.solved) {
+      play("correct");
+      setHintAnim(true);
+      setTimeout(() => setHintAnim(false), 600);
+    }
+  }, [storeUseHint, play]);
+
+  if (loadError) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "300px",
+          gap: "16px",
+          padding: "24px",
+          textAlign: "center",
+        }}
+      >
+        <p style={{ margin: 0, color: "#787c7e", fontSize: "14px", lineHeight: 1.5, maxWidth: "320px" }}>
+          {loadError}
+        </p>
+        <button
+          type="button"
+          onClick={() => void initPuzzle(mode)}
+          style={{
+            padding: "10px 18px",
+            borderRadius: "8px",
+            border: "1px solid #3a3a3c",
+            background: "#1a1a1b",
+            color: "#d7dadc",
+            cursor: "pointer",
+            fontSize: "13px",
+          }}
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
   if (loading || puzzleWords.length === 0) {
     return (
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "300px", color: "#787c7e" }}>
@@ -593,21 +659,31 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
               <circle cx="12" cy="18" r="4" stroke="#ffffff" strokeWidth="2" fill="none" />
               <rect x="11" y="9" width="2" height="6" rx="1" fill="#ffffff" />
             </svg>
-            <h1 style={{ fontSize: "clamp(24px, 5vw, 32px)", fontWeight: 700, color: "#ffffff", margin: 0, letterSpacing: "-0.02em" }}>
-              Chainlink
-            </h1>
+            <GameTitle
+              game="chainlink"
+              as="h1"
+              style={{
+                fontSize: "clamp(24px, 5vw, 32px)",
+                fontWeight: 700,
+                color: "#ffffff",
+                margin: 0,
+                letterSpacing: "-0.02em",
+              }}
+            />
           </div>
 
           <div style={{ fontSize: "11px", fontWeight: 500, color: "#565758", marginBottom: "4px" }}>
             {`Daily Puzzle · ${formatDate(date || getDateString())}`}
           </div>
 
-          {/* Mistakes remaining */}
+          {/* Tries + hint */}
           {gameStatus === "playing" && (
             <div
               style={{
                 display: "flex",
-                justifyContent: "center",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "8px",
                 marginTop: "8px",
               }}
             >
@@ -622,6 +698,33 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
               >
                 {hintsRemaining} {hintsRemaining === 1 ? "try" : "tries"} left
               </span>
+              <button
+                onClick={handleHint}
+                disabled={hintsRemaining <= 0}
+                style={{
+                  width: "auto",
+                  padding: "10px 20px",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  background: "#565758",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "6px",
+                  cursor: hintsRemaining > 0 ? "pointer" : "not-allowed",
+                  opacity: hintsRemaining > 0 ? 1 : 0.4,
+                  animation: hintAnim ? "cl-hint-pulse 0.4s ease" : undefined,
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 18h6" />
+                  <path d="M10 22h4" />
+                  <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14" />
+                </svg>
+                Hint
+              </button>
             </div>
           )}
 

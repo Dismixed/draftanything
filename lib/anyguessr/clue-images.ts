@@ -9,6 +9,7 @@ const IMAGE_CLUE_TYPES = new Set([
   "jersey",
   "brand",
   "currency",
+  "wildlife",
 ]);
 
 export function isImageClueType(type: string): boolean {

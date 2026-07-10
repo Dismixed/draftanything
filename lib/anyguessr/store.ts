@@ -144,7 +144,7 @@ export const useAnyGuessrStore = create<AnyGuessrStore>()(
           console.error("anyguessr init failed:", err);
           const message =
             err instanceof Error && err.message === "No puzzle available"
-              ? "Today's daily isn't ready yet — there aren't enough approved countries in the puzzle pool."
+              ? "Today's daily isn't ready yet — the puzzle pool can't fill all ten rounds yet."
               : "Couldn't load a puzzle. Try again.";
           set({
             ...buildInitialState(),

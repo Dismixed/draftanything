@@ -13,6 +13,7 @@ const CLUE_TYPE_LABEL: Record<string, string> = {
   currency: "Currency",
   jersey: "Jersey",
   brand: "Brand",
+  wildlife: "Wildlife",
   audio: "Spoken Language",
 };
 

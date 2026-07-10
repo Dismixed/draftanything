@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { GameBackLink } from "@/components/ui/game-back-link";
+import { GameTitle } from "@/components/ui/game-title";
 
 export default function AnyGuessrPage() {
   return (
@@ -39,7 +40,9 @@ export default function AnyGuessrPage() {
         <header style={{ position: "relative", marginBottom: "32px" }}>
           <GameBackLink color="var(--ag-muted)" />
           <div style={{ textAlign: "center" }}>
-          <h1
+          <GameTitle
+            game="anyguessr"
+            as="h1"
             style={{
               fontSize: "clamp(26px, 5.5vw, 34px)",
               fontWeight: 800,
@@ -47,9 +50,7 @@ export default function AnyGuessrPage() {
               margin: "0 0 6px",
               letterSpacing: "-0.02em",
             }}
-          >
-            AnyGuessr
-          </h1>
+          />
           <p
             style={{
               fontSize: "11px",
@@ -106,7 +107,7 @@ export default function AnyGuessrPage() {
               Today&apos;s Puzzle
             </div>
             <div style={{ fontSize: "10px", color: "var(--ag-muted)" }}>
-              Nine countries, nine clue types. Closer guesses score more.
+              Ten countries, ten clue types. Closer guesses score more.
             </div>
           </div>
         </Link>
