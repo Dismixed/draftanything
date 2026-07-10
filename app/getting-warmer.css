@@ -568,3 +568,76 @@
   font-family: "IBM Plex Mono", monospace;
   font-size: 13px;
 }
+
+.gw-results-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(10, 7, 5, 0.92);
+  overflow-y: auto;
+}
+
+.gw-results-modal {
+  width: 100%;
+  max-width: 520px;
+}
+
+.gw-results-modal-card {
+  background: var(--gw-surface);
+  border: 1px solid rgba(255, 107, 26, 0.3);
+  border-radius: var(--gw-radius);
+  padding: 24px 20px 28px;
+}
+
+.gw-results-eyebrow {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gw-orange);
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.gw-guess-recap {
+  margin-top: 20px;
+  text-align: left;
+}
+
+.gw-guess-recap-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gw-guess-recap-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 9px;
+  background: rgba(255, 77, 77, 0.08);
+  border: 1px solid rgba(255, 77, 77, 0.25);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  color: #ff8a8a;
+  text-transform: uppercase;
+}
+
+.gw-guess-recap-item.correct {
+  background: rgba(57, 255, 143, 0.08);
+  border-color: rgba(57, 255, 143, 0.35);
+  color: var(--gw-success);
+}
+
+.gw-guess-recap-num {
+  width: 18px;
+  color: var(--gw-ink-dim);
+  font-size: 10px;
+  flex-shrink: 0;
+}

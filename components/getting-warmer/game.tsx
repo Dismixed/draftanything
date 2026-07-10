@@ -6,10 +6,9 @@ import {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import { GameBackLink } from "@/components/ui/game-back-link";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
-import { OtherDailies } from "@/components/daily/other-dailies";
-import { WinStreakLine } from "@/components/streak/streak-notifier";
 import { isHowItWorksSeen, markHowItWorksSeen } from "@/lib/game-how-it-works";
 import { getCountdownText } from "@/lib/getting-warmer/game-logic";
 import {
@@ -20,6 +19,7 @@ import {
   saveLeaderboardEntry,
 } from "@/lib/getting-warmer/storage";
 import type { DailyPuzzleClient, LeaderboardEntry } from "@/lib/getting-warmer/types";
+import { GettingWarmerResultsModal } from "./results-modal";
 
 type Screen = "loading" | "game" | "results" | "played";
 
@@ -42,6 +42,8 @@ export default function GettingWarmerGame() {
   const [clues, setClues] = useState<string[]>([]);
   const [extraClues, setExtraClues] = useState<string[]>([]);
   const [wrongGuesses, setWrongGuesses] = useState<string[]>([]);
+  const [guessHistory, setGuessHistory] = useState<string[]>([]);
+  const [gaveUp, setGaveUp] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [finished, setFinished] = useState(false);
   const [won, setWon] = useState(false);
@@ -64,6 +66,8 @@ export default function GettingWarmerGame() {
   const [showHowItWorks, setShowHowItWorks] = useState(
     () => !isHowItWorksSeen("getting-warmer"),
   );
+  const [mounted, setMounted] = useState(false);
+  const [showResultsModal, setShowResultsModal] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const submittedEntryIdRef = useRef<string | null>(getSubmittedEntryId());
@@ -83,6 +87,19 @@ export default function GettingWarmerGame() {
   useEffect(() => {
     cluesRef.current = clues;
   }, [clues]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (screen !== "results" && screen !== "played") {
+      setShowResultsModal(false);
+      return;
+    }
+    const timer = setTimeout(() => setShowResultsModal(true), 400);
+    return () => clearTimeout(timer);
+  }, [screen]);
 
   const loadLeaderboard = useCallback(async () => {
     setLbLoading(true);
@@ -124,6 +141,12 @@ export default function GettingWarmerGame() {
         if (played) {
           setAttempts(played.attempts);
           setWon(played.won);
+          setAnswer(played.answer ?? "");
+          setGuessHistory(played.guesses ?? []);
+          setGaveUp(played.gaveUp ?? false);
+          if (getSubmittedEntryId()) {
+            setLbSubmitted(true);
+          }
           setScreen("played");
           loadLeaderboard();
           return;
@@ -168,10 +191,16 @@ export default function GettingWarmerGame() {
       finalAnswer: string;
       finalAttempts: number;
     }) => {
+      const allGuesses = opts.won
+        ? [...wrongGuessesRef.current, opts.finalAnswer.toUpperCase()]
+        : [...wrongGuessesRef.current];
+
       setFinished(true);
       setWon(opts.won);
+      setGaveUp(opts.gaveUp ?? false);
       setAnswer(opts.finalAnswer);
       setAttempts(opts.finalAttempts);
+      setGuessHistory(allGuesses);
       setScreen("results");
 
       if (opts.won) {
@@ -184,7 +213,11 @@ export default function GettingWarmerGame() {
         setFeedbackClass("lose");
       }
 
-      saveDailyPlayed(opts.won, opts.finalAttempts);
+      saveDailyPlayed(opts.won, opts.finalAttempts, {
+        answer: opts.finalAnswer,
+        guesses: allGuesses,
+        gaveUp: opts.gaveUp,
+      });
       await loadLeaderboard();
     },
     [loadLeaderboard],
@@ -424,7 +457,7 @@ export default function GettingWarmerGame() {
                 <div className={`gw-feedback ${feedbackClass}`}>{feedback}</div>
               )}
 
-              {wrongGuesses.length > 0 && (
+              {wrongGuesses.length > 0 && !finished && (
                 <div className="gw-past-guesses">
                   {wrongGuesses.map((g, i) => (
                     <div key={i} className="gw-past-guess">
@@ -433,133 +466,36 @@ export default function GettingWarmerGame() {
                   ))}
                 </div>
               )}
-
-              {screen === "results" && (
-                <div className="gw-result">
-                  <div className="gw-sub">
-                    {won ? "YOU GOT IT" : "TODAY'S WORD WAS"}
-                  </div>
-                  <div className="gw-result-answer">{answer}</div>
-                  {won ? (
-                    <div className="gw-result-score">
-                      <b>{attempts}</b>
-                      {attempts === 1 ? "guess" : "guesses"}
-                    </div>
-                  ) : null}
-                  <div className="gw-share-emoji">{shareEmojis}</div>
-
-                  {won && (
-                    <>
-                      <div className="gw-section-label" style={{ marginTop: 20 }}>
-                        Join Today&apos;s Leaderboard
-                      </div>
-                      {!lbSubmitted ? (
-                        <div className="gw-join-row">
-                          <input
-                            type="text"
-                            value={nameInput}
-                            onChange={(e) => setNameInput(e.target.value)}
-                            placeholder="Your name"
-                            maxLength={18}
-                          />
-                          <button
-                            type="button"
-                            onClick={handleJoinLeaderboard}
-                            disabled={lbSubmitting}
-                          >
-                            {lbSubmitting ? "…" : "Join"}
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="gw-empty-note">You&apos;re on the board!</div>
-                      )}
-                      <div className="gw-streak-line">
-                        <WinStreakLine gameId="getting-warmer" />
-                      </div>
-                      <OtherDailies currentGameId="getting-warmer" />
-                    </>
-                  )}
-                </div>
-              )}
             </div>
-
-            {screen === "results" && (
-              <div className="gw-leaderboard">
-                <div className="gw-lb-head">
-                  <h2>Today&apos;s Leaderboard</h2>
-                  <span>
-                    {lbLoading ? "…" : `${leaderboard.length} players`}
-                  </span>
-                </div>
-                {lbLoading ? (
-                  <div className="gw-empty-note">Loading…</div>
-                ) : leaderboard.length === 0 ? (
-                  <div className="gw-empty-note">
-                    No entries yet — be the first.
-                  </div>
-                ) : (
-                  leaderboard.slice(0, 10).map((row, i) => (
-                    <div
-                      key={row.id}
-                      className={`gw-lb-row${row.id === submittedEntryIdRef.current ? " me" : ""}`}
-                    >
-                      <div className="gw-lb-rank">{i + 1}</div>
-                      <div className="gw-lb-name">{row.name}</div>
-                      <div className="gw-lb-score">
-                        {row.guesses}
-                        <span style={{ opacity: 0.6, fontSize: "10px", marginLeft: "3px" }}>
-                          {row.guesses === 1 ? "guess" : "guesses"}
-                        </span>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
           </>
         )}
 
         {screen === "played" && puzzle && (
           <div className="gw-card">
+            <div className="gw-back-link">
+              <GameBackLink href="/" color="var(--gw-ink-dim)" />
+            </div>
             <div className="gw-result" style={{ marginTop: 0 }}>
               <div className="gw-sub">ALREADY PLAYED TODAY</div>
               <div className="gw-result-score">
-                <b>{attempts}</b>
-                {won
-                  ? ` ${attempts === 1 ? "guess" : "guesses"}`
-                  : " guesses before giving up"}
+                {won ? (
+                  <>
+                    <b>{attempts}</b>
+                    {attempts === 1 ? " guess" : " guesses"}
+                  </>
+                ) : (
+                  <>
+                    <b>{attempts}</b>
+                    {attempts === 1 ? " guess" : " guesses"} before giving up
+                  </>
+                )}
               </div>
               <div className="gw-share-emoji">
                 {buildShareEmojis(attempts, won)}
               </div>
             </div>
-            <div className="gw-leaderboard">
-              <div className="gw-lb-head">
-                <h2>Today&apos;s Leaderboard</h2>
-              </div>
-              {leaderboard.slice(0, 10).map((row, i) => (
-                <div
-                  key={row.id}
-                  className={`gw-lb-row${row.id === submittedEntryIdRef.current ? " me" : ""}`}
-                >
-                  <div className="gw-lb-rank">{i + 1}</div>
-                  <div className="gw-lb-name">{row.name}</div>
-                  <div className="gw-lb-score">
-                    {row.guesses}
-                    <span style={{ opacity: 0.6, fontSize: "10px", marginLeft: "3px" }}>
-                      {row.guesses === 1 ? "guess" : "guesses"}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {countdown && (
-              <p className="gw-countdown">Next puzzle in {countdown}</p>
-            )}
           </div>
         )}
-
-        <OtherDailies currentGameId="getting-warmer" />
 
         {showHowItWorks && (
           <GameHowItWorksModal
@@ -597,6 +533,38 @@ export default function GettingWarmerGame() {
           />
         )}
       </div>
+
+      {mounted &&
+        showResultsModal &&
+        (screen === "results" || screen === "played") &&
+        createPortal(
+          <div
+            className="gw-results-overlay anim-fade-slide-up"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Puzzle results"
+          >
+            <GettingWarmerResultsModal
+              won={won}
+              gaveUp={gaveUp}
+              answer={answer}
+              attempts={attempts}
+              guesses={guessHistory}
+              shareEmojis={shareEmojis}
+              countdown={countdown}
+              alreadyPlayed={screen === "played"}
+              leaderboard={leaderboard}
+              lbLoading={lbLoading}
+              submittedEntryId={submittedEntryIdRef.current}
+              nameInput={nameInput}
+              onNameInputChange={setNameInput}
+              onJoinLeaderboard={handleJoinLeaderboard}
+              lbSubmitting={lbSubmitting}
+              lbSubmitted={lbSubmitted}
+            />
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

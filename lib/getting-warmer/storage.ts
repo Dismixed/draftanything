@@ -31,7 +31,15 @@ export function getDailyPlayed(): DailyPlayed | null {
   }
 }
 
-export function saveDailyPlayed(won: boolean, attempts: number): void {
+export function saveDailyPlayed(
+  won: boolean,
+  attempts: number,
+  details?: {
+    answer: string;
+    guesses: string[];
+    gaveUp?: boolean;
+  },
+): void {
   if (typeof window === "undefined") return;
   const playDate = getDateString();
   localStorage.setItem(
@@ -40,6 +48,13 @@ export function saveDailyPlayed(won: boolean, attempts: number): void {
       won,
       attempts,
       ts: Date.now(),
+      ...(details
+        ? {
+            answer: details.answer,
+            guesses: details.guesses,
+            gaveUp: details.gaveUp ?? false,
+          }
+        : {}),
     }),
   );
   if (won) {

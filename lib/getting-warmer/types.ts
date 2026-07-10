@@ -9,6 +9,9 @@ export interface DailyPlayed {
   won: boolean;
   attempts: number;
   ts: number;
+  answer?: string;
+  guesses?: string[];
+  gaveUp?: boolean;
 }
 
 export interface LeaderboardEntry {
