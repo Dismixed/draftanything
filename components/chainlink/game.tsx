@@ -115,10 +115,10 @@ function WordRow({
     setSubmitting(false);
   }, [word]);
 
-  const handleLocalKeyDown = async (e: React.KeyboardEvent) => {
-    if (e.key !== "Enter" || !localGuess.trim() || !onSubmitGuess || submitting) return;
+  const trySubmit = useCallback(async () => {
+    if (!localGuess.trim() || !onSubmitGuess || submitting) return;
+    if (localGuess.length < unrevealedCount) return;
 
-    // Build the full word: first letter + hint-revealed letters + typed remainder
     const typed = localGuess.trim();
     let typedIdx = 0;
     let fullGuess = word[0].toLowerCase();
@@ -148,6 +148,19 @@ function WordRow({
     } else if (result === "already-solved") {
       play("ui.tap");
     }
+  }, [localGuess, unrevealedCount, onSubmitGuess, submitting, word, revealedLetters, play]);
+
+  useEffect(() => {
+    if (status !== "active" || unrevealedCount === 0) return;
+    if (localGuess.length === unrevealedCount) {
+      void trySubmit();
+    }
+  }, [localGuess, unrevealedCount, status, trySubmit]);
+
+  const handleLocalKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== "Enter" || !localGuess.trim() || !onSubmitGuess || submitting) return;
+    e.preventDefault();
+    void trySubmit();
   };
 
   const letterStyle = (i: number): React.CSSProperties => {
