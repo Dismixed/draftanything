@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Providers } from "./providers";
 import { ProfileMenuWrapper } from "@/components/auth/profile-menu-wrapper";
+import { SITE_URL } from "@/lib/seo";
 import "./globals.css";
 import "./slippery-slope.css";
 import "./anyguessr.css";
@@ -10,8 +11,27 @@ import "./ball-knowledge.css";
 import "./getting-warmer.css";
 
 export const metadata: Metadata = {
-  title: "Stim Games",
-  description: "Party games for any crowd.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Stim Games",
+    template: "%s | Stim Games",
+  },
+  description: "A fresh rotation of quick daily games across geography, movies, trivia, chains, hot takes, and group-chat arguments.",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "Stim Games",
+    description: "Quick daily games across geography, movies, trivia, chains, hot takes, and group-chat arguments.",
+    url: "/",
+    siteName: "Stim Games",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Stim Games",
+    description: "Quick daily games across geography, movies, trivia, chains, hot takes, and group-chat arguments.",
+  },
 };
 
 export const viewport: Viewport = {

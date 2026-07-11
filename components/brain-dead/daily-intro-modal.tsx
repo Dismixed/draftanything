@@ -7,7 +7,7 @@ interface DailyIntroModalProps {
 const RULES = [
   {
     title: "15 Questions",
-    body: "Everyone gets the same trivia set today. Answer as many as you can.",
+    body: "Everyone gets the same set today. Answer as many as you can.",
   },
   {
     title: "One Wrong Answer Ends It",
@@ -19,7 +19,7 @@ const RULES = [
   },
   {
     title: "One Shot Per Day",
-    body: "Play once, submit your score, then come back tomorrow for a new challenge.",
+    body: "Play once and post your score. Tomorrow gets a fresh set.",
   },
 ] as const;
 

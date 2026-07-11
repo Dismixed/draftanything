@@ -462,6 +462,9 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
   const [hintAnim, setHintAnim] = useState(false);
   const [showCompleteOverlay, setShowCompleteOverlay] = useState(false);
   const [showFailOverlay, setShowFailOverlay] = useState(false);
+  const [storeReady, setStoreReady] = useState(
+    () => typeof window !== "undefined" && useChainlinkStore.persist.hasHydrated(),
+  );
   const failCelebratedRef = useRef(false);
   const savedFailRef = useRef(false);
 
@@ -469,26 +472,32 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
   const isFailed = gameStatus === "failed";
   const isOver = isComplete || isFailed;
 
-  // Initialize after persist rehydration so puzzle is not stuck loading.
+  // Initialize after persist rehydration so we don't clobber an in-progress daily.
   useEffect(() => {
-    const hydrate = () => initPuzzle(mode);
-    if (useChainlinkStore.persist.hasHydrated()) {
-      hydrate();
-    } else {
-      return useChainlinkStore.persist.onFinishHydration(hydrate);
-    }
-  }, [mode, initPuzzle]);
+    const start = () => {
+      setStoreReady(true);
+      void initPuzzle(mode);
+    };
 
-  // Retry if hydration stalls (common on mobile dev over LAN).
-  useEffect(() => {
-    if (puzzleWords.length > 0 || loading || loadError) return;
-    const timer = window.setTimeout(() => {
-      if (useChainlinkStore.getState().puzzleWords.length === 0) {
-        void initPuzzle(mode);
+    if (useChainlinkStore.persist.hasHydrated()) {
+      start();
+      return;
+    }
+
+    const unsub = useChainlinkStore.persist.onFinishHydration(start);
+    const fallback = window.setTimeout(() => {
+      if (useChainlinkStore.persist.hasHydrated()) {
+        start();
+        return;
       }
-    }, 4000);
-    return () => window.clearTimeout(timer);
-  }, [puzzleWords.length, loading, loadError, mode, initPuzzle]);
+      void Promise.resolve(useChainlinkStore.persist.rehydrate()).finally(start);
+    }, 750);
+
+    return () => {
+      unsub?.();
+      window.clearTimeout(fallback);
+    };
+  }, [mode, initPuzzle]);
 
   useEffect(() => {
     if (!isComplete || completeCelebratedRef.current) return;
@@ -596,8 +605,13 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
     }
   }, [storeUseHint, play]);
 
-  if (loadError) {
-    return (
+  const isPuzzleLoading =
+    storeReady && !loadError && (loading || puzzleWords.length === 0);
+
+  return (
+    <>
+      <TutorialModal />
+      {loadError ? (
       <div
         style={{
           display: "flex",
@@ -629,20 +643,11 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
           Try again
         </button>
       </div>
-    );
-  }
-
-  if (loading || puzzleWords.length === 0) {
-    return (
+      ) : isPuzzleLoading ? (
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "300px", color: "#787c7e" }}>
         Loading puzzle...
       </div>
-    );
-  }
-
-  return (
-    <>
-      <TutorialModal />
+      ) : (
       <div className="game-shell" style={{ width: "100%", maxWidth: "520px", margin: "0 auto" }}>
         {/* ---- Header ---- */}
         <header style={{ textAlign: "center", marginBottom: "32px", position: "relative" }}>
@@ -984,6 +989,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
         )}
 
       </div>
+      )}
     </>
   );
 }

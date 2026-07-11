@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
+import { buildGameJsonLd, JsonLdScript } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Draft Anything",
-  description: "A live draft room for any topic.",
+  description: "A room-code party game where friends draft any topic, defend every pick, and vote on the best roster.",
+  alternates: {
+    canonical: "/draft-anything",
+  },
 };
 
 export default function DraftAnythingLayout({
@@ -10,5 +14,10 @@ export default function DraftAnythingLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return children;
+  return (
+    <>
+      <JsonLdScript data={buildGameJsonLd("draft-anything")} />
+      {children}
+    </>
+  );
 }

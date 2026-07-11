@@ -9,8 +9,9 @@ import {
 import { createPortal } from "react-dom";
 import { GameBackLink } from "@/components/ui/game-back-link";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
-import { isHowItWorksSeen, markHowItWorksSeen } from "@/lib/game-how-it-works";
-import { getCountdownText } from "@/lib/getting-warmer/game-logic";
+import { useGameHowItWorks } from "@/lib/game-how-it-works";
+import { readDailyPuzzleCache, writeDailyPuzzleCache } from "@/lib/daily-puzzle-cache";
+import { getCountdownText, getDateString } from "@/lib/getting-warmer/game-logic";
 import {
   fetchTodayLeaderboard,
   getDailyPlayed,
@@ -22,6 +23,43 @@ import type { DailyPuzzleClient, LeaderboardEntry } from "@/lib/getting-warmer/t
 import { GettingWarmerResultsModal } from "./results-modal";
 
 type Screen = "loading" | "game" | "results" | "played";
+
+function readInitialGettingWarmerState(): {
+  screen: Screen;
+  puzzle: DailyPuzzleClient | null;
+  clues: string[];
+  authoredCount: number;
+  played: ReturnType<typeof getDailyPlayed>;
+} {
+  if (typeof window === "undefined") {
+    return { screen: "loading", puzzle: null, clues: [], authoredCount: 0, played: null };
+  }
+
+  const today = getDateString();
+  const played = getDailyPlayed();
+  const cached = readDailyPuzzleCache<DailyPuzzleClient>("getting-warmer", today);
+  if (!cached) {
+    return { screen: "loading", puzzle: null, clues: [], authoredCount: 0, played };
+  }
+
+  if (played) {
+    return {
+      screen: "played",
+      puzzle: cached,
+      clues: [],
+      authoredCount: cached.authoredClueCount,
+      played,
+    };
+  }
+
+  return {
+    screen: "game",
+    puzzle: cached,
+    clues: cached.initialClues,
+    authoredCount: cached.authoredClueCount,
+    played,
+  };
+}
 
 function buildShareEmojis(attempts: number, won: boolean): string {
   const used = Math.min(attempts, 6);
@@ -35,19 +73,22 @@ function buildShareEmojis(attempts: number, won: boolean): string {
 }
 
 export default function GettingWarmerGame() {
-  const [screen, setScreen] = useState<Screen>("loading");
-  const [puzzle, setPuzzle] = useState<DailyPuzzleClient | null>(null);
+  const initial = readInitialGettingWarmerState();
+  const [screen, setScreen] = useState<Screen>(initial.screen);
+  const [puzzle, setPuzzle] = useState<DailyPuzzleClient | null>(initial.puzzle);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
-  const [clues, setClues] = useState<string[]>([]);
+  const [clues, setClues] = useState<string[]>(initial.clues);
   const [extraClues, setExtraClues] = useState<string[]>([]);
   const [wrongGuesses, setWrongGuesses] = useState<string[]>([]);
-  const [guessHistory, setGuessHistory] = useState<string[]>([]);
-  const [gaveUp, setGaveUp] = useState(false);
-  const [attempts, setAttempts] = useState(0);
+  const [guessHistory, setGuessHistory] = useState<string[]>(
+    initial.played?.guesses ?? [],
+  );
+  const [gaveUp, setGaveUp] = useState(initial.played?.gaveUp ?? false);
+  const [attempts, setAttempts] = useState(initial.played?.attempts ?? 0);
   const [finished, setFinished] = useState(false);
-  const [won, setWon] = useState(false);
-  const [answer, setAnswer] = useState("");
+  const [won, setWon] = useState(initial.played?.won ?? false);
+  const [answer, setAnswer] = useState(initial.played?.answer ?? "");
   const [feedback, setFeedback] = useState("");
   const [feedbackClass, setFeedbackClass] = useState("");
   const [guessInput, setGuessInput] = useState("");
@@ -62,10 +103,10 @@ export default function GettingWarmerGame() {
   const [lbLoading, setLbLoading] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const [lbSubmitting, setLbSubmitting] = useState(false);
-  const [lbSubmitted, setLbSubmitted] = useState(false);
-  const [showHowItWorks, setShowHowItWorks] = useState(
-    () => !isHowItWorksSeen("getting-warmer"),
+  const [lbSubmitted, setLbSubmitted] = useState(
+    () => initial.screen === "played" && !!getSubmittedEntryId(),
   );
+  const { showHowItWorks, dismissHowItWorks } = useGameHowItWorks("getting-warmer");
   const [mounted, setMounted] = useState(false);
   const [showResultsModal, setShowResultsModal] = useState(false);
 
@@ -73,8 +114,8 @@ export default function GettingWarmerGame() {
   const submittedEntryIdRef = useRef<string | null>(getSubmittedEntryId());
   const extraCluesRef = useRef<string[]>([]);
   const wrongGuessesRef = useRef<string[]>([]);
-  const cluesRef = useRef<string[]>([]);
-  const authoredCountRef = useRef(0);
+  const cluesRef = useRef<string[]>(initial.clues);
+  const authoredCountRef = useRef(initial.authoredCount);
 
   useEffect(() => {
     extraCluesRef.current = extraClues;
@@ -129,40 +170,53 @@ export default function GettingWarmerGame() {
   }, [finished]);
 
   useEffect(() => {
-    async function load() {
-      const played = getDailyPlayed();
+    if (initial.screen === "played") {
+      void loadLeaderboard();
+      return;
+    }
+    if (initial.screen !== "loading") return;
 
+    const today = getDateString();
+    const played = getDailyPlayed();
+
+    function applyPuzzle(data: DailyPuzzleClient) {
+      setPuzzle(data);
+
+      if (played) {
+        setAttempts(played.attempts);
+        setWon(played.won);
+        setAnswer(played.answer ?? "");
+        setGuessHistory(played.guesses ?? []);
+        setGaveUp(played.gaveUp ?? false);
+        if (getSubmittedEntryId()) {
+          setLbSubmitted(true);
+        }
+        setScreen("played");
+        void loadLeaderboard();
+        return;
+      }
+
+      setClues(data.initialClues);
+      authoredCountRef.current = data.authoredClueCount;
+      cluesRef.current = data.initialClues;
+      setScreen("game");
+    }
+
+    async function load() {
       try {
         const res = await fetch("/api/getting-warmer/daily");
         if (!res.ok) throw new Error("Failed to load puzzle");
         const data = (await res.json()) as DailyPuzzleClient;
-        setPuzzle(data);
-
-        if (played) {
-          setAttempts(played.attempts);
-          setWon(played.won);
-          setAnswer(played.answer ?? "");
-          setGuessHistory(played.guesses ?? []);
-          setGaveUp(played.gaveUp ?? false);
-          if (getSubmittedEntryId()) {
-            setLbSubmitted(true);
-          }
-          setScreen("played");
-          loadLeaderboard();
-          return;
-        }
-
-        setClues(data.initialClues);
-        authoredCountRef.current = data.authoredClueCount;
-        cluesRef.current = data.initialClues;
-        setScreen("game");
+        writeDailyPuzzleCache("getting-warmer", today, data);
+        applyPuzzle(data);
       } catch {
         setFetchError("Couldn't load today's puzzle. Try refreshing.");
         setScreen("loading");
       }
     }
-    load();
-  }, [loadLeaderboard]);
+
+    void load();
+  }, [initial.screen, loadLeaderboard]);
 
   useEffect(() => {
     const tick = () => setCountdown(getCountdownText());
@@ -351,9 +405,43 @@ export default function GettingWarmerGame() {
 
   const shareEmojis = buildShareEmojis(attempts, won);
 
+  const howItWorksModal = showHowItWorks ? (
+    <GameHowItWorksModal
+      title="How Getting Warmer Works"
+      subtitle="Guess until the answer gives itself away."
+      rules={[
+        {
+          title: "Start warm",
+          body: "You begin with two clues pointing at a secret word or phrase.",
+        },
+        {
+          title: "Unlimited guesses",
+          body: "Guess as much as you need. Every miss reveals another clue.",
+        },
+        {
+          title: "Keeps going",
+          body: "If the written clues run out, you still get new hints, with letter reveals as backup.",
+        },
+        {
+          title: "Ranked by guesses",
+          body: "The leaderboard sorts by fewest guesses. Solve it in one shot and you're at the top.",
+        },
+      ]}
+      onDismiss={dismissHowItWorks}
+      theme={{
+        surface: "#150e08",
+        border: "rgba(255, 107, 26, 0.3)",
+        accent: "#ff6b1a",
+        text: "#fff3e8",
+        textMuted: "#c9a893",
+      }}
+    />
+  ) : null;
+
   if (fetchError) {
     return (
       <div className="gw-page">
+        {howItWorksModal}
         <div className="gw-app">
           <div className="gw-error">{fetchError}</div>
         </div>
@@ -364,6 +452,7 @@ export default function GettingWarmerGame() {
   if (screen === "loading" && !fetchError) {
     return (
       <div className="gw-page">
+        {howItWorksModal}
         <div className="gw-app">
           <div className="gw-loading-page">Loading today&apos;s puzzle…</div>
         </div>
@@ -373,6 +462,7 @@ export default function GettingWarmerGame() {
 
   return (
     <div className="gw-page">
+      {howItWorksModal}
       <div className="gw-app">
         <header className="gw-header">
           <div className="gw-badge">
@@ -497,41 +587,6 @@ export default function GettingWarmerGame() {
           </div>
         )}
 
-        {showHowItWorks && (
-          <GameHowItWorksModal
-            title="How Getting Warmer Works"
-            subtitle="A daily word puzzle that never runs out of hints."
-            rules={[
-              {
-                title: "Start warm",
-                body: "You begin with two clues pointing at a secret word or phrase.",
-              },
-              {
-                title: "Unlimited guesses",
-                body: "Keep guessing as long as you need. Every wrong answer unlocks another clue.",
-              },
-              {
-                title: "Keeps going",
-                body: "When the written clues run out, fresh hints are generated for you — with letter reveals as a backup.",
-              },
-              {
-                title: "Ranked by guesses",
-                body: "The leaderboard sorts by fewest guesses. Solve it in one shot and you're at the top.",
-              },
-            ]}
-            onDismiss={() => {
-              markHowItWorksSeen("getting-warmer");
-              setShowHowItWorks(false);
-            }}
-            theme={{
-              surface: "#150e08",
-              border: "rgba(255, 107, 26, 0.3)",
-              accent: "#ff6b1a",
-              text: "#fff3e8",
-              textMuted: "#c9a893",
-            }}
-          />
-        )}
       </div>
 
       {mounted &&

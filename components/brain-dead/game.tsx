@@ -796,18 +796,28 @@ export default function BrainDeadGame({
   /* ── Game ── */
   if (!q) {
     return gameShell(
-      <div
-        style={{
-          minHeight: "200px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "var(--bd-text-muted)",
-          fontSize: "13px",
-        }}
-      >
-        {fetchError ?? "Loading questions…"}
-      </div>,
+      <>
+        {isDaily && showIntro && (
+          <DailyIntroModal
+            onStart={() => {
+              play("ui.tap");
+              setShowIntro(false);
+            }}
+          />
+        )}
+        <div
+          style={{
+            minHeight: "200px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "var(--bd-text-muted)",
+            fontSize: "13px",
+          }}
+        >
+          {fetchError ?? "Loading questions…"}
+        </div>
+      </>,
     );
   }
 

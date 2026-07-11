@@ -2,21 +2,21 @@ import type { Metadata } from "next";
 import { buildGameJsonLd, JsonLdScript } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "Chainlink — Stim Labs",
-  description: "Link words together in a chain. Each word pairs with the one before it.",
+  title: "AnyGuessr — Stim Games",
+  description: "Guess the country from cultural clues, flags, maps, and geography.",
   alternates: {
-    canonical: "/chainlink",
+    canonical: "/anyguessr",
   },
 };
 
-export default function ChainlinkLayout({
+export default function AnyGuessrLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
     <>
-      <JsonLdScript data={buildGameJsonLd("chainlink")} />
+      <JsonLdScript data={buildGameJsonLd("anyguessr")} />
       {children}
     </>
   );

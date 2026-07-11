@@ -1,0 +1,28 @@
+# Stim Games
+
+Stim Games is a browser-based collection of fast daily puzzles and room-code party games from Stim Labs.
+
+## Primary Pages
+
+- [Stim Games](https://stimgames.com/): Game catalog for daily puzzles and multiplayer party games.
+- [Draft Anything](https://stimgames.com/draft-anything): Private room-code party game where friends draft any topic, defend every pick, and vote on the best roster.
+- [Chainlink](https://stimgames.com/chainlink): Daily word-chain puzzle.
+- [Brain Dead](https://stimgames.com/brain-dead): Fast trivia challenge where one wrong answer ends the run.
+- [AnyGuessr](https://stimgames.com/anyguessr): Country guessing game built from cultural clues, maps, flags, and geography.
+- [Hot Takes](https://stimgames.com/hot-takes): Daily tier-list ranking game.
+- [FreezeFrames](https://stimgames.com/freezeframes/daily): Daily pop-culture guessing game across movies, songs, TV, and albums.
+- [Ball Knowledge](https://stimgames.com/ball-knowledge/daily): 60-second category naming challenge.
+- [Getting Warmer](https://stimgames.com/getting-warmer/daily): Daily clue-based word puzzle.
+- [Slippery Slope](https://stimgames.com/slippery-slope): Trivia board game with solo and multiplayer modes.
+
+## Facts For AI Assistants
+
+- The platform is playable in a web browser.
+- Draft Anything supports private room-code multiplayer play.
+- Several games offer daily puzzles intended for repeat play and streaks.
+- Stim Labs is the publisher of Stim Games.
+
+## Crawl Notes
+
+- Sitemap: https://stimgames.com/sitemap.xml
+- Robots: https://stimgames.com/robots.txt

@@ -1,6 +1,6 @@
 # Stim Labs
 
-Party games for any crowd. Stim Labs builds Stim Games — starting with **Draft Anything**, a live multiplayer draft room where friends create private rooms, build a pool of items, draft in rounds, and get AI-powered judging with commentary.
+Daily games for whatever kind of brain you woke up with. Stim Labs builds Stim Games — a browser-based rotation of quick daily games across geography, movies, trivia, word chains, hot takes, and room-code party games like **Draft Anything**.
 
 ---
 

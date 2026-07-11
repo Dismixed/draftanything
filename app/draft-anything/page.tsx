@@ -34,7 +34,7 @@ export default function DraftAnythingLobby() {
             <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, var(--border-hi), transparent)' }} />
           </div>
           <p style={{ fontSize: '12px', color: 'var(--text-dim)', textAlign: 'center', lineHeight: 1.65, margin: 0, fontWeight: 300 }}>
-            Assemble your roster. Defend every pick.<br />Let the jury decide.
+            Pick your lineup. Argue for it.<br />Let the room judge.
           </p>
         </div>
 
@@ -111,7 +111,7 @@ export default function DraftAnythingLobby() {
         </div>
 
         <p style={{ textAlign: 'center', fontSize: '11px', color: 'var(--text-dim)', marginTop: '20px', opacity: 0.6 }}>
-          No account needed — just pick a name and go.
+          No account needed. Pick a name and get a room code.
         </p>
       </div>
     </main>

@@ -60,7 +60,7 @@ export default function AnyGuessrPage() {
               textTransform: "uppercase",
             }}
           >
-            Guess the country from cultural clues
+            Name the country from the clues
           </p>
           </div>
         </header>
@@ -107,7 +107,7 @@ export default function AnyGuessrPage() {
               Today&apos;s Puzzle
             </div>
             <div style={{ fontSize: "10px", color: "var(--ag-muted)" }}>
-              Ten countries, ten clue types. Closer guesses score more.
+              Ten countries. Ten clue types. Nearby guesses still score.
             </div>
           </div>
         </Link>

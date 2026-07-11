@@ -11,7 +11,7 @@ import Link from "next/link";
 import { GameTitle } from "@/components/ui/game-title";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
 import { OtherDailies } from "@/components/daily/other-dailies";
-import { isHowItWorksSeen, markHowItWorksSeen } from "@/lib/game-how-it-works";
+import { useGameHowItWorks } from "@/lib/game-how-it-works";
 import type { HotTakesDailyCategory, HotTakesDailyItem } from "@/lib/hot-takes/types";
 
 const TIERS = ["S", "A", "B", "C", "D"] as const;
@@ -94,9 +94,7 @@ export default function HotTakesGame({
   const [dragOverZone, setDragOverZone] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [trayShuffle, setTrayShuffle] = useState(0);
-  const [showHowItWorks, setShowHowItWorks] = useState(
-    () => !isHowItWorksSeen("hot-takes"),
-  );
+  const { showHowItWorks, dismissHowItWorks } = useGameHowItWorks("hot-takes");
   const consensus = useMemo(() => generateConsensus(category.items), [category.items]);
 
   const trayItems = useMemo(() => {
@@ -354,10 +352,7 @@ export default function HotTakesGame({
         <GameHowItWorksModal
           subtitle="15 items · One ranking a day"
           rules={HOT_TAKES_HOW_IT_WORKS}
-          onDismiss={() => {
-            markHowItWorksSeen("hot-takes");
-            setShowHowItWorks(false);
-          }}
+          onDismiss={dismissHowItWorks}
           theme={{
             overlay: "rgba(12, 4, 4, 0.92)",
             surface: "var(--ht-surface)",

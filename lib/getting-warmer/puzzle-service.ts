@@ -17,6 +17,9 @@ interface PuzzleContent {
   clues: string[];
 }
 
+const puzzleContentCache = new Map<string, PuzzleContent>();
+const dailyClientCache = new Map<string, DailyPuzzleClient>();
+
 function parseClues(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
   return raw.filter((c): c is string => typeof c === "string" && c.trim().length > 0);
@@ -56,33 +59,72 @@ async function getScheduledPuzzleRow(
   };
 }
 
+async function loadPuzzleById(
+  db: SupabaseClient,
+  puzzleId: string,
+): Promise<PuzzleContent | null> {
+  const { data, error } = await db
+    .from("getting_warmer_puzzles")
+    .select("answer, clues")
+    .eq("id", puzzleId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to load puzzle: ${error.message}`);
+  }
+  if (!data) return null;
+
+  return {
+    answer: data.answer,
+    clues: parseClues(data.clues),
+  };
+}
+
 async function resolveTodayPuzzle(
   db: SupabaseClient,
   date: string,
 ): Promise<PuzzleContent> {
+  const cached = puzzleContentCache.get(date);
+  if (cached) return cached;
+
   const scheduled = await getScheduledPuzzleRow(db, date);
-  if (scheduled) return scheduled;
+  if (scheduled) {
+    puzzleContentCache.set(date, scheduled);
+    return scheduled;
+  }
 
-  await scheduleDailyPuzzle(db, date);
-  const afterSchedule = await getScheduledPuzzleRow(db, date);
-  if (afterSchedule) return afterSchedule;
+  const scheduleResult = await scheduleDailyPuzzle(db, date);
+  if (scheduleResult) {
+    const loaded = await loadPuzzleById(db, scheduleResult.puzzleId);
+    if (loaded) {
+      puzzleContentCache.set(date, loaded);
+      return loaded;
+    }
+  }
 
-  return getSeedPuzzle();
+  const fallback = getSeedPuzzle();
+  puzzleContentCache.set(date, fallback);
+  return fallback;
 }
 
 export async function getDailyPuzzle(
   db: SupabaseClient,
 ): Promise<DailyPuzzleClient> {
   const today = getDateString();
+  const cached = dailyClientCache.get(today);
+  if (cached) return cached;
+
   const puzzle = await resolveTodayPuzzle(db, today);
   const initialClues = puzzle.clues.slice(0, INITIAL_CLUES);
 
-  return {
+  const client: DailyPuzzleClient = {
     date: today,
     dayNumber: getDayNumber(),
     initialClues,
     authoredClueCount: puzzle.clues.length,
   };
+  dailyClientCache.set(today, client);
+  return client;
 }
 
 export async function getDailyAnswer(db: SupabaseClient): Promise<PuzzleContent> {

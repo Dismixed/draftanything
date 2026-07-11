@@ -4,6 +4,7 @@ import { SoundToggle } from "@/components/ui/sound-toggle";
 import { GameCardStreak } from "@/components/streak/streak-notifier";
 import { GameTitle } from "@/components/ui/game-title";
 import { HotTakesHomeVisual } from "@/components/hot-takes/home-visual";
+import { buildHomeJsonLd, getGameSeo, JsonLdScript } from "@/lib/seo";
 
 /* ─── Visual Preview Components ──────────────────────────────────── */
 
@@ -488,11 +489,18 @@ const cta = {
 
 const cardTitleSection = {
   padding: "16px 20px 14px",
-  minHeight: "98px",
+  minHeight: "128px",
   boxSizing: "border-box" as const,
   display: "flex",
   flexDirection: "column" as const,
   justifyContent: "flex-start",
+};
+
+const cardDescription = {
+  fontSize: "12px",
+  lineHeight: 1.5,
+  margin: "8px 0 0",
+  fontWeight: 300,
 };
 
 const cardVisualSection = {
@@ -555,7 +563,7 @@ function GameCard({
           overflow: "hidden",
           cursor: "pointer",
           position: "relative",
-          minHeight: "290px",
+          minHeight: "320px",
           display: "flex",
           flexDirection: "column",
         }}
@@ -611,7 +619,7 @@ function SectionLabel({
 /* ─── Coming soon ─────────────────────────────────────────────────── */
 
 const COMING_SOON = [
-  { name: "Would You Rather", icon: "VS", description: "Pick a side. Defend your choice." },
+  { name: "Would You Rather", icon: "VS", description: "Pick a side. Make the room argue." },
   { name: "Scattergories", icon: "A", description: "A letter, a timer, twelve categories." },
 ];
 
@@ -632,6 +640,7 @@ export default function StimGames() {
         overflow: "hidden",
       }}
     >
+      <JsonLdScript data={buildHomeJsonLd()} />
       {/* Atmospheric gradients */}
       <div
         style={{
@@ -731,16 +740,16 @@ export default function StimGames() {
               maxWidth: "420px",
             }}
           >
-            Daily puzzles to solve on your own, or multiplayer games to play with
-            friends.
+            Your daily puzzle rotation after Wordle: geography, movies, chains,
+            trivia, hot takes, and a few games for the group chat.
           </p>
         </header>
 
-        {/* ── DAILY PUZZLES ───────────────────────────────────────── */}
+        {/* ── DAILY GAMES ─────────────────────────────────────────── */}
         <section style={{ marginBottom: "36px" }}>
-          <SectionLabel accent="#6aaa64">Daily puzzles</SectionLabel>
+          <SectionLabel accent="#6aaa64">Daily game rotation</SectionLabel>
           <div style={{ ...eyebrow, color: "#6aaa64", opacity: 0.55, marginBottom: "12px" }}>
-            Featured
+            Start here
           </div>
           <Link href="/chainlink" style={{ display: "block", textDecoration: "none" }}>
             <div
@@ -800,6 +809,9 @@ export default function StimGames() {
                 <p style={{ ...modeHint, color: "#787c7e", margin: "8px 0 0" }}>
                   Solo · Daily puzzle
                 </p>
+                <p style={{ ...cardDescription, color: "#787c7e" }}>
+                  {getGameSeo("chainlink").description}
+                </p>
               </div>
 
               {/* Divider */}
@@ -832,7 +844,7 @@ export default function StimGames() {
                     color: "#c9b458",
                   }}
                 >
-                  Play today&apos;s puzzle
+                  Play Chainlink
                   <span style={{ fontSize: "12px" }}>&#8594;</span>
                 </div>
               </div>
@@ -856,7 +868,7 @@ export default function StimGames() {
               borderRadius: "10px",
               overflow: "hidden",
               position: "relative",
-              minHeight: "290px",
+              minHeight: "320px",
               display: "flex",
               flexDirection: "column",
             }}
@@ -908,6 +920,9 @@ export default function StimGames() {
                   <GameCardStreak gameId="brain-dead" accentColor="var(--bd-primary)" inline />
                 </div>
                 <p style={{ ...modeHint, margin: "6px 0 0" }}>Solo · Daily + Freeplay</p>
+                <p style={{ ...cardDescription, color: "var(--bd-muted, var(--text-dim))" }}>
+                  {getGameSeo("brain-dead").description}
+                </p>
               </div>
               <Divider color="var(--bd-border)" />
               {/* Visual */}
@@ -927,7 +942,7 @@ export default function StimGames() {
             >
               <Link href="/brain-dead/daily" style={{ textDecoration: "none" }}>
                 <span className="stim-text-link" style={{ ...cta, color: "var(--bd-primary)" }}>
-                  Play today&apos;s run &#8594;
+                  Start the daily &#8594;
                 </span>
               </Link>
               <Link href="/brain-dead" style={{ textDecoration: "none" }}>
@@ -935,7 +950,7 @@ export default function StimGames() {
                   className="stim-text-link"
                   style={{ ...cta, color: "var(--bd-primary)", opacity: 0.72 }}
                 >
-                  All modes &#8594;
+                  Pick a mode &#8594;
                 </span>
               </Link>
             </div>
@@ -977,6 +992,9 @@ export default function StimGames() {
               <p style={{ ...modeHint, color: "var(--ag-muted)", margin: "6px 0 0" }}>
                 Solo · Daily
               </p>
+              <p style={{ ...cardDescription, color: "var(--ag-muted)" }}>
+                {getGameSeo("anyguessr").description}
+              </p>
             </div>
             <Divider color="var(--ag-border)" />
             {/* Visual */}
@@ -987,7 +1005,7 @@ export default function StimGames() {
             {/* CTA */}
             <div style={cardActionSection}>
               <span className="stim-text-link" style={{ ...cta, color: "var(--ag-accent)" }}>
-                Play today&apos;s puzzle &#8594;
+                Guess today&apos;s countries &#8594;
               </span>
             </div>
           </GameCard>
@@ -1020,6 +1038,9 @@ export default function StimGames() {
               <p style={{ ...modeHint, color: "#9a98a3", margin: "6px 0 0" }}>
                 Solo · Daily
               </p>
+              <p style={{ ...cardDescription, color: "#9a98a3" }}>
+                {getGameSeo("hot-takes").description}
+              </p>
             </div>
             <Divider color="#2a2a34" />
             {/* Visual */}
@@ -1030,7 +1051,7 @@ export default function StimGames() {
             {/* CTA */}
             <div style={cardActionSection}>
               <span className="stim-text-link" style={{ ...cta, color: "#ff5a36" }}>
-                Play today&apos;s category &#8594;
+                Rank today&apos;s list &#8594;
               </span>
             </div>
           </GameCard>
@@ -1073,6 +1094,9 @@ export default function StimGames() {
               <p style={{ ...modeHint, color: "#6b5f8a", margin: "6px 0 0" }}>
                 Solo · Daily
               </p>
+              <p style={{ ...cardDescription, color: "#6b5f8a" }}>
+                {getGameSeo("freezeframes").description}
+              </p>
             </div>
             <Divider color="#2d2550" />
             {/* Visual */}
@@ -1083,7 +1107,7 @@ export default function StimGames() {
             {/* CTA */}
             <div style={cardActionSection}>
               <span className="stim-text-link" style={{ ...cta, color: "#a855f7" }}>
-                Play today&apos;s puzzle &#8594;
+                Play the four rounds &#8594;
               </span>
             </div>
           </GameCard>
@@ -1128,6 +1152,9 @@ export default function StimGames() {
               <p style={{ ...modeHint, color: "#8ba3c9", margin: "6px 0 0" }}>
                 Solo · Daily
               </p>
+              <p style={{ ...cardDescription, color: "#8ba3c9" }}>
+                {getGameSeo("ball-knowledge").description}
+              </p>
             </div>
             <Divider color="rgba(140,170,220,0.12)" />
             {/* Visual */}
@@ -1138,7 +1165,7 @@ export default function StimGames() {
             {/* CTA */}
             <div style={cardActionSection}>
               <span className="stim-text-link" style={{ ...cta, color: "#5b9ee8" }}>
-                Play today&apos;s category &#8594;
+                Start the clock &#8594;
               </span>
             </div>
           </GameCard>
@@ -1173,12 +1200,17 @@ export default function StimGames() {
                     color: "#fff3e8",
                     margin: 0,
                     letterSpacing: "0.03em",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
                   }}
                 />
                 <GameCardStreak gameId="getting-warmer" accentColor="#ff6b1a" inline />
               </div>
               <p style={{ ...modeHint, color: "#c9a893", margin: "6px 0 0" }}>
                 Solo · Daily
+              </p>
+              <p style={{ ...cardDescription, color: "#c9a893" }}>
+                {getGameSeo("getting-warmer").description}
               </p>
             </div>
             <Divider color="rgba(255,107,26,0.2)" />
@@ -1188,7 +1220,7 @@ export default function StimGames() {
             <Divider color="rgba(255,107,26,0.2)" />
             <div style={cardActionSection}>
               <span className="stim-text-link" style={{ ...cta, color: "#ff6b1a" }}>
-                Play today&apos;s puzzle &#8594;
+                Reveal the clues &#8594;
               </span>
             </div>
           </GameCard>
@@ -1197,7 +1229,7 @@ export default function StimGames() {
 
         {/* ── PLAY TOGETHER ─────────────────────────────────────────── */}
         <section style={{ marginBottom: "36px" }}>
-          <SectionLabel accent="var(--gold)">Play together</SectionLabel>
+          <SectionLabel accent="var(--gold)">Play together later</SectionLabel>
           <div
             className="stim-party-grid"
             style={{
@@ -1282,8 +1314,8 @@ export default function StimGames() {
                       fontWeight: 300,
                     }}
                   >
-                    Assemble your roster. Defend every pick. Let the jury decide who built the
-                    best lineup.
+                    Pick the best lineup you can, then explain the choices when everyone
+                    starts judging.
                   </p>
                 </div>
                 <div style={partyVisualSection}>
@@ -1305,7 +1337,7 @@ export default function StimGames() {
                       color: "var(--gold-hi)",
                     }}
                   >
-                    Play now
+                    Create a room
                     <span style={{ fontSize: "12px" }}>&#8594;</span>
                   </div>
                 </div>
@@ -1381,8 +1413,8 @@ export default function StimGames() {
                       opacity: 0.9,
                     }}
                   >
-                    Answer trivia, climb the board, and race to the top before your opponents
-                    knock you back down.
+                    Answer trivia to move up the board. Miss at the wrong time and someone
+                    else takes the lead.
                   </p>
                 </div>
                 <div style={partyVisualSection}>
@@ -1402,7 +1434,7 @@ export default function StimGames() {
                       padding: "10px 18px",
                     }}
                   >
-                    Play slippery slope &#8594;
+                    Open the board &#8594;
                   </span>
                 </div>
               </div>

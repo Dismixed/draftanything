@@ -10,7 +10,7 @@ import { GameBackLink } from "@/components/ui/game-back-link";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
 import { SoundToggle } from "@/components/ui/sound-toggle";
 import { GameTitle } from "@/components/ui/game-title";
-import { isHowItWorksSeen, markHowItWorksSeen } from "@/lib/game-how-it-works";
+import { useGameHowItWorks } from "@/lib/game-how-it-works";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
 import ClueCard from "./clue-card";
 import CountryPicker from "./country-picker";
@@ -42,9 +42,10 @@ export default function AnyGuessrGame() {
   const [pickerKey, setPickerKey] = useState(0);
   const [showResultsOverlay, setShowResultsOverlay] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [showHowItWorks, setShowHowItWorks] = useState(
-    () => !isHowItWorksSeen("anyguessr"),
+  const [storeReady, setStoreReady] = useState(
+    () => typeof window !== "undefined" && useAnyGuessrStore.persist.hasHydrated(),
   );
+  const { showHowItWorks, dismissHowItWorks } = useGameHowItWorks("anyguessr");
 
   const loading = store.loading;
   const date = store.date;
@@ -86,12 +87,29 @@ export default function AnyGuessrGame() {
   }, [status]);
 
   useEffect(() => {
-    const hydrate = () => initPuzzle();
+    const start = () => {
+      setStoreReady(true);
+      void initPuzzle();
+    };
+
     if (useAnyGuessrStore.persist.hasHydrated()) {
-      hydrate();
-    } else {
-      return useAnyGuessrStore.persist.onFinishHydration(hydrate);
+      start();
+      return;
     }
+
+    const unsub = useAnyGuessrStore.persist.onFinishHydration(start);
+    const fallback = window.setTimeout(() => {
+      if (useAnyGuessrStore.persist.hasHydrated()) {
+        start();
+        return;
+      }
+      void Promise.resolve(useAnyGuessrStore.persist.rehydrate()).finally(start);
+    }, 750);
+
+    return () => {
+      unsub?.();
+      window.clearTimeout(fallback);
+    };
   }, [initPuzzle]);
 
   useEffect(() => {
@@ -112,7 +130,9 @@ export default function AnyGuessrGame() {
     void store.submitDailyGuess(name);
   };
 
-  const isLoading = loading || (store.dailyRounds.length === 0 && !feedback);
+  const isLoading =
+    storeReady &&
+    (loading || (store.dailyRounds.length === 0 && !feedback));
 
   const dailyUnavailable =
     !loading &&
@@ -121,9 +141,29 @@ export default function AnyGuessrGame() {
     (feedback.message.includes("isn't ready") ||
       feedback.message.includes("No daily puzzle"));
 
+  const howItWorksModal = showHowItWorks ? (
+    <GameHowItWorksModal
+      subtitle={`${DAILY_ROUND_COUNT} rounds · One puzzle a day`}
+      rules={ANYGUESSR_HOW_IT_WORKS}
+      onDismiss={() => {
+        dismissHowItWorks();
+        play("ui.tap");
+      }}
+      theme={{
+        overlay: "rgba(7, 9, 15, 0.92)",
+        surface: "var(--ag-surface)",
+        border: "var(--ag-border)",
+        accent: "var(--ag-accent)",
+        text: "var(--ag-text)",
+        textMuted: "var(--ag-muted)",
+      }}
+    />
+  ) : null;
+
   if (isLoading) {
     return (
       <div style={{ width: "100%", maxWidth: "560px", margin: "0 auto" }}>
+        {howItWorksModal}
         <header style={{ position: "relative", marginBottom: "24px" }}>
           <GameBackLink color="var(--ag-muted)" />
         </header>
@@ -146,6 +186,7 @@ export default function AnyGuessrGame() {
   if (dailyUnavailable) {
     return (
       <div style={{ width: "100%", maxWidth: "560px", margin: "0 auto" }}>
+        {howItWorksModal}
         <header style={{ position: "relative", marginBottom: "24px" }}>
           <GameBackLink color="var(--ag-muted)" />
         </header>
@@ -201,6 +242,7 @@ export default function AnyGuessrGame() {
 
   return (
     <div style={{ width: "100%", maxWidth: "560px", margin: "0 auto" }}>
+      {howItWorksModal}
       <header style={{ textAlign: "center", marginBottom: "24px", position: "relative" }}>
         <GameBackLink color="var(--ag-muted)" />
         <div style={{ position: "absolute", top: 0, right: 0 }}>
@@ -443,25 +485,6 @@ export default function AnyGuessrGame() {
           document.body,
         )}
 
-      {showHowItWorks && (
-        <GameHowItWorksModal
-          subtitle={`${DAILY_ROUND_COUNT} rounds · One puzzle a day`}
-          rules={ANYGUESSR_HOW_IT_WORKS}
-          onDismiss={() => {
-            markHowItWorksSeen("anyguessr");
-            setShowHowItWorks(false);
-            play("ui.tap");
-          }}
-          theme={{
-            overlay: "rgba(7, 9, 15, 0.92)",
-            surface: "var(--ag-surface)",
-            border: "var(--ag-border)",
-            accent: "var(--ag-accent)",
-            text: "var(--ag-text)",
-            textMuted: "var(--ag-muted)",
-          }}
-        />
-      )}
     </div>
   );
 }

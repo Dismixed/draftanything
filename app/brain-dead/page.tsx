@@ -78,7 +78,7 @@ export default function BrainDeadPage() {
               textTransform: "uppercase",
             }}
           >
-            Trivia Challenge
+            Fast trivia. One mistake hurts.
           </p>
           </div>
         </header>
@@ -126,7 +126,7 @@ export default function BrainDeadPage() {
                 Daily Challenge
               </div>
               <div style={{ fontSize: "10px", color: "var(--bd-text-muted)" }}>
-                15 questions. Same for everyone. One shot.
+                Same 15 questions for everyone. One try.
               </div>
             </div>
           </Link>
@@ -172,7 +172,7 @@ export default function BrainDeadPage() {
                 Free Play
               </div>
               <div style={{ fontSize: "10px", color: "var(--bd-text-muted)" }}>
-                Pick your category. Play as many times as you want.
+                Choose a category and keep playing.
               </div>
             </div>
           </Link>
@@ -223,7 +223,7 @@ export default function BrainDeadPage() {
                 Leaderboard
               </div>
               <div style={{ fontSize: "10px", color: "var(--bd-text-muted)" }}>
-                See how you stack up against today&apos;s players.
+                Check today&apos;s scores.
               </div>
             </div>
           </Link>

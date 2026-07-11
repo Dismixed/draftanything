@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
+import { buildGameJsonLd, JsonLdScript } from "@/lib/seo";
 import "../hot-takes.css";
 
 export const metadata: Metadata = {
   title: "Hot Takes — Stim Games",
   description: "Rank fifteen items S through D in today's debatable category.",
+  alternates: {
+    canonical: "/hot-takes",
+  },
 };
 
 export default function HotTakesLayout({
@@ -11,5 +15,10 @@ export default function HotTakesLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return children;
+  return (
+    <>
+      <JsonLdScript data={buildGameJsonLd("hot-takes")} />
+      {children}
+    </>
+  );
 }

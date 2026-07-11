@@ -1,6 +1,7 @@
 "use client";
 
 import { recordDailyCompletion } from "@/lib/streak/storage";
+import { readDailyPuzzleCache, writeDailyPuzzleCache } from "@/lib/daily-puzzle-cache";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { DAILY_ROUND_COUNT } from "./daily";
@@ -99,12 +100,18 @@ function buildStateFromDailyPuzzle(puzzle: ClientDailyPuzzle): PersistedData {
 }
 
 async function fetchDailyPuzzle(): Promise<ClientDailyPuzzle> {
+  const today = getDateString();
+  const cached = readDailyPuzzleCache<ClientDailyPuzzle>("anyguessr", today);
+  if (cached) return cached;
+
   const res = await fetch("/api/anyguessr/daily");
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error ?? (res.status === 404 ? "No puzzle available" : "Failed to fetch daily puzzle"));
   }
-  return res.json();
+  const puzzle = (await res.json()) as ClientDailyPuzzle;
+  writeDailyPuzzleCache("anyguessr", today, puzzle);
+  return puzzle;
 }
 
 function isDailyState(s: PersistedData): boolean {

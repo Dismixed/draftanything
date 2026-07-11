@@ -37,7 +37,7 @@ import { useSound } from "@/lib/audio/sound-context";
 import { SoundToggle } from "@/components/ui/sound-toggle";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
 import { OtherDailies } from "@/components/daily/other-dailies";
-import { isHowItWorksSeen, markHowItWorksSeen } from "@/lib/game-how-it-works";
+import { useGameHowItWorks } from "@/lib/game-how-it-works";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
 
 type Screen = "home" | "played" | "game" | "results";
@@ -138,9 +138,7 @@ export default function FreezeFramesGame() {
   const [lbSubmitting, setLbSubmitting] = useState(false);
   const [lbSubmitted, setLbSubmitted] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
-  const [showHowItWorks, setShowHowItWorks] = useState(
-    () => !isHowItWorksSeen("freezeframes"),
-  );
+  const { showHowItWorks, dismissHowItWorks } = useGameHowItWorks("freezeframes");
 
   const startTimeRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -786,14 +784,11 @@ export default function FreezeFramesGame() {
         </div>
       </div>
 
-      {screen === "home" && showHowItWorks && (
+      {showHowItWorks && (
         <GameHowItWorksModal
           subtitle="Four rounds · One shot a day"
           rules={FREEZEFRAMES_HOW_IT_WORKS}
-          onDismiss={() => {
-            markHowItWorksSeen("freezeframes");
-            setShowHowItWorks(false);
-          }}
+          onDismiss={dismissHowItWorks}
           theme={{
             overlay: "rgba(10, 5, 20, 0.92)",
             surface: "var(--ff-surface)",
@@ -815,7 +810,7 @@ const FREEZEFRAMES_HOW_IT_WORKS = [
   },
   {
     title: "Type Your Guess",
-    body: "Enter titles or names in the box. Close spellings and partial matches count — you don't need to be letter-perfect.",
+    body: "Enter titles or names in the box. Close spellings and partial matches count; you don't need to be letter-perfect.",
   },
   {
     title: "Points Tick Down",
@@ -823,6 +818,6 @@ const FREEZEFRAMES_HOW_IT_WORKS = [
   },
   {
     title: "One Run Per Day",
-    body: "Everyone gets the same four rounds today. Play once, then come back tomorrow for a new FreezeFrames.",
+    body: "Everyone gets the same four rounds today. Play once. Tomorrow gets a fresh set.",
   },
 ] as const;

@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { isTutorialSeen, markTutorialSeen } from "@/lib/chainlink/store";
 
 export default function TutorialModal() {
-  const [visible, setVisible] = useState(() => !isTutorialSeen());
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    setVisible(!isTutorialSeen());
+  }, []);
 
   const handleDismiss = () => {
     markTutorialSeen();

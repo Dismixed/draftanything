@@ -9,7 +9,7 @@ import {
 import { GameBackLink } from "@/components/ui/game-back-link";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
 import { OtherDailies } from "@/components/daily/other-dailies";
-import { isHowItWorksSeen, markHowItWorksSeen } from "@/lib/game-how-it-works";
+import { useGameHowItWorks } from "@/lib/game-how-it-works";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
 import {
   CLOCK_CIRCUMFERENCE,
@@ -80,9 +80,7 @@ export default function BallKnowledgeGame({
   const [showToast, setShowToast] = useState(false);
   const [countdown, setCountdown] = useState("");
   const [playedScore, setPlayedScore] = useState(0);
-  const [showHowItWorks, setShowHowItWorks] = useState(
-    () => !isHowItWorksSeen("ball-knowledge"),
-  );
+  const { showHowItWorks, dismissHowItWorks } = useGameHowItWorks("ball-knowledge");
 
   const answerInputRef = useRef<HTMLInputElement>(null);
   const entryCounterRef = useRef(0);
@@ -653,15 +651,12 @@ export default function BallKnowledgeGame({
         )}
       </div>
 
-      {screen === "start" && showHowItWorks && (
+      {showHowItWorks && (
         <GameHowItWorksModal
           subtitle="60 seconds · One category a day"
           rules={BALL_KNOWLEDGE_HOW_IT_WORKS}
           buttonLabel="Start Challenge"
-          onDismiss={() => {
-            markHowItWorksSeen("ball-knowledge");
-            setShowHowItWorks(false);
-          }}
+          onDismiss={dismissHowItWorks}
           theme={{
             overlay: "rgba(8, 12, 20, 0.92)",
             surface: "var(--bk-backboard)",
@@ -681,7 +676,7 @@ export default function BallKnowledgeGame({
 const BALL_KNOWLEDGE_HOW_IT_WORKS = [
   {
     title: "One Category, 60 Seconds",
-    body: "Everyone gets the same category today — pizza toppings, dog breeds, state capitals, and more. Name as many valid answers as you can before time runs out.",
+    body: "Everyone gets the same category today: pizza toppings, dog breeds, state capitals, whatever is on the board. Name as many valid answers as you can before time runs out.",
   },
   {
     title: "Type and Enter",
@@ -693,6 +688,6 @@ const BALL_KNOWLEDGE_HOW_IT_WORKS = [
   },
   {
     title: "One Run Per Day",
-    body: "Play once, post your score to the leaderboard, then come back tomorrow for a new category.",
+    body: "Play once and post your score. Tomorrow gets a new category.",
   },
 ] as const;

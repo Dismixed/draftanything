@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { WordStatus, GameMode, GameStatus } from "./types";
 import { getDateString } from "./puzzles";
+import { readDailyPuzzleCache, writeDailyPuzzleCache } from "@/lib/daily-puzzle-cache";
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -161,12 +162,18 @@ function isResumableDailyState(s: PersistedData): boolean {
 /* ------------------------------------------------------------------ */
 
 async function fetchDailyPuzzle(): Promise<ApiPlayablePuzzle> {
+  const today = getDateString();
+  const cached = readDailyPuzzleCache<ApiPlayablePuzzle>("chainlink", today);
+  if (cached) return cached;
+
   const res = await fetch("/api/chain/daily");
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error ?? "Failed to fetch daily puzzle");
   }
-  return res.json();
+  const puzzle = (await res.json()) as ApiPlayablePuzzle;
+  writeDailyPuzzleCache("chainlink", today, puzzle);
+  return puzzle;
 }
 
 /* ------------------------------------------------------------------ */
