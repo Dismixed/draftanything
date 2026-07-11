@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import posthog from "posthog-js";
 import { CreateRoomForm } from "@/components/lobby/create-room-form";
 import { JoinRoomForm } from "@/components/lobby/join-room-form";
 
@@ -46,7 +47,10 @@ export default function DraftAnythingLobby() {
               id="tab-create"
               aria-selected={activeTab === "create"}
               aria-controls="panel-create"
-              onClick={() => setActiveTab("create")}
+              onClick={() => {
+                setActiveTab("create");
+                posthog.capture("draft_lobby_tab_changed", { tab: "create" });
+              }}
               style={{
                 padding: '13px',
                 textAlign: 'center',
@@ -71,7 +75,10 @@ export default function DraftAnythingLobby() {
               id="tab-join"
               aria-selected={activeTab === "join"}
               aria-controls="panel-join"
-              onClick={() => setActiveTab("join")}
+              onClick={() => {
+                setActiveTab("join");
+                posthog.capture("draft_lobby_tab_changed", { tab: "join" });
+              }}
               style={{
                 padding: '13px',
                 textAlign: 'center',

@@ -2,6 +2,7 @@ import { AppError } from "@/lib/errors";
 import { ensureGuestSession } from "@/features/guest/session";
 import { generateRequestId, setRequestIdHeader } from "@/lib/request-id";
 import { logRoute } from "@/lib/logger";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 /**
  * POST /api/guest
@@ -18,6 +19,14 @@ export async function POST() {
 
   try {
     const { guestId } = await ensureGuestSession();
+    const posthog = getPostHogClient();
+    posthog.identify({ distinctId: guestId });
+    posthog.capture({
+      distinctId: guestId,
+      event: "guest_session_created",
+      properties: {},
+    });
+    await posthog.flush();
     const res = Response.json({ guestId });
     setRequestIdHeader(res, requestId);
     logRoute({ timestamp: new Date().toISOString(), requestId, action: "bootstrap_guest", result: "success", durationMs: performance.now() - start });

@@ -3,6 +3,7 @@ import { AppError } from "@/lib/errors";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { requireGuestSession } from "@/features/guest/session";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 const startDraftSchema = z.object({
   pickOrder: z.array(
@@ -77,6 +78,16 @@ export async function POST(
       return Response.json({ error: "INVALID_INPUT", message: msg }, { status: 400 });
     }
 
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: guestId,
+      event: "draft_started",
+      properties: {
+        draft_id: draftId,
+        total_picks: parseResult.data.pickOrder.length,
+      },
+    });
+    await posthog.flush();
     return Response.json({ success: true });
   } catch (e) {
     if (e instanceof AppError) {

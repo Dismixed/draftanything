@@ -2,6 +2,7 @@ import { AppError } from "@/lib/errors";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { requireGuestSession } from "@/features/guest/session";
 import { resetForRematch } from "@/features/room/service";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 /**
  * POST /api/drafts/[draftId]/rematch
@@ -34,6 +35,13 @@ export async function POST(
     }
 
     const projection = await resetForRematch(draftId, guestId);
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: guestId,
+      event: "draft_rematch_initiated",
+      properties: { draft_id: draftId },
+    });
+    await posthog.flush();
     return Response.json(projection);
   } catch (e) {
     if (e instanceof AppError) {

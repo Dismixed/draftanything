@@ -7,6 +7,7 @@ import { logRoute } from "@/lib/logger";
 import { generateRequestId, setRequestIdHeader } from "@/lib/request-id";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export async function POST() {
   const requestId = generateRequestId();
@@ -52,6 +53,17 @@ export async function POST() {
       return res;
     }
 
+    const posthog = getPostHogClient();
+    posthog.identify({
+      distinctId: user.id,
+      properties: { linked_provider: user.app_metadata?.provider ?? "email" },
+    });
+    posthog.capture({
+      distinctId: user.id,
+      event: "account_linked",
+      properties: { provider: user.app_metadata?.provider ?? "email" },
+    });
+    await posthog.flush();
     const res = NextResponse.json({ merged: true });
     setRequestIdHeader(res, requestId);
     logRoute({ requestId, action: "merge_guest", result: "success", durationMs: performance.now() - start });

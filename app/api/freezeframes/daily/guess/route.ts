@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { fuzzyMatch } from "@/lib/freezeframes/game-logic";
 import { getDailyAnswers } from "@/lib/freezeframes/puzzle-service";
 import type { RoundKey } from "@/lib/freezeframes/types";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 const guessSchema = z
   .object({
@@ -35,10 +36,24 @@ export async function POST(request: Request) {
     const answer = answers[roundKey as RoundKey];
 
     if (skip) {
+      const posthog = getPostHogClient();
+      posthog.capture({
+        distinctId: roundKey,
+        event: "freezeframes_guess_submitted",
+        properties: { round_key: roundKey, skipped: true, correct: false },
+      });
+      await posthog.flush();
       return Response.json({ correct: false, answer });
     }
 
     const correct = fuzzyMatch(guess!, answer);
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: roundKey,
+      event: "freezeframes_guess_submitted",
+      properties: { round_key: roundKey, skipped: false, correct },
+    });
+    await posthog.flush();
     return Response.json({
       correct,
       ...(correct ? { answer } : {}),

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { validateGuess } from "@/lib/chainlink/puzzle-service";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,6 +27,17 @@ export async function POST(req: NextRequest) {
     const db = createAdminClient();
     const result = await validateGuess(db, puzzleId, position, guess);
 
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: puzzleId,
+      event: "chainlink_guess_submitted",
+      properties: {
+        puzzle_id: puzzleId,
+        position,
+        correct: (result as { correct?: boolean }).correct ?? false,
+      },
+    });
+    await posthog.flush();
     return NextResponse.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";

@@ -3,6 +3,7 @@ import { AppError } from "@/lib/errors";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { requireGuestSession } from "@/features/guest/session";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 
 const voteSchema = z.object({
@@ -78,6 +79,16 @@ export async function POST(
       return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
     }
 
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: guestId,
+      event: "draft_vote_submitted",
+      properties: {
+        draft_id: draftId,
+        new_phase: draft.phase,
+      },
+    });
+    await posthog.flush();
     return Response.json({ success: true, phase: draft.phase });
   } catch (e) {
     if (e instanceof AppError) {
