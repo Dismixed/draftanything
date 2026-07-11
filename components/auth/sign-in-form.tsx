@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import posthog from "posthog-js";
 
 import { createClient } from "@/lib/supabase/browser";
 
@@ -71,7 +72,7 @@ export function SignInForm() {
     setLoading(true);
 
     const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password,
     });
@@ -80,6 +81,10 @@ export function SignInForm() {
       setError(signInError.message);
       setLoading(false);
       return;
+    }
+
+    if (signInData.user) {
+      posthog.identify(signInData.user.id);
     }
 
     await fetch("/api/auth/merge", { method: "POST" }).catch(() => {});

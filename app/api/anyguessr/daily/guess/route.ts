@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { validateDailyGuess } from "@/lib/anyguessr/puzzle-service";
 import { DAILY_ROUND_COUNT } from "@/lib/anyguessr/daily";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,6 +31,17 @@ export async function POST(req: NextRequest) {
 
     const db = createAdminClient();
     const result = await validateDailyGuess(db, puzzleId, guess, roundIndex);
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: puzzleId,
+      event: "anyguessr_daily_guess_submitted",
+      properties: {
+        puzzle_id: puzzleId,
+        round_index: roundIndex,
+        correct: (result as { correct?: boolean }).correct ?? false,
+      },
+    });
+    await posthog.flush();
     return NextResponse.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";

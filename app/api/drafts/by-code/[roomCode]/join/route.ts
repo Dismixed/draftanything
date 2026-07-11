@@ -6,6 +6,7 @@ import { displayNameSchema } from "@/features/room/schema";
 import { joinRoom } from "@/features/room/service";
 import { generateRequestId, setRequestIdHeader } from "@/lib/request-id";
 import { logRoute } from "@/lib/logger";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 const JOIN_RATE_LIMIT_MAX = 30;
 const JOIN_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
@@ -72,6 +73,17 @@ export async function POST(
       guestId,
     );
 
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: guestId,
+      event: "draft_room_joined",
+      properties: {
+        draft_id: room.draftId,
+        room_code: roomCode.toUpperCase(),
+        player_count: room.players.length,
+      },
+    });
+    await posthog.flush();
     const res = Response.json(room, { status: 200 });
     setRequestIdHeader(res, requestId);
     logRoute({ requestId, action: "join_room", draftId: room.draftId, result: "success", durationMs: performance.now() - start });
