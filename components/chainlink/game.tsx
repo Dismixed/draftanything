@@ -115,11 +115,7 @@ function WordRow({
     setSubmitting(false);
   }, [word]);
 
-  const trySubmit = useCallback(async () => {
-    if (!localGuess.trim() || !onSubmitGuess || submitting) return;
-    if (localGuess.length < unrevealedCount) return;
-
-    const typed = localGuess.trim();
+  const buildFullGuess = useCallback((typed: string) => {
     let typedIdx = 0;
     let fullGuess = word[0].toLowerCase();
     for (let i = 1; i < word.length; i++) {
@@ -130,6 +126,21 @@ function WordRow({
         typedIdx++;
       }
     }
+    return fullGuess;
+  }, [word, revealedLetters]);
+
+  const isCompleteCorrectGuess = useCallback((typed: string) => {
+    if (typed.length < unrevealedCount) return false;
+    const normalizedGuess = buildFullGuess(typed.trim()).trim().toLowerCase().replace(/\s+/g, "");
+    const normalizedTarget = word.toLowerCase().replace(/\s+/g, "");
+    return normalizedGuess === normalizedTarget;
+  }, [buildFullGuess, unrevealedCount, word]);
+
+  const trySubmit = useCallback(async () => {
+    if (!localGuess.trim() || !onSubmitGuess || submitting) return;
+    if (localGuess.length < unrevealedCount) return;
+
+    const fullGuess = buildFullGuess(localGuess.trim());
 
     setSubmitting(true);
     const result = await onSubmitGuess(fullGuess);
@@ -148,14 +159,14 @@ function WordRow({
     } else if (result === "already-solved") {
       play("ui.tap");
     }
-  }, [localGuess, unrevealedCount, onSubmitGuess, submitting, word, revealedLetters, play]);
+  }, [localGuess, unrevealedCount, onSubmitGuess, submitting, buildFullGuess, play]);
 
   useEffect(() => {
     if (status !== "active" || unrevealedCount === 0) return;
-    if (localGuess.length === unrevealedCount) {
+    if (localGuess.length === unrevealedCount && isCompleteCorrectGuess(localGuess)) {
       void trySubmit();
     }
-  }, [localGuess, unrevealedCount, status, trySubmit]);
+  }, [localGuess, unrevealedCount, status, trySubmit, isCompleteCorrectGuess]);
 
   const handleLocalKeyDown = (e: React.KeyboardEvent) => {
     if (e.key !== "Enter" || !localGuess.trim() || !onSubmitGuess || submitting) return;
