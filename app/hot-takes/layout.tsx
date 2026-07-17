@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { buildGameJsonLd, JsonLdScript } from "@/lib/seo";
-import "../hot-takes.css";
 
 export const metadata: Metadata = {
   title: "Hot Takes — Stim Games",

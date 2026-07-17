@@ -325,8 +325,8 @@ export async function saveDraftChains(
 ): Promise<number> {
   const records = chains.map((c) => ({
     title: c.words.join(" → "),
-    words: JSON.stringify(c.words),
-    phrases: JSON.stringify(c.phrases),
+    words: c.words,
+    phrases: c.phrases,
     difficulty: c.difficulty,
     theme: c.theme,
     status: "draft",

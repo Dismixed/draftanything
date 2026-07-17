@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { resolveWagerTopicHint } from "./topic-hint";
+import { resolveSsFetchCategory, resolveWagerTopicHint } from "./topic-hint";
+
+describe("resolveSsFetchCategory", () => {
+  it("omits the API filter for general so every category is used", () => {
+    expect(resolveSsFetchCategory("general")).toBeNull();
+  });
+
+  it("passes through specific categories", () => {
+    expect(resolveSsFetchCategory("sports")).toBe("sports");
+  });
+});
 
 describe("resolveWagerTopicHint", () => {
   it("uses API category for general games", () => {

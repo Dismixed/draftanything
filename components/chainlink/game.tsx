@@ -58,9 +58,9 @@ function ChainLink({ active, animated }: { active: boolean; animated: boolean })
       }}
     >
       <svg width="14" height="18" viewBox="0 0 12 16" fill="none" style={{ display: "block" }}>
-        <circle cx="6" cy="3" r="2.5" stroke={active ? "#565758" : "#3a3a3c"} strokeWidth="1.5" fill="none" />
-        <circle cx="6" cy="13" r="2.5" stroke={active ? "#565758" : "#3a3a3c"} strokeWidth="1.5" fill="none" />
-        <line x1="6" y1="5.5" x2="6" y2="10.5" stroke={active ? "#565758" : "#3a3a3c"} strokeWidth="1.5" />
+        <circle cx="6" cy="3" r="2.5" stroke={active ? "var(--cl-gray)" : "var(--cl-border)"} strokeWidth="1.5" fill="none" />
+        <circle cx="6" cy="13" r="2.5" stroke={active ? "var(--cl-gray)" : "var(--cl-border)"} strokeWidth="1.5" fill="none" />
+        <line x1="6" y1="5.5" x2="6" y2="10.5" stroke={active ? "var(--cl-gray)" : "var(--cl-border)"} strokeWidth="1.5" />
       </svg>
     </div>
   );
@@ -200,7 +200,7 @@ function WordRow({
             fontSize: "10px",
             fontWeight: 500,
             letterSpacing: "0.04em",
-            color: status === "active" ? "#c9b458" : "#787c7e",
+            color: status === "active" ? "var(--cl-yellow)" : "var(--cl-gray-dim)",
             opacity: status === "active" ? 0.85 : 0.55,
             marginLeft: "2px",
             marginBottom: "2px",
@@ -216,7 +216,7 @@ function WordRow({
           fontWeight: 600,
           letterSpacing: "0.06em",
           textTransform: "uppercase",
-          color: status === "locked" ? "#3a3a3c" : status === "active" ? "#c9b458" : "#6aaa64",
+          color: status === "locked" ? "var(--cl-gray)" : status === "active" ? "var(--cl-yellow)" : "var(--cl-green)",
           opacity: status === "locked" ? 1 : 0.9,
           marginLeft: "2px",
         }}
@@ -236,18 +236,18 @@ function WordRow({
             wrongFlash
               ? "rgba(255, 107, 107, 0.1)"
               : status === "active"
-                ? "#1a1a1b"
+                ? "var(--cl-card)"
                 : status === "solved"
-                  ? "#6aaa64"
-                  : "#3a3a3c",
+                  ? "var(--cl-green)"
+                  : "var(--cl-card-locked)",
           border: `2px solid ${
             wrongFlash
               ? "#ff6b6b"
               : status === "active"
-                ? "#c9b458"
+                ? "var(--cl-yellow)"
                 : status === "solved"
-                  ? "#6aaa64"
-                  : "#3a3a3c"
+                  ? "var(--cl-green)"
+                  : "var(--cl-card-locked)"
           }`,
           borderRadius: "6px",
           transition: "border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease",
@@ -297,7 +297,7 @@ function WordRow({
                   fontSize: "clamp(20px, 4vw, 28px)",
                   fontWeight: 700,
                   letterSpacing: "0.06em",
-                  color: "#ffffff",
+                  color: "var(--cl-text)",
                   flexShrink: 0,
                 }}
               >
@@ -315,7 +315,7 @@ function WordRow({
                         fontSize: "clamp(20px, 4vw, 28px)",
                         fontWeight: 700,
                         letterSpacing: "0.06em",
-                        color: "#c9b458",
+                        color: "var(--cl-yellow)",
                       }}
                     >
                       {ch.toLowerCase()}
@@ -331,7 +331,7 @@ function WordRow({
                       fontSize: "clamp(20px, 4vw, 28px)",
                       fontWeight: 700,
                       letterSpacing: "0.06em",
-                      color: typed ? "#ffffff" : "#565758",
+                      color: typed ? "var(--cl-text)" : "var(--cl-gray)",
                       opacity: typed ? 1 : 0.5,
                     }}
                   >
@@ -372,7 +372,7 @@ function WordRow({
                 fontSize: "clamp(20px, 4vw, 28px)",
                 fontWeight: 700,
                 letterSpacing: "0.06em",
-                color: "#565758",
+                color: "var(--cl-gray)",
               }}
             >
               {chars.map((ch, i) => {
@@ -383,7 +383,7 @@ function WordRow({
                     style={{
                       opacity: show ? 1 : 0.5,
                       transition: "opacity 0.3s ease, color 0.3s ease",
-                      color: show && i !== 0 ? "#c9b458" : undefined,
+                      color: show && i !== 0 ? "var(--cl-yellow)" : undefined,
                     }}
                   >
                     {show ? displayChar(ch, i) : "_"}
@@ -422,7 +422,7 @@ function WordRow({
             style={{
               marginLeft: "auto",
               fontSize: "10px",
-              color: "#787c7e",
+              color: "var(--cl-gray-dim)",
               opacity: 0.7,
               whiteSpace: "nowrap",
               flexShrink: 0,
@@ -635,7 +635,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
           textAlign: "center",
         }}
       >
-        <p style={{ margin: 0, color: "#787c7e", fontSize: "14px", lineHeight: 1.5, maxWidth: "320px" }}>
+        <p style={{ margin: 0, color: "var(--cl-gray-dim)", fontSize: "14px", lineHeight: 1.5, maxWidth: "320px" }}>
           {loadError}
         </p>
         <button
@@ -644,9 +644,9 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
           style={{
             padding: "10px 18px",
             borderRadius: "8px",
-            border: "1px solid #3a3a3c",
-            background: "#1a1a1b",
-            color: "#d7dadc",
+            border: "1px solid var(--cl-border)",
+            background: "var(--cl-card)",
+            color: "var(--cl-text)",
             cursor: "pointer",
             fontSize: "13px",
           }}
@@ -655,7 +655,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
         </button>
       </div>
       ) : isPuzzleLoading ? (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "300px", color: "#787c7e" }}>
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "300px", color: "var(--cl-gray-dim)" }}>
         Loading puzzle...
       </div>
       ) : (
@@ -671,7 +671,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                 gap: "4px",
                 fontSize: "11px",
                 fontWeight: 500,
-                color: "#787c7e",
+                color: "var(--cl-gray-dim)",
                 textDecoration: "none",
                 padding: "4px 0",
               }}
@@ -684,9 +684,9 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
           </div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", marginBottom: "6px" }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="6" r="4" stroke="#ffffff" strokeWidth="2" fill="none" />
-              <circle cx="12" cy="18" r="4" stroke="#ffffff" strokeWidth="2" fill="none" />
-              <rect x="11" y="9" width="2" height="6" rx="1" fill="#ffffff" />
+              <circle cx="12" cy="6" r="4" stroke="var(--cl-text)" strokeWidth="2" fill="none" />
+              <circle cx="12" cy="18" r="4" stroke="var(--cl-text)" strokeWidth="2" fill="none" />
+              <rect x="11" y="9" width="2" height="6" rx="1" fill="var(--cl-text)" />
             </svg>
             <GameTitle
               game="chainlink"
@@ -694,14 +694,14 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
               style={{
                 fontSize: "clamp(24px, 5vw, 32px)",
                 fontWeight: 700,
-                color: "#ffffff",
+                color: "var(--cl-text)",
                 margin: 0,
                 letterSpacing: "-0.02em",
               }}
             />
           </div>
 
-          <div style={{ fontSize: "11px", fontWeight: 500, color: "#565758", marginBottom: "4px" }}>
+          <div style={{ fontSize: "11px", fontWeight: 500, color: "var(--cl-gray)", marginBottom: "4px" }}>
             {`Daily Puzzle · ${formatDate(date || getDateString())}`}
           </div>
 
@@ -720,7 +720,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                 style={{
                   fontSize: "12px",
                   fontWeight: 600,
-                  color: hintsRemaining <= 1 ? "#ff6b6b" : "#787c7e",
+                  color: hintsRemaining <= 1 ? "#ff6b6b" : "var(--cl-gray-dim)",
                   letterSpacing: "0.04em",
                   animation: hintAnim ? "cl-hint-pulse 0.4s ease" : undefined,
                 }}
@@ -738,7 +738,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                   display: "flex",
                   alignItems: "center",
                   gap: "6px",
-                  background: "#565758",
+                  background: "var(--cl-gray)",
                   color: "#ffffff",
                   border: "none",
                   borderRadius: "6px",
@@ -761,9 +761,9 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
 
         {!isOver && (
           <div className="cl-hint-banner" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginBottom: "24px", padding: "10px 16px", background: "rgba(106,170,100,0.08)", border: "1px solid rgba(106,170,100,0.2)", borderRadius: "6px" }}>
-            <span style={{ fontSize: "14px", color: "#6aaa64", opacity: 0.7 }}>&#9670;</span>
-            <span style={{ fontSize: "11px", color: "#787c7e", letterSpacing: "0.04em" }}>
-              Each word pairs with the one before it — like <em style={{ color: "#ffffff", fontStyle: "normal" }}>apple juice</em>, then <em style={{ color: "#ffffff", fontStyle: "normal" }}>juice box</em>.
+            <span style={{ fontSize: "14px", color: "var(--cl-green)", opacity: 0.7 }}>&#9670;</span>
+            <span style={{ fontSize: "11px", color: "var(--cl-gray-dim)", letterSpacing: "0.04em" }}>
+              Each word pairs with the one before it — like <em style={{ color: "var(--cl-text)", fontStyle: "normal" }}>apple juice</em>, then <em style={{ color: "var(--cl-text)", fontStyle: "normal" }}>juice box</em>.
             </span>
           </div>
         )}
@@ -808,7 +808,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                   padding: "28px 24px",
                   textAlign: "center",
                   border: "2px solid #ff6b6b",
-                  background: "#1a1a1b",
+                  background: "var(--cl-card)",
                   borderRadius: "6px",
                 }}
               >
@@ -816,7 +816,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                 <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#ff6b6b", margin: "0 0 8px" }}>
                   Game Over
                 </h2>
-                <p style={{ fontSize: "12px", color: "#787c7e", margin: "0 0 20px" }}>
+                <p style={{ fontSize: "12px", color: "var(--cl-gray-dim)", margin: "0 0 20px" }}>
                   Wrong a fourth time and you&apos;re out. The full chain was:
                 </p>
 
@@ -827,7 +827,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                       style={{
                         fontSize: "13px",
                         padding: "6px 14px",
-                        background: "#3a3a3c",
+                        background: "var(--cl-border)",
                         borderRadius: "6px",
                         color: "#ff6b6b",
                         fontWeight: 600,
@@ -838,7 +838,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                   ))}
                 </div>
 
-                <div style={{ fontSize: "11px", color: "#787c7e", marginBottom: "16px" }}>
+                <div style={{ fontSize: "11px", color: "var(--cl-gray-dim)", marginBottom: "16px" }}>
                   Come back tomorrow for a new puzzle!
                 </div>
 
@@ -860,7 +860,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                     style={{
                       display: "inline-block",
                       textDecoration: "none",
-                      background: "#565758",
+                      background: "var(--cl-gray)",
                       color: "#ffffff",
                       padding: "10px 24px",
                       fontSize: "12px",
@@ -896,13 +896,13 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                   width: "100%",
                   padding: "28px 24px",
                   textAlign: "center",
-                  border: "2px solid #6aaa64",
-                  background: "#1a1a1b",
+                  border: "2px solid var(--cl-green)",
+                  background: "var(--cl-card)",
                   borderRadius: "6px",
                 }}
               >
                 <div style={{ fontSize: "32px", marginBottom: "8px" }}>&#9670;</div>
-                <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#6aaa64", margin: "0 0 20px" }}>
+                <h2 style={{ fontSize: "22px", fontWeight: 700, color: "var(--cl-green)", margin: "0 0 20px" }}>
                   Chain Complete!
                 </h2>
 
@@ -913,9 +913,9 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                       style={{
                         fontSize: "13px",
                         padding: "6px 14px",
-                        background: "#3a3a3c",
+                        background: "var(--cl-border)",
                         borderRadius: "6px",
-                        color: "#6aaa64",
+                        color: "var(--cl-green)",
                         fontWeight: 600,
                       }}
                     >
@@ -924,7 +924,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                   ))}
                 </div>
 
-                <div style={{ fontSize: "11px", color: "#787c7e", marginBottom: "4px" }}>
+                <div style={{ fontSize: "11px", color: "var(--cl-gray-dim)", marginBottom: "4px" }}>
                   Come back tomorrow for a new puzzle!
                 </div>
 
@@ -938,7 +938,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                   }}
                 >
                   {mode === "daily" && (
-                    <WinStreakLine gameId="chainlink" accentColor="#6aaa64" />
+                    <WinStreakLine gameId="chainlink" accentColor="var(--cl-green)" />
                   )}
 
                   {mode === "daily" && (
@@ -950,7 +950,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                     style={{
                       display: "inline-block",
                       textDecoration: "none",
-                      background: "#565758",
+                      background: "var(--cl-gray)",
                       color: "#ffffff",
                       padding: "10px 24px",
                       fontSize: "12px",
@@ -979,8 +979,8 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
               fontSize: "13px",
               fontWeight: 600,
               color:
-                feedback.type === "correct" ? "#6aaa64"
-                : feedback.type === "hint" ? "#c9b458"
+                feedback.type === "correct" ? "var(--cl-green)"
+                : feedback.type === "hint" ? "var(--cl-yellow)"
                 : "#ff6b6b",
               background:
                 feedback.type === "correct" ? "rgba(106,170,100,0.1)"

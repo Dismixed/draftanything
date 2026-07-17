@@ -14,6 +14,21 @@
   --gw-radius: 14px;
 }
 
+html[data-theme="light"] {
+  --gw-bg: #fff8f2;
+  --gw-surface: #ffffff;
+  --gw-surface-2: #fff1e6;
+  --gw-cold-slate: #e8eef4;
+  --gw-cold-slate-text: #5a6b7a;
+  --gw-orange: #e85a0c;
+  --gw-orange-bright: #d97706;
+  --gw-white-hot: #7c2d12;
+  --gw-ink: #1c1008;
+  --gw-ink-dim: #8a6a52;
+  --gw-danger: #dc2626;
+  --gw-success: #059669;
+}
+
 .gw-page {
   min-height: 100vh;
   background:
@@ -33,6 +48,21 @@
   display: flex;
   justify-content: center;
   padding: 32px 16px 64px;
+}
+
+html[data-theme="light"] .gw-page {
+  background:
+    radial-gradient(
+      ellipse 900px 500px at 50% -10%,
+      rgba(255, 107, 26, 0.1),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 700px 400px at 85% 100%,
+      rgba(255, 107, 26, 0.05),
+      transparent 60%
+    ),
+    var(--gw-bg);
 }
 
 .gw-app {

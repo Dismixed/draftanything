@@ -6,7 +6,7 @@ export default function DailyPuzzlePage() {
       className="game-page"
       style={{
         minHeight: "100vh",
-        background: "#121213",
+        background: "var(--cl-bg)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",

@@ -1,4 +1,4 @@
-.freezeframes-app {
+:root {
   --ff-bg: #0c0812;
   --ff-surface: #130f1e;
   --ff-surface2: #1c1630;
@@ -14,7 +14,27 @@
   --ff-text: #f0eaff;
   --ff-muted: #6b5f8a;
   --ff-faint: #17122a;
+}
 
+html[data-theme="light"] {
+  --ff-bg: #f7f4fc;
+  --ff-surface: #ffffff;
+  --ff-surface2: #f0eaf8;
+  --ff-surface3: #e8dff5;
+  --ff-border: #d4c8e8;
+  --ff-border2: #b8a8d4;
+  --ff-purple: #7e22ce;
+  --ff-purple-light: #9333ea;
+  --ff-pink: #db2777;
+  --ff-gold: #d97706;
+  --ff-green: #059669;
+  --ff-red: #e11d48;
+  --ff-text: #1a1228;
+  --ff-muted: #6b5f8a;
+  --ff-faint: #ebe4f5;
+}
+
+.freezeframes-app {
   min-height: 100vh;
   background: var(--ff-bg);
   color: var(--ff-text);

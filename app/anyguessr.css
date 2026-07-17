@@ -12,6 +12,20 @@
   --ag-accent-dim: rgba(224, 168, 88, 0.18);
   --ag-brand: #5d8f56;
 }
+
+html[data-theme="light"] {
+  --ag-bg: #f7f4ec;
+  --ag-surface: #ffffff;
+  --ag-surface-hi: #f0ebe0;
+  --ag-border: #ddd5c4;
+  --ag-border-hi: #c9bfa8;
+  --ag-border-faint: #ebe6da;
+  --ag-text: #1a1814;
+  --ag-muted: #6b6570;
+  --ag-accent: #b8862d;
+  --ag-accent-dim: rgba(184, 134, 45, 0.14);
+  --ag-brand: #4a7344;
+}
 .ag-game-page { background: var(--ag-bg); min-height: 100vh; }
 @keyframes ag-flash-kf {
   0%   { box-shadow: 0 0 0 rgba(224,168,88,0); }

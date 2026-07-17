@@ -1,6 +1,6 @@
 /* Hot Takes — daily tier ranking game */
 
-.hot-takes-page {
+:root {
   --ht-bg: #0b0b0e;
   --ht-surface: #16161c;
   --ht-surface-2: #1e1e26;
@@ -15,6 +15,25 @@
   --ht-accent: #ff5a36;
   --ht-accent-2: #ff2e63;
   --ht-radius: 14px;
+}
+
+html[data-theme="light"] {
+  --ht-bg: #faf8f6;
+  --ht-surface: #ffffff;
+  --ht-surface-2: #f3f0ec;
+  --ht-line: #e4e0d8;
+  --ht-text: #1a1816;
+  --ht-text-dim: #6b6570;
+  --ht-heat-s: #e11d48;
+  --ht-heat-a: #ea580c;
+  --ht-heat-b: #ca8a04;
+  --ht-heat-c: #65a30d;
+  --ht-heat-d: #16a34a;
+  --ht-accent: #e03e1a;
+  --ht-accent-2: #db2777;
+}
+
+.hot-takes-page {
   min-height: 100vh;
   background:
     radial-gradient(circle at 15% 0%, rgba(255, 90, 54, 0.12), transparent 40%),
@@ -23,6 +42,13 @@
   color: var(--ht-text);
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   padding-bottom: 40px;
+}
+
+html[data-theme="light"] .hot-takes-page {
+  background:
+    radial-gradient(circle at 15% 0%, rgba(224, 62, 26, 0.08), transparent 40%),
+    radial-gradient(circle at 85% 10%, rgba(219, 39, 119, 0.06), transparent 45%),
+    var(--ht-bg);
 }
 
 .hot-takes-wrap {

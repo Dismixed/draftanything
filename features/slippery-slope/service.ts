@@ -6,7 +6,7 @@ import { fetchQuestions } from "@/lib/brain-dead/trivia-api";
 import { AppError } from "@/lib/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { pickQuestionFromPool, PREVIEW_WAGER } from "./game-logic";
-import { resolveWagerTopicHint } from "./topic-hint";
+import { resolveSsFetchCategory, resolveWagerTopicHint } from "./topic-hint";
 import { enrichQuestionsWithTopics } from "./topic";
 import type {
   CreateSsRoomInput,
@@ -356,7 +356,7 @@ export async function startSsGame(roomId: string, guestId: string): Promise<SsRo
 
   const result = await fetchQuestions({
     count: 40,
-    category: room.category,
+    category: resolveSsFetchCategory(room.category),
     token: room.question_token || "",
     seenIds: [],
   });

@@ -9,24 +9,42 @@ export default function Error({
   reset: () => void;
 }) {
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md text-center">
-        <div className="bg-white rounded-xl border shadow-sm p-8 space-y-4">
-          <h1 className="text-2xl font-bold text-gray-900">Something went wrong</h1>
-          <p className="text-gray-500 text-sm">
+    <main
+      style={{
+        minHeight: "100vh",
+        background: "var(--bg)",
+        color: "var(--text)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 16,
+      }}
+    >
+      <div style={{ width: "100%", maxWidth: 420, textAlign: "center" }}>
+        <div
+          style={{
+            background: "var(--panel)",
+            border: "1px solid var(--border-hi)",
+            borderRadius: 12,
+            padding: 32,
+          }}
+        >
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 8px", color: "var(--text)" }}>
+            Something went wrong
+          </h1>
+          <p style={{ color: "var(--text-dim)", fontSize: 14, margin: "0 0 20px" }}>
             An unexpected error occurred. Please try again.
           </p>
           <button
+            type="button"
             onClick={reset}
-            className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+            className="btn-gold"
+            style={{ padding: "10px 18px", marginBottom: 12 }}
           >
             Try again
           </button>
           <div>
-            <Link
-              href="/"
-              className="text-sm text-indigo-600 hover:text-indigo-700 underline underline-offset-2"
-            >
+            <Link href="/" style={{ color: "var(--gold)", fontSize: 13 }}>
               Back to home
             </Link>
           </div>

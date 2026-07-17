@@ -35,8 +35,8 @@ export default function TutorialModal() {
           style={{
             width: "100%",
             maxWidth: "420px",
-            background: "#1a1a1b",
-            border: "2px solid #3a3a3c",
+            background: "var(--cl-card)",
+            border: "2px solid var(--cl-border)",
             borderRadius: "6px",
             padding: "32px 28px 28px",
             position: "relative",
@@ -52,15 +52,15 @@ export default function TutorialModal() {
               fill="none"
               style={{ display: "inline-block", marginBottom: "8px" }}
             >
-              <circle cx="12" cy="6" r="4" stroke="#ffffff" strokeWidth="2" fill="none" />
-              <circle cx="12" cy="18" r="4" stroke="#ffffff" strokeWidth="2" fill="none" />
-              <rect x="11" y="9" width="2" height="6" rx="1" fill="#ffffff" />
+              <circle cx="12" cy="6" r="4" stroke="var(--cl-text)" strokeWidth="2" fill="none" />
+              <circle cx="12" cy="18" r="4" stroke="var(--cl-text)" strokeWidth="2" fill="none" />
+              <rect x="11" y="9" width="2" height="6" rx="1" fill="var(--cl-text)" />
             </svg>
             <h2
               style={{
                 fontSize: "24px",
                 fontWeight: 700,
-                color: "#ffffff",
+                color: "var(--cl-text)",
                 margin: 0,
               }}
             >
@@ -75,13 +75,13 @@ export default function TutorialModal() {
                   width: "28px",
                   height: "28px",
                   borderRadius: "50%",
-                  background: "#6aaa64",
+                  background: "var(--cl-green)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   fontSize: "12px",
                   fontWeight: 700,
-                  color: "#ffffff",
+                  color: "var(--cl-text)",
                   flexShrink: 0,
                 }}
               >
@@ -92,16 +92,16 @@ export default function TutorialModal() {
                   style={{
                     fontSize: "13px",
                     fontWeight: 600,
-                    color: "#ffffff",
+                    color: "var(--cl-text)",
                     marginBottom: "4px",
                   }}
                 >
                   Build the Chain
                 </div>
-                <p style={{ fontSize: "12px", color: "#787c7e", margin: 0, lineHeight: 1.6 }}>
+                <p style={{ fontSize: "12px", color: "var(--cl-gray-dim)", margin: 0, lineHeight: 1.6 }}>
                   Each word pairs with the one before it to form a common phrase — like{" "}
-                  <strong style={{ color: "#c9b458" }}>apple juice</strong>, then{" "}
-                  <strong style={{ color: "#c9b458" }}>juice box</strong>.
+                  <strong style={{ color: "var(--cl-yellow)" }}>apple juice</strong>, then{" "}
+                  <strong style={{ color: "var(--cl-yellow)" }}>juice box</strong>.
                 </p>
               </div>
             </div>
@@ -112,13 +112,13 @@ export default function TutorialModal() {
                   width: "28px",
                   height: "28px",
                   borderRadius: "50%",
-                  background: "#6aaa64",
+                  background: "var(--cl-green)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   fontSize: "12px",
                   fontWeight: 700,
-                  color: "#ffffff",
+                  color: "var(--cl-text)",
                   flexShrink: 0,
                 }}
               >
@@ -129,13 +129,13 @@ export default function TutorialModal() {
                   style={{
                     fontSize: "13px",
                     fontWeight: 600,
-                    color: "#ffffff",
+                    color: "var(--cl-text)",
                     marginBottom: "4px",
                   }}
                 >
                   Start With the First Word
                 </div>
-                <p style={{ fontSize: "12px", color: "#787c7e", margin: 0, lineHeight: 1.6 }}>
+                <p style={{ fontSize: "12px", color: "var(--cl-gray-dim)", margin: 0, lineHeight: 1.6 }}>
                   The first word is given to you. Guess each next word one at a time — you only see
                   the first letter until you solve it.
                 </p>
@@ -148,13 +148,13 @@ export default function TutorialModal() {
                   width: "28px",
                   height: "28px",
                   borderRadius: "50%",
-                  background: "#6aaa64",
+                  background: "var(--cl-green)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   fontSize: "12px",
                   fontWeight: 700,
-                  color: "#ffffff",
+                  color: "var(--cl-text)",
                   flexShrink: 0,
                 }}
               >
@@ -165,13 +165,13 @@ export default function TutorialModal() {
                   style={{
                     fontSize: "13px",
                     fontWeight: 600,
-                    color: "#ffffff",
+                    color: "var(--cl-text)",
                     marginBottom: "4px",
                   }}
                 >
                   Stuck? Wrong Guesses Help
                 </div>
-                <p style={{ fontSize: "12px", color: "#787c7e", margin: 0, lineHeight: 1.6 }}>
+                <p style={{ fontSize: "12px", color: "var(--cl-gray-dim)", margin: 0, lineHeight: 1.6 }}>
                   Each wrong guess reveals one letter of the current word. You can be wrong three
                   times — wrong a fourth time and you lose.
                 </p>
@@ -185,8 +185,8 @@ export default function TutorialModal() {
               marginTop: "28px",
               padding: "14px",
               width: "100%",
-              background: "#6aaa64",
-              color: "#ffffff",
+              background: "var(--cl-green)",
+                  color: "#ffffff",
               fontSize: "13px",
               fontWeight: 700,
               border: "none",

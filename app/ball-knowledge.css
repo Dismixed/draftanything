@@ -1,4 +1,4 @@
-.bk-page {
+:root {
   --bk-court-navy: #0a1830;
   --bk-backboard: #122a52;
   --bk-backboard-hi: #173568;
@@ -10,7 +10,22 @@
   --bk-miss: #e8536b;
   --bk-line: rgba(140, 170, 220, 0.18);
   --bk-radius: 14px;
+}
 
+html[data-theme="light"] {
+  --bk-court-navy: #eef4fc;
+  --bk-backboard: #ffffff;
+  --bk-backboard-hi: #f5f8fd;
+  --bk-hardwood: #1d4ed8;
+  --bk-net-blue: #2563eb;
+  --bk-chalk: #0f1c33;
+  --bk-chalk-dim: #5a7194;
+  --bk-buzzer: #d97706;
+  --bk-miss: #dc2626;
+  --bk-line: rgba(37, 99, 235, 0.16);
+}
+
+.bk-page {
   min-height: 100vh;
   background:
     radial-gradient(
@@ -25,6 +40,16 @@
   align-items: flex-start;
   justify-content: center;
   padding: 24px 16px 60px;
+}
+
+html[data-theme="light"] .bk-page {
+  background:
+    radial-gradient(
+      ellipse 900px 500px at 50% -10%,
+      rgba(37, 99, 235, 0.1),
+      transparent 60%
+    ),
+    var(--bk-court-navy);
 }
 
 .bk-app {

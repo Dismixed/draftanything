@@ -31,12 +31,12 @@ export default function ChainlinkStatsPage() {
     <main
       style={{
         minHeight: "100vh",
-        background: "#121213",
+        background: "var(--cl-bg)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         padding: "32px 20px 64px",
-        color: "#ffffff",
+        color: "var(--cl-text)",
       }}
     >
       <div style={{ width: "100%", maxWidth: "560px" }}>
@@ -47,7 +47,7 @@ export default function ChainlinkStatsPage() {
           style={{
             fontSize: "clamp(24px, 5vw, 32px)",
             fontWeight: 700,
-            color: "#ffffff",
+            color: "var(--cl-text)",
             margin: "0 0 32px",
             letterSpacing: "-0.02em",
             textAlign: "center",
@@ -55,7 +55,7 @@ export default function ChainlinkStatsPage() {
         />
 
         {loading ? (
-          <div style={{ textAlign: "center", color: "#787c7e", padding: "40px 0" }}>
+          <div style={{ textAlign: "center", color: "var(--cl-gray-dim)", padding: "40px 0" }}>
             Loading stats...
           </div>
         ) : stats ? (
@@ -82,7 +82,7 @@ export default function ChainlinkStatsPage() {
                 style={{
                   fontSize: "14px",
                   fontWeight: 600,
-                  color: "#565758",
+                  color: "var(--cl-gray)",
                   margin: "0 0 12px",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
@@ -98,14 +98,14 @@ export default function ChainlinkStatsPage() {
                 style={{
                   textAlign: "center",
                   fontSize: "12px",
-                  color: "#565758",
+                  color: "var(--cl-gray)",
                   padding: "16px",
-                  borderTop: "1px solid #3a3a3c",
+                  borderTop: "1px solid var(--cl-border)",
                 }}
               >
                 <a
                   href="/auth"
-                  style={{ color: "#c9b458", textDecoration: "underline" }}
+                  style={{ color: "var(--cl-yellow)", textDecoration: "underline" }}
                 >
                   Sign in
                 </a>{" "}
@@ -114,7 +114,7 @@ export default function ChainlinkStatsPage() {
             ) : null}
           </>
         ) : (
-          <div style={{ textAlign: "center", color: "#787c7e", padding: "40px 0" }}>
+          <div style={{ textAlign: "center", color: "var(--cl-gray-dim)", padding: "40px 0" }}>
             No stats available yet. Play a game to get started!
           </div>
         )}
@@ -127,8 +127,8 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
     <div
       style={{
-        background: "#1a1a1b",
-        border: "1px solid #3a3a3c",
+        background: "var(--cl-card)",
+        border: "1px solid var(--cl-border)",
         borderRadius: "8px",
         padding: "16px",
         textAlign: "center",
@@ -138,13 +138,13 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
         style={{
           fontSize: "28px",
           fontWeight: 700,
-          color: "#c9b458",
+          color: "var(--cl-yellow)",
           marginBottom: "4px",
         }}
       >
         {value}
       </div>
-      <div style={{ fontSize: "11px", color: "#787c7e", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+      <div style={{ fontSize: "11px", color: "var(--cl-gray-dim)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
         {label}
       </div>
     </div>
@@ -178,7 +178,7 @@ function Heatmap({ dates }: { dates: string[] }) {
           style={{
             width: "100%",
             aspectRatio: "1",
-            backgroundColor: cell.filled ? "#c9b458" : "#3a3a3c",
+            backgroundColor: cell.filled ? "var(--cl-yellow)" : "var(--cl-border)",
             borderRadius: "2px",
             transition: "background-color 0.2s ease",
           }}

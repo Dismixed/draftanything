@@ -2,22 +2,47 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md text-center">
-        <div className="bg-white rounded-xl border shadow-sm p-8 space-y-4">
-          <h1 className="text-6xl font-bold text-gray-300">404</h1>
-          <h2 className="text-xl font-semibold text-gray-900">Page not found</h2>
-          <p className="text-gray-500 text-sm">
+    <main
+      style={{
+        minHeight: "100vh",
+        background: "var(--bg)",
+        color: "var(--text)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 16,
+      }}
+    >
+      <div style={{ width: "100%", maxWidth: 420, textAlign: "center" }}>
+        <div
+          style={{
+            background: "var(--panel)",
+            border: "1px solid var(--border-hi)",
+            borderRadius: 12,
+            padding: 32,
+          }}
+        >
+          <h1
+            style={{
+              fontSize: 64,
+              fontWeight: 700,
+              margin: "0 0 8px",
+              color: "var(--text-dim)",
+              opacity: 0.45,
+              lineHeight: 1,
+            }}
+          >
+            404
+          </h1>
+          <h2 style={{ fontSize: 20, fontWeight: 600, margin: "0 0 8px", color: "var(--text)" }}>
+            Page not found
+          </h2>
+          <p style={{ color: "var(--text-dim)", fontSize: 14, margin: "0 0 20px" }}>
             The page you&apos;re looking for doesn&apos;t exist or has been moved.
           </p>
-          <div>
-            <Link
-              href="/"
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              Back to home
-            </Link>
-          </div>
+          <Link href="/" className="btn-gold" style={{ display: "inline-block", padding: "10px 18px" }}>
+            Back to home
+          </Link>
         </div>
       </div>
     </main>

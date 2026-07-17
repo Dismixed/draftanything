@@ -71,6 +71,7 @@ export default function AdminChainsPage() {
   );
   const [generating, setGenerating] = useState(false);
   const [autoScheduling, setAutoScheduling] = useState(false);
+  const [autoApproving, setAutoApproving] = useState(false);
   const [genResult, setGenResult] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [scheduleSaving, setScheduleSaving] = useState(false);
@@ -240,6 +241,39 @@ export default function AdminChainsPage() {
       setError(msg);
     } finally {
       setGenerating(false);
+    }
+  };
+
+  /* ---- Approve all draft puzzles ---- */
+  const approveAllDrafts = async () => {
+    const confirmed = confirm(
+      "Approve every draft puzzle in the database? Rejected, scheduled, and published puzzles are left alone.",
+    );
+    if (!confirmed) return;
+
+    setAutoApproving(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/chains/status/bulk", {
+        method: "POST",
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          typeof data.error === "string" ? data.error : "Bulk approve failed",
+        );
+      }
+
+      setSuccessMsg(
+        `Approved ${data.approved} draft puzzle${data.approved === 1 ? "" : "s"}.`,
+      );
+      fetchPuzzles();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Bulk approve failed";
+      setError(msg);
+    } finally {
+      setAutoApproving(false);
     }
   };
 
@@ -422,7 +456,7 @@ export default function AdminChainsPage() {
 
           <button
             onClick={generateChains}
-            disabled={generating || autoScheduling}
+            disabled={generating || autoScheduling || autoApproving}
             style={{
               padding: "8px 16px",
               background: "#c9b458",
@@ -431,16 +465,16 @@ export default function AdminChainsPage() {
               borderRadius: "6px",
               fontSize: "12px",
               fontWeight: 600,
-              cursor: generating || autoScheduling ? "not-allowed" : "pointer",
-              opacity: generating || autoScheduling ? 0.6 : 1,
+              cursor: generating || autoScheduling || autoApproving ? "not-allowed" : "pointer",
+              opacity: generating || autoScheduling || autoApproving ? 0.6 : 1,
             }}
           >
             {generating ? "Generating..." : "Generate 25 Draft Chains"}
           </button>
 
           <button
-            onClick={autoScheduleAll}
-            disabled={autoScheduling || generating}
+            onClick={approveAllDrafts}
+            disabled={autoApproving || generating || autoScheduling}
             style={{
               padding: "8px 16px",
               background: "#6aaa64",
@@ -449,8 +483,26 @@ export default function AdminChainsPage() {
               borderRadius: "6px",
               fontSize: "12px",
               fontWeight: 600,
-              cursor: autoScheduling || generating ? "not-allowed" : "pointer",
-              opacity: autoScheduling || generating ? 0.6 : 1,
+              cursor: autoApproving || generating || autoScheduling ? "not-allowed" : "pointer",
+              opacity: autoApproving || generating || autoScheduling ? 0.6 : 1,
+            }}
+          >
+            {autoApproving ? "Approving..." : "Approve All Drafts"}
+          </button>
+
+          <button
+            onClick={autoScheduleAll}
+            disabled={autoScheduling || generating || autoApproving}
+            style={{
+              padding: "8px 16px",
+              background: "#6aaa64",
+              color: "#121213",
+              border: "none",
+              borderRadius: "6px",
+              fontSize: "12px",
+              fontWeight: 600,
+              cursor: autoScheduling || generating || autoApproving ? "not-allowed" : "pointer",
+              opacity: autoScheduling || generating || autoApproving ? 0.6 : 1,
             }}
           >
             {autoScheduling ? "Scheduling..." : "Auto-Schedule Approved"}

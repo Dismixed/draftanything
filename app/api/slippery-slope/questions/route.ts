@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { enrichQuestionsWithTopics } from "@/features/slippery-slope/topic";
+import { resolveSsFetchCategory } from "@/features/slippery-slope/topic-hint";
 import { fetchQuestions } from "@/lib/brain-dead/trivia-api";
 
 export async function GET(req: NextRequest) {
@@ -9,7 +10,12 @@ export async function GET(req: NextRequest) {
   const token = searchParams.get("token") || "";
   const seenIds = searchParams.get("seen")?.split(",").filter(Boolean) ?? [];
 
-  const result = await fetchQuestions({ count, category, token, seenIds });
+  const result = await fetchQuestions({
+    count,
+    category: resolveSsFetchCategory(category),
+    token,
+    seenIds,
+  });
 
   if (result.error) {
     return NextResponse.json(
