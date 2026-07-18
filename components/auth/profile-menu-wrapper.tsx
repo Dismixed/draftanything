@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { SHOW_AUTH_UI } from "@/lib/auth/config";
+import { SoundToggle } from "@/components/ui/sound-toggle";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { ProfileMenu } from "./profile-menu";
 import { ProfileMenuClient } from "./profile-menu-client";
@@ -17,6 +18,7 @@ export function ProfileMenuWrapper() {
         alignItems: "center",
       }}
     >
+      <SoundToggle />
       <ThemeToggle />
       <Suspense fallback={SHOW_AUTH_UI ? <ProfileMenuClient variant="signed-out" /> : null}>
         <ProfileMenu />

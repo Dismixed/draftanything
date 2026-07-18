@@ -34,9 +34,9 @@ import type {
 } from "@/lib/freezeframes/types";
 import { fireConfetti } from "@/lib/motion/confetti";
 import { useSound } from "@/lib/audio/sound-context";
-import { SoundToggle } from "@/components/ui/sound-toggle";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
 import { OtherDailies } from "@/components/daily/other-dailies";
+import { DailyCompleteShell } from "@/components/daily/daily-complete-shell";
 import { useGameHowItWorks } from "@/lib/game-how-it-works";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
 
@@ -139,6 +139,7 @@ export default function FreezeFramesGame() {
   const [lbSubmitted, setLbSubmitted] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
   const { showHowItWorks, dismissHowItWorks } = useGameHowItWorks("freezeframes");
+  const [completeOpen, setCompleteOpen] = useState(false);
 
   const startTimeRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -490,7 +491,22 @@ export default function FreezeFramesGame() {
   const wrongCount = guesses.filter((g) => !g.correct && !g.skip).length;
   const elapsedSec = ((Date.now() - startTimeRef.current) / 1000).toFixed(1);
 
+  useEffect(() => {
+    if (screen !== "played" && screen !== "results") {
+      setCompleteOpen(false);
+      return;
+    }
+    const timer = setTimeout(() => setCompleteOpen(true), 350);
+    return () => clearTimeout(timer);
+  }, [screen]);
+
   return (
+    <DailyCompleteShell
+      enabled={screen === "played" || screen === "results"}
+      open={completeOpen}
+      onClose={() => setCompleteOpen(false)}
+      ariaLabel="Daily complete"
+    >
     <div className="freezeframes-app">
       <nav className="freezeframes-nav">
         <Link href="/freezeframes" className="freezeframes-logo">
@@ -498,7 +514,6 @@ export default function FreezeFramesGame() {
         </Link>
         <div className="freezeframes-nav-right">
           <span className="freezeframes-date-chip">{displayDate}</span>
-          <SoundToggle />
           <button
             type="button"
             className={`freezeframes-nav-btn${screen === "game" ? " active" : ""}`}
@@ -790,16 +805,17 @@ export default function FreezeFramesGame() {
           rules={FREEZEFRAMES_HOW_IT_WORKS}
           onDismiss={dismissHowItWorks}
           theme={{
-            overlay: "rgba(10, 5, 20, 0.92)",
+            overlay: "var(--ff-overlay)",
             surface: "var(--ff-surface)",
             border: "var(--ff-border)",
-            accent: "#a855f7",
+            accent: "var(--ff-purple-light)",
             text: "var(--ff-text)",
             textMuted: "var(--ff-muted)",
           }}
         />
       )}
     </div>
+    </DailyCompleteShell>
   );
 }
 

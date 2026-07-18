@@ -37,7 +37,7 @@ export default function DailyIntroModal({ onStart }: DailyIntroModalProps) {
         alignItems: "center",
         justifyContent: "center",
         padding: "20px",
-        background: "rgba(15, 23, 42, 0.92)",
+        background: "var(--bd-overlay)",
         backdropFilter: "blur(6px)",
       }}
     >

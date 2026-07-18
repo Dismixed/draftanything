@@ -12,6 +12,7 @@
   --gw-danger: #ff4d4d;
   --gw-success: #39ff8f;
   --gw-radius: 14px;
+  --gw-overlay: rgba(10, 7, 5, 0.72);
 }
 
 html[data-theme="light"] {
@@ -27,6 +28,7 @@ html[data-theme="light"] {
   --gw-ink-dim: #8a6a52;
   --gw-danger: #dc2626;
   --gw-success: #059669;
+  --gw-overlay: rgba(28, 16, 8, 0.38);
 }
 
 .gw-page {
@@ -620,7 +622,7 @@ html[data-theme="light"] .gw-page {
 
 .gw-results-modal {
   width: 100%;
-  max-width: 520px;
+  max-width: none;
 }
 
 .gw-results-modal-card {
@@ -628,7 +630,7 @@ html[data-theme="light"] .gw-page {
   border: 1px solid rgba(255, 107, 26, 0.3);
   border-radius: var(--gw-radius);
   padding: 24px 20px 28px;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+  box-shadow: none;
 }
 
 .gw-results-eyebrow {

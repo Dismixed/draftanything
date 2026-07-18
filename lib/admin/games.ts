@@ -20,7 +20,7 @@ export const ADMIN_GAMES: AdminGame[] = [
   },
   {
     id: "chainlink",
-    name: "Chainlink",
+    name: "Chain Link",
     playHref: "/chainlink/daily",
     adminHref: "/admin/chains",
     description: "Word-chain puzzle queue, generation, and daily scheduling.",

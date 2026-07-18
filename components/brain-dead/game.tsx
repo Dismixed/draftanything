@@ -25,8 +25,8 @@ import { useSound } from "@/lib/audio/sound-context";
 import { fireConfetti } from "@/lib/motion/confetti";
 import { triggerAnimation } from "@/lib/motion/trigger-class";
 import { GameBackLink } from "@/components/ui/game-back-link";
-import { SoundToggle } from "@/components/ui/sound-toggle";
 import { OtherDailies } from "@/components/daily/other-dailies";
+import { DailyCompleteShell } from "@/components/daily/daily-complete-shell";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
 import DailyIntroModal from "@/components/brain-dead/daily-intro-modal";
 
@@ -83,10 +83,20 @@ export default function BrainDeadGame({
   const router = useRouter();
   const isDaily = mode === "daily";
   const q = questions[qi];
+  const [completeOpen, setCompleteOpen] = useState(false);
 
   useEffect(() => {
     screenRef.current = screen;
   }, [screen]);
+
+  useEffect(() => {
+    if (!isDaily || (screen !== "played" && screen !== "result")) {
+      setCompleteOpen(false);
+      return;
+    }
+    const timer = setTimeout(() => setCompleteOpen(true), 350);
+    return () => clearTimeout(timer);
+  }, [isDaily, screen]);
 
   const clearIntervalTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -387,7 +397,7 @@ export default function BrainDeadGame({
 
   const gameShell = (
     children: React.ReactNode,
-    options?: { sound?: boolean; padTop?: boolean; useRouterBack?: boolean },
+    options?: { padTop?: boolean; useRouterBack?: boolean },
   ) => (
     <div style={{ width: "100%", maxWidth: "480px", margin: "0 auto", position: "relative" }}>
       {options?.useRouterBack ? (
@@ -418,18 +428,20 @@ export default function BrainDeadGame({
           color="var(--bd-text-muted)"
         />
       )}
-      {options?.sound !== false && (
-        <div style={{ position: "absolute", top: 0, right: 0, zIndex: 2 }}>
-          <SoundToggle />
-        </div>
-      )}
       <div style={options?.padTop === false ? undefined : { paddingTop: "28px" }}>{children}</div>
     </div>
   );
 
   /* ── Already played ── */
   if (screen === "played") {
-    return gameShell(
+    return (
+      <DailyCompleteShell
+        enabled={isDaily}
+        open={completeOpen}
+        onClose={() => setCompleteOpen(false)}
+        ariaLabel="Daily complete"
+      >
+        {gameShell(
       <div style={{ textAlign: "center", padding: "24px 0" }}>
         <div
           style={{
@@ -441,130 +453,108 @@ export default function BrainDeadGame({
             margin: "0 auto",
           }}
         >
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--bd-text-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
-          </div>
-          <h2
-            style={{
-              fontSize: "18px",
-              fontWeight: 700,
-              margin: "0 0 20px",
-              color: "var(--bd-text)",
-            }}
-          >
-            Come back tomorrow
-          </h2>
           <div
             style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "8px",
-              marginBottom: "20px",
-            }}
-          >
-            {[
-              { val: todayCorrect, lbl: "Correct" },
-              { val: todayScore, lbl: "Score" },
-            ].map(({ val, lbl }) => (
-              <div
-                key={lbl}
-                style={{
-                  background: "var(--bd-bg)",
-                  border: "1px solid var(--bd-border)",
-                  borderRadius: "8px",
-                  padding: "12px",
-                  textAlign: "center",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "20px",
-                    fontWeight: 700,
-                    color: "var(--bd-primary)",
-                    lineHeight: 1,
-                  }}
-                >
-                  {val}
-                </div>
-                <div
-                  style={{
-                    fontSize: "10px",
-                    color: "var(--bd-text-muted)",
-                    marginTop: "2px",
-                  }}
-                >
-                  {lbl}
-                </div>
-              </div>
-            ))}
-          </div>
-          <Link
-            href="/brain-dead/leaderboard"
-            style={{
-              display: "inline-block",
-              background: "var(--bd-primary)",
-              color: "#fff",
-              border: "none",
-              padding: "10px 24px",
-              fontSize: "12px",
-              fontWeight: 700,
-              borderRadius: "8px",
-              textDecoration: "none",
-              marginBottom: "20px",
-            }}
-          >
-            View Leaderboard
-          </Link>
-          <div
-            style={{
-              width: "40px",
-              height: "2px",
-              background: "var(--bd-primary)",
-              margin: "16px auto",
-            }}
-          />
-          <div
-            style={{
-              fontSize: "10px",
+              fontSize: "11px",
               color: "var(--bd-text-muted)",
               textTransform: "uppercase",
-              letterSpacing: "1px",
+              letterSpacing: "1.5px",
+              marginBottom: "8px",
             }}
           >
-            Next challenge
+            Today&apos;s result
           </div>
           <div
             style={{
-              fontSize: "24px",
-              fontWeight: 700,
-              marginTop: "4px",
+              fontSize: "56px",
+              fontWeight: 800,
+              lineHeight: 1,
+              color: "var(--bd-primary)",
               fontVariantNumeric: "tabular-nums",
-              color: "var(--bd-text)",
             }}
           >
-            {countdown}
+            {todayCorrect}
           </div>
-          <div style={{ marginTop: "32px" }}>
+          <div
+            style={{
+              fontSize: "14px",
+              fontWeight: 600,
+              color: "var(--bd-text)",
+              marginTop: "6px",
+              marginBottom: "4px",
+            }}
+          >
+            correct
+          </div>
+          <div
+            style={{
+              fontSize: "12px",
+              color: "var(--bd-text-muted)",
+              marginBottom: "24px",
+            }}
+          >
+            Score {todayScore}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              gap: "8px",
+              justifyContent: "center",
+              flexWrap: "wrap",
+              marginBottom: "20px",
+            }}
+          >
             <Link
               href="/brain-dead/freeplay"
+              style={{
+                display: "inline-block",
+                textDecoration: "none",
+                background: "var(--bd-primary)",
+                color: "#fff",
+                border: "none",
+                padding: "12px 24px",
+                borderRadius: "8px",
+                fontSize: "13px",
+                fontWeight: 700,
+              }}
+            >
+              Play Free Mode
+            </Link>
+            <Link
+              href="/brain-dead/leaderboard"
               style={{
                 display: "inline-block",
                 textDecoration: "none",
                 background: "transparent",
                 border: "1px solid var(--bd-border)",
                 color: "var(--bd-text-secondary)",
-                padding: "10px 24px",
+                padding: "12px 24px",
                 borderRadius: "8px",
-                fontSize: "12px",
+                fontSize: "13px",
                 fontWeight: 600,
-                transition: "border-color 0.2s",
               }}
             >
-              Play Free Mode
+              View Leaderboard
             </Link>
+          </div>
+          <p
+            style={{
+              fontSize: "12px",
+              color: "var(--bd-text-muted)",
+              margin: "0 0 4px",
+              lineHeight: 1.5,
+            }}
+          >
+            Daily locked — come back tomorrow for a new set
+          </p>
+          <div
+            style={{
+              fontSize: "11px",
+              color: "var(--bd-text-muted)",
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            Next challenge in {countdown}
           </div>
         </div>
 
@@ -575,13 +565,21 @@ export default function BrainDeadGame({
           </>
         )}
       </div>,
-      { sound: false },
+    )}
+      </DailyCompleteShell>
     );
   }
 
   /* ── Result ── */
   if (screen === "result") {
-    return gameShell(
+    return (
+      <DailyCompleteShell
+        enabled={isDaily}
+        open={completeOpen}
+        onClose={() => setCompleteOpen(false)}
+        ariaLabel="Daily complete"
+      >
+        {gameShell(
       <div className="anim-fade-slide-up" style={{ textAlign: "center", padding: "24px 0" }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--bd-primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -611,53 +609,99 @@ export default function BrainDeadGame({
           {result.sub}
         </p>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr",
-            gap: "8px",
-            marginBottom: "24px",
-            maxWidth: "380px",
-            margin: "0 auto 24px",
-          }}
-        >
-          {[
-            { val: correct, lbl: "Correct" },
-            { val: score, lbl: "Score" },
-            { val: `${avgSpeed}s`, lbl: "Avg Time" },
-          ].map(({ val, lbl }) => (
+        {isDaily ? (
+          <>
             <div
-              key={lbl}
               style={{
-                background: "var(--bd-surface)",
-                border: "1px solid var(--bd-border)",
-                borderRadius: "8px",
-                padding: "12px",
-                textAlign: "center",
+                fontSize: "56px",
+                fontWeight: 800,
+                lineHeight: 1,
+                color: "var(--bd-primary)",
+                fontVariantNumeric: "tabular-nums",
+                marginBottom: "6px",
               }}
             >
-              <div
-                style={{
-                  fontSize: "20px",
-                  fontWeight: 700,
-                  color: "var(--bd-primary)",
-                  lineHeight: 1,
-                }}
-              >
-                {val}
-              </div>
-              <div
-                style={{
-                  fontSize: "10px",
-                  color: "var(--bd-text-muted)",
-                  marginTop: "2px",
-                }}
-              >
-                {lbl}
-              </div>
+              {correct}
             </div>
-          ))}
-        </div>
+            <div
+              style={{
+                fontSize: "14px",
+                fontWeight: 600,
+                color: "var(--bd-text)",
+                marginBottom: "16px",
+              }}
+            >
+              correct
+            </div>
+            <div
+              style={{
+                display: "flex",
+                gap: "16px",
+                justifyContent: "center",
+                marginBottom: "24px",
+                fontSize: "12px",
+                color: "var(--bd-text-muted)",
+              }}
+            >
+              <span>
+                Score{" "}
+                <strong style={{ color: "var(--bd-text)", fontWeight: 700 }}>{score}</strong>
+              </span>
+              <span>
+                Avg{" "}
+                <strong style={{ color: "var(--bd-text)", fontWeight: 700 }}>{avgSpeed}s</strong>
+              </span>
+            </div>
+          </>
+        ) : (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr 1fr",
+              gap: "8px",
+              marginBottom: "24px",
+              maxWidth: "380px",
+              margin: "0 auto 24px",
+            }}
+          >
+            {[
+              { val: correct, lbl: "Correct" },
+              { val: score, lbl: "Score" },
+              { val: `${avgSpeed}s`, lbl: "Avg Time" },
+            ].map(({ val, lbl }) => (
+              <div
+                key={lbl}
+                style={{
+                  background: "var(--bd-surface)",
+                  border: "1px solid var(--bd-border)",
+                  borderRadius: "8px",
+                  padding: "12px",
+                  textAlign: "center",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "20px",
+                    fontWeight: 700,
+                    color: "var(--bd-primary)",
+                    lineHeight: 1,
+                  }}
+                >
+                  {val}
+                </div>
+                <div
+                  style={{
+                    fontSize: "10px",
+                    color: "var(--bd-text-muted)",
+                    marginTop: "2px",
+                  }}
+                >
+                  {lbl}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {isDaily && !submitted && (
           <div
@@ -718,34 +762,68 @@ export default function BrainDeadGame({
           </div>
         )}
 
-        {(submitted || isDaily) && (
+        {isDaily && (
           <div
             style={{
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: "20px",
+              gap: "12px",
+              marginBottom: "8px",
             }}
           >
-            {submitted && (
+            <div
+              style={{
+                display: "flex",
+                gap: "8px",
+                justifyContent: "center",
+                flexWrap: "wrap",
+              }}
+            >
               <Link
-                href="/brain-dead/leaderboard"
+                href="/brain-dead/freeplay"
                 style={{
                   display: "inline-block",
                   background: "var(--bd-primary)",
                   color: "#fff",
                   border: "none",
-                  padding: "12px 28px",
+                  padding: "12px 24px",
                   fontSize: "13px",
                   fontWeight: 700,
                   borderRadius: "8px",
                   textDecoration: "none",
                 }}
               >
+                Play Free Mode
+              </Link>
+              <Link
+                href="/brain-dead/leaderboard"
+                style={{
+                  display: "inline-block",
+                  background: "transparent",
+                  border: "1px solid var(--bd-border)",
+                  color: "var(--bd-text-secondary)",
+                  padding: "12px 24px",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  borderRadius: "8px",
+                  textDecoration: "none",
+                }}
+              >
                 View Leaderboard
               </Link>
-            )}
-            {isDaily && <WinStreakLine gameId="brain-dead" accentColor="var(--bd-primary)" />}
+            </div>
+            <p
+              style={{
+                fontSize: "12px",
+                color: "var(--bd-text-muted)",
+                margin: 0,
+                lineHeight: 1.5,
+              }}
+            >
+              Daily locked — come back tomorrow for a new set
+            </p>
+            <WinStreakLine gameId="brain-dead" accentColor="var(--bd-primary)" />
           </div>
         )}
 
@@ -789,7 +867,9 @@ export default function BrainDeadGame({
           </button>
         </div>
       </div>,
-      { sound: false, useRouterBack: !isDaily },
+      { useRouterBack: !isDaily },
+    )}
+      </DailyCompleteShell>
     );
   }
 

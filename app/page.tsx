@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { SoundToggle } from "@/components/ui/sound-toggle";
 import { GameCardStreak } from "@/components/streak/streak-notifier";
 import { GameTitle } from "@/components/ui/game-title";
 import { HotTakesHomeVisual } from "@/components/hot-takes/home-visual";
@@ -11,7 +10,7 @@ import { buildHomeJsonLd, getGameSeo, JsonLdScript } from "@/lib/seo";
 function ChainlinkVisualRow() {
   const tiles = ["SNOW", "BALL", "PARK"];
   return (
-    <div className="chainlink-preview">
+    <div className="chainlink-preview stim-visual-wide">
       {tiles.map((word, i) => (
         <div key={word} className="chainlink-preview-segment">
           <div
@@ -45,100 +44,41 @@ function ChainlinkVisualRow() {
 }
 
 function BrainDeadVisual() {
-  const streak = [true, true, true, true, true, false];
+  const streak = [true, true, true, true, false];
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        height: "100%",
-        gap: "12px",
-      }}
-    >
-      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+    <div className="brain-dead-preview">
+      <div className="brain-dead-preview-dots">
         {streak.map((correct, i) => (
           <div
             key={i}
-            style={{
-              width: "30px",
-              height: "30px",
-              borderRadius: "50%",
-              background: correct ? "rgba(110,186,100,0.12)" : "rgba(220,50,50,0.12)",
-              border: `2px solid ${correct ? "#6eba64" : "#dc3232"}`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "13px",
-              color: correct ? "#6eba64" : "#dc3232",
-              fontWeight: 700,
-            }}
+            className={`brain-dead-preview-dot${correct ? " ok" : " miss"}`}
           >
             {correct ? "✓" : "✗"}
           </div>
         ))}
       </div>
-      <div
-        style={{
-          fontSize: "10px",
-          fontWeight: 600,
-          letterSpacing: "0.1em",
-          textTransform: "uppercase" as const,
-          color: "var(--bd-primary)",
-          opacity: 0.65,
-        }}
-      >
-        One wrong ends it
-      </div>
+      <div className="brain-dead-preview-caption">One wrong ends it</div>
     </div>
   );
 }
 
 function AnyGuessrVisual() {
-  const clues = ["🏳️", "💰", "👕", "🏛", "🍕", "🌿", "🐆", "👤", "🔤", "🗺️"];
+  const clues = [
+    { icon: "🏳️", label: "Flag" },
+    { icon: "💰", label: "Currency" },
+    { icon: "🏛", label: "Landmark" },
+    { icon: "🗺️", label: "Map" },
+  ];
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "100%",
-        gap: "10px",
-      }}
-    >
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "5px" }}>
-        {clues.map((icon, i) => (
-          <div
-            key={i}
-            style={{
-              width: "34px",
-              height: "34px",
-              borderRadius: "5px",
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "15px",
-            }}
-          >
-            {icon}
+    <div className="anyguessr-preview">
+      <div className="anyguessr-preview-grid">
+        {clues.map((clue) => (
+          <div key={clue.label} className="anyguessr-preview-chip" title={clue.label}>
+            {clue.icon}
           </div>
         ))}
       </div>
-      <div
-        style={{
-          fontSize: "10px",
-          color: "var(--ag-muted)",
-          letterSpacing: "0.1em",
-          textTransform: "uppercase" as const,
-          fontWeight: 600,
-        }}
-      >
-        10 countries · 10 clue types
-      </div>
+      <div className="anyguessr-preview-caption">Guess the country</div>
     </div>
   );
 }
@@ -167,7 +107,7 @@ function FreezeFramesVisual() {
               width: "64px",
               height: "60px",
               background: "rgba(168,85,247,0.07)",
-              border: "1px solid rgba(168,85,247,0.22)",
+              border: "1px solid color-mix(in srgb, var(--ff-purple-light) 28%, transparent)",
               borderRadius: "6px",
               display: "flex",
               flexDirection: "column",
@@ -180,7 +120,7 @@ function FreezeFramesVisual() {
             <span
               style={{
                 fontSize: "8px",
-                color: "#a855f7",
+                color: "var(--ff-purple-light)",
                 letterSpacing: "0.06em",
                 textTransform: "uppercase",
                 fontWeight: 600,
@@ -222,8 +162,8 @@ function BallKnowledgeVisual() {
           flexShrink: 0,
           aspectRatio: "1",
           borderRadius: "50%",
-          border: "3px solid #5b9ee8",
-          background: "rgba(91,158,232,0.08)",
+          border: "3px solid var(--bk-net-blue)",
+          background: "color-mix(in srgb, var(--bk-net-blue) 10%, transparent)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -233,7 +173,7 @@ function BallKnowledgeVisual() {
           style={{
             fontSize: "20px",
             fontWeight: 800,
-            color: "#5b9ee8",
+            color: "var(--bk-net-blue)",
             fontFamily: '"Teko", sans-serif',
             letterSpacing: "0.02em",
           }}
@@ -259,9 +199,9 @@ function BallKnowledgeVisual() {
               fontWeight: 700,
               letterSpacing: "0.06em",
               textTransform: "uppercase",
-              color: "#8ba3c9",
-              background: "rgba(91,158,232,0.1)",
-              border: "1px solid rgba(91,158,232,0.22)",
+              color: "var(--bk-chalk-dim)",
+              background: "color-mix(in srgb, var(--bk-net-blue) 10%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--bk-net-blue) 28%, transparent)",
               borderRadius: "20px",
               padding: "3px 8px",
               whiteSpace: "nowrap",
@@ -300,13 +240,13 @@ function GettingWarmerVisual() {
             background:
               i < 2
                 ? "linear-gradient(135deg, rgba(255,107,26,0.15), rgba(255,107,26,0.04))"
-                : "rgba(38,49,61,0.6)",
+                : "var(--gw-cold-slate)",
             border:
               i < 2
                 ? "1px solid rgba(255,150,60,0.35)"
-                : "1px solid rgba(255,255,255,0.06)",
-            color: i < 2 ? "#fff3e8" : "#7c8a99",
-            opacity: i < 2 ? 1 : 0.55,
+                : "1px solid color-mix(in srgb, var(--gw-cold-slate-text) 35%, transparent)",
+            color: i < 2 ? "var(--gw-ink)" : "var(--gw-cold-slate-text)",
+            opacity: i < 2 ? 1 : 0.85,
             display: "flex",
             alignItems: "center",
             gap: "6px",
@@ -317,8 +257,8 @@ function GettingWarmerVisual() {
               width: "14px",
               height: "14px",
               borderRadius: "50%",
-              background: i < 2 ? "#ff6b1a" : "rgba(255,255,255,0.06)",
-              color: i < 2 ? "#1a0a02" : "#7c8a99",
+              background: i < 2 ? "var(--gw-orange)" : "color-mix(in srgb, var(--gw-cold-slate-text) 22%, transparent)",
+              color: i < 2 ? "#1a0a02" : "var(--gw-cold-slate-text)",
               fontSize: "7px",
               fontWeight: 700,
               display: "flex",
@@ -372,14 +312,14 @@ function SlipperySlopeVisual() {
                     background: isCurrent
                       ? "var(--ss-lime)"
                       : isVisited
-                      ? "rgba(181,242,61,0.18)"
-                      : "rgba(255,255,255,0.04)",
+                      ? "color-mix(in srgb, var(--ss-lime) 18%, transparent)"
+                      : "var(--ss-surface2)",
                     border: `1px solid ${
                       isCurrent
                         ? "var(--ss-lime)"
                         : isVisited
-                        ? "rgba(181,242,61,0.3)"
-                        : "rgba(255,255,255,0.07)"
+                        ? "color-mix(in srgb, var(--ss-lime) 40%, transparent)"
+                        : "var(--ss-border)"
                     }`,
                     display: "flex",
                     alignItems: "center",
@@ -387,10 +327,10 @@ function SlipperySlopeVisual() {
                     fontSize: "7px",
                     fontWeight: 700,
                     color: isCurrent
-                      ? "#0d1117"
+                      ? "var(--ss-on-accent)"
                       : isVisited
-                      ? "rgba(181,242,61,0.8)"
-                      : "rgba(255,255,255,0.2)",
+                      ? "var(--ss-lime)"
+                      : "var(--ss-cell-num)",
                   }}
                 >
                   {cell}
@@ -445,9 +385,9 @@ function DraftAnythingVisual() {
                 fontSize: "10px",
                 fontWeight: 500,
                 color: i === 0 ? "var(--gold-hi)" : "var(--text-dim)",
-                background: i === 0 ? "rgba(201,168,76,0.14)" : "rgba(255,255,255,0.03)",
+                background: i === 0 ? "rgba(201,168,76,0.14)" : "var(--panel-alt)",
                 border: `1px solid ${
-                  i === 0 ? "rgba(201,168,76,0.4)" : "rgba(255,255,255,0.08)"
+                  i === 0 ? "rgba(201,168,76,0.4)" : "var(--border)"
                 }`,
                 borderRadius: "4px",
                 padding: "5px 8px",
@@ -472,14 +412,6 @@ const eyebrow = {
   textTransform: "uppercase" as const,
 };
 
-const modeHint = {
-  fontSize: "10px",
-  fontWeight: 500,
-  letterSpacing: "0.06em",
-  color: "var(--text-dim)",
-  opacity: 0.75,
-};
-
 const cta = {
   fontSize: "10px",
   fontWeight: 600,
@@ -489,7 +421,7 @@ const cta = {
 
 const cardTitleSection = {
   padding: "16px 20px 14px",
-  minHeight: "128px",
+  minHeight: "96px",
   boxSizing: "border-box" as const,
   display: "flex",
   flexDirection: "column" as const,
@@ -510,6 +442,8 @@ const cardVisualSection = {
   alignItems: "center",
   justifyContent: "center",
   flexShrink: 0,
+  overflow: "hidden",
+  position: "relative" as const,
 };
 
 const cardActionSection = {
@@ -537,6 +471,13 @@ const partyActionSection = {
   flexShrink: 0,
 };
 
+const cardTitleClass = "stim-card-title";
+const cardDescClass = "stim-card-desc";
+const cardVisualClass = "stim-card-visual";
+const cardActionClass = "stim-card-action";
+const partyVisualClass = "stim-party-visual";
+const partyActionClass = "stim-party-action";
+
 /* ─── Card shell ──────────────────────────────────────────────────── */
 
 function GameCard({
@@ -555,10 +496,10 @@ function GameCard({
   return (
     <Link href={href} style={{ display: "block", textDecoration: "none" }}>
       <div
-        className="stim-hero-card"
+        className="stim-hero-card stim-game-card"
         style={{
           background: bg,
-          border: `1px solid ${border}`,
+          border: `1.5px solid ${border}`,
           borderRadius: radius,
           overflow: "hidden",
           cursor: "pointer",
@@ -575,7 +516,12 @@ function GameCard({
 }
 
 function Divider({ color }: { color: string }) {
-  return <div style={{ height: "1px", background: color, margin: "0 20px", flexShrink: 0 }} />;
+  return (
+    <div
+      className="stim-card-rule"
+      style={{ height: "1px", background: color, margin: "0 20px", flexShrink: 0 }}
+    />
+  );
 }
 
 function SectionLabel({
@@ -587,6 +533,7 @@ function SectionLabel({
 }) {
   return (
     <div
+      className="stim-section-label"
       style={{
         display: "flex",
         alignItems: "center",
@@ -641,16 +588,6 @@ export default function StimGames() {
       }}
     >
       <JsonLdScript data={buildHomeJsonLd()} />
-      {/* Atmospheric gradients */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "radial-gradient(ellipse 80% 40% at 50% -10%, rgba(124,58,255,0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 35% at 80% 85%, rgba(201,168,76,0.06) 0%, transparent 55%)",
-          pointerEvents: "none",
-        }}
-      />
 
       <div
         style={{
@@ -660,39 +597,37 @@ export default function StimGames() {
           zIndex: 1,
         }}
       >
-        <div style={{ position: "absolute", top: 0, right: 0, zIndex: 2 }}>
-          <SoundToggle />
-        </div>
-
         {/* Header */}
         <header
+          className="stim-home-header"
           style={{
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
-            gap: "16px",
-            marginBottom: "32px",
-            paddingRight: "40px",
+            textAlign: "center",
+            gap: "14px",
+            marginBottom: "36px",
           }}
         >
           <Image
             src="/stimlabs_badge_v5.svg"
             alt="Stim Labs"
-            width={64}
-            height={74}
+            width={80}
+            height={92}
             priority
             unoptimized
             style={{
-              width: "64px",
+              width: "80px",
               height: "auto",
               flexShrink: 0,
               display: "block",
             }}
           />
-          <div style={{ minWidth: 0 }}>
+          <div style={{ minWidth: 0, maxWidth: "28rem" }}>
             <h1
               style={{
                 fontFamily: '"Playfair Display", serif',
-                fontSize: "clamp(26px, 5.5vw, 34px)",
+                fontSize: "clamp(32px, 6.5vw, 42px)",
                 fontWeight: 900,
                 lineHeight: 1.1,
                 color: "var(--text)",
@@ -712,10 +647,10 @@ export default function StimGames() {
             </h1>
             <p
               style={{
-                fontSize: "13px",
+                fontSize: "15px",
                 color: "var(--text-dim)",
-                lineHeight: 1.45,
-                margin: "6px 0 0",
+                lineHeight: 1.5,
+                margin: "8px 0 0",
                 fontWeight: 300,
               }}
             >
@@ -725,224 +660,113 @@ export default function StimGames() {
         </header>
 
         {/* ── DAILY GAMES ─────────────────────────────────────────── */}
-        <section style={{ marginBottom: "36px" }}>
+        <section className="stim-home-section" style={{ marginBottom: "36px" }}>
           <SectionLabel accent="var(--cl-green)">Daily game rotation</SectionLabel>
-          <Link href="/chainlink" style={{ display: "block", textDecoration: "none" }}>
-            <div
-              className="stim-hero-card"
-              style={{
-                background: "var(--cl-card)",
-                border: "2px solid var(--cl-border)",
-                borderRadius: "6px",
-                overflow: "hidden",
-                position: "relative",
-                cursor: "pointer",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              {/* Glow */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: "-40%",
-                  right: "-5%",
-                  width: "400px",
-                  height: "400px",
-                  borderRadius: "50%",
-                  background:
-                    "radial-gradient(circle, rgba(201,180,88,0.06) 0%, transparent 70%)",
-                  pointerEvents: "none",
-                }}
-              />
-
-              {/* Title */}
-              <div style={{ padding: "28px 36px 20px", position: "relative" }}>
-                <div style={{ ...eyebrow, color: "var(--cl-green)", opacity: 0.9, marginBottom: "8px" }}>
-                  Word Game
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    justifyContent: "space-between",
-                    gap: "12px",
-                  }}
-                >
-                  <GameTitle
-                    game="chainlink"
-                    as="h2"
-                    style={{
-                      fontSize: "clamp(28px, 5vw, 38px)",
-                      fontWeight: 700,
-                      lineHeight: 0.95,
-                      color: "var(--cl-text)",
-                      margin: 0,
-                    }}
-                  />
-                  <GameCardStreak gameId="chainlink" accentColor="var(--cl-yellow)" inline />
-                </div>
-                <p style={{ ...modeHint, color: "var(--cl-gray-dim)", margin: "8px 0 0" }}>
-                  Solo · Daily puzzle
-                </p>
-                <p style={{ ...cardDescription, color: "var(--cl-gray-dim)" }}>
-                  {getGameSeo("chainlink").description}
-                </p>
-              </div>
-
-              {/* Divider */}
-              <div style={{ height: "1px", background: "var(--cl-border)", margin: "0 36px" }} />
-
-              {/* Visual */}
-              <div
-                style={{
-                  padding: "28px 36px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <ChainlinkVisualRow />
-              </div>
-
-              {/* Divider */}
-              <div style={{ height: "1px", background: "var(--cl-border)", margin: "0 36px" }} />
-
-              {/* CTA */}
-              <div style={{ padding: "16px 36px 24px" }}>
-                <div
-                  className="stim-text-link"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    ...cta,
-                    color: "var(--cl-yellow)",
-                  }}
-                >
-                  Play Chainlink
-                  <span style={{ fontSize: "12px" }}>&#8594;</span>
-                </div>
-              </div>
-            </div>
-          </Link>
           <div
+            className="stim-daily-grid"
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fill, minmax(258px, 1fr))",
               gap: "14px",
-              marginTop: "14px",
             }}
           >
-
-          {/* Brain Dead */}
-          <div
-            className="stim-hero-card"
-            style={{
-              background: "var(--bd-surface)",
-              border: "1px solid var(--bd-border)",
-              borderRadius: "10px",
-              overflow: "hidden",
-              position: "relative",
-              minHeight: "320px",
-              display: "flex",
-              flexDirection: "column",
-            }}
+          {/* Chainlink */}
+          <GameCard
+            href="/chainlink"
+            bg="var(--cl-card)"
+            border="color-mix(in srgb, var(--cl-yellow) 65%, transparent)"
           >
-            <Link
-              href="/brain-dead/daily"
-              style={{
-                textDecoration: "none",
-                display: "flex",
-                flexDirection: "column",
-                flex: 1,
-              }}
-            >
+            <div className={cardTitleClass} style={cardTitleSection}>
               <div
                 style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: "3px",
-                  background: "var(--bd-primary)",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                  gap: "8px",
                 }}
-              />
-              {/* Title */}
-              <div style={cardTitleSection}>
-                <div style={{ ...eyebrow, color: "var(--bd-primary)", marginBottom: "5px" }}>
-                  Trivia
-                </div>
-                <div
+              >
+                <GameTitle
+                  game="chainlink"
+                  as="h2"
                   style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    justifyContent: "space-between",
-                    gap: "8px",
+                    fontSize: "28px",
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    color: "var(--cl-text)",
+                    margin: 0,
                   }}
-                >
-                  <GameTitle
-                    game="brain-dead"
-                    as="h2"
-                    style={{
-                      fontSize: "22px",
-                      fontWeight: 700,
-                      lineHeight: 1,
-                      color: "var(--bd-text)",
-                      margin: 0,
-                      letterSpacing: "-0.5px",
-                    }}
-                  />
-                  <GameCardStreak gameId="brain-dead" accentColor="var(--bd-primary)" inline />
-                </div>
-                <p style={{ ...modeHint, margin: "6px 0 0" }}>Solo · Daily + Freeplay</p>
-                <p style={{ ...cardDescription, color: "var(--bd-muted, var(--text-dim))" }}>
-                  {getGameSeo("brain-dead").description}
-                </p>
+                />
+                <GameCardStreak gameId="chainlink" accentColor="var(--cl-yellow)" inline />
               </div>
-              <Divider color="var(--bd-border)" />
-              {/* Visual */}
-              <div style={cardVisualSection}>
-                <BrainDeadVisual />
-              </div>
-            </Link>
-            <Divider color="var(--bd-border)" />
-            {/* CTA */}
-            <div
-              style={{
-                ...cardActionSection,
-                justifyContent: "space-between",
-                gap: "12px",
-                width: "100%",
-              }}
-            >
-              <Link href="/brain-dead/daily" style={{ textDecoration: "none" }}>
-                <span className="stim-text-link" style={{ ...cta, color: "var(--bd-primary)" }}>
-                  Start the daily &#8594;
-                </span>
-              </Link>
-              <Link href="/brain-dead" style={{ textDecoration: "none" }}>
-                <span
-                  className="stim-text-link"
-                  style={{ ...cta, color: "var(--bd-primary)", opacity: 0.72 }}
-                >
-                  Pick a mode &#8594;
-                </span>
-              </Link>
+              <p className={cardDescClass} style={{ ...cardDescription, color: "var(--cl-gray-dim)" }}>
+                {getGameSeo("chainlink").description}
+              </p>
             </div>
-          </div>
+            <Divider color="var(--cl-border)" />
+            <div className={cardVisualClass} style={cardVisualSection}>
+              <ChainlinkVisualRow />
+            </div>
+            <Divider color="var(--cl-border)" />
+            <div className={cardActionClass} style={cardActionSection}>
+              <span className="stim-text-link" style={{ ...cta, color: "var(--cl-yellow)" }}>
+                Play Chain Link &#8594;
+              </span>
+            </div>
+          </GameCard>
+
+          {/* Brain Dead */}
+          <GameCard
+            href="/brain-dead/daily"
+            bg="var(--bd-surface)"
+            border="color-mix(in srgb, var(--bd-primary) 65%, transparent)"
+          >
+            <div className={cardTitleClass} style={cardTitleSection}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                  gap: "8px",
+                }}
+              >
+                <GameTitle
+                  game="brain-dead"
+                  as="h2"
+                  style={{
+                    fontSize: "28px",
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    color: "var(--bd-text)",
+                    margin: 0,
+                    letterSpacing: "-0.5px",
+                  }}
+                />
+                <GameCardStreak gameId="brain-dead" accentColor="var(--bd-primary)" inline />
+              </div>
+              <p className={cardDescClass} style={{ ...cardDescription, color: "var(--bd-muted, var(--text-dim))" }}>
+                {getGameSeo("brain-dead").description}
+              </p>
+            </div>
+            <Divider color="var(--bd-border)" />
+            <div className={cardVisualClass} style={cardVisualSection}>
+              <BrainDeadVisual />
+            </div>
+            <Divider color="var(--bd-border)" />
+            <div className={cardActionClass} style={cardActionSection}>
+              <span className="stim-text-link" style={{ ...cta, color: "var(--bd-primary)" }}>
+                Start the daily &#8594;
+              </span>
+            </div>
+          </GameCard>
 
           {/* AnyGuessr */}
           <GameCard
             href="/anyguessr/daily"
             bg="var(--ag-surface)"
-            border="var(--ag-border)"
+            border="color-mix(in srgb, var(--ag-brand) 55%, transparent)"
           >
             {/* Title */}
-            <div style={cardTitleSection}>
-              <div style={{ ...eyebrow, color: "var(--ag-accent)", marginBottom: "5px" }}>
-                Country Guessing
-              </div>
+            <div className={cardTitleClass} style={cardTitleSection}>
               <div
                 style={{
                   display: "flex",
@@ -955,7 +779,7 @@ export default function StimGames() {
                   game="anyguessr"
                   as="h2"
                   style={{
-                    fontSize: "22px",
+                    fontSize: "28px",
                     fontWeight: 800,
                     lineHeight: 1,
                     color: "var(--ag-text)",
@@ -963,24 +787,21 @@ export default function StimGames() {
                     letterSpacing: "-0.02em",
                   }}
                 />
-                <GameCardStreak gameId="anyguessr" accentColor="var(--ag-accent)" inline />
+                <GameCardStreak gameId="anyguessr" accentColor="var(--ag-brand)" inline />
               </div>
-              <p style={{ ...modeHint, color: "var(--ag-muted)", margin: "6px 0 0" }}>
-                Solo · Daily
-              </p>
-              <p style={{ ...cardDescription, color: "var(--ag-muted)" }}>
+              <p className={cardDescClass} style={{ ...cardDescription, color: "var(--ag-muted)" }}>
                 {getGameSeo("anyguessr").description}
               </p>
             </div>
             <Divider color="var(--ag-border)" />
             {/* Visual */}
-            <div style={cardVisualSection}>
+            <div className={cardVisualClass} style={cardVisualSection}>
               <AnyGuessrVisual />
             </div>
             <Divider color="var(--ag-border)" />
             {/* CTA */}
-            <div style={cardActionSection}>
-              <span className="stim-text-link" style={{ ...cta, color: "var(--ag-accent)" }}>
+            <div className={cardActionClass} style={cardActionSection}>
+              <span className="stim-text-link" style={{ ...cta, color: "var(--ag-brand)" }}>
                 Guess today&apos;s countries &#8594;
               </span>
             </div>
@@ -990,19 +811,15 @@ export default function StimGames() {
           <GameCard
             href="/hot-takes"
             bg="var(--ht-surface)"
-            border="var(--ht-line)"
-            radius="14px"
+            border="color-mix(in srgb, var(--ht-accent) 65%, transparent)"
           >
             {/* Title */}
-            <div style={cardTitleSection}>
-              <div style={{ ...eyebrow, color: "var(--ht-accent)", marginBottom: "5px" }}>
-                Tier Game
-              </div>
+            <div className={cardTitleClass} style={cardTitleSection}>
               <GameTitle
                 game="hot-takes"
                 as="h2"
                 style={{
-                  fontSize: "22px",
+                  fontSize: "28px",
                   fontWeight: 900,
                   fontStyle: "italic",
                   lineHeight: 1,
@@ -1011,21 +828,18 @@ export default function StimGames() {
                   letterSpacing: "-0.02em",
                 }}
               />
-              <p style={{ ...modeHint, color: "var(--ht-text-dim)", margin: "6px 0 0" }}>
-                Solo · Daily
-              </p>
-              <p style={{ ...cardDescription, color: "var(--ht-text-dim)" }}>
+              <p className={cardDescClass} style={{ ...cardDescription, color: "var(--ht-text-dim)" }}>
                 {getGameSeo("hot-takes").description}
               </p>
             </div>
             <Divider color="var(--ht-line)" />
             {/* Visual */}
-            <div style={cardVisualSection}>
+            <div className={cardVisualClass} style={cardVisualSection}>
               <HotTakesHomeVisual />
             </div>
             <Divider color="var(--ht-line)" />
             {/* CTA */}
-            <div style={cardActionSection}>
+            <div className={cardActionClass} style={cardActionSection}>
               <span className="stim-text-link" style={{ ...cta, color: "var(--ht-accent)" }}>
                 Rank today&apos;s list &#8594;
               </span>
@@ -1036,14 +850,10 @@ export default function StimGames() {
           <GameCard
             href="/freezeframes/daily"
             bg="var(--ff-surface)"
-            border="var(--ff-border)"
-            radius="14px"
+            border="color-mix(in srgb, var(--ff-purple-light) 65%, transparent)"
           >
             {/* Title */}
-            <div style={cardTitleSection}>
-              <div style={{ ...eyebrow, color: "var(--ff-purple-light)", marginBottom: "5px" }}>
-                Movie · Song · TV · Album
-              </div>
+            <div className={cardTitleClass} style={cardTitleSection}>
               <div
                 style={{
                   display: "flex",
@@ -1057,7 +867,7 @@ export default function StimGames() {
                   as="h2"
                   style={{
                     fontFamily: '"Space Mono", monospace',
-                    fontSize: "22px",
+                    fontSize: "28px",
                     fontWeight: 700,
                     lineHeight: 1,
                     color: "var(--ff-text)",
@@ -1067,21 +877,18 @@ export default function StimGames() {
                 />
                 <GameCardStreak gameId="freezeframes" accentColor="var(--ff-purple-light)" inline />
               </div>
-              <p style={{ ...modeHint, color: "var(--ff-muted)", margin: "6px 0 0" }}>
-                Solo · Daily
-              </p>
-              <p style={{ ...cardDescription, color: "var(--ff-muted)" }}>
+              <p className={cardDescClass} style={{ ...cardDescription, color: "var(--ff-muted)" }}>
                 {getGameSeo("freezeframes").description}
               </p>
             </div>
             <Divider color="var(--ff-border)" />
             {/* Visual */}
-            <div style={cardVisualSection}>
+            <div className={cardVisualClass} style={cardVisualSection}>
               <FreezeFramesVisual />
             </div>
             <Divider color="var(--ff-border)" />
             {/* CTA */}
-            <div style={cardActionSection}>
+            <div className={cardActionClass} style={cardActionSection}>
               <span className="stim-text-link" style={{ ...cta, color: "var(--ff-purple-light)" }}>
                 Play the four rounds &#8594;
               </span>
@@ -1092,14 +899,10 @@ export default function StimGames() {
           <GameCard
             href="/ball-knowledge/daily"
             bg="var(--bk-backboard)"
-            border="var(--bk-line)"
-            radius="14px"
+            border="color-mix(in srgb, var(--bk-net-blue) 65%, transparent)"
           >
             {/* Title */}
-            <div style={cardTitleSection}>
-              <div style={{ ...eyebrow, color: "var(--bk-net-blue)", marginBottom: "5px" }}>
-                Any Topic · 60 Seconds
-              </div>
+            <div className={cardTitleClass} style={cardTitleSection}>
               <div
                 style={{
                   display: "flex",
@@ -1113,7 +916,7 @@ export default function StimGames() {
                   as="h2"
                   style={{
                     fontFamily: '"Teko", sans-serif',
-                    fontSize: "26px",
+                    fontSize: "28px",
                     fontWeight: 700,
                     lineHeight: 1,
                     color: "var(--bk-chalk)",
@@ -1125,21 +928,18 @@ export default function StimGames() {
                 />
                 <GameCardStreak gameId="ball-knowledge" accentColor="var(--bk-net-blue)" inline />
               </div>
-              <p style={{ ...modeHint, color: "var(--bk-chalk-dim)", margin: "6px 0 0" }}>
-                Solo · Daily
-              </p>
-              <p style={{ ...cardDescription, color: "var(--bk-chalk-dim)" }}>
+              <p className={cardDescClass} style={{ ...cardDescription, color: "var(--bk-chalk-dim)" }}>
                 {getGameSeo("ball-knowledge").description}
               </p>
             </div>
             <Divider color="var(--bk-line)" />
             {/* Visual */}
-            <div style={cardVisualSection}>
+            <div className={cardVisualClass} style={cardVisualSection}>
               <BallKnowledgeVisual />
             </div>
             <Divider color="var(--bk-line)" />
             {/* CTA */}
-            <div style={cardActionSection}>
+            <div className={cardActionClass} style={cardActionSection}>
               <span className="stim-text-link" style={{ ...cta, color: "var(--bk-net-blue)" }}>
                 Start the clock &#8594;
               </span>
@@ -1149,14 +949,10 @@ export default function StimGames() {
           {/* Getting Warmer */}
           <GameCard
             href="/getting-warmer/daily"
-            bg="var(--gw-bg)"
-            border="rgba(255,107,26,0.25)"
-            radius="14px"
+            bg="var(--gw-surface)"
+            border="color-mix(in srgb, var(--gw-orange) 65%, transparent)"
           >
-            <div style={cardTitleSection}>
-              <div style={{ ...eyebrow, color: "var(--gw-orange)", marginBottom: "5px" }}>
-                Word Puzzle · Unlimited Guesses
-              </div>
+            <div className={cardTitleClass} style={cardTitleSection}>
               <div
                 style={{
                   display: "flex",
@@ -1170,31 +966,27 @@ export default function StimGames() {
                   as="h2"
                   style={{
                     fontFamily: '"Bebas Neue", sans-serif',
-                    fontSize: "26px",
+                    fontSize: "28px",
                     fontWeight: 400,
                     lineHeight: 1,
                     color: "var(--gw-ink)",
                     margin: 0,
                     letterSpacing: "0.03em",
-                    whiteSpace: "nowrap",
-                    flexShrink: 0,
+                    minWidth: 0,
                   }}
                 />
                 <GameCardStreak gameId="getting-warmer" accentColor="var(--gw-orange)" inline />
               </div>
-              <p style={{ ...modeHint, color: "var(--gw-ink-dim)", margin: "6px 0 0" }}>
-                Solo · Daily
-              </p>
-              <p style={{ ...cardDescription, color: "var(--gw-ink-dim)" }}>
+              <p className={cardDescClass} style={{ ...cardDescription, color: "var(--gw-ink-dim)" }}>
                 {getGameSeo("getting-warmer").description}
               </p>
             </div>
-            <Divider color="rgba(255,107,26,0.2)" />
-            <div style={cardVisualSection}>
+            <Divider color="color-mix(in srgb, var(--gw-orange) 28%, transparent)" />
+            <div className={cardVisualClass} style={cardVisualSection}>
               <GettingWarmerVisual />
             </div>
-            <Divider color="rgba(255,107,26,0.2)" />
-            <div style={cardActionSection}>
+            <Divider color="color-mix(in srgb, var(--gw-orange) 28%, transparent)" />
+            <div className={cardActionClass} style={cardActionSection}>
               <span className="stim-text-link" style={{ ...cta, color: "var(--gw-orange)" }}>
                 Reveal the clues &#8594;
               </span>
@@ -1204,7 +996,7 @@ export default function StimGames() {
         </section>
 
         {/* ── PLAY TOGETHER ─────────────────────────────────────────── */}
-        <section style={{ marginBottom: "36px" }}>
+        <section className="stim-home-section" style={{ marginBottom: "36px" }}>
           <SectionLabel accent="var(--gold)">Play together later</SectionLabel>
           <div
             className="stim-party-grid"
@@ -1216,11 +1008,10 @@ export default function StimGames() {
           >
             <Link href="/draft-anything" style={{ display: "block", textDecoration: "none" }}>
               <div
-                className="stim-hero-card stim-party-card"
+                className="stim-hero-card stim-party-card stim-game-card"
                 style={{
-                  background:
-                    "linear-gradient(135deg, rgba(201,168,76,0.12) 0%, rgba(124,58,255,0.07) 100%)",
-                  border: "1px solid rgba(201,168,76,0.32)",
+                  background: "var(--panel)",
+                  border: "1.5px solid color-mix(in srgb, var(--gold) 65%, transparent)",
                   borderRadius: "12px",
                   position: "relative",
                   overflow: "hidden",
@@ -1232,33 +1023,9 @@ export default function StimGames() {
                 }}
               >
                 <div
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: "8%",
-                    right: "8%",
-                    height: "1px",
-                    background:
-                      "linear-gradient(90deg, transparent, rgba(201,168,76,0.5), transparent)",
-                  }}
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "-30%",
-                    right: "-15%",
-                    width: "260px",
-                    height: "260px",
-                    borderRadius: "50%",
-                    background:
-                      "radial-gradient(circle, rgba(201,168,76,0.1) 0%, transparent 70%)",
-                    pointerEvents: "none",
-                  }}
-                />
-                <div style={{ padding: "28px 28px 16px", position: "relative" }}>
-                  <div style={{ ...eyebrow, color: "var(--gold)", opacity: 0.85, marginBottom: "8px" }}>
-                    Party Game
-                  </div>
+                  className="stim-party-title"
+                  style={{ padding: "28px 28px 16px", position: "relative" }}
+                >
                   <h2
                     style={{
                       fontFamily: '"Playfair Display", serif',
@@ -1266,7 +1033,7 @@ export default function StimGames() {
                       fontWeight: 900,
                       lineHeight: 0.95,
                       color: "var(--text)",
-                      margin: "0 0 6px",
+                      margin: "0 0 10px",
                     }}
                   >
                     Draft{" "}
@@ -1274,13 +1041,11 @@ export default function StimGames() {
                       style={{
                         fontStyle: "italic",
                         color: "var(--gold-hi)",
-                        textShadow: "0 0 30px rgba(240,200,96,0.15)",
                       }}
                     >
                       Anything
                     </em>
                   </h2>
-                  <p style={{ ...modeHint, margin: "0 0 10px" }}>Multiplayer · 2+ players</p>
                   <p
                     style={{
                       fontSize: "13px",
@@ -1294,18 +1059,16 @@ export default function StimGames() {
                     starts judging.
                   </p>
                 </div>
-                <div style={partyVisualSection}>
+                <div className={partyVisualClass} style={partyVisualSection}>
                   <DraftAnythingVisual />
                 </div>
-                <div style={partyActionSection}>
+                <div className={partyActionClass} style={partyActionSection}>
                   <div
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
                       gap: "8px",
-                      background: "rgba(201,168,76,0.14)",
-                      border: "1px solid rgba(201,168,76,0.35)",
-                      padding: "10px 18px",
+                      padding: "10px 0",
                       fontSize: "10px",
                       fontWeight: 600,
                       letterSpacing: "0.18em",
@@ -1322,11 +1085,10 @@ export default function StimGames() {
 
             <Link href="/slippery-slope" style={{ display: "block", textDecoration: "none" }}>
               <div
-                className="stim-hero-card stim-party-card"
+                className="stim-hero-card stim-party-card stim-game-card"
                 style={{
-                  background:
-                    "linear-gradient(135deg, rgba(181,242,61,0.08) 0%, rgba(20,30,10,0.6) 100%)",
-                  border: "1px solid rgba(181,242,61,0.28)",
+                  background: "var(--ss-surface)",
+                  border: "1.5px solid color-mix(in srgb, var(--ss-lime) 65%, transparent)",
                   borderRadius: "12px",
                   overflow: "hidden",
                   cursor: "pointer",
@@ -1338,33 +1100,9 @@ export default function StimGames() {
                 }}
               >
                 <div
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: "8%",
-                    right: "8%",
-                    height: "1px",
-                    background:
-                      "linear-gradient(90deg, transparent, rgba(181,242,61,0.45), transparent)",
-                  }}
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: "-20%",
-                    left: "-10%",
-                    width: "240px",
-                    height: "240px",
-                    borderRadius: "50%",
-                    background:
-                      "radial-gradient(circle, rgba(181,242,61,0.08) 0%, transparent 70%)",
-                    pointerEvents: "none",
-                  }}
-                />
-                <div style={{ padding: "28px 28px 16px", position: "relative" }}>
-                  <div style={{ ...eyebrow, color: "var(--ss-lime)", opacity: 0.9, marginBottom: "8px" }}>
-                    Trivia + Board Game
-                  </div>
+                  className="stim-party-title"
+                  style={{ padding: "28px 28px 16px", position: "relative" }}
+                >
                   <GameTitle
                     game="slippery-slope"
                     as="h2"
@@ -1373,12 +1111,9 @@ export default function StimGames() {
                       fontWeight: 700,
                       lineHeight: 1,
                       color: "var(--ss-text)",
-                      margin: "0 0 6px",
+                      margin: "0 0 10px",
                     }}
                   />
-                  <p style={{ ...modeHint, color: "var(--ss-muted)", margin: "0 0 10px" }}>
-                    Solo or multiplayer
-                  </p>
                   <p
                     style={{
                       fontSize: "13px",
@@ -1393,10 +1128,10 @@ export default function StimGames() {
                     else takes the lead.
                   </p>
                 </div>
-                <div style={partyVisualSection}>
+                <div className={partyVisualClass} style={partyVisualSection}>
                   <SlipperySlopeVisual />
                 </div>
-                <div style={partyActionSection}>
+                <div className={partyActionClass} style={partyActionSection}>
                   <span
                     className="stim-text-link"
                     style={{
@@ -1405,9 +1140,7 @@ export default function StimGames() {
                       display: "inline-flex",
                       alignItems: "center",
                       gap: "6px",
-                      background: "rgba(181,242,61,0.1)",
-                      border: "1px solid rgba(181,242,61,0.3)",
-                      padding: "10px 18px",
+                      padding: "10px 0",
                     }}
                   >
                     Open the board &#8594;
@@ -1453,14 +1186,14 @@ export default function StimGames() {
                     width: "36px",
                     height: "36px",
                     borderRadius: "8px",
-                    background: "rgba(124,58,255,0.08)",
+                    background: "var(--panel-alt)",
                     border: "1px solid var(--border-hi)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: "13px",
                     fontWeight: 700,
-                    color: "var(--purple)",
+                    color: "var(--text-dim)",
                     marginBottom: "14px",
                     fontFamily: "monospace",
                   }}

@@ -15,13 +15,14 @@
   --ht-accent: #ff5a36;
   --ht-accent-2: #ff2e63;
   --ht-radius: 14px;
+  --ht-overlay: rgba(11, 11, 14, 0.72);
 }
 
 html[data-theme="light"] {
   --ht-bg: #faf8f6;
   --ht-surface: #ffffff;
   --ht-surface-2: #f3f0ec;
-  --ht-line: #e4e0d8;
+  --ht-line: #cfc7bb;
   --ht-text: #1a1816;
   --ht-text-dim: #6b6570;
   --ht-heat-s: #e11d48;
@@ -31,6 +32,7 @@ html[data-theme="light"] {
   --ht-heat-d: #16a34a;
   --ht-accent: #e03e1a;
   --ht-accent-2: #db2777;
+  --ht-overlay: rgba(26, 24, 22, 0.38);
 }
 
 .hot-takes-page {
@@ -188,8 +190,16 @@ html[data-theme="light"] .hot-takes-page {
   min-height: 92px;
 }
 
-.hot-takes-tier-list.drag-over {
+.hot-takes-tier-list.drag-over,
+.hot-takes-tray-list.drag-over {
   background: rgba(255, 90, 54, 0.06);
+}
+
+.hot-takes-tier-list.placeable,
+.hot-takes-tray-list.placeable {
+  outline: 1px dashed color-mix(in srgb, var(--ht-accent) 55%, transparent);
+  outline-offset: -2px;
+  cursor: pointer;
 }
 
 .hot-takes-item {
@@ -200,6 +210,8 @@ html[data-theme="light"] .hot-takes-page {
   gap: 5px;
   cursor: grab;
   user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
   transition: transform 0.12s ease;
 }
 
@@ -209,6 +221,13 @@ html[data-theme="light"] .hot-takes-page {
 
 .hot-takes-item.dragging {
   opacity: 0.45;
+  pointer-events: none;
+}
+
+.hot-takes-item.selected .hot-takes-icon-box {
+  border-color: var(--ht-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ht-accent) 45%, transparent);
+  transform: scale(1.06);
 }
 
 .hot-takes-icon-box {

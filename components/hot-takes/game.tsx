@@ -4,18 +4,23 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
-  type DragEvent,
+  type PointerEvent as ReactPointerEvent,
 } from "react";
 import Link from "next/link";
 import { GameTitle } from "@/components/ui/game-title";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
 import { OtherDailies } from "@/components/daily/other-dailies";
+import { DailyCompleteShell } from "@/components/daily/daily-complete-shell";
 import { useGameHowItWorks } from "@/lib/game-how-it-works";
 import type { HotTakesDailyCategory, HotTakesDailyItem } from "@/lib/hot-takes/types";
 
 const TIERS = ["S", "A", "B", "C", "D"] as const;
 type Tier = (typeof TIERS)[number];
+type DropZone = Tier | "tray";
+
+const DRAG_THRESHOLD_PX = 8;
 
 const TIER_COLORS: Record<Tier, string> = {
   S: "var(--ht-heat-s)",
@@ -24,6 +29,22 @@ const TIER_COLORS: Record<Tier, string> = {
   C: "var(--ht-heat-c)",
   D: "var(--ht-heat-d)",
 };
+
+function zoneFromPoint(
+  x: number,
+  y: number,
+  exclude?: HTMLElement | null,
+): DropZone | null {
+  const prev = exclude?.style.pointerEvents;
+  if (exclude) exclude.style.pointerEvents = "none";
+  const el = document.elementFromPoint(x, y);
+  if (exclude) exclude.style.pointerEvents = prev ?? "";
+  const zone = el?.closest("[data-drop-zone]")?.getAttribute("data-drop-zone");
+  if (zone === "tray" || (TIERS as readonly string[]).includes(zone ?? "")) {
+    return zone as DropZone;
+  }
+  return null;
+}
 
 function seedRandom(seed: number) {
   let s = seed;
@@ -55,21 +76,38 @@ function generateConsensus(items: HotTakesDailyItem[]) {
 
 function TierItem({
   item,
-  onDragStart,
-  onDragEnd,
   dragging,
+  selected,
+  disabled,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  onPointerCancel,
 }: {
   item: HotTakesDailyItem;
-  onDragStart: (e: DragEvent<HTMLDivElement>, id: string) => void;
-  onDragEnd: () => void;
   dragging: boolean;
+  selected: boolean;
+  disabled: boolean;
+  onPointerDown: (e: ReactPointerEvent<HTMLDivElement>, id: string) => void;
+  onPointerMove: (e: ReactPointerEvent<HTMLDivElement>) => void;
+  onPointerUp: (e: ReactPointerEvent<HTMLDivElement>) => void;
+  onPointerCancel: () => void;
 }) {
   return (
     <div
-      className={`hot-takes-item${dragging ? " dragging" : ""}`}
-      draggable
-      onDragStart={(e) => onDragStart(e, item.id)}
-      onDragEnd={onDragEnd}
+      className={`hot-takes-item${dragging ? " dragging" : ""}${selected ? " selected" : ""}`}
+      role="button"
+      tabIndex={disabled ? -1 : 0}
+      aria-pressed={selected}
+      aria-disabled={disabled}
+      onClick={(e) => e.stopPropagation()}
+      onPointerDown={(e) => {
+        if (disabled) return;
+        onPointerDown(e, item.id);
+      }}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerCancel}
     >
       <div className="hot-takes-icon-box">
         <img src={item.imageUrl} alt={item.label} draggable={false} />
@@ -91,11 +129,20 @@ export default function HotTakesGame({
     return init;
   });
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [dragOverZone, setDragOverZone] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [trayShuffle, setTrayShuffle] = useState(0);
   const { showHowItWorks, dismissHowItWorks } = useGameHowItWorks("hot-takes");
+  const [completeOpen, setCompleteOpen] = useState(false);
   const consensus = useMemo(() => generateConsensus(category.items), [category.items]);
+  const pointerDragRef = useRef<{
+    id: string;
+    pointerId: number;
+    startX: number;
+    startY: number;
+    active: boolean;
+  } | null>(null);
 
   const trayItems = useMemo(() => {
     const items = category.items.filter((item) => placements[item.id] === "tray");
@@ -110,31 +157,81 @@ export default function HotTakesGame({
   }, [category.items, placements, trayShuffle]);
   const remaining = trayItems.length;
 
-  const moveItem = useCallback((itemId: string, zone: Tier | "tray") => {
+  const moveItem = useCallback((itemId: string, zone: DropZone) => {
     setPlacements((prev) => ({ ...prev, [itemId]: zone }));
+    setSelectedId(null);
   }, []);
 
-  function handleDragOver(e: DragEvent, zone: string) {
-    e.preventDefault();
-    setDragOverZone(zone);
-  }
-
-  function handleDrop(e: DragEvent, zone: Tier | "tray") {
-    e.preventDefault();
-    const id = e.dataTransfer.getData("text/plain") || draggingId;
-    if (id) moveItem(id, zone);
-    setDragOverZone(null);
+  const clearPointerDrag = useCallback(() => {
+    pointerDragRef.current = null;
     setDraggingId(null);
-  }
+    setDragOverZone(null);
+  }, []);
+
+  const handleItemPointerDown = useCallback(
+    (e: ReactPointerEvent<HTMLDivElement>, id: string) => {
+      if (submitted || e.button !== 0) return;
+      e.currentTarget.setPointerCapture(e.pointerId);
+      pointerDragRef.current = {
+        id,
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        active: false,
+      };
+    },
+    [submitted],
+  );
+
+  const handleItemPointerMove = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = pointerDragRef.current;
+    if (!drag || drag.pointerId !== e.pointerId) return;
+
+    const dx = e.clientX - drag.startX;
+    const dy = e.clientY - drag.startY;
+    if (!drag.active) {
+      if (Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
+      drag.active = true;
+      setSelectedId(null);
+      setDraggingId(drag.id);
+    }
+
+    e.preventDefault();
+    setDragOverZone(zoneFromPoint(e.clientX, e.clientY, e.currentTarget));
+  }, []);
+
+  const handleItemPointerUp = useCallback(
+    (e: ReactPointerEvent<HTMLDivElement>) => {
+      const drag = pointerDragRef.current;
+      if (!drag || drag.pointerId !== e.pointerId) return;
+
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+
+      if (drag.active) {
+        const zone = zoneFromPoint(e.clientX, e.clientY, e.currentTarget);
+        if (zone) moveItem(drag.id, zone);
+        clearPointerDrag();
+        return;
+      }
+
+      clearPointerDrag();
+      setSelectedId((prev) => (prev === drag.id ? null : drag.id));
+    },
+    [clearPointerDrag, moveItem],
+  );
+
+  const handleZoneActivate = useCallback(
+    (zone: DropZone) => {
+      if (submitted || !selectedId) return;
+      moveItem(selectedId, zone);
+    },
+    [moveItem, selectedId, submitted],
+  );
 
   function shuffleTray() {
     setTrayShuffle((n) => n + 1);
-  }
-
-  function startDrag(e: DragEvent<HTMLDivElement>, id: string) {
-    e.dataTransfer.setData("text/plain", id);
-    e.dataTransfer.effectAllowed = "move";
-    setDraggingId(id);
   }
 
   const results = useMemo(() => {
@@ -171,11 +268,16 @@ export default function HotTakesGame({
     : "";
 
   useEffect(() => {
-    if (!submitted) return;
+    if (!submitted) {
+      setCompleteOpen(false);
+      return;
+    }
     document.getElementById("hot-takes-results")?.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
+    const timer = setTimeout(() => setCompleteOpen(true), 450);
+    return () => clearTimeout(timer);
   }, [submitted]);
 
   const dateLabel = new Date().toLocaleDateString("en-US", {
@@ -185,6 +287,12 @@ export default function HotTakesGame({
   });
 
   return (
+    <DailyCompleteShell
+      enabled={submitted}
+      open={completeOpen}
+      onClose={() => setCompleteOpen(false)}
+      ariaLabel="Daily complete"
+    >
     <div className="hot-takes-page">
       <div className="hot-takes-wrap">
         <header className="hot-takes-header">
@@ -195,7 +303,7 @@ export default function HotTakesGame({
             <GameTitle game="hot-takes" />
           </h1>
           <p className="hot-takes-sub">
-            Fifteen items, one ranking. Drag them S to D, then see if you&apos;re right — or
+            Fifteen items, one ranking. Drag or tap them S to D, then see if you&apos;re right — or
             just controversial.
           </p>
           <div className="hot-takes-meta-row">
@@ -235,18 +343,21 @@ export default function HotTakesGame({
                 <div key={tier} className={`hot-takes-tier-row hot-takes-tier-${tier}`}>
                   <div className="hot-takes-tier-label">{tier}</div>
                   <div
-                    className={`hot-takes-tier-list${dragOverZone === tier ? " drag-over" : ""}`}
-                    onDragOver={(e) => handleDragOver(e, tier)}
-                    onDragLeave={() => setDragOverZone(null)}
-                    onDrop={(e) => handleDrop(e, tier)}
+                    data-drop-zone={tier}
+                    className={`hot-takes-tier-list${dragOverZone === tier ? " drag-over" : ""}${selectedId ? " placeable" : ""}`}
+                    onClick={() => handleZoneActivate(tier)}
                   >
                     {tierItems.map((item) => (
                       <TierItem
                         key={item.id}
                         item={item}
                         dragging={draggingId === item.id}
-                        onDragStart={startDrag}
-                        onDragEnd={() => setDraggingId(null)}
+                        selected={selectedId === item.id}
+                        disabled={submitted}
+                        onPointerDown={handleItemPointerDown}
+                        onPointerMove={handleItemPointerMove}
+                        onPointerUp={handleItemPointerUp}
+                        onPointerCancel={clearPointerDrag}
                       />
                     ))}
                   </div>
@@ -256,20 +367,25 @@ export default function HotTakesGame({
           </div>
 
           <div className="hot-takes-tray-panel">
-            <div className="hot-takes-tray-title">Drag into your tiers</div>
+            <div className="hot-takes-tray-title">
+              {selectedId ? "Tap a tier to place" : "Drag or tap into your tiers"}
+            </div>
             <div
-              className={`hot-takes-tray-list${dragOverZone === "tray" ? " drag-over" : ""}`}
-              onDragOver={(e) => handleDragOver(e, "tray")}
-              onDragLeave={() => setDragOverZone(null)}
-              onDrop={(e) => handleDrop(e, "tray")}
+              data-drop-zone="tray"
+              className={`hot-takes-tray-list${dragOverZone === "tray" ? " drag-over" : ""}${selectedId ? " placeable" : ""}`}
+              onClick={() => handleZoneActivate("tray")}
             >
               {trayItems.map((item) => (
                 <TierItem
                   key={item.id}
                   item={item}
                   dragging={draggingId === item.id}
-                  onDragStart={startDrag}
-                  onDragEnd={() => setDraggingId(null)}
+                  selected={selectedId === item.id}
+                  disabled={submitted}
+                  onPointerDown={handleItemPointerDown}
+                  onPointerMove={handleItemPointerMove}
+                  onPointerUp={handleItemPointerUp}
+                  onPointerCancel={clearPointerDrag}
                 />
               ))}
             </div>
@@ -354,27 +470,28 @@ export default function HotTakesGame({
           rules={HOT_TAKES_HOW_IT_WORKS}
           onDismiss={dismissHowItWorks}
           theme={{
-            overlay: "rgba(12, 4, 4, 0.92)",
+            overlay: "var(--ht-overlay)",
             surface: "var(--ht-surface)",
             border: "var(--ht-line)",
-            accent: "#ff3b3b",
+            accent: "var(--ht-accent)",
             text: "var(--ht-text)",
             textMuted: "var(--ht-text-dim)",
           }}
         />
       )}
     </div>
+    </DailyCompleteShell>
   );
 }
 
 const HOT_TAKES_HOW_IT_WORKS = [
   {
     title: "Rank Today's Category",
-    body: "Everyone gets the same 15 items in one category — drag each into your S, A, B, C, or D tiers.",
+    body: "Everyone gets the same 15 items in one category — drag or tap each into your S, A, B, C, or D tiers.",
   },
   {
-    title: "Drag From the Tray",
-    body: "Items start in the tray at the bottom. Drop them into a tier row, or drag them back if you change your mind.",
+    title: "From the Tray",
+    body: "Items start in the tray. Drag them into a tier, or tap an item then tap a tier. Move them back anytime before you lock in.",
   },
   {
     title: "Lock It In",

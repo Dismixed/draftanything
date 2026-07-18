@@ -1,10 +1,12 @@
 "use client";
 
-import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import ClueCard from "@/components/anyguessr/clue-card";
 import { OtherDailies } from "@/components/daily/other-dailies";
 import { DAILY_CLUE_TYPE_LABEL, formatDistanceKm } from "@/lib/anyguessr/daily";
 import { useCountUp } from "@/lib/motion/count-up";
 import { useAnyGuessrStore } from "@/lib/anyguessr/store";
+import type { DailyRoundResult } from "@/lib/anyguessr/types";
 
 function getDateString(d: Date = new Date()): string {
   const y = d.getFullYear();
@@ -22,6 +24,8 @@ export default function Results({
 }) {
   const store = useAnyGuessrStore();
   const isWin = store.status === "won";
+  const rounds = store.roundResults;
+  const [cardIndex, setCardIndex] = useState(0);
 
   const displayScore = useCountUp(
     store.totalScore,
@@ -29,229 +33,182 @@ export default function Results({
     900,
   );
 
+  const goPrev = useCallback(() => {
+    setCardIndex((i) => Math.max(0, i - 1));
+  }, []);
+
+  const goNext = useCallback(() => {
+    setCardIndex((i) => Math.min(rounds.length - 1, i + 1));
+  }, [rounds.length]);
+
+  useEffect(() => {
+    if (cardIndex >= rounds.length && rounds.length > 0) {
+      setCardIndex(rounds.length - 1);
+    }
+  }, [cardIndex, rounds.length]);
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "ArrowLeft") goPrev();
+      if (event.key === "ArrowRight") goNext();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [goPrev, goNext]);
+
+  const activeRound = rounds[cardIndex];
+  const activeClue = store.dailyRounds[activeRound?.roundIndex ?? 0]?.clue;
+
   return (
     <div
-      className={embedded ? undefined : "anim-fade-slide-up"}
-      style={{
-        marginTop: embedded ? 0 : "20px",
-        padding: "28px 24px",
-        textAlign: "center",
-        border: `1px solid ${isWin ? "var(--ag-accent)" : "var(--ag-border)"}`,
-        background: "var(--ag-surface)",
-        borderRadius: "14px",
-      }}
+      className={`ag-results${embedded ? " ag-results--embedded" : ""}`}
+      style={embedded ? undefined : { marginTop: "20px" }}
     >
-      <div
-        style={{
-          fontSize: "11px",
-          fontWeight: 600,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: isWin ? "var(--ag-accent)" : "var(--ag-muted)",
-          marginBottom: "12px",
-        }}
-      >
-        Daily Complete
-      </div>
-
-      <div
-        style={{
-          margin: "20px 0",
-          display: embedded ? "grid" : "flex",
-          flexDirection: embedded ? undefined : "column",
-          gridTemplateColumns: embedded ? "repeat(auto-fill, minmax(200px, 1fr))" : undefined,
-          gap: "10px",
-        }}
-      >
-        <div style={embedded ? { gridColumn: "1 / -1" } : undefined}>
-          <StatRow label="Total Score" value={`${displayScore}`} highlight={isWin} />
+      <div className="ag-results-header">
+        <div className="ag-results-kicker">Daily Complete</div>
+        <div className="ag-results-total">
+          <span className="ag-results-total-label">Total Score</span>
+          <span className={`ag-results-total-value${isWin ? " ag-results-total-value--win" : ""}`}>
+            {displayScore}
+          </span>
         </div>
-
-        {store.roundResults.map((round) => (
-          <DailyRoundRow key={round.roundIndex} round={round} />
-        ))}
       </div>
 
-      <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
-        <Link href="/" style={{ textDecoration: "none" }}>
-          <button style={primaryBtnStyle}>Back home</button>
-        </Link>
-        <Link href="/anyguessr/daily" style={{ textDecoration: "none" }}>
-          <button style={secondaryBtnStyle}>View results</button>
-        </Link>
-      </div>
+      {activeRound && activeClue ? (
+        <div className="ag-results-carousel">
+          <RoundResultCard
+            key={activeRound.roundIndex}
+            round={activeRound}
+            clue={activeClue}
+          />
+
+          <div className="ag-results-nav">
+            <button
+              type="button"
+              className="ag-results-nav-btn"
+              onClick={goPrev}
+              disabled={cardIndex === 0}
+              aria-label="Previous round"
+            >
+              ←
+            </button>
+
+            <div className="ag-results-dots" role="tablist" aria-label="Round results">
+              {rounds.map((round, i) => (
+                <button
+                  key={round.roundIndex}
+                  type="button"
+                  role="tab"
+                  aria-selected={i === cardIndex}
+                  aria-label={`Round ${i + 1}`}
+                  className={`ag-results-dot${i === cardIndex ? " ag-results-dot--active" : ""}${
+                    round.exact ? " ag-results-dot--exact" : round.surrendered ? " ag-results-dot--miss" : ""
+                  }`}
+                  onClick={() => setCardIndex(i)}
+                />
+              ))}
+            </div>
+
+            <button
+              type="button"
+              className="ag-results-nav-btn"
+              onClick={goNext}
+              disabled={cardIndex >= rounds.length - 1}
+              aria-label="Next round"
+            >
+              →
+            </button>
+          </div>
+
+          <div className="ag-results-counter">
+            Round {cardIndex + 1} of {rounds.length}
+          </div>
+        </div>
+      ) : null}
 
       <OtherDailies currentGameId="anyguessr" />
 
-      <div
-        style={{
-          marginTop: "18px",
-          fontSize: "10px",
-          color: "var(--ag-muted)",
-          opacity: 0.7,
-        }}
-      >
+      <div className="ag-results-footer">
         Come back tomorrow · {getDateString()}
       </div>
     </div>
   );
 }
 
-function DailyRoundRow({
+function RoundResultCard({
   round,
+  clue,
 }: {
-  round: {
-    roundIndex: number;
-    clueType: string;
-    answer: string;
-    flagUrl?: string;
-    roundScore: number;
-    exact: boolean;
-    surrendered?: boolean;
-    distanceKm: number;
-  };
+  round: DailyRoundResult;
+  clue: { type: string; content: string; metadata?: import("@/lib/anyguessr/types").ClueMetadata };
 }) {
   const label =
     DAILY_CLUE_TYPE_LABEL[round.clueType as keyof typeof DAILY_CLUE_TYPE_LABEL] ??
     round.clueType;
+
   const scoreLabel = round.surrendered
-    ? "0"
+    ? "0 pts"
     : round.exact
-      ? `+${round.roundScore}`
-      : `+${round.roundScore} · ${formatDistanceKm(round.distanceKm)}`;
+      ? `+${round.roundScore} · exact`
+      : `+${round.roundScore} · ${formatDistanceKm(round.distanceKm)} off`;
 
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "8px 14px",
-        background: "var(--ag-surface-hi)",
-        borderRadius: "8px",
-        border: "1px solid var(--ag-border-faint)",
-        gap: "12px",
-      }}
-    >
-      <div style={{ textAlign: "left", minWidth: 0 }}>
-        <div
-          style={{
-            fontSize: "10px",
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            color: "var(--ag-muted)",
-            marginBottom: "4px",
-          }}
-        >
-          {label}
-        </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            fontSize: "14px",
-            fontWeight: 700,
-            color: "var(--ag-text)",
-          }}
-        >
-          {round.flagUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={round.flagUrl}
-              alt=""
-              style={{
-                width: "24px",
-                height: "16px",
-                borderRadius: "2px",
-                objectFit: "cover",
-                flexShrink: 0,
-              }}
-            />
-          ) : null}
-          <span>{round.answer}</span>
-        </div>
+    <article className="ag-results-card anim-fade-slide-up">
+      <div className="ag-results-card-label">
+        Round {round.roundIndex + 1} · {label}
       </div>
-      <span
-        style={{
-          fontSize: "13px",
-          fontWeight: 700,
-          color: "var(--ag-accent)",
-          whiteSpace: "nowrap",
-        }}
-      >
+
+      <div className="ag-results-clue">
+        <ClueCard
+          clue={clue}
+          index={round.roundIndex}
+          revealed
+          headerLabel={`${label} clue`}
+        />
+      </div>
+
+      <div className="ag-results-compare">
+        <CompareCell
+          label="You guessed"
+          value={round.surrendered ? "Gave up" : round.guess || "—"}
+          tone={round.surrendered ? "muted" : round.exact ? "good" : "bad"}
+        />
+        <CompareCell
+          label="Answer"
+          value={round.answer}
+          flagUrl={round.flagUrl}
+          tone="answer"
+        />
+      </div>
+
+      <div className={`ag-results-round-score${round.exact ? " ag-results-round-score--exact" : ""}`}>
         {scoreLabel}
-      </span>
-    </div>
+      </div>
+    </article>
   );
 }
 
-function StatRow({
+function CompareCell({
   label,
   value,
-  highlight,
+  flagUrl,
+  tone,
 }: {
   label: string;
   value: string;
-  highlight?: boolean;
+  flagUrl?: string;
+  tone: "good" | "bad" | "muted" | "answer";
 }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "baseline",
-        justifyContent: "space-between",
-        padding: "8px 14px",
-        background: "var(--ag-surface-hi)",
-        borderRadius: "8px",
-        border: "1px solid var(--ag-border-faint)",
-        gap: "12px",
-      }}
-    >
-      <span
-        style={{
-          fontSize: "11px",
-          letterSpacing: "0.14em",
-          textTransform: "uppercase",
-          color: "var(--ag-muted)",
-          textAlign: "left",
-        }}
-      >
-        {label}
-      </span>
-      <span
-        style={{
-          fontSize: "14px",
-          fontWeight: 700,
-          color: highlight ? "var(--ag-accent)" : "var(--ag-text)",
-          textAlign: "right",
-        }}
-      >
-        {value}
-      </span>
+    <div className={`ag-results-compare-cell ag-results-compare-cell--${tone}`}>
+      <div className="ag-results-compare-label">{label}</div>
+      <div className="ag-results-compare-value">
+        {flagUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={flagUrl} alt="" className="ag-results-flag" />
+        ) : null}
+        <span>{value}</span>
+      </div>
     </div>
   );
 }
-
-const PRIMARY_BASE: React.CSSProperties = {
-  padding: "10px 18px",
-  fontSize: "12px",
-  fontWeight: 600,
-  letterSpacing: "0.16em",
-  textTransform: "uppercase",
-  borderRadius: "8px",
-  cursor: "pointer",
-  border: "none",
-};
-
-const primaryBtnStyle: React.CSSProperties = {
-  ...PRIMARY_BASE,
-  background: "var(--ag-accent)",
-  color: "#0b0e1c",
-};
-const secondaryBtnStyle: React.CSSProperties = {
-  ...PRIMARY_BASE,
-  background: "var(--ag-surface-hi)",
-  color: "var(--ag-text)",
-  border: "1px solid var(--ag-border)",
-};

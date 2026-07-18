@@ -42,11 +42,12 @@ export interface DailyGameTheme {
 
 export const GAME_META: Record<
   DailyGameId,
-  { label: string; href: string; theme: DailyGameTheme }
+  { label: string; href: string; blurb: string; theme: DailyGameTheme }
 > = {
   chainlink: {
-    label: "Chainlink",
+    label: "Chain Link",
     href: "/chainlink/daily",
+    blurb: "Link words into a chain.",
     theme: {
       background: "var(--cl-card)",
       border: "var(--cl-border)",
@@ -57,6 +58,7 @@ export const GAME_META: Record<
   "brain-dead": {
     label: "Brain Dead",
     href: "/brain-dead/daily",
+    blurb: "One wrong answer ends it.",
     theme: {
       background: "var(--bd-surface)",
       border: "var(--bd-border)",
@@ -67,6 +69,7 @@ export const GAME_META: Record<
   anyguessr: {
     label: "AnyGuessr",
     href: "/anyguessr/daily",
+    blurb: "Guess countries from clues.",
     theme: {
       background: "var(--ag-surface)",
       border: "var(--ag-border)",
@@ -77,6 +80,7 @@ export const GAME_META: Record<
   freezeframes: {
     label: "FreezeFrames",
     href: "/freezeframes/daily",
+    blurb: "Movie, song, TV, album.",
     theme: {
       background: "var(--ff-surface)",
       border: "var(--ff-border)",
@@ -87,6 +91,7 @@ export const GAME_META: Record<
   "ball-knowledge": {
     label: "Ball Knowledge",
     href: "/ball-knowledge/daily",
+    blurb: "60 seconds. Name them all.",
     theme: {
       background: "var(--bk-backboard)",
       border: "var(--bk-line)",
@@ -97,6 +102,7 @@ export const GAME_META: Record<
   "hot-takes": {
     label: "Hot Takes",
     href: "/hot-takes",
+    blurb: "Rank today's list.",
     theme: {
       background: "var(--ht-surface)",
       border: "var(--ht-line)",
@@ -107,9 +113,10 @@ export const GAME_META: Record<
   "getting-warmer": {
     label: "Getting Warmer",
     href: "/getting-warmer/daily",
+    blurb: "Clues get warmer.",
     theme: {
-      background: "var(--gw-bg)",
-      border: "rgba(255, 107, 26, 0.25)",
+      background: "var(--gw-surface)",
+      border: "color-mix(in srgb, var(--gw-orange) 65%, transparent)",
       accent: "var(--gw-orange)",
       text: "var(--gw-ink)",
     },

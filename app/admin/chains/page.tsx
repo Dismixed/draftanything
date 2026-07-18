@@ -370,7 +370,7 @@ export default function AdminChainsPage() {
 
   return (
     <AdminShell
-      title="Chainlink"
+      title="Chain Link"
       subtitle="Manage, approve, generate, and schedule word chain puzzles."
     >
         {/* ---- Notifications ---- */}

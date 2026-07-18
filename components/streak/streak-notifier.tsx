@@ -39,13 +39,13 @@ export function GameCardStreak({
         color: active ? accentColor : "var(--text-dim)",
         background: active
           ? `color-mix(in srgb, ${accentColor} 12%, transparent)`
-          : "rgba(0,0,0,0.2)",
+          : "color-mix(in srgb, var(--text) 8%, transparent)",
         border: active
           ? `1px solid color-mix(in srgb, ${accentColor} 35%, transparent)`
           : "1px solid var(--border)",
         borderRadius: "999px",
         padding: "4px 10px",
-        opacity: active ? 1 : 0.7,
+        opacity: active ? 1 : 0.85,
         flexShrink: 0,
       }}
       title={

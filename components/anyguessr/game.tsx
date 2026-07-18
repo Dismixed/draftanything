@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { DAILY_CLUE_TYPE_LABEL, DAILY_ROUND_COUNT } from "@/lib/anyguessr/daily";
 import { useAnyGuessrStore } from "@/lib/anyguessr/store";
@@ -8,8 +8,8 @@ import { useSound } from "@/lib/audio/sound-context";
 import { fireConfetti } from "@/lib/motion/confetti";
 import { GameBackLink } from "@/components/ui/game-back-link";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
-import { SoundToggle } from "@/components/ui/sound-toggle";
 import { GameTitle } from "@/components/ui/game-title";
+import { DailyCompleteOverlay } from "@/components/daily/daily-complete-overlay";
 import { useGameHowItWorks } from "@/lib/game-how-it-works";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
 import ClueCard from "./clue-card";
@@ -150,7 +150,7 @@ export default function AnyGuessrGame() {
         play("ui.tap");
       }}
       theme={{
-        overlay: "rgba(7, 9, 15, 0.92)",
+        overlay: "var(--ag-overlay)",
         surface: "var(--ag-surface)",
         border: "var(--ag-border)",
         accent: "var(--ag-accent)",
@@ -245,9 +245,6 @@ export default function AnyGuessrGame() {
       {howItWorksModal}
       <header style={{ textAlign: "center", marginBottom: "24px", position: "relative" }}>
         <GameBackLink color="var(--ag-muted)" />
-        <div style={{ position: "absolute", top: 0, right: 0 }}>
-          <SoundToggle />
-        </div>
         <GameTitle
           game="anyguessr"
           as="h1"
@@ -436,7 +433,7 @@ export default function AnyGuessrGame() {
               alignItems: "center",
               justifyContent: "center",
               padding: "20px",
-              background: "rgba(7, 9, 15, 0.92)",
+              background: "var(--ag-overlay)",
               overflowY: "auto",
             }}
           >
@@ -454,37 +451,25 @@ export default function AnyGuessrGame() {
           document.body,
         )}
 
-      {mounted &&
-        showResultsOverlay &&
-        createPortal(
-          <div
-            className="anim-fade-slide-up"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Puzzle results"
-            style={{
-              position: "fixed",
-              inset: 0,
-              zIndex: 1000,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "20px",
-              background: "rgba(7, 9, 15, 0.92)",
-              overflowY: "auto",
-            }}
-          >
-            <div style={{ width: "100%", maxWidth: "680px" }}>
-              <Results scoreActive embedded />
-              {status === "won" && (
-                <WinStreakLine gameId="anyguessr" accentColor="var(--ag-accent)" />
-              )}
-            </div>
-          </div>,
-          document.body,
+      <DailyCompleteOverlay
+        open={mounted && showResultsOverlay}
+        onClose={() => setShowResultsOverlay(false)}
+        ariaLabel="Puzzle results"
+        style={
+          {
+            "--bg": "var(--ag-bg)",
+            "--text": "var(--ag-text)",
+            "--text-dim": "var(--ag-muted)",
+            background: "var(--ag-bg)",
+            color: "var(--ag-text)",
+          } as CSSProperties
+        }
+      >
+        <Results scoreActive embedded />
+        {status === "won" && (
+          <WinStreakLine gameId="anyguessr" accentColor="var(--ag-accent)" />
         )}
-
+      </DailyCompleteOverlay>
     </div>
   );
 }

@@ -14,6 +14,7 @@
   --ff-text: #f0eaff;
   --ff-muted: #6b5f8a;
   --ff-faint: #17122a;
+  --ff-overlay: rgba(12, 8, 18, 0.72);
 }
 
 html[data-theme="light"] {
@@ -21,8 +22,8 @@ html[data-theme="light"] {
   --ff-surface: #ffffff;
   --ff-surface2: #f0eaf8;
   --ff-surface3: #e8dff5;
-  --ff-border: #d4c8e8;
-  --ff-border2: #b8a8d4;
+  --ff-border: #b39fd0;
+  --ff-border2: #9a84bc;
   --ff-purple: #7e22ce;
   --ff-purple-light: #9333ea;
   --ff-pink: #db2777;
@@ -32,6 +33,7 @@ html[data-theme="light"] {
   --ff-text: #1a1228;
   --ff-muted: #6b5f8a;
   --ff-faint: #ebe4f5;
+  --ff-overlay: rgba(26, 18, 40, 0.38);
 }
 
 .freezeframes-app {

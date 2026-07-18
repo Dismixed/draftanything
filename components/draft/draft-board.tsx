@@ -10,7 +10,6 @@ import { useSound } from "@/lib/audio/sound-context";
 import { createSoundGate } from "@/lib/audio/debounce";
 import { preloadSamples } from "@/lib/audio/samples";
 import { DRAFT_SAMPLE_SRCS } from "@/lib/audio/sounds";
-import { SoundToggle } from "@/components/ui/sound-toggle";
 import { AvailablePool } from "./available-pool";
 import { PickHistory } from "./pick-history";
 import { PlayerRosters } from "./player-rosters";
@@ -347,7 +346,6 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
               onAutoPickTriggered={refreshProjection}
             />
           )}
-          <SoundToggle />
           <span
             style={{
               width: '8px',

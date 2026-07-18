@@ -114,7 +114,7 @@ export default function ClueCard({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#0b0e1c",
+          background: "var(--ag-bg)",
           position: "relative",
         }}
       >

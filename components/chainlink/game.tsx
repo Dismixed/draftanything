@@ -8,10 +8,10 @@ import type { GameMode } from "@/lib/chainlink/types";
 import { useSound } from "@/lib/audio/sound-context";
 import { fireConfetti } from "@/lib/motion/confetti";
 import { triggerAnimation } from "@/lib/motion/trigger-class";
-import { SoundToggle } from "@/components/ui/sound-toggle";
 import { GameTitle } from "@/components/ui/game-title";
 import TutorialModal from "./tutorial-modal";
 import { OtherDailies } from "@/components/daily/other-dailies";
+import { DailyCompleteOverlay } from "@/components/daily/daily-complete-overlay";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
 import { recordDailyCompletion } from "@/lib/streak/storage";
 
@@ -679,9 +679,6 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
               &larr; Back
             </Link>
           </div>
-          <div style={{ position: "absolute", top: 0, right: 0 }}>
-            <SoundToggle />
-          </div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", marginBottom: "6px" }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="6" r="4" stroke="var(--cl-text)" strokeWidth="2" fill="none" />
@@ -787,32 +784,19 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
             ))}
           </div>
 
-          {showFailOverlay && (
-            <div
-              className="anim-fade-slide-up"
-              style={{
-                position: "absolute",
-                inset: 0,
-                zIndex: 10,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "16px",
-                background: "rgba(18, 18, 19, 0.92)",
-                borderRadius: "6px",
-              }}
+          {mode === "daily" ? (
+            <DailyCompleteOverlay
+              open={showFailOverlay}
+              onClose={() => setShowFailOverlay(false)}
+              ariaLabel="Game over"
             >
               <div
                 style={{
                   width: "100%",
-                  padding: "28px 24px",
+                  padding: "12px 4px 28px",
                   textAlign: "center",
-                  border: "2px solid #ff6b6b",
-                  background: "var(--cl-card)",
-                  borderRadius: "6px",
                 }}
               >
-                <div style={{ fontSize: "32px", marginBottom: "8px" }}>&#10007;</div>
                 <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#ff6b6b", margin: "0 0 8px" }}>
                   Game Over
                 </h2>
@@ -838,7 +822,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                   ))}
                 </div>
 
-                <div style={{ fontSize: "11px", color: "var(--cl-gray-dim)", marginBottom: "16px" }}>
+                <div style={{ fontSize: "11px", color: "var(--cl-gray-dim)", marginBottom: "8px" }}>
                   Come back tomorrow for a new puzzle!
                 </div>
 
@@ -847,14 +831,64 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
-                    gap: "28px",
-                    marginTop: "8px",
+                    gap: "16px",
+                    marginTop: "16px",
                   }}
                 >
-                  {mode === "daily" && (
-                    <OtherDailies currentGameId="chainlink" />
-                  )}
-
+                  <WinStreakLine gameId="chainlink" accentColor="var(--cl-green)" />
+                  <OtherDailies currentGameId="chainlink" />
+                </div>
+              </div>
+            </DailyCompleteOverlay>
+          ) : (
+            showFailOverlay && (
+              <div
+                className="anim-fade-slide-up"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  zIndex: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "16px",
+                  background: "rgba(18, 18, 19, 0.92)",
+                  borderRadius: "6px",
+                }}
+              >
+                <div
+                  style={{
+                    width: "100%",
+                    padding: "28px 24px",
+                    textAlign: "center",
+                    border: "2px solid #ff6b6b",
+                    background: "var(--cl-card)",
+                    borderRadius: "6px",
+                  }}
+                >
+                  <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#ff6b6b", margin: "0 0 8px" }}>
+                    Game Over
+                  </h2>
+                  <p style={{ fontSize: "12px", color: "var(--cl-gray-dim)", margin: "0 0 20px" }}>
+                    Wrong a fourth time and you&apos;re out. The full chain was:
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "center", marginBottom: "20px" }}>
+                    {puzzleWords.slice(1).map((w, i) => (
+                      <span
+                        key={i}
+                        style={{
+                          fontSize: "13px",
+                          padding: "6px 14px",
+                          background: "var(--cl-border)",
+                          borderRadius: "6px",
+                          color: "#ff6b6b",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {formatPair(puzzleWords[i], w)}
+                      </span>
+                    ))}
+                  </div>
                   <Link
                     href="/"
                     style={{
@@ -873,32 +907,20 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                   </Link>
                 </div>
               </div>
-            </div>
+            )
           )}
 
-          {showCompleteOverlay && (
-            <div
-              className="anim-fade-slide-up"
-              style={{
-                position: "absolute",
-                inset: 0,
-                zIndex: 10,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "16px",
-                background: "rgba(18, 18, 19, 0.92)",
-                borderRadius: "6px",
-              }}
+          {mode === "daily" ? (
+            <DailyCompleteOverlay
+              open={showCompleteOverlay}
+              onClose={() => setShowCompleteOverlay(false)}
+              ariaLabel="Chain complete"
             >
               <div
                 style={{
                   width: "100%",
-                  padding: "28px 24px",
+                  padding: "12px 4px 28px",
                   textAlign: "center",
-                  border: "2px solid var(--cl-green)",
-                  background: "var(--cl-card)",
-                  borderRadius: "6px",
                 }}
               >
                 <div style={{ fontSize: "32px", marginBottom: "8px" }}>&#9670;</div>
@@ -933,18 +955,62 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
-                    gap: "28px",
+                    gap: "16px",
                     marginTop: "16px",
                   }}
                 >
-                  {mode === "daily" && (
-                    <WinStreakLine gameId="chainlink" accentColor="var(--cl-green)" />
-                  )}
-
-                  {mode === "daily" && (
-                    <OtherDailies currentGameId="chainlink" />
-                  )}
-
+                  <WinStreakLine gameId="chainlink" accentColor="var(--cl-green)" />
+                  <OtherDailies currentGameId="chainlink" />
+                </div>
+              </div>
+            </DailyCompleteOverlay>
+          ) : (
+            showCompleteOverlay && (
+              <div
+                className="anim-fade-slide-up"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  zIndex: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "16px",
+                  background: "rgba(18, 18, 19, 0.92)",
+                  borderRadius: "6px",
+                }}
+              >
+                <div
+                  style={{
+                    width: "100%",
+                    padding: "28px 24px",
+                    textAlign: "center",
+                    border: "2px solid var(--cl-green)",
+                    background: "var(--cl-card)",
+                    borderRadius: "6px",
+                  }}
+                >
+                  <div style={{ fontSize: "32px", marginBottom: "8px" }}>&#9670;</div>
+                  <h2 style={{ fontSize: "22px", fontWeight: 700, color: "var(--cl-green)", margin: "0 0 20px" }}>
+                    Chain Complete!
+                  </h2>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "center", marginBottom: "20px" }}>
+                    {puzzleWords.slice(1).map((w, i) => (
+                      <span
+                        key={i}
+                        style={{
+                          fontSize: "13px",
+                          padding: "6px 14px",
+                          background: "var(--cl-border)",
+                          borderRadius: "6px",
+                          color: "var(--cl-green)",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {formatPair(puzzleWords[i], w)}
+                      </span>
+                    ))}
+                  </div>
                   <Link
                     href="/"
                     style={{
@@ -963,7 +1029,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                   </Link>
                 </div>
               </div>
-            </div>
+            )
           )}
         </div>
 

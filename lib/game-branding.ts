@@ -5,7 +5,7 @@ export interface GameBrand {
 }
 
 export const GAME_BRANDS = {
-  chainlink: { first: "Chain", second: "link", color: "#c9b458" },
+  chainlink: { first: "Chain ", second: "Link", color: "#c9b458" },
   anyguessr: { first: "Any", second: "Guessr", color: "var(--ag-brand)" },
   "brain-dead": { first: "Brain ", second: "Dead", color: "var(--bd-primary)" },
   freezeframes: { first: "Freeze", second: "Frames", color: "#a855f7" },

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useStreak } from "@/lib/streak/context";
 import { GameTitle } from "@/components/ui/game-title";
+import { GameCardPreview } from "@/components/daily/game-card-preview";
 import {
   DAILY_GAMES,
   GAME_META,
@@ -15,7 +16,9 @@ function getOtherDailies(
   streaks: GameStreakInfo[],
 ): GameStreakInfo[] {
   if (streaks.length > 0) {
-    return streaks.filter((game) => game.id !== currentGameId);
+    return streaks.filter(
+      (game) => game.id !== currentGameId && !game.playedToday,
+    );
   }
 
   return DAILY_GAMES.filter((id) => id !== currentGameId).map((id) => ({
@@ -38,73 +41,44 @@ export function OtherDailies({
   if (others.length === 0) return null;
 
   return (
-    <div
-      style={{
-        marginTop: "24px",
-        width: "100%",
-        maxWidth: "380px",
-        marginLeft: "auto",
-        marginRight: "auto",
-      }}
-    >
-      <div
-        style={{
-          fontSize: "10px",
-          fontWeight: 600,
-          letterSpacing: "0.14em",
-          textTransform: "uppercase",
-          color: "var(--text-dim, #787c7e)",
-          marginBottom: "10px",
-        }}
-      >
-        More dailies
-      </div>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "8px",
-        }}
-      >
+    <div className="od-section">
+      <div className="od-label">More dailies</div>
+      <div className="od-grid">
         {others.map((game) => {
-          const theme = GAME_META[game.id].theme;
+          const meta = GAME_META[game.id];
+          const theme = meta.theme;
 
           return (
             <Link
               key={game.id}
               href={game.href}
+              className="od-card"
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "12px",
-                padding: "10px 14px",
-                borderRadius: "8px",
-                border: `1px solid ${theme.border}`,
+                borderColor: theme.border,
                 background: theme.background,
-                textDecoration: "none",
-                color: "inherit",
-                transition: "border-color 0.15s ease, box-shadow 0.15s ease",
+                color: theme.text,
               }}
             >
-              <GameTitle
-                game={game.id}
-                style={{
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  color: theme.text,
-                }}
-              />
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 600,
-                  letterSpacing: "0.04em",
-                  color: game.playedToday ? "var(--text-dim, #787c7e)" : theme.accent,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {game.playedToday ? "Done" : "Play →"}
+              <div className="od-card-visual">
+                <GameCardPreview gameId={game.id} />
+              </div>
+              <div className="od-card-copy">
+                <GameTitle
+                  game={game.id}
+                  style={{
+                    fontSize: "15px",
+                    fontWeight: 700,
+                    color: theme.text,
+                    margin: 0,
+                    lineHeight: 1.15,
+                  }}
+                />
+                <p className="od-card-blurb" style={{ color: theme.text }}>
+                  {meta.blurb}
+                </p>
+              </div>
+              <span className="od-card-cta" style={{ color: theme.accent }}>
+                Play →
               </span>
             </Link>
           );

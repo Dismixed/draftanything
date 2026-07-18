@@ -6,9 +6,9 @@ import {
   useRef,
   useState,
 } from "react";
-import { createPortal } from "react-dom";
 import { GameBackLink } from "@/components/ui/game-back-link";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
+import { DailyCompleteOverlay } from "@/components/daily/daily-complete-overlay";
 import { useGameHowItWorks } from "@/lib/game-how-it-works";
 import { readDailyPuzzleCache, writeDailyPuzzleCache } from "@/lib/daily-puzzle-cache";
 import { getCountdownText, getDateString } from "@/lib/getting-warmer/game-logic";
@@ -107,7 +107,6 @@ export default function GettingWarmerGame() {
     () => initial.screen === "played" && !!getSubmittedEntryId(),
   );
   const { showHowItWorks, dismissHowItWorks } = useGameHowItWorks("getting-warmer");
-  const [mounted, setMounted] = useState(false);
   const [showResultsModal, setShowResultsModal] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -128,10 +127,6 @@ export default function GettingWarmerGame() {
   useEffect(() => {
     cluesRef.current = clues;
   }, [clues]);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (screen !== "results" && screen !== "played") {
@@ -429,11 +424,12 @@ export default function GettingWarmerGame() {
       ]}
       onDismiss={dismissHowItWorks}
       theme={{
-        surface: "#150e08",
-        border: "rgba(255, 107, 26, 0.3)",
-        accent: "#ff6b1a",
-        text: "#fff3e8",
-        textMuted: "#c9a893",
+        overlay: "var(--gw-overlay)",
+        surface: "var(--gw-surface)",
+        border: "color-mix(in srgb, var(--gw-orange) 30%, transparent)",
+        accent: "var(--gw-orange)",
+        text: "var(--gw-ink)",
+        textMuted: "var(--gw-ink-dim)",
       }}
     />
   ) : null;
@@ -589,37 +585,32 @@ export default function GettingWarmerGame() {
 
       </div>
 
-      {mounted &&
-        showResultsModal &&
-        (screen === "results" || screen === "played") &&
-        createPortal(
-          <div
-            className="gw-results-overlay anim-fade-slide-up"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Puzzle results"
-          >
-            <GettingWarmerResultsModal
-              won={won}
-              gaveUp={gaveUp}
-              answer={answer}
-              attempts={attempts}
-              guesses={guessHistory}
-              shareEmojis={shareEmojis}
-              countdown={countdown}
-              alreadyPlayed={screen === "played"}
-              leaderboard={leaderboard}
-              lbLoading={lbLoading}
-              submittedEntryId={submittedEntryIdRef.current}
-              nameInput={nameInput}
-              onNameInputChange={setNameInput}
-              onJoinLeaderboard={handleJoinLeaderboard}
-              lbSubmitting={lbSubmitting}
-              lbSubmitted={lbSubmitted}
-            />
-          </div>,
-          document.body,
-        )}
+      <DailyCompleteOverlay
+        open={
+          showResultsModal && (screen === "results" || screen === "played")
+        }
+        onClose={() => setShowResultsModal(false)}
+        ariaLabel="Puzzle results"
+      >
+        <GettingWarmerResultsModal
+          won={won}
+          gaveUp={gaveUp}
+          answer={answer}
+          attempts={attempts}
+          guesses={guessHistory}
+          shareEmojis={shareEmojis}
+          countdown={countdown}
+          alreadyPlayed={screen === "played"}
+          leaderboard={leaderboard}
+          lbLoading={lbLoading}
+          submittedEntryId={submittedEntryIdRef.current}
+          nameInput={nameInput}
+          onNameInputChange={setNameInput}
+          onJoinLeaderboard={handleJoinLeaderboard}
+          lbSubmitting={lbSubmitting}
+          lbSubmitted={lbSubmitted}
+        />
+      </DailyCompleteOverlay>
     </div>
   );
 }

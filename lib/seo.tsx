@@ -41,7 +41,7 @@ export function absoluteUrl(path = "/"): string {
 export const games: GameSeo[] = [
   {
     id: "chainlink",
-    name: "Chainlink",
+    name: "Chain Link",
     path: "/chainlink",
     description: "A daily word-chain puzzle where each word links naturally with the one before it.",
     genre: ["Word game", "Daily puzzle"],

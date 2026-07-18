@@ -10,6 +10,9 @@
   --bk-miss: #e8536b;
   --bk-line: rgba(140, 170, 220, 0.18);
   --bk-radius: 14px;
+  --bk-overlay: rgba(8, 12, 20, 0.72);
+  --bk-input-bg: #0a1428;
+  --bk-row-bg: #0a1428;
 }
 
 html[data-theme="light"] {
@@ -22,11 +25,21 @@ html[data-theme="light"] {
   --bk-chalk-dim: #5a7194;
   --bk-buzzer: #d97706;
   --bk-miss: #dc2626;
-  --bk-line: rgba(37, 99, 235, 0.16);
+  --bk-line: #9eb4d9;
+  --bk-overlay: rgba(15, 28, 51, 0.38);
+  --bk-input-bg: #e4ecf8;
+  --bk-row-bg: #e4ecf8;
+}
+
+/* Keep iOS status/safe areas from flashing the global cream body bg */
+html:has(.bk-page),
+body:has(.bk-page) {
+  background: var(--bk-court-navy);
 }
 
 .bk-page {
   min-height: 100vh;
+  min-height: 100dvh;
   background:
     radial-gradient(
       ellipse 900px 500px at 50% -10%,
@@ -39,7 +52,11 @@ html[data-theme="light"] {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 24px 16px 60px;
+  padding:
+    max(24px, env(safe-area-inset-top, 0px))
+    max(16px, env(safe-area-inset-right, 0px))
+    max(60px, env(safe-area-inset-bottom, 0px))
+    max(16px, env(safe-area-inset-left, 0px));
 }
 
 html[data-theme="light"] .bk-page {
@@ -107,6 +124,34 @@ html[data-theme="light"] .bk-page {
     transparent 65%
   );
   pointer-events: none;
+}
+
+/* Full-page layouts — no floating modal card */
+.bk-start,
+.bk-play,
+.bk-results {
+  position: relative;
+  padding: 28px 8px 8px;
+}
+
+.bk-page--complete,
+html[data-theme="light"] .bk-page.bk-page--complete {
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.bk-page--complete .bk-app {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.bk-page--complete .bk-results {
+  padding: 8px 4px 28px;
+}
+
+.bk-page--complete .bk-end-score {
+  margin-bottom: 16px;
 }
 
 .bk-court-card > *:not(.bk-court-bg) {
@@ -232,7 +277,7 @@ html[data-theme="light"] .bk-page {
   letter-spacing: 0.01em;
   margin: 0 0 2px;
   text-align: center;
-  color: #ffffff;
+  color: var(--bk-chalk);
 }
 
 .bk-title-accent {
@@ -269,7 +314,7 @@ html[data-theme="light"] .bk-page {
 }
 
 .bk-category-panel {
-  background: rgba(6, 16, 34, 0.55);
+  background: var(--bk-row-bg);
   border: 1px solid var(--bk-line);
   border-radius: 10px;
   padding: 16px 18px;
@@ -443,13 +488,17 @@ html[data-theme="light"] .bk-page {
   padding: 15px 16px;
   border-radius: 10px;
   border: 1.5px solid var(--bk-line);
-  background: rgba(6, 16, 34, 0.55);
+  background-color: var(--bk-input-bg);
   color: var(--bk-chalk);
   font-family: "Inter", sans-serif;
   font-size: 16px;
   font-weight: 500;
   outline: none;
   margin-bottom: 14px;
+  /* iOS Safari paints rgba/transparent inputs white without these */
+  appearance: none;
+  -webkit-appearance: none;
+  color-scheme: inherit;
 }
 
 .bk-answer-input:focus {
@@ -512,7 +561,7 @@ html[data-theme="light"] .bk-page {
   gap: 10px;
   padding: 9px 12px;
   border-radius: 8px;
-  background: rgba(6, 16, 34, 0.4);
+  background: var(--bk-row-bg);
   font-size: 14px;
   font-weight: 500;
   animation: bkSlideIn 0.2s ease;
@@ -594,10 +643,7 @@ html[data-theme="light"] .bk-page {
   font-size: 88px;
   font-weight: 700;
   line-height: 0.85;
-  background: linear-gradient(180deg, #ffffff, var(--bk-net-blue));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--bk-net-blue);
 }
 
 .bk-end-score .bk-end-lbl {
@@ -661,11 +707,14 @@ html[data-theme="light"] .bk-page {
   padding: 12px 14px;
   border-radius: 9px;
   border: 1.5px solid var(--bk-line);
-  background: rgba(6, 16, 34, 0.55);
+  background-color: var(--bk-input-bg);
   color: var(--bk-chalk);
   font-family: "Inter", sans-serif;
   font-size: 14px;
   outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  color-scheme: inherit;
 }
 
 .bk-join-row input:focus {

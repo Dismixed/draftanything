@@ -5,11 +5,14 @@ import {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
 } from "react";
 import { GameBackLink } from "@/components/ui/game-back-link";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
 import { OtherDailies } from "@/components/daily/other-dailies";
+import { DailyCompleteShell } from "@/components/daily/daily-complete-shell";
 import { useGameHowItWorks } from "@/lib/game-how-it-works";
+import { useTheme, setThemeColorOverride } from "@/lib/theme/theme-context";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
 import {
   CLOCK_CIRCUMFERENCE,
@@ -81,6 +84,8 @@ export default function BallKnowledgeGame({
   const [countdown, setCountdown] = useState("");
   const [playedScore, setPlayedScore] = useState(0);
   const { showHowItWorks, dismissHowItWorks } = useGameHowItWorks("ball-knowledge");
+  const [completeOpen, setCompleteOpen] = useState(false);
+  const { theme } = useTheme();
 
   const answerInputRef = useRef<HTMLInputElement>(null);
   const entryCounterRef = useRef(0);
@@ -96,6 +101,25 @@ export default function BallKnowledgeGame({
   useEffect(() => {
     acceptedRef.current = accepted;
   }, [accepted]);
+
+  // Match browser chrome to the court bg (not the global cream/midnight)
+  useEffect(() => {
+    const court =
+      getComputedStyle(document.documentElement)
+        .getPropertyValue("--bk-court-navy")
+        .trim() || (theme === "light" ? "#eef4fc" : "#0a1830");
+    setThemeColorOverride(court);
+    return () => setThemeColorOverride(null);
+  }, [theme]);
+
+  useEffect(() => {
+    if (screen !== "end" && screen !== "played") {
+      setCompleteOpen(false);
+      return;
+    }
+    const timer = setTimeout(() => setCompleteOpen(true), 350);
+    return () => clearTimeout(timer);
+  }, [screen]);
 
   const toast = useCallback((msg: string) => {
     setToastMsg(msg);
@@ -351,18 +375,37 @@ export default function BallKnowledgeGame({
   const endItems = entries.filter((e) => e.status === endTab);
 
   return (
-    <main className="bk-page">
+    <DailyCompleteShell
+      enabled={screen === "end" || screen === "played"}
+      open={completeOpen}
+      onClose={() => setCompleteOpen(false)}
+      ariaLabel="Daily complete"
+      style={
+        {
+          "--bg": "var(--bk-court-navy)",
+          "--text": "var(--bk-chalk)",
+          "--text-dim": "var(--bk-chalk-dim)",
+          background: "var(--bk-court-navy)",
+          color: "var(--bk-chalk)",
+        } as CSSProperties
+      }
+    >
+    <main className={`bk-page${completeOpen ? " bk-page--complete" : ""}`}>
       <div className="bk-app">
-        <div className="bk-brand">
-          <div className="bk-brand-dot" />
-          <span>Stim Games</span>
-        </div>
+        {!completeOpen && (
+          <div className="bk-brand">
+            <div className="bk-brand-dot" />
+            <span>Stim Games</span>
+          </div>
+        )}
 
         {screen === "played" && (
-          <div className="bk-card" style={{ position: "relative" }}>
-            <div className="bk-back-link">
-              <GameBackLink href="/" color="var(--bk-chalk-dim)" />
-            </div>
+          <div className="bk-results">
+            {!completeOpen && (
+              <div className="bk-back-link">
+                <GameBackLink href="/" color="var(--bk-chalk-dim)" />
+              </div>
+            )}
             <div className="bk-end-score">
               <div className="bk-end-num">{playedScore}</div>
               <div className="bk-end-lbl">Today&apos;s Ball Knowledge Score</div>
@@ -405,14 +448,14 @@ export default function BallKnowledgeGame({
               </p>
             ) : null}
             <div className="bk-streak-line">
-              <WinStreakLine gameId="ball-knowledge" />
+              <WinStreakLine gameId="ball-knowledge" accentColor="var(--bk-net-blue)" />
             </div>
             <OtherDailies currentGameId="ball-knowledge" />
           </div>
         )}
 
         {screen === "start" && (
-          <div className="bk-card" style={{ position: "relative" }}>
+          <div className="bk-start">
             <div className="bk-back-link">
               <GameBackLink href="/" color="var(--bk-chalk-dim)" />
             </div>
@@ -448,7 +491,7 @@ export default function BallKnowledgeGame({
         )}
 
         {screen === "game" && (
-          <div className="bk-card">
+          <div className="bk-play">
             <div className="bk-game-top">
               <div className="bk-game-category">
                 <small>Category</small>
@@ -484,6 +527,9 @@ export default function BallKnowledgeGame({
               className="bk-answer-input"
               placeholder="Type an answer and hit enter…"
               autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   submitAnswer(e.currentTarget.value);
@@ -504,7 +550,7 @@ export default function BallKnowledgeGame({
         )}
 
         {screen === "end" && (
-          <div className="bk-card">
+          <div className="bk-results">
             <div className="bk-end-score">
               <div className="bk-end-num">{score}</div>
               <div className="bk-end-lbl">Ball Knowledge Score</div>
@@ -623,16 +669,18 @@ export default function BallKnowledgeGame({
                 <span>Messages</span>
               </button>
             </div>
-            <button
-              type="button"
-              className="bk-btn-ghost"
-              onClick={() => setScreen("start")}
-            >
-              Back to Start
-            </button>
+            {!completeOpen && (
+              <button
+                type="button"
+                className="bk-btn-ghost"
+                onClick={() => setScreen("start")}
+              >
+                Back to Start
+              </button>
+            )}
 
             <div className="bk-streak-line">
-              <WinStreakLine gameId="ball-knowledge" />
+              <WinStreakLine gameId="ball-knowledge" accentColor="var(--bk-net-blue)" />
             </div>
             {countdown ? (
               <p
@@ -658,10 +706,10 @@ export default function BallKnowledgeGame({
           buttonLabel="Start Challenge"
           onDismiss={dismissHowItWorks}
           theme={{
-            overlay: "rgba(8, 12, 20, 0.92)",
+            overlay: "var(--bk-overlay)",
             surface: "var(--bk-backboard)",
             border: "var(--bk-line)",
-            accent: "#5b9ee8",
+            accent: "var(--bk-net-blue)",
             text: "var(--bk-chalk)",
             textMuted: "var(--bk-chalk-dim)",
           }}
@@ -670,6 +718,7 @@ export default function BallKnowledgeGame({
 
       <div className={`bk-toast${showToast ? " show" : ""}`}>{toastMsg}</div>
     </main>
+    </DailyCompleteShell>
   );
 }
 

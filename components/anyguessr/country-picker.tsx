@@ -423,12 +423,16 @@ export default function CountryPicker({ open, roundKey, onClose, onPick }: Props
                 spellCheck={false}
                 style={{
                   width: "100%",
-                  background: "transparent",
-                  border: "none",
+                  backgroundColor: "var(--ag-surface-hi)",
+                  border: "1px solid var(--ag-border)",
+                  borderRadius: "10px",
                   outline: "none",
                   color: "var(--ag-text)",
-                  fontSize: "15px",
-                  padding: "8px 4px",
+                  fontSize: "16px",
+                  padding: "12px 14px",
+                  appearance: "none",
+                  WebkitAppearance: "none",
+                  colorScheme: "inherit",
                 }}
               />
             </div>
