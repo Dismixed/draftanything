@@ -468,11 +468,6 @@ export default function BallKnowledgeGame({
               60 seconds. One random category. Name everything you know.
             </div>
             <div className="bk-category-chips" aria-hidden>
-              {SAMPLE_CATEGORIES.map((name) => (
-                <span key={name} className="bk-category-chip">
-                  {name}
-                </span>
-              ))}
             </div>
             <div className="bk-category-panel">
               <div className="bk-category-eyebrow">Today&apos;s Category</div>
