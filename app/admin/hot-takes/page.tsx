@@ -199,6 +199,25 @@ export default function AdminHotTakesPage() {
     }
   }
 
+  async function sourceItem(item: ItemRow) {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/admin/hot-takes/items/${item.id}/source`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Source failed");
+      setMessage(
+        data.kind === "photo"
+          ? `Found a real photo for ${item.label}`
+          : `Generated an icon for ${item.label}`,
+      );
+      if (selected) await fetchCategory(selected.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Source failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function generateIcon(item: ItemRow) {
     setBusy(true);
     try {
@@ -430,7 +449,7 @@ export default function AdminHotTakesPage() {
                               {item.status}{item.wiki_title ? ` · ${item.wiki_title}` : ""}
                             </div>
                           </div>
-                          <button type="button" disabled={busy} onClick={() => fetchImages(item)} style={btnStyle}>Fetch</button>
+                          <button type="button" disabled={busy} onClick={() => sourceItem(item)} style={btnStyle}>Source</button>
                           <button type="button" disabled={busy} onClick={() => generateIcon(item)} style={btnStyle}>Generate</button>
                           <button type="button" disabled={busy} onClick={() => approveItem(item)} style={btnStyle}>Approve</button>
                         </div>
