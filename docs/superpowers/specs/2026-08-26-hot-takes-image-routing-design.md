@@ -55,13 +55,14 @@ Extend the Zod `ProposalSchema` per-item to include:
 
 - `subject_type`: enum `"real_entity" | "generic"`.
 - `photo_query`: string (min 1).
+- Relax `wiki_title` from `z.string().min(1)` to `z.string().nullable().optional()` — the current schema rejects empty/null, which would make every `generic` item fail validation.
 
-`ProposedItem` gains the same two fields.
+`ProposedItem` gains the two new fields and makes `wiki_title` nullable.
 
 Update the system prompt to:
 
 1. Define the two subject types and instruct classification: named/findable entity with a Wikipedia article → `real_entity`; abstract concept/activity → `generic`.
-2. `wiki_title` = exact Wikipedia article title for `real_entity` items; empty string/null for `generic` items.
+2. `wiki_title` = exact Wikipedia article title for `real_entity` items; empty/null for `generic` items.
 3. `photo_query` = the best Wikimedia Commons search string (may equal `wiki_title` or `label`).
 4. Retain the existing nudge "prefer Wikipedia article titles that have strong lead photos" — this is the **lean-real** bias, hardcoded for v1 (no admin toggle yet).
 
@@ -75,12 +76,18 @@ New module `lib/hot-takes/source-item.ts` with a single entry point:
 sourceItemImage(db, item, categoryName): Promise<{ kind: "photo" | "generated" }>
 ```
 
+`db` is a `SupabaseClient<Database>` passed in by the route handler (which creates it via `createAdminClient()`), matching the `daily-service`/`schedule-service` pattern. Re-sourcing is always allowed: each run overwrites `image_candidates`/`image_url` and sets `status = "needs_review"`.
+
 Flow:
 
-1. **Always look up first.** Call `resolveItemImageCandidates({ label, wikiTitle: item.wiki_title, categoryName })` (existing, `lib/hot-takes/image-sourcing.ts`), additionally using `item.photo_query` as an extra Commons search term when present. If ≥1 candidate returns:
+1. **Always look up first.** Extend `resolveItemImageCandidates` (in `lib/hot-takes/image-sourcing.ts`) to accept an optional `photoQuery?: string | null`; when present, it is added as an extra `searchCommonsFiles` term. Call it with `{ label: item.label, wikiTitle: item.wiki_title, categoryName, photoQuery: item.photo_query }`. If ≥1 candidate returns:
    - Set `image_candidates`, `selected_candidate_index = 0`, `image_url = first candidate`, `image_source = "wikimedia"`, `status = "needs_review"`.
    - Return `{ kind: "photo" }`.
-2. **Fallback generate on miss.** If lookup returns zero candidates, call `generateItemIcon({ categorySlug, itemSlug, categoryName, label })` (existing, `lib/hot-takes/icon-generate.ts`). The prompt remains the flat-vector icon style. For `subject_type === "real_entity"`, append a no-likeness instruction: "generic symbolic representation; do not render a specific named individual's likeness." Set `image_source = "generated"`. Return `{ kind: "generated" }`.
+2. **Fallback generate on miss.** If lookup returns zero candidates, call `generateItemIcon({ categorySlug, itemSlug, categoryName, label, subjectType: item.subject_type })`. Extend `generateItemIcon`/`iconPrompt` (in `lib/hot-takes/icon-generate.ts`) to accept `subjectType`; the prompt remains the flat-vector icon style, and for `subjectType === "real_entity"` it appends a no-likeness instruction: "generic symbolic representation; do not render a specific named individual's likeness." Set `image_source = "generated"`. Return `{ kind: "generated" }`.
+
+**Error handling:** the lookup path already swallows errors and returns `[]` (so it degrades to generation). If generation also fails (network/quota/storage error), `sourceItemImage` throws, and the route returns a 500 with the error message — the admin sees it and can retry or use "Add URL". No partial writes: the item is only updated on success.
+
+**Return value:** `sourceItemImage` returns `{ kind }` only; the admin route re-fetches the category afterward (the existing `fetchCategory` pattern), so the updated item is always read fresh from the DB rather than reconstructed.
 
 `subject_type` is consulted **only** for the fallback prompt style — never to decide whether the lookup runs. Consequences:
 
@@ -99,6 +106,7 @@ The existing generator already produces a flat vector icon, not a photorealistic
 
 - `POST`, admin-guarded (same `checkAdmin()` pattern as sibling routes).
 - Loads item + category, calls `sourceItemImage`, returns `{ item, kind, candidateCount }`.
+- The existing `images/route.ts` (the old "Fetch" lookup-only endpoint) becomes unused by the UI once "Fetch" is renamed to "Source"; remove it or leave it, but it should no longer be referenced.
 
 ### 4.2 UI (`app/admin/hot-takes/page.tsx`)
 
