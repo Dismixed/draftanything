@@ -184,21 +184,6 @@ export default function AdminHotTakesPage() {
     return data.item as ItemRow;
   }
 
-  async function fetchImages(item: ItemRow) {
-    setBusy(true);
-    try {
-      const res = await fetch(`/api/admin/hot-takes/items/${item.id}/images`, { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Image fetch failed");
-      setMessage(`Found ${data.candidateCount} candidates for ${item.label}`);
-      if (selected) await fetchCategory(selected.id);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Image fetch failed");
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function sourceItem(item: ItemRow) {
     setBusy(true);
     try {
