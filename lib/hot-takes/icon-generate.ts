@@ -2,18 +2,30 @@ import "server-only";
 
 import { getGeminiClient } from "@/features/ai/gemini";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { ImageCandidate } from "./types";
+import type { ImageCandidate, SubjectType } from "./types";
 
 const IMAGE_MODEL = process.env.GEMINI_IMAGE_MODEL || "imagen-3.0-generate-002";
 const BUCKET = "hot-takes-icons";
 
-function iconPrompt(categoryName: string, label: string): string {
-  return [
+export function iconPrompt(
+  categoryName: string,
+  label: string,
+  subjectType?: SubjectType,
+): string {
+  const prompt = [
     `Flat vector app icon for "${label}" in the category "${categoryName}".`,
     "Centered subject, simple recognizable silhouette, bold colors,",
     "dark charcoal background (#1e1e26), no text, no border, no watermark,",
     "game UI asset style, square composition.",
-  ].join(" ");
+  ];
+
+  if (subjectType === "real_entity") {
+    prompt.push(
+      "Generic symbolic representation; do not render a specific named individual's likeness.",
+    );
+  }
+
+  return prompt.join(" ");
 }
 
 export async function generateItemIcon(options: {
@@ -21,12 +33,13 @@ export async function generateItemIcon(options: {
   itemSlug: string;
   categoryName: string;
   label: string;
+  subjectType?: SubjectType;
 }): Promise<{ publicUrl: string; candidate: ImageCandidate }> {
   const client = getGeminiClient();
 
   const response = await client.models.generateImages({
     model: IMAGE_MODEL,
-    prompt: iconPrompt(options.categoryName, options.label),
+    prompt: iconPrompt(options.categoryName, options.label, options.subjectType),
     config: { numberOfImages: 1 },
   });
 

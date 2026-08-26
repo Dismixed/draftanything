@@ -24,6 +24,9 @@ export type ItemStatus = (typeof ITEM_STATUSES)[number];
 export const IMAGE_SOURCES = ["wikimedia", "manual", "generated"] as const;
 export type ImageSource = (typeof IMAGE_SOURCES)[number];
 
+export const SUBJECT_TYPES = ["real_entity", "generic"] as const;
+export type SubjectType = (typeof SUBJECT_TYPES)[number];
+
 export interface ImageCandidate {
   image_url: string;
   thumb_url?: string;
@@ -71,7 +74,9 @@ export interface ItemRow {
   selected_candidate_index: number;
   image_source: ImageSource | null;
   status: ItemStatus;
+  subject_type: SubjectType;
   notes: string | null;
+  photo_query: string | null;
   created_at: string;
   updated_at: string;
 }
