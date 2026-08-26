@@ -25,6 +25,7 @@ export async function POST(
       itemSlug: item.slug,
       categoryName: category.name,
       label: item.label,
+      subjectType: item.subject_type,
     });
 
     const candidates = [candidate, ...item.image_candidates.filter((c) => c.image_url !== publicUrl)];
