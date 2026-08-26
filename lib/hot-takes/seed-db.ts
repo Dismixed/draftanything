@@ -14,6 +14,7 @@ import {
   type ItemRow,
   type ItemStatus,
   type ScheduleRow,
+  type SubjectType,
 } from "./types";
 
 function parseCandidates(raw: unknown): ImageCandidate[] {
@@ -53,7 +54,9 @@ function rowToItem(row: Record<string, unknown>): ItemRow {
     selected_candidate_index: (row.selected_candidate_index as number) ?? 0,
     image_source: (row.image_source as ImageSource | null) ?? null,
     status: row.status as ItemStatus,
+    subject_type: (row.subject_type as SubjectType) ?? "generic",
     notes: (row.notes as string | null) ?? null,
+    photo_query: (row.photo_query as string | null) ?? null,
     created_at: row.created_at as string,
     updated_at: row.updated_at as string,
   };
