@@ -75,6 +75,7 @@ export async function resolveItemImageCandidates(options: {
   label: string;
   wikiTitle?: string | null;
   categoryName: string;
+  photoQuery?: string | null;
 }): Promise<ImageCandidate[]> {
   const titles = Array.from(
     new Set(
@@ -106,6 +107,10 @@ export async function resolveItemImageCandidates(options: {
   collected.push(
     ...(await searchCommonsFiles(`${options.categoryName} ${options.label}`, 5)),
   );
+
+  if (options.photoQuery?.trim()) {
+    collected.push(...(await searchCommonsFiles(options.photoQuery, 5)));
+  }
 
   return dedupeCandidates(collected).slice(0, 8);
 }
