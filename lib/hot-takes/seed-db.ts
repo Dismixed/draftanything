@@ -182,6 +182,8 @@ export async function replaceCategoryItems(
     label: string;
     wiki_title?: string | null;
     notes?: string | null;
+    subject_type?: SubjectType;
+    photo_query?: string | null;
   }>,
 ): Promise<ItemRow[]> {
   if (items.length !== HOT_TAKES_ITEM_COUNT) {
@@ -202,6 +204,8 @@ export async function replaceCategoryItems(
     notes: item.notes ?? null,
     sort_order: index + 1,
     status: "needs_image" as const,
+    subject_type: item.subject_type ?? "generic",
+    photo_query: item.photo_query ?? null,
   }));
 
   const { data, error } = await db
@@ -244,6 +248,8 @@ export async function updateItem(
     image_source: ImageSource | null;
     status: ItemStatus;
     notes: string | null;
+    subject_type: SubjectType;
+    photo_query: string | null;
   }>,
 ): Promise<ItemRow> {
   const { data, error } = await db
