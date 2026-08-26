@@ -121,4 +121,15 @@ describe("sourceItemImage", () => {
 
     expect(result).toEqual({ kind: "generated" });
   });
+
+  it("propagates generation errors to the caller without partial writes", async () => {
+    resolveItemImageCandidatesMock.mockResolvedValue([]);
+    generateItemIconMock.mockRejectedValue(new Error("quota exceeded"));
+
+    await expect(
+      sourceItemImage({} as never, makeItem(), "Pizza Toppings", "pizza-toppings"),
+    ).rejects.toThrow("quota exceeded");
+
+    expect(updateItemMock).not.toHaveBeenCalled();
+  });
 });
