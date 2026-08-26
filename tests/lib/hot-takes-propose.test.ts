@@ -66,4 +66,37 @@ describe("ProposalSchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("rejects an item with an empty photo_query", () => {
+    const result = ProposalSchema.safeParse({
+      items: [
+        {
+          slug: "pepperoni",
+          label: "Pepperoni",
+          wiki_title: "Pepperoni",
+          subject_type: "real_entity",
+          photo_query: "",
+        },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts a generic item with an empty wiki_title", () => {
+    const result = ProposalSchema.safeParse({
+      items: [
+        {
+          slug: "meeting-type",
+          label: "Meeting type",
+          wiki_title: "",
+          notes: null,
+          subject_type: "generic",
+          photo_query: "meeting type",
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+  });
 });

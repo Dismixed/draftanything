@@ -2,7 +2,7 @@ import "server-only";
 
 import { z } from "zod/v4";
 import { generateJson } from "@/features/ai/gemini";
-import { HOT_TAKES_ITEM_COUNT, type SubjectType } from "./types";
+import { HOT_TAKES_ITEM_COUNT, SUBJECT_TYPES, type SubjectType } from "./types";
 
 export const ProposalSchema = z.object({
   items: z.array(
@@ -11,7 +11,7 @@ export const ProposalSchema = z.object({
       label: z.string().min(1),
       wiki_title: z.string().nullable().optional(),
       notes: z.string().nullable().optional(),
-      subject_type: z.enum(["real_entity", "generic"]),
+      subject_type: z.enum(SUBJECT_TYPES),
       photo_query: z.string().min(1),
     }),
   ),
@@ -36,7 +36,7 @@ export async function proposeCategoryItemsWithLlm(
       `You propose exactly ${HOT_TAKES_ITEM_COUNT} tier-list items for a daily ranking game called Hot Takes.`,
       "Items should be recognizable, debatable, and fun to rank S through D.",
       "Classify each item's subject_type: use 'real_entity' for a named, findable entity that has its own Wikipedia article (e.g. a food, place, person, brand, or thing), and 'generic' for an abstract concept or activity without a dedicated article (e.g. 'meeting type', 'first date idea').",
-      "For real_entity items set wiki_title to the exact Wikipedia article title; for generic items set wiki_title to an empty string or null.",
+      "For real_entity items set wiki_title to the exact Wikipedia article title; for generic items set wiki_title to null.",
       "Set photo_query to the best Wikimedia Commons search string for the item (this may equal wiki_title or label).",
       "Prefer Wikipedia article titles that have strong lead photos.",
       "Use lowercase slug ids with hyphens (e.g. pepperoni, bell-pepper).",
