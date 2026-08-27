@@ -918,6 +918,7 @@ body {
   --cl-gray-dim: #787c7e;
   --cl-text: #ffffff;
   --cl-border: #3a3a3c;
+  --cl-overlay: color-mix(in srgb, var(--cl-bg) 78%, transparent);
 }
 
 html[data-theme="light"] {
@@ -932,6 +933,7 @@ html[data-theme="light"] {
   --cl-gray-dim: #787c7e;
   --cl-text: #1a1a1b;
   --cl-border: #c5c9d1;
+  --cl-overlay: color-mix(in srgb, var(--cl-bg) 78%, transparent);
 }
 
 /* ── Chainlink keyframes ── */

@@ -66,6 +66,14 @@ export const ADMIN_GAMES: AdminGame[] = [
     description: "Daily word puzzles with clue chains and AI-generated hints.",
     accent: "#ff6b1a",
   },
+  {
+    id: "ball-knowledge",
+    name: "Ball Knowledge",
+    playHref: "/ball-knowledge/daily",
+    adminHref: "/admin/ball-knowledge",
+    description: "Daily category rotation with least-recently-used scheduling.",
+    accent: "#5b9ee8",
+  },
 ];
 
 export function getAdminGame(id: string): AdminGame | undefined {

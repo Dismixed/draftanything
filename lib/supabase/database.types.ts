@@ -419,6 +419,27 @@ export type Database = {
           },
         ]
       }
+      ball_knowledge_schedule: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          publish_date: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          publish_date: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          publish_date?: string
+        }
+        Relationships: []
+      }
       getting_warmer_leaderboard: {
         Row: {
           created_at: string

@@ -20,6 +20,7 @@
     "db:types": "supabase gen types typescript --local --schema public > lib/supabase/database.types.ts",
     "db:types:remote": "supabase gen types typescript --linked --schema public > lib/supabase/database.types.ts",
     "seed:anyguessr": "npx tsx scripts/seed-anyguessr.ts",
+    "generate:chains": "npx tsx scripts/generate-chains.ts",
     "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "dependencies": {

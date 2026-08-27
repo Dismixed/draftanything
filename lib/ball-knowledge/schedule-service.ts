@@ -3,22 +3,29 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { orderByLru, pickLru } from "@/lib/schedule/lru";
+import { CATEGORIES } from "./categories";
 
 export interface AutoScheduleOptions {
   startDate?: string;
 }
 
 export interface AutoScheduleEntry {
-  categoryId: string;
+  category: string;
   publishDate: string;
 }
 
 export interface AutoScheduleResult {
   scheduled: number;
-  skippedAlreadyScheduled: number;
   startDate: string;
   endDate: string | null;
   entries: AutoScheduleEntry[];
+}
+
+export interface ScheduleRow {
+  id: string;
+  publish_date: string;
+  category: string;
+  created_at: string;
 }
 
 function todayUtc(): string {
@@ -35,62 +42,41 @@ function isValidDate(date: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(date);
 }
 
-interface ApprovedCategory {
-  id: string;
-}
-
-interface ScheduleRow {
-  category_id: string;
-  publish_date: string;
-}
-
-/** Map of category id → most recent publish date (or absent if never used). */
-function computeLastUsedByCategory(rows: ScheduleRow[]): Map<string, string> {
+/** Map of category name → most recent publish date (or absent if never used). */
+export function computeLastUsedByCategory(
+  rows: Array<{ category: string; publish_date: string }>,
+): Map<string, string> {
   const lastUsed = new Map<string, string>();
   for (const row of rows) {
-    const prev = lastUsed.get(row.category_id);
+    const prev = lastUsed.get(row.category);
     if (!prev || row.publish_date > prev) {
-      lastUsed.set(row.category_id, row.publish_date);
+      lastUsed.set(row.category, row.publish_date);
     }
   }
   return lastUsed;
 }
 
-async function listApprovedCategories(
+async function listScheduleRows(
   db: SupabaseClient<Database>,
-): Promise<ApprovedCategory[]> {
+): Promise<Array<{ category: string; publish_date: string }>> {
   const { data, error } = await db
-    .from("hot_takes_categories")
-    .select("id")
-    .eq("status", "approved")
-    .order("created_at", { ascending: true });
+    .from("ball_knowledge_schedule")
+    .select("category, publish_date");
 
   if (error) {
-    throw new Error(`Failed to load approved categories: ${error.message}`);
+    throw new Error(`Failed to load ball knowledge schedule: ${error.message}`);
   }
 
   return data ?? [];
 }
 
-async function listScheduleRows(db: SupabaseClient<Database>): Promise<ScheduleRow[]> {
-  const { data, error } = await db
-    .from("hot_takes_schedule")
-    .select("category_id, publish_date");
-
-  if (error) {
-    throw new Error(`Failed to load schedule: ${error.message}`);
-  }
-
-  return data ?? [];
-}
-
-export async function getScheduledCategoryId(
+export async function getScheduledCategory(
   db: SupabaseClient<Database>,
   date: string,
 ): Promise<string | null> {
   const { data, error } = await db
-    .from("hot_takes_schedule")
-    .select("category_id")
+    .from("ball_knowledge_schedule")
+    .select("category")
     .eq("publish_date", date)
     .maybeSingle();
 
@@ -98,53 +84,44 @@ export async function getScheduledCategoryId(
     throw new Error(`Failed to load scheduled category: ${error.message}`);
   }
 
-  return data?.category_id ?? null;
+  return data?.category ?? null;
 }
 
-/** Pick the approved category used longest ago (never-used first). */
-export async function pickLruCategoryId(
+/** Pick the category used longest ago (never-used first), in CATEGORIES order. */
+export async function pickLruCategory(
   db: SupabaseClient<Database>,
 ): Promise<string | null> {
-  const [approved, rows] = await Promise.all([
-    listApprovedCategories(db),
-    listScheduleRows(db),
-  ]);
-
+  const rows = await listScheduleRows(db);
   const lastUsed = computeLastUsedByCategory(rows);
-  return pickLru(approved, (category) => category.id, lastUsed)?.id ?? null;
+  return pickLru(CATEGORIES, (category) => category, lastUsed);
 }
 
 export async function scheduleDailyCategory(
   db: SupabaseClient<Database>,
   date?: string,
-): Promise<{ categoryId: string; date: string; alreadyScheduled: boolean } | null> {
+): Promise<{ category: string; date: string; alreadyScheduled: boolean } | null> {
   const targetDate = date ?? todayUtc();
 
-  const existing = await getScheduledCategoryId(db, targetDate);
+  const existing = await getScheduledCategory(db, targetDate);
   if (existing) {
-    return { categoryId: existing, date: targetDate, alreadyScheduled: true };
+    return { category: existing, date: targetDate, alreadyScheduled: true };
   }
 
-  const categoryId = await pickLruCategoryId(db);
-  if (!categoryId) return null;
+  const category = await pickLruCategory(db);
+  if (!category) return null;
 
   const { error } = await db
-    .from("hot_takes_schedule")
-    .insert({ category_id: categoryId, publish_date: targetDate });
+    .from("ball_knowledge_schedule")
+    .insert({ category, publish_date: targetDate });
 
   if (error && error.code !== "23505") {
     throw new Error(`Failed to schedule daily category: ${error.message}`);
   }
 
-  return { categoryId, date: targetDate, alreadyScheduled: false };
+  return { category, date: targetDate, alreadyScheduled: false };
 }
 
-/**
- * Assigns approved categories (ordered by least-recently-used) to consecutive
- * open dates starting at `startDate`. Categories already scheduled are not
- * reused until the whole approved pool has cycled through.
- */
-export async function autoScheduleApprovedCategories(
+export async function autoScheduleCategories(
   db: SupabaseClient<Database>,
   options: AutoScheduleOptions = {},
 ): Promise<AutoScheduleResult> {
@@ -154,25 +131,11 @@ export async function autoScheduleApprovedCategories(
     throw new Error("startDate must be YYYY-MM-DD format");
   }
 
-  const [approved, rows] = await Promise.all([
-    listApprovedCategories(db),
-    listScheduleRows(db),
-  ]);
-
-  if (approved.length === 0) {
-    return {
-      scheduled: 0,
-      skippedAlreadyScheduled: 0,
-      startDate,
-      endDate: null,
-      entries: [],
-    };
-  }
-
+  const rows = await listScheduleRows(db);
   const occupiedDates = new Set(rows.map((row) => row.publish_date));
   const lastUsed = computeLastUsedByCategory(rows);
 
-  const ordered = orderByLru(approved, (category) => category.id, lastUsed);
+  const ordered = orderByLru(CATEGORIES, (category) => category, lastUsed);
 
   const entries: AutoScheduleEntry[] = [];
   let cursor = startDate;
@@ -182,15 +145,15 @@ export async function autoScheduleApprovedCategories(
       cursor = addDays(cursor, 1);
     }
 
-    entries.push({ categoryId: category.id, publishDate: cursor });
+    entries.push({ category, publishDate: cursor });
     occupiedDates.add(cursor);
     cursor = addDays(cursor, 1);
   }
 
   if (entries.length > 0) {
-    const { error } = await db.from("hot_takes_schedule").insert(
+    const { error } = await db.from("ball_knowledge_schedule").insert(
       entries.map((entry) => ({
-        category_id: entry.categoryId,
+        category: entry.category,
         publish_date: entry.publishDate,
       })),
     );
@@ -202,9 +165,23 @@ export async function autoScheduleApprovedCategories(
 
   return {
     scheduled: entries.length,
-    skippedAlreadyScheduled: 0,
     startDate,
     endDate: entries.length > 0 ? entries[entries.length - 1]!.publishDate : null,
     entries,
   };
+}
+
+export async function listSchedule(
+  db: SupabaseClient<Database>,
+): Promise<ScheduleRow[]> {
+  const { data, error } = await db
+    .from("ball_knowledge_schedule")
+    .select("*")
+    .order("publish_date", { ascending: true });
+
+  if (error) {
+    throw new Error(`Failed to list schedule: ${error.message}`);
+  }
+
+  return (data ?? []) as ScheduleRow[];
 }

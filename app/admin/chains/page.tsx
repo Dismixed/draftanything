@@ -225,7 +225,7 @@ export default function AdminChainsPage() {
       const res = await fetch("/api/admin/chains/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ count: 25 }),
+        body: JSON.stringify({ count: 25, validate: true }),
       });
 
       if (!res.ok) {

@@ -2,6 +2,7 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { generateChains } from "./generator";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -46,6 +47,106 @@ export interface HintResult {
 
 const fallbackCache = new Map<string, PlayablePuzzle>();
 
+/**
+ * Reads the puzzle scheduled for `targetDate` (or null if none). Raises on
+ * database errors so callers can distinguish "no puzzle" from "failed read".
+ */
+async function loadScheduledPuzzle(
+  db: SupabaseClient<Database>,
+  targetDate: string,
+): Promise<PlayablePuzzle | null> {
+  const { data: scheduled, error: schedError } = await db
+    .from("daily_chain_puzzles")
+    .select("puzzle_id, publish_date")
+    .eq("publish_date", targetDate)
+    .maybeSingle();
+
+  if (schedError) throw schedError;
+  if (!scheduled) return null;
+
+  const { data: puzzle, error: puzzleError } = await db
+    .from("chain_puzzles")
+    .select("*")
+    .eq("id", scheduled.puzzle_id)
+    .single();
+
+  if (puzzleError) throw puzzleError;
+  if (!puzzle) return null;
+
+  const words = puzzle.words as string[];
+  return buildPlayablePuzzle(
+    puzzle.id,
+    words,
+    "daily",
+    puzzle.difficulty,
+    scheduled.publish_date,
+  );
+}
+
+/**
+ * Generates a fresh chain from the curated phrase graph and schedules it for
+ * `targetDate` on the fly, so a day with nothing on the calendar still gets a
+ * single persisted puzzle (identical for every visitor). Returns null if
+ * generation produced nothing or persistence failed.
+ *
+ * Note: the LLM semantic pass is intentionally skipped here — this is the hot
+ * path that runs on a user's page load, and the phrase graph is already
+ * curated. The LLM pass belongs in the batch/admin pipeline instead.
+ */
+async function generateOnDemandPuzzle(
+  db: SupabaseClient<Database>,
+  targetDate: string,
+): Promise<PlayablePuzzle | null> {
+  const chains = await generateChains(db, { length: 5, count: 1 });
+  if (chains.length === 0) return null;
+
+  const chain = chains[0];
+
+  const { data: inserted, error: insertError } = await db
+    .from("chain_puzzles")
+    .insert({
+      title: chain.words.join(" → "),
+      words: chain.words,
+      phrases: chain.phrases,
+      difficulty: chain.difficulty,
+      theme: chain.theme,
+      status: "scheduled",
+      score: chain.score,
+      notes: "Auto-generated on demand — no puzzle was scheduled for this date.",
+      created_by: "on-demand",
+    })
+    .select("id")
+    .single();
+
+  if (insertError || !inserted) {
+    console.error("[chainlink] on-demand insert failed:", insertError);
+    return null;
+  }
+
+  const { error: scheduleError } = await db
+    .from("daily_chain_puzzles")
+    .insert({ publish_date: targetDate, puzzle_id: inserted.id });
+
+  // Lost a race — another request already scheduled today's puzzle. Re-read
+  // the winner so every visitor sees the same puzzle (our insert is orphaned,
+  // which is harmless and self-heals).
+  if (scheduleError && scheduleError.code === "23505") {
+    return loadScheduledPuzzle(db, targetDate);
+  }
+  if (scheduleError) {
+    console.error("[chainlink] on-demand schedule failed:", scheduleError);
+    return null;
+  }
+
+  return buildPlayablePuzzle(
+    inserted.id,
+    chain.words,
+    "daily",
+    chain.difficulty,
+    targetDate,
+  );
+}
+
 export async function getDailyPuzzle(
   db: SupabaseClient<Database>,
   date?: string,
@@ -56,32 +157,46 @@ export async function getDailyPuzzle(
   const cached = fallbackCache.get(targetDate);
   if (cached) return cached;
 
-  // Find today's scheduled puzzle
-  const { data: scheduled, error: schedError } = await db
-    .from("daily_chain_puzzles")
-    .select("puzzle_id, publish_date")
-    .eq("publish_date", targetDate)
-    .maybeSingle();
-
-  if (schedError) throw schedError;
-
+  // 1. Today's scheduled puzzle
+  const scheduled = await loadScheduledPuzzle(db, targetDate);
   if (scheduled) {
-    const { data: puzzle, error: puzzleError } = await db
-      .from("chain_puzzles")
-      .select("*")
-      .eq("id", scheduled.puzzle_id)
-      .single();
-
-    if (puzzleError) throw puzzleError;
-    if (puzzle) {
-      const words = puzzle.words as string[];
-      const result = buildPlayablePuzzle(puzzle.id, words, "daily", puzzle.difficulty, scheduled.publish_date);
-      fallbackCache.set(targetDate, result);
-      return result;
-    }
+    fallbackCache.set(targetDate, scheduled);
+    return scheduled;
   }
 
-  // Fallback: pick a random approved puzzle and cache it for the day
+  // 2. Nothing scheduled — generate one on demand and load it, so the game
+  //    always has a puzzle for the day.
+  try {
+    const generated = await generateOnDemandPuzzle(db, targetDate);
+    if (generated) {
+      fallbackCache.set(targetDate, generated);
+      return generated;
+    }
+  } catch (err) {
+    console.error("[chainlink] on-demand generation failed:", err);
+    // Fall through to the approved fallback below.
+  }
+
+  // 3. Last resort: pick a random approved puzzle, persist it to the daily
+  //    schedule so every later visitor gets the same one, then return it.
+  const fallback = await scheduleApprovedFallback(db, targetDate);
+  if (fallback) {
+    fallbackCache.set(targetDate, fallback);
+    return fallback;
+  }
+
+  return null;
+}
+
+/**
+ * Picks an approved/published puzzle and writes it to `daily_chain_puzzles`
+ * for `targetDate`. Concurrent callers race on the unique publish_date —
+ * losers re-read the winner so everyone still sees one shared puzzle.
+ */
+async function scheduleApprovedFallback(
+  db: SupabaseClient<Database>,
+  targetDate: string,
+): Promise<PlayablePuzzle | null> {
   const { data: approved } = await db
     .from("chain_puzzles")
     .select("*")
@@ -89,15 +204,25 @@ export async function getDailyPuzzle(
     .order("score", { ascending: false })
     .limit(50);
 
-  if (approved && approved.length > 0) {
-    const pick = approved[Math.floor(Math.random() * approved.length)];
-    const words = pick.words as string[];
-    const result = buildPlayablePuzzle(pick.id, words, "daily", pick.difficulty, targetDate);
-    fallbackCache.set(targetDate, result);
-    return result;
+  if (!approved || approved.length === 0) return null;
+
+  const pick = approved[Math.floor(Math.random() * approved.length)];
+
+  const { error: scheduleError } = await db
+    .from("daily_chain_puzzles")
+    .insert({ publish_date: targetDate, puzzle_id: pick.id });
+
+  // Lost the race — another request already claimed the day. Serve theirs.
+  if (scheduleError && scheduleError.code === "23505") {
+    return loadScheduledPuzzle(db, targetDate);
+  }
+  if (scheduleError) {
+    console.error("[chainlink] approved fallback schedule failed:", scheduleError);
+    return null;
   }
 
-  return null;
+  const words = pick.words as string[];
+  return buildPlayablePuzzle(pick.id, words, "daily", pick.difficulty, targetDate);
 }
 
 /* ------------------------------------------------------------------ */

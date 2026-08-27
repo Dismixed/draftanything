@@ -3,10 +3,8 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { LEGACY_CATEGORIES } from "./seed";
-import {
-  getApprovedCategoryPool,
-  getCategoryForPlay,
-} from "./seed-db";
+import { getCategoryForPlay } from "./seed-db";
+import { scheduleDailyCategory } from "./schedule-service";
 import { getDailyCategoryIndex } from "./categories";
 import type { HotTakesDailyCategory } from "./types";
 
@@ -40,24 +38,16 @@ export async function getDailyCategoryForPlay(
     return legacyFallback(dateStr);
   }
 
-  if (scheduled?.category_id) {
-    const category = await getCategoryForPlay(db, scheduled.category_id);
-    if (category) {
-      return {
-        name: category.name,
-        items: category.items.map((item) => ({
-          id: item.slug,
-          label: item.label,
-          imageUrl: item.image_url ?? item.image_candidates[item.selected_candidate_index]?.image_url ?? "",
-        })),
-      };
-    }
+  let categoryId = scheduled?.category_id ?? null;
+
+  // No explicit schedule yet — assign one lazily using the LRU rotation.
+  if (!categoryId) {
+    const result = await scheduleDailyCategory(db, dateStr);
+    categoryId = result?.categoryId ?? null;
   }
 
-  const pool = await getApprovedCategoryPool(db);
-  if (pool.length > 0) {
-    const pick = pool[getDailyCategoryIndex(dateStr, pool.length)]!;
-    const category = await getCategoryForPlay(db, pick.id);
+  if (categoryId) {
+    const category = await getCategoryForPlay(db, categoryId);
     if (category) {
       return {
         name: category.name,

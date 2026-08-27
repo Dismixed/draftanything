@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import type { CategoryWithItems, ImageCandidate, ItemRow } from "@/lib/hot-takes/types";
 import { HOT_TAKES_ITEM_COUNT } from "@/lib/hot-takes/types";
+import { orderByLru } from "@/lib/schedule/lru";
 
 interface CategoryRow {
   id: string;
@@ -314,6 +315,22 @@ export default function AdminHotTakesPage() {
 
   const approvedCategories = categories.filter((c) => c.status === "approved");
 
+  const lastUsedByCategory = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const row of schedule) {
+      const prev = map.get(row.category_id);
+      if (!prev || row.publish_date > prev) {
+        map.set(row.category_id, row.publish_date);
+      }
+    }
+    return map;
+  }, [schedule]);
+
+  const nextUp = useMemo(
+    () => orderByLru(approvedCategories, (c) => c.id, lastUsedByCategory),
+    [approvedCategories, lastUsedByCategory],
+  );
+
   return (
     <AdminShell
       title="Hot Takes"
@@ -500,6 +517,22 @@ export default function AdminHotTakesPage() {
               );
             })}
             {schedule.length === 0 && <p style={{ color: "#787c7e" }}>No scheduled dates yet.</p>}
+          </div>
+
+          <h3 style={{ fontSize: 14, margin: "20px 0 8px" }}>Next up (LRU rotation)</h3>
+          <div style={{ display: "grid", gap: 8 }}>
+            {nextUp.map((cat, idx) => {
+              const lastUsed = lastUsedByCategory.get(cat.id);
+              return (
+                <div key={cat.id} style={{ padding: "10px 12px", background: "#1c1c1e", borderRadius: 8, border: "1px solid #3a3a3c" }}>
+                  <strong style={{ color: idx === 0 ? "#6aaa64" : "#e8e8e8" }}>
+                    {idx === 0 ? "→ " : ""}{cat.name}
+                  </strong>
+                  <span style={{ color: "#787c7e" }}> — {lastUsed ? `last used ${lastUsed}` : "never used"}</span>
+                </div>
+              );
+            })}
+            {nextUp.length === 0 && <p style={{ color: "#787c7e" }}>No approved categories.</p>}
           </div>
         </>
       )}

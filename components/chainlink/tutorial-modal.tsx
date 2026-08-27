@@ -27,7 +27,7 @@ export default function TutorialModal() {
           alignItems: "center",
           justifyContent: "center",
           padding: "20px",
-          background: "rgba(18,18,19,0.9)",
+          background: "var(--cl-overlay)",
           backdropFilter: "blur(6px)",
         }}
       >

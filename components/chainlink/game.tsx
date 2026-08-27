@@ -852,7 +852,8 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                   alignItems: "center",
                   justifyContent: "center",
                   padding: "16px",
-                  background: "rgba(18, 18, 19, 0.92)",
+                  background: "var(--cl-overlay)",
+                  backdropFilter: "blur(6px)",
                   borderRadius: "6px",
                 }}
               >
@@ -976,7 +977,8 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                   alignItems: "center",
                   justifyContent: "center",
                   padding: "16px",
-                  background: "rgba(18, 18, 19, 0.92)",
+                  background: "var(--cl-overlay)",
+                  backdropFilter: "blur(6px)",
                   borderRadius: "6px",
                 }}
               >

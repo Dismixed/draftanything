@@ -1,5 +1,7 @@
 import { z } from "zod/v4";
 import { generateJson } from "@/features/ai/gemini";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getDailyCategory } from "@/lib/ball-knowledge/puzzle-service";
 import { getTodayCategory } from "@/lib/ball-knowledge/game-logic";
 import { checkRateLimit } from "@/lib/rate-limit";
 
@@ -43,7 +45,15 @@ export async function POST(request: Request) {
 
   const { category, answer, accepted } = parsed.data;
 
-  if (category !== getTodayCategory()) {
+  let todayCategory: string;
+  try {
+    const db = createAdminClient();
+    todayCategory = await getDailyCategory(db);
+  } catch {
+    todayCategory = getTodayCategory();
+  }
+
+  if (category !== todayCategory) {
     return Response.json({ error: "INVALID_CATEGORY" }, { status: 400 });
   }
 
