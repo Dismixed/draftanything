@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ProposalSchema } from "@/lib/hot-takes/propose";
+import { CategoryProposalSchema, ProposalSchema } from "@/lib/hot-takes/propose";
 
 describe("ProposalSchema", () => {
   it("accepts a valid real_entity item", () => {
@@ -98,5 +98,39 @@ describe("ProposalSchema", () => {
     });
 
     expect(result.success).toBe(true);
+  });
+});
+
+describe("CategoryProposalSchema", () => {
+  it("accepts a valid category proposal with a name and items", () => {
+    const result = CategoryProposalSchema.safeParse({
+      name: "80s Cartoons",
+      items: [
+        {
+          slug: "he-man",
+          label: "He-Man",
+          wiki_title: "He-Man",
+          subject_type: "real_entity",
+          photo_query: "He-Man",
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a proposal missing a name", () => {
+    const result = CategoryProposalSchema.safeParse({
+      items: [
+        {
+          slug: "x",
+          label: "X",
+          subject_type: "generic",
+          photo_query: "x",
+        },
+      ],
+    });
+
+    expect(result.success).toBe(false);
   });
 });

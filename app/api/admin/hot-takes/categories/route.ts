@@ -9,7 +9,10 @@ import {
   replaceCategoryItems,
   updateCategory,
 } from "@/lib/hot-takes/seed-db";
-import { proposeCategoryItemsWithLlm } from "@/lib/hot-takes/propose";
+import {
+  proposeCategoryItemsWithLlm,
+  proposeCategoryWithLlm,
+} from "@/lib/hot-takes/propose";
 
 export async function GET(req: NextRequest) {
   const admin = await checkAdmin();
@@ -47,6 +50,16 @@ export async function POST(req: NextRequest) {
     if (body.action === "import_legacy") {
       const result = await importLegacySeed(db);
       return NextResponse.json(result);
+    }
+
+    if (body.action === "generate") {
+      const proposal = await proposeCategoryWithLlm();
+      const category = await createCategory(db, {
+        name: proposal.name,
+        proposed_by: "llm",
+      });
+      const items = await replaceCategoryItems(db, category.id, proposal.items);
+      return NextResponse.json({ category, items });
     }
 
     if (body.action === "propose" && body.category_id) {

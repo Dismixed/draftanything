@@ -139,6 +139,27 @@ export default function AdminHotTakesPage() {
     }
   }
 
+  async function generateCategory() {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/hot-takes/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "generate" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Generate failed");
+      setMessage(`Generated "${data.category?.name}" with ${data.items?.length ?? 0} items`);
+      await fetchCategories();
+      if (data.category?.id) await fetchCategory(data.category.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Generate failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function proposeItems(categoryId: string) {
     setBusy(true);
     try {
@@ -392,6 +413,7 @@ export default function AdminHotTakesPage() {
             />
             <button type="button" disabled={busy} onClick={() => createCategory(false)} style={btnStyle}>Create</button>
             <button type="button" disabled={busy} onClick={() => createCategory(true)} style={btnStyle}>Create + LLM items</button>
+            <button type="button" disabled={busy} onClick={generateCategory} style={btnStyle}>Generate category</button>
             <button type="button" disabled={busy} onClick={importLegacy} style={btnStyle}>Import legacy seed</button>
           </div>
 
