@@ -707,10 +707,12 @@ export type Database = {
           image_url: string | null
           label: string
           notes: string | null
+          photo_query: string | null
           selected_candidate_index: number
           slug: string
           sort_order: number
           status: string
+          subject_type: string
           updated_at: string
           wiki_title: string | null
         }
@@ -723,10 +725,12 @@ export type Database = {
           image_url?: string | null
           label: string
           notes?: string | null
+          photo_query?: string | null
           selected_candidate_index?: number
           slug: string
           sort_order?: number
           status?: string
+          subject_type?: string
           updated_at?: string
           wiki_title?: string | null
         }
@@ -739,10 +743,12 @@ export type Database = {
           image_url?: string | null
           label?: string
           notes?: string | null
+          photo_query?: string | null
           selected_candidate_index?: number
           slug?: string
           sort_order?: number
           status?: string
+          subject_type?: string
           updated_at?: string
           wiki_title?: string | null
         }

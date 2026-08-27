@@ -14,6 +14,7 @@ import {
   type ItemRow,
   type ItemStatus,
   type ScheduleRow,
+  type SubjectType,
 } from "./types";
 
 function parseCandidates(raw: unknown): ImageCandidate[] {
@@ -53,7 +54,9 @@ function rowToItem(row: Record<string, unknown>): ItemRow {
     selected_candidate_index: (row.selected_candidate_index as number) ?? 0,
     image_source: (row.image_source as ImageSource | null) ?? null,
     status: row.status as ItemStatus,
+    subject_type: (row.subject_type as SubjectType) ?? "generic",
     notes: (row.notes as string | null) ?? null,
+    photo_query: (row.photo_query as string | null) ?? null,
     created_at: row.created_at as string,
     updated_at: row.updated_at as string,
   };
@@ -179,6 +182,8 @@ export async function replaceCategoryItems(
     label: string;
     wiki_title?: string | null;
     notes?: string | null;
+    subject_type?: SubjectType;
+    photo_query?: string | null;
   }>,
 ): Promise<ItemRow[]> {
   if (items.length !== HOT_TAKES_ITEM_COUNT) {
@@ -199,6 +204,8 @@ export async function replaceCategoryItems(
     notes: item.notes ?? null,
     sort_order: index + 1,
     status: "needs_image" as const,
+    subject_type: item.subject_type ?? "generic",
+    photo_query: item.photo_query ?? null,
   }));
 
   const { data, error } = await db
@@ -241,6 +248,8 @@ export async function updateItem(
     image_source: ImageSource | null;
     status: ItemStatus;
     notes: string | null;
+    subject_type: SubjectType;
+    photo_query: string | null;
   }>,
 ): Promise<ItemRow> {
   const { data, error } = await db
