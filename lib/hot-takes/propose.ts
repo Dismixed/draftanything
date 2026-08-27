@@ -38,11 +38,11 @@ export interface ProposedCategory {
 
 const ITEM_RULES = [
   "Items should be recognizable, debatable, and fun to rank S through D.",
-  "Classify each item's subject_type: use 'real_entity' for a named, findable entity that has its own Wikipedia article (e.g. a food, place, person, brand, or thing), and 'generic' for an abstract concept or activity without a dedicated article (e.g. 'meeting type', 'first date idea').",
+  "Classify each item's subject_type: use 'real_entity' for a named, findable entity that has its own Wikipedia article (e.g. a person, place, film, brand, or other notable thing), and 'generic' for an abstract concept or activity without a dedicated article (e.g. 'meeting type', 'first date idea').",
   "For real_entity items set wiki_title to the exact Wikipedia article title; for generic items set wiki_title to null.",
   "Set photo_query to the best Wikimedia Commons search string for the item (this may equal wiki_title or label).",
   "Prefer Wikipedia article titles that have strong lead photos.",
-  "Use lowercase slug ids with hyphens (e.g. pepperoni, bell-pepper).",
+  "Use lowercase slug ids with hyphens (e.g. he-man, dark-knight).",
   "No duplicates, no vague entries, no 'other' catch-alls.",
   "Mix obvious picks with a few spicy/controversial choices when appropriate.",
 ].join(" ");
@@ -79,7 +79,8 @@ export async function proposeCategoryWithLlm(): Promise<ProposedCategory> {
     schemaName: "HotTakesFullCategoryProposal",
     systemPrompt: [
       `You invent a brand-new category for a daily ranking game called Hot Takes.`,
-      "Pick a fun, debatable category name, ideally about recognizable real-world things (people, foods, films, brands, places) that have findable photos.",
+      "Pick a fun, debatable category name and vary the domain widely — movies, TV, music, sports, video games, celebrities, travel destinations, tech, hobbies, fashion, and more. Avoid defaulting to food or snacks.",
+      "Prefer categories about recognizable real-world things that have findable photos.",
       "Keep the category name short and punchy (2-4 words).",
       `Then propose exactly ${HOT_TAKES_ITEM_COUNT} tier-list items for that category.`,
       ITEM_RULES,
