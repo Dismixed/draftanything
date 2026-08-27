@@ -182,6 +182,31 @@ export default function AdminHotTakesPage() {
     }
   }
 
+  async function approveAllItems() {
+    if (!selected) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/hot-takes/categories/${selected.id}/approve-all`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Approve all failed");
+      if (data.categoryApproved) {
+        setMessage(`Approved ${data.approved} items and the category`);
+      } else {
+        setMessage(`Approved ${data.approved} items`);
+        setError(data.issues?.join(" · ") ?? "Category not ready to approve");
+      }
+      await fetchCategory(selected.id);
+      await fetchCategories();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Approve all failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function proposeItems(categoryId: string) {
     setBusy(true);
     try {
@@ -479,6 +504,7 @@ export default function AdminHotTakesPage() {
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                       <button type="button" disabled={busy} onClick={() => proposeItems(selected.id)} style={btnStyle}>Propose items</button>
                       <button type="button" disabled={busy} onClick={sourceAllItems} style={btnStyle}>Source all</button>
+                      <button type="button" disabled={busy} onClick={approveAllItems} style={btnStyle}>Approve all</button>
                       <button type="button" disabled={busy} onClick={() => updateCategoryStatus(selected.id, "approved")} style={btnStyle}>Approve category</button>
                     </div>
                   </div>
