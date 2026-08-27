@@ -95,7 +95,10 @@ export default function AdminHotTakesPage() {
   }, [fetchCategories]);
 
   async function createCategory(proposeItems: boolean) {
-    if (!newName.trim()) return;
+    if (!newName.trim()) {
+      setError("Enter a category name first");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
