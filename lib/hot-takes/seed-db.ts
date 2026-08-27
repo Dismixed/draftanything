@@ -132,7 +132,22 @@ export async function createCategory(
   db: SupabaseClient<Database>,
   input: { name: string; notes?: string | null; proposed_by?: string | null },
 ): Promise<CategoryRow> {
-  const slug = slugify(input.name);
+  const baseSlug = slugify(input.name);
+  // Categories have a unique slug; append -2, -3, … if the base slug is taken
+  // (the LLM occasionally regenerates a near-identical category name).
+  let slug = baseSlug;
+  let n = 2;
+  for (;;) {
+    const { data: existing } = await db
+      .from("hot_takes_categories")
+      .select("id")
+      .eq("slug", slug)
+      .maybeSingle();
+    if (!existing) break;
+    slug = `${baseSlug}-${n}`;
+    n += 1;
+  }
+
   const { data, error } = await db
     .from("hot_takes_categories")
     .insert({
