@@ -174,6 +174,30 @@ export async function updateCategory(
   return rowToCategory(data as Record<string, unknown>);
 }
 
+/**
+ * Ensures slugs are unique within a batch, appending `-2`, `-3`, … to later
+ * duplicates. The item slug doubles as the player-facing id, and the DB
+ * enforces a `(category_id, slug)` unique constraint, so duplicates would
+ * otherwise fail the insert (or collide in the game).
+ */
+export function dedupeItemSlugs<T extends { slug: string }>(items: T[]): T[] {
+  const seen = new Set<string>();
+  return items.map((item) => {
+    if (!seen.has(item.slug)) {
+      seen.add(item.slug);
+      return item;
+    }
+    let n = 2;
+    let candidate = `${item.slug}-${n}`;
+    while (seen.has(candidate)) {
+      n += 1;
+      candidate = `${item.slug}-${n}`;
+    }
+    seen.add(candidate);
+    return { ...item, slug: candidate };
+  });
+}
+
 export async function replaceCategoryItems(
   db: SupabaseClient<Database>,
   categoryId: string,
@@ -196,7 +220,7 @@ export async function replaceCategoryItems(
     .eq("category_id", categoryId);
   if (deleteError) throw new Error(deleteError.message);
 
-  const rows = items.map((item, index) => ({
+  const rows = dedupeItemSlugs(items).map((item, index) => ({
     category_id: categoryId,
     slug: item.slug,
     label: item.label,
