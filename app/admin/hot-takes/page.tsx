@@ -160,6 +160,28 @@ export default function AdminHotTakesPage() {
     }
   }
 
+  async function sourceAllItems() {
+    if (!selected) return;
+    setBusy(true);
+    setError(null);
+    setMessage("Sourcing images…");
+    try {
+      const res = await fetch(`/api/admin/hot-takes/categories/${selected.id}/source-all`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Source all failed");
+      setMessage(
+        `Sourced images for ${data.sourced} items${data.skipped ? ` (${data.skipped} already had images)` : ""}`,
+      );
+      await fetchCategory(selected.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Source all failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function proposeItems(categoryId: string) {
     setBusy(true);
     try {
@@ -170,8 +192,7 @@ export default function AdminHotTakesPage() {
       if (!res.ok) throw new Error(data.error ?? "Propose failed");
       setMessage(`Proposed ${data.items?.length ?? 0} items`);
       await fetchCategory(categoryId);
-      await fetchCategories();
-    } catch (err) {
+      await fetchCategories();    } catch (err) {
       setError(err instanceof Error ? err.message : "Propose failed");
     } finally {
       setBusy(false);
@@ -457,6 +478,7 @@ export default function AdminHotTakesPage() {
                     </div>
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                       <button type="button" disabled={busy} onClick={() => proposeItems(selected.id)} style={btnStyle}>Propose items</button>
+                      <button type="button" disabled={busy} onClick={sourceAllItems} style={btnStyle}>Source all</button>
                       <button type="button" disabled={busy} onClick={() => updateCategoryStatus(selected.id, "approved")} style={btnStyle}>Approve category</button>
                     </div>
                   </div>
