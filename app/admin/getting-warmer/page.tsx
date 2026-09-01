@@ -37,6 +37,9 @@ export default function AdminGettingWarmerPage() {
   const [newClues, setNewClues] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
+  const [clueEdits, setClueEdits] = useState<Record<string, string[]>>({});
+  const [savingClues, setSavingClues] = useState<Record<string, boolean>>({});
+
   const [schedulePuzzle, setSchedulePuzzle] = useState<Puzzle | null>(null);
   const [scheduleDate, setScheduleDate] = useState(
     new Date().toISOString().slice(0, 10),
@@ -81,7 +84,57 @@ export default function AdminGettingWarmerPage() {
     );
   }, [fetchPuzzles, fetchSchedule]);
 
+  useEffect(() => {
+    setClueEdits((prev) => {
+      const next = { ...prev };
+      for (const p of puzzles) {
+        if (!next[p.id]) {
+          next[p.id] = p.clues.slice(0, 5);
+        }
+      }
+      return next;
+    });
+  }, [puzzles]);
+
   const usedDates = new Set(schedule.map((s) => s.publish_date));
+
+  async function generatePuzzles() {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/getting-warmer/puzzles/generate", {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Generate failed");
+      const data = await res.json();
+      const answers = (data.puzzles as Puzzle[]).map((p) => p.answer).join(", ");
+      setMessage(`Generated: ${answers}`);
+      await fetchPuzzles();
+    } catch {
+      setMessage("Failed to generate puzzles.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveClues(puzzle: Puzzle) {
+    const edits = clueEdits[puzzle.id] ?? puzzle.clues.slice(0, 5);
+    const merged = [...edits, ...puzzle.clues.slice(5)];
+    setSavingClues((prev) => ({ ...prev, [puzzle.id]: true }));
+    try {
+      const res = await fetch(`/api/admin/getting-warmer/puzzles/${puzzle.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clues: merged }),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      await fetchPuzzles();
+    } catch {
+      setMessage("Failed to save clues.");
+    } finally {
+      setSavingClues((prev) => ({ ...prev, [puzzle.id]: false }));
+    }
+  }
 
   async function createPuzzle() {
     const clues = newClues
@@ -253,21 +306,39 @@ export default function AdminGettingWarmerPage() {
                 fontFamily: "monospace",
               }}
             />
-            <button
-              type="button"
-              onClick={createPuzzle}
-              disabled={busy}
-              style={{
-                padding: "8px 16px",
-                background: "#ff6b1a",
-                border: "none",
-                borderRadius: 4,
-                cursor: "pointer",
-                fontWeight: 600,
-              }}
-            >
-              Create & Approve
-            </button>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                type="button"
+                onClick={createPuzzle}
+                disabled={busy}
+                style={{
+                  padding: "8px 16px",
+                  background: "#ff6b1a",
+                  border: "none",
+                  borderRadius: 4,
+                  cursor: "pointer",
+                  fontWeight: 600,
+                }}
+              >
+                Create & Approve
+              </button>
+              <button
+                type="button"
+                onClick={generatePuzzles}
+                disabled={busy}
+                style={{
+                  padding: "8px 16px",
+                  background: "#1a3a2a",
+                  border: "1px solid #6aaa64",
+                  borderRadius: 4,
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  color: "#6aaa64",
+                }}
+              >
+                Generate 5 puzzles
+              </button>
+            </div>
           </div>
 
           <div style={{ marginBottom: 12 }}>
@@ -319,21 +390,56 @@ export default function AdminGettingWarmerPage() {
                   {puzzle.status}
                 </span>
               </div>
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "#999",
-                  fontFamily: "monospace",
-                  marginBottom: 8,
-                }}
-              >
-                {puzzle.clues.map((c, i) => (
-                  <div key={i}>
-                    {i + 1}. {c}
-                  </div>
-                ))}
+              <div style={{ marginBottom: 8 }}>
+                {puzzle.clues.map((c, i) => {
+                  const isEditable = i < 5;
+                  const val = isEditable ? (clueEdits[puzzle.id]?.[i] ?? c) : c;
+                  return (
+                    <div
+                      key={i}
+                      style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}
+                    >
+                      <span style={{ fontSize: 11, color: "#555", minWidth: 18 }}>{i + 1}.</span>
+                      {isEditable ? (
+                        <input
+                          type="text"
+                          value={val}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setClueEdits((prev) => {
+                              const curr = prev[puzzle.id] ?? puzzle.clues.slice(0, 5);
+                              const next = [...curr];
+                              next[i] = v;
+                              return { ...prev, [puzzle.id]: next };
+                            });
+                          }}
+                          style={{
+                            flex: 1,
+                            padding: "3px 6px",
+                            background: "#111",
+                            border: "1px solid #333",
+                            color: "#ddd",
+                            borderRadius: 3,
+                            fontSize: 12,
+                            fontFamily: "monospace",
+                          }}
+                        />
+                      ) : (
+                        <span style={{ fontSize: 12, color: "#666", fontFamily: "monospace" }}>{c}</span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
               <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => saveClues(puzzle)}
+                  disabled={savingClues[puzzle.id]}
+                  style={{ fontSize: 12, cursor: "pointer", color: "#6aaa64" }}
+                >
+                  {savingClues[puzzle.id] ? "Saving…" : "Save clues"}
+                </button>
                 {puzzle.status !== "approved" && (
                   <button
                     type="button"

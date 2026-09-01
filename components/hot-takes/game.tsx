@@ -14,6 +14,7 @@ import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
 import { OtherDailies } from "@/components/daily/other-dailies";
 import { DailyCompleteShell } from "@/components/daily/daily-complete-shell";
 import { useGameHowItWorks } from "@/lib/game-how-it-works";
+import { HotTakesImage } from "@/components/hot-takes/optimized-image";
 import type { HotTakesDailyCategory, HotTakesDailyItem } from "@/lib/hot-takes/types";
 
 const TIERS = ["S", "A", "B", "C", "D"] as const;
@@ -110,7 +111,7 @@ function TierItem({
       onPointerCancel={onPointerCancel}
     >
       <div className="hot-takes-icon-box">
-        <img src={item.imageUrl} alt={item.label} draggable={false} />
+        <HotTakesImage src={item.imageUrl} alt={item.label} width={52} draggable={false} />
       </div>
       <span className="hot-takes-item-label">{item.label}</span>
     </div>
@@ -414,7 +415,7 @@ export default function HotTakesGame({
             {results.rows.map(({ item, yourTier, dist }) => (
               <div key={item.id} className="hot-takes-consensus-item">
                 <div className="hot-takes-consensus-top">
-                  <img src={item.imageUrl} alt="" />
+                  <HotTakesImage src={item.imageUrl} alt="" width={28} />
                   <div className="hot-takes-consensus-name">{item.label}</div>
                   <div className="hot-takes-consensus-pick">
                     you said <b>{yourTier}</b> · {dist[yourTier]}% agree

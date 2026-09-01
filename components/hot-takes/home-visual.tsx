@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { HotTakesImage } from "@/components/hot-takes/optimized-image";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getDailyCategoryForPlay } from "@/lib/hot-takes/daily-service";
 import { getLegacyDailyCategory } from "@/lib/hot-takes/categories";
@@ -73,13 +73,11 @@ export async function HotTakesHomeVisual() {
                   }}
                   title={item.label}
                 >
-                  <Image
+                  <HotTakesImage
                     src={item.imageUrl}
                     alt=""
-                    fill
-                    unoptimized
-                    sizes="22px"
-                    style={{ objectFit: "cover" }}
+                    width={22}
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />
                 </div>
               ))}

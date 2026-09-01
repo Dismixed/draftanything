@@ -4,7 +4,7 @@ import { getGeminiClient } from "@/features/ai/gemini";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ImageCandidate, SubjectType } from "./types";
 
-const IMAGE_MODEL = process.env.GEMINI_IMAGE_MODEL || "imagen-3.0-generate-002";
+const IMAGE_MODEL = process.env.GEMINI_IMAGE_MODEL || "gemini-3.1-flash-image";
 const BUCKET = "hot-takes-icons";
 
 export function iconPrompt(
@@ -37,13 +37,18 @@ export async function generateItemIcon(options: {
 }): Promise<{ publicUrl: string; candidate: ImageCandidate }> {
   const client = getGeminiClient();
 
-  const response = await client.models.generateImages({
+  const response = await client.models.generateContent({
     model: IMAGE_MODEL,
-    prompt: iconPrompt(options.categoryName, options.label, options.subjectType),
-    config: { numberOfImages: 1 },
+    contents: iconPrompt(options.categoryName, options.label, options.subjectType),
+    config: {
+      responseModalities: ["IMAGE"],
+      imageConfig: { aspectRatio: "1:1" },
+    },
   });
 
-  const imageBytes = response.generatedImages?.[0]?.image?.imageBytes;
+  const imageBytes = response.candidates?.[0]?.content?.parts?.find(
+    (part) => part.inlineData?.data,
+  )?.inlineData?.data;
   if (!imageBytes) {
     throw new Error("Image generation returned no bytes");
   }

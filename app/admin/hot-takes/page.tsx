@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { HotTakesImage } from "@/components/hot-takes/optimized-image";
 import type { CategoryWithItems, ImageCandidate, ItemRow } from "@/lib/hot-takes/types";
 import { HOT_TAKES_ITEM_COUNT } from "@/lib/hot-takes/types";
 import { orderByLru } from "@/lib/schedule/lru";
@@ -514,7 +515,12 @@ export default function AdminHotTakesPage() {
                       <div key={item.id} style={{ border: "1px solid #2a2a2c", borderRadius: 8, padding: 10 }}>
                         <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 8 }}>
                           {item.image_url ? (
-                            <img src={item.image_url} alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover" }} />
+                            <HotTakesImage
+                              src={item.image_url}
+                              alt=""
+                              width={44}
+                              style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover" }}
+                            />
                           ) : (
                             <div style={{ width: 44, height: 44, borderRadius: 8, background: "#2a2a2c" }} />
                           )}
@@ -544,7 +550,12 @@ export default function AdminHotTakesPage() {
                                   cursor: "pointer",
                                 }}
                               >
-                                <img src={c.thumb_url ?? c.image_url} alt="" style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 4, display: "block" }} />
+                                <HotTakesImage
+                                  src={c.thumb_url ?? c.image_url}
+                                  alt=""
+                                  width={48}
+                                  style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 4, display: "block" }}
+                                />
                               </button>
                             ))}
                           </div>
