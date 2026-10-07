@@ -10,10 +10,13 @@
  *              the intended title, check the image does not show the answer
  *              (trying other frames if it does), and move the entry to
  *              needs_review or needs_media
+ *   clues    — write a one-line clue for each song (this run's entries and
+ *              existing puzzles) that has none, for players without audio
  *
  * Usage:
  *   npx tsx scripts/freezeframes-bulk-seed.ts apply   data/freezeframes/proposals-2026-10.json
  *   npx tsx scripts/freezeframes-bulk-seed.ts resolve data/freezeframes/proposals-2026-10.json
+ *   npx tsx scripts/freezeframes-bulk-seed.ts clues   data/freezeframes/proposals-2026-10.json
  *
  * Nothing here approves an entry. A person reviews each one first.
  */
@@ -32,6 +35,8 @@ const RUN_TAG = "bulk-2026-10";
 
 /** Frames tried per movie or show before giving up on finding a clean one. */
 const MAX_FRAME_VARIANTS = 3;
+/** Songs sent to the model per request when writing clues. */
+const CLUE_BATCH_SIZE = 20;
 /** iTunes allows roughly 20 searches a minute. */
 const ITUNES_DELAY_MS = 3200;
 
@@ -42,8 +47,8 @@ interface Proposal {
 }
 
 const [mode, proposalsPath] = process.argv.slice(2);
-if (!["apply", "resolve"].includes(mode) || !proposalsPath) {
-  console.error("Usage: npx tsx scripts/freezeframes-bulk-seed.ts <apply|resolve> <proposals.json>");
+if (!["apply", "resolve", "clues"].includes(mode) || !proposalsPath) {
+  console.error("Usage: npx tsx scripts/freezeframes-bulk-seed.ts <apply|resolve|clues> <proposals.json>");
   process.exit(1);
 }
 
@@ -72,6 +77,52 @@ async function main() {
       if (!before.has(entry.id)) created++;
     }
     console.log(`Created ${created} draft entries; ${proposals.length - created} already existed.`);
+    return;
+  }
+
+  if (mode === "clues") {
+    const { generateTextClues } = await import("../lib/freezeframes/text-clue-generate");
+
+    /** Clues for every song in `songs`, with one retry for those the first pass left out. */
+    async function cluesFor(songs: { title: string; artist: string }[]) {
+      const clues = new Map<string, string>();
+      for (const pass of [0, 1]) {
+        const todo = songs.filter((song) => !clues.has(song.title));
+        for (let i = 0; i < todo.length; i += CLUE_BATCH_SIZE) {
+          const batch = await generateTextClues(todo.slice(i, i + CLUE_BATCH_SIZE));
+          for (const [title, clue] of batch) clues.set(title, clue);
+        }
+        if (pass === 0) console.log(`  first pass: ${clues.size}/${songs.length}`);
+      }
+      return clues;
+    }
+
+    const entries = (await listSeedEntries(db, { roundKey: "song", limit: 5000 })).filter(
+      (e) => e.notes === RUN_TAG && e.answer && e.artist && !e.metadata?.text_clue && e.status !== "draft",
+    );
+    console.log(`Writing clues for ${entries.length} seed songs…`);
+    const entryClues = await cluesFor(entries.map((e) => ({ title: e.answer!, artist: e.artist! })));
+    for (const entry of entries) {
+      const clue = entryClues.get(entry.answer!);
+      if (clue) await updateSeedEntry(db, entry.id, { metadata: { ...entry.metadata, text_clue: clue } });
+    }
+    console.log(`Seed songs with a clue: ${entryClues.size}/${entries.length}`);
+
+    const { data: puzzles, error } = await db.from("freezeframes_puzzles").select("id, song");
+    if (error) throw new Error(error.message);
+    const lacking = (puzzles ?? []).filter((p) => !(p.song as Record<string, unknown>).textClue);
+    const puzzleSongs = lacking.map((p) => p.song as { answer: string; artist?: string; hint?: string });
+    const puzzleClues = await cluesFor(
+      [...new Map(puzzleSongs.map((s) => [s.answer, { title: s.answer, artist: s.artist ?? s.hint ?? "" }])).values()],
+    );
+    for (const puzzle of lacking) {
+      const song = puzzle.song as Record<string, unknown>;
+      const clue = puzzleClues.get(String(song.answer));
+      if (!clue) continue;
+      const { error: updateError } = await db.from("freezeframes_puzzles").update({ song: { ...song, textClue: clue } }).eq("id", puzzle.id);
+      if (updateError) throw new Error(updateError.message);
+    }
+    console.log(`Existing puzzles given a clue: ${lacking.filter((p) => puzzleClues.has(String((p.song as Record<string, unknown>).answer))).length}/${lacking.length}`);
     return;
   }
 

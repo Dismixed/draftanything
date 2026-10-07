@@ -20,6 +20,8 @@ export interface SongRound {
   audio: string;
   artist: string;
   hint?: string;
+  /** A written clue can be requested in place of the audio. */
+  hasTextClue?: boolean;
 }
 
 export interface ShowRound {

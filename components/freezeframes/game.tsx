@@ -14,6 +14,7 @@ import {
   MAX_DAILY_SCORE,
   MAX_PTS,
   SNIPPET_SEC,
+  TEXT_CLUE_MAX_PTS,
   WRONG_PEN,
   calcAvailablePoints,
   calcRoundScore,
@@ -74,14 +75,31 @@ function SongPlayer({
   playing,
   songPos,
   onToggle,
+  textClue,
+  onRequestClue,
 }: {
   data: SongRound;
   playing: boolean;
   songPos: number;
   onToggle: () => void;
+  /** The written clue, once the player has asked for it. */
+  textClue: string | null;
+  onRequestClue: () => void;
 }) {
   const pct = Math.min(songPos / SNIPPET_SEC, 1);
   const elapsed = Math.min(songPos, SNIPPET_SEC);
+
+  if (textClue) {
+    return (
+      <div className="freezeframes-song-player">
+        <div className="freezeframes-song-artist">
+          by <strong>{data.artist}</strong>
+        </div>
+        <p className="freezeframes-text-clue">{textClue}</p>
+        <div className="freezeframes-snippet-tag">◆ Written clue · max {TEXT_CLUE_MAX_PTS} pts</div>
+      </div>
+    );
+  }
 
   return (
     <div className="freezeframes-song-player">
@@ -118,6 +136,11 @@ function SongPlayer({
         <div className="freezeframes-progress-fill" style={{ width: `${pct * 100}%` }} />
       </div>
       <div className="freezeframes-snippet-tag">◆ {SNIPPET_SEC}s snippet</div>
+      {data.hasTextClue && (
+        <button type="button" className="freezeframes-no-audio-btn" onClick={onRequestClue}>
+          Can&apos;t listen? Get a written clue (max {TEXT_CLUE_MAX_PTS} pts)
+        </button>
+      )}
     </div>
   );
 }
@@ -158,6 +181,9 @@ export default function FreezeFramesGame() {
   const [songPlaying, setSongPlaying] = useState(false);
   const [songPos, setSongPos] = useState(0);
   const songPosRef = useRef(0);
+  // Set when the player swaps the song clip for a written clue; caps the round's score.
+  const [textClue, setTextClue] = useState<string | null>(null);
+  const maxPtsRef = useRef(MAX_PTS);
   const songStartedAtRef = useRef(0);
 
   const cfg = ROUNDS[round];
@@ -203,6 +229,8 @@ export default function FreezeFramesGame() {
       setFlashInput(false);
       setImgFailed(false);
       setAvailablePts(MAX_PTS);
+      setTextClue(null);
+      maxPtsRef.current = MAX_PTS;
       startTimeRef.current = Date.now();
       setSongPos(0);
       songPosRef.current = 0;
@@ -227,7 +255,7 @@ export default function FreezeFramesGame() {
 
       timerRef.current = setInterval(() => {
         setAvailablePts(
-          calcAvailablePoints(guessesRef.current, startTimeRef.current),
+          calcAvailablePoints(guessesRef.current, startTimeRef.current, Date.now(), maxPtsRef.current),
         );
       }, 300);
     },
@@ -282,7 +310,7 @@ export default function FreezeFramesGame() {
   useEffect(() => {
     guessesRef.current = guesses;
     if (screen !== "game" || roundComplete) return;
-    setAvailablePts(calcAvailablePoints(guesses, startTimeRef.current));
+    setAvailablePts(calcAvailablePoints(guesses, startTimeRef.current, Date.now(), maxPtsRef.current));
   }, [guesses, screen, roundComplete]);
 
   const playSong = useCallback(() => {
@@ -315,6 +343,22 @@ export default function FreezeFramesGame() {
     else playSong();
   }, [songPlaying, pauseSong, playSong]);
 
+  const requestTextClue = useCallback(async () => {
+    try {
+      const res = await fetch("/api/freezeframes/daily/clue");
+      if (!res.ok) throw new Error("clue failed");
+      const data = (await res.json()) as { clue: string };
+      pauseSong();
+      maxPtsRef.current = TEXT_CLUE_MAX_PTS;
+      setTextClue(data.clue);
+      setAvailablePts(
+        calcAvailablePoints(guessesRef.current, startTimeRef.current, Date.now(), TEXT_CLUE_MAX_PTS),
+      );
+    } catch {
+      setFetchError("Could not load the written clue — try again.");
+    }
+  }, [pauseSong]);
+
   const completeRound = useCallback(
     (correct: boolean, answer: string) => {
       clearRoundTimer();
@@ -323,6 +367,8 @@ export default function FreezeFramesGame() {
         correct,
         guesses,
         startTimeRef.current,
+        Date.now(),
+        maxPtsRef.current,
       );
       setRoundScores((prev) => [...prev, score]);
       setRoundResults((prev) => [...prev, { answer, score, correct }]);
@@ -503,6 +549,8 @@ export default function FreezeFramesGame() {
         playing={songPlaying}
         songPos={songPos}
         onToggle={toggleSong}
+        textClue={textClue}
+        onRequestClue={() => void requestTextClue()}
       />
     );
   };

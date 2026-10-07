@@ -5,6 +5,8 @@ export const WRONG_PEN = 150;
 export const TIME_RATE = 4;
 export const SNIPPET_SEC = 20;
 export const MAX_DAILY_SCORE = MAX_PTS * 4;
+/** Most a round can score once the player swaps the audio clip for a written clue. */
+export const TEXT_CLUE_MAX_PTS = 700;
 
 export function getDateString(): string {
   return new Date().toISOString().slice(0, 10);
@@ -73,12 +75,13 @@ export function calcAvailablePoints(
   guesses: GuessHistoryRow[],
   startTime: number,
   now = Date.now(),
+  maxPts = MAX_PTS,
 ): number {
   const wrongs = guesses.filter((g) => !g.correct && !g.skip).length;
   const elapsed = (now - startTime) / 1000;
   return Math.max(
     50,
-    Math.round(MAX_PTS - wrongs * WRONG_PEN - elapsed * TIME_RATE),
+    Math.min(maxPts, Math.round(MAX_PTS - wrongs * WRONG_PEN - elapsed * TIME_RATE)),
   );
 }
 
@@ -87,7 +90,8 @@ export function calcRoundScore(
   guesses: GuessHistoryRow[],
   startTime: number,
   now = Date.now(),
+  maxPts = MAX_PTS,
 ): number {
   if (!correct) return 0;
-  return calcAvailablePoints(guesses, startTime, now);
+  return calcAvailablePoints(guesses, startTime, now, maxPts);
 }

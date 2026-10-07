@@ -16,6 +16,7 @@ interface ReviewEntry {
   audio: string | null;
   status: string;
   resolve_notes: string | null;
+  metadata?: { text_clue?: string };
 }
 
 const ROUND_LABELS: Record<string, string> = {
@@ -259,6 +260,11 @@ function EntryCard({
 
         <p style={{ margin: "6px 0 2px", fontSize: "15px", fontWeight: 600 }}>{answer}</p>
         {detail && <p style={{ margin: 0, fontSize: "12px", color: "#c7c7cc" }}>{detail}</p>}
+        {isSong && (
+          <p style={{ margin: "6px 0 0", fontSize: "12px", color: entry.metadata?.text_clue ? "#c7c7cc" : "#787c7e" }}>
+            {entry.metadata?.text_clue ? `Written clue: ${entry.metadata.text_clue}` : "No written clue yet"}
+          </p>
+        )}
 
         {warnings.map((warning) => (
           <p key={warning} style={{ margin: "6px 0 0", fontSize: "12px", color: "#c9b458" }}>

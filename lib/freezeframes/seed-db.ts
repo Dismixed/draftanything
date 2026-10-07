@@ -237,5 +237,7 @@ export function seedEntryToRoundJson(entry: SeedEntryRow): Record<string, string
   if (entry.audio) base.audio = entry.audio;
   if (entry.artist) base.artist = entry.artist;
   if (entry.album_name) base.albumName = entry.album_name;
+  const textClue = entry.metadata?.text_clue;
+  if (typeof textClue === "string" && textClue.trim()) base.textClue = textClue;
   return base;
 }
