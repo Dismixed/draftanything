@@ -2,6 +2,7 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { pickLru } from "@/lib/schedule/lru";
 
 export interface AutoScheduleOptions {
   startDate?: string;
@@ -127,26 +128,38 @@ export async function autoScheduleApprovedPuzzles(
   };
 }
 
-export async function getScheduledPuzzleIds(
-  db: SupabaseClient<Database>,
-): Promise<Set<string>> {
-  const { data, error } = await db
-    .from("daily_getting_warmer_puzzles")
-    .select("puzzle_id");
-
-  if (error) {
-    throw new Error(`Failed to load schedule: ${error.message}`);
-  }
-
-  return new Set((data ?? []).map((row) => row.puzzle_id));
+interface ScheduleRow {
+  puzzle_id: string;
+  publish_date: string;
 }
 
-export async function pickNextUnscheduledApprovedPuzzleId(
-  db: SupabaseClient<Database>,
-): Promise<string | null> {
-  const usedIds = await getScheduledPuzzleIds(db);
+/** Rows fetched per request; a single response stops at 1000. */
+const HISTORY_PAGE_SIZE = 1000;
 
-  const { data: approved, error } = await db
+/**
+ * Every schedule row, oldest first. Paged so that a long-running schedule
+ * cannot silently drop rows from the least-recently-used calculation.
+ */
+async function loadScheduleHistory(db: SupabaseClient<Database>): Promise<ScheduleRow[]> {
+  const rows: ScheduleRow[] = [];
+  for (let from = 0; ; from += HISTORY_PAGE_SIZE) {
+    const { data, error } = await db
+      .from("daily_getting_warmer_puzzles")
+      .select("puzzle_id, publish_date")
+      .order("publish_date", { ascending: true })
+      .range(from, from + HISTORY_PAGE_SIZE - 1);
+
+    if (error) {
+      throw new Error(`Failed to load schedule: ${error.message}`);
+    }
+    rows.push(...(data ?? []));
+    if (!data || data.length < HISTORY_PAGE_SIZE) return rows;
+  }
+}
+
+/** Approved puzzle ids, oldest first. */
+async function loadApprovedIds(db: SupabaseClient<Database>): Promise<{ id: string }[]> {
+  const { data, error } = await db
     .from("getting_warmer_puzzles")
     .select("id")
     .eq("status", "approved")
@@ -155,9 +168,55 @@ export async function pickNextUnscheduledApprovedPuzzleId(
   if (error) {
     throw new Error(`Failed to load approved puzzles: ${error.message}`);
   }
+  return data ?? [];
+}
 
-  const pick = (approved ?? []).find((puzzle) => !usedIds.has(puzzle.id));
-  return pick?.id ?? null;
+/**
+ * The puzzle to schedule for `targetDate`: one that has never run if any is
+ * left, otherwise the one that ran longest ago. Only assignments before
+ * `targetDate` count as use, so a future-dated row does not hide a puzzle
+ * from an earlier date.
+ */
+export async function pickNextApprovedPuzzleId(
+  db: SupabaseClient<Database>,
+  targetDate: string,
+): Promise<string | null> {
+  const [approved, history] = await Promise.all([loadApprovedIds(db), loadScheduleHistory(db)]);
+
+  const lastUsed = new Map<string, string>();
+  for (const row of history) {
+    if (row.publish_date >= targetDate) continue;
+    const previous = lastUsed.get(row.puzzle_id);
+    if (!previous || row.publish_date > previous) lastUsed.set(row.puzzle_id, row.publish_date);
+  }
+
+  return pickLru(approved, (puzzle) => puzzle.id, lastUsed)?.id ?? null;
+}
+
+/**
+ * How many approved puzzles have not run on or before `date`: the days of
+ * fresh content left before recycling starts.
+ */
+export async function countUnusedApproved(
+  db: SupabaseClient<Database>,
+  date: string = todayUtc(),
+): Promise<number> {
+  const [approved, history] = await Promise.all([loadApprovedIds(db), loadScheduleHistory(db)]);
+  const used = new Set(history.filter((row) => row.publish_date <= date).map((row) => row.puzzle_id));
+  return approved.filter((puzzle) => !used.has(puzzle.id)).length;
+}
+
+async function loadAssignment(db: SupabaseClient<Database>, date: string): Promise<string | null> {
+  const { data, error } = await db
+    .from("daily_getting_warmer_puzzles")
+    .select("puzzle_id")
+    .eq("publish_date", date)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to load daily schedule: ${error.message}`);
+  }
+  return data?.puzzle_id ?? null;
 }
 
 export async function scheduleDailyPuzzle(
@@ -166,25 +225,12 @@ export async function scheduleDailyPuzzle(
 ): Promise<{ puzzleId: string; date: string; alreadyScheduled: boolean } | null> {
   const targetDate = date ?? todayUtc();
 
-  const { data: existing, error: existingError } = await db
-    .from("daily_getting_warmer_puzzles")
-    .select("puzzle_id")
-    .eq("publish_date", targetDate)
-    .maybeSingle();
-
-  if (existingError) {
-    throw new Error(`Failed to load daily schedule: ${existingError.message}`);
-  }
-
+  const existing = await loadAssignment(db, targetDate);
   if (existing) {
-    return {
-      puzzleId: existing.puzzle_id,
-      date: targetDate,
-      alreadyScheduled: true,
-    };
+    return { puzzleId: existing, date: targetDate, alreadyScheduled: true };
   }
 
-  const puzzleId = await pickNextUnscheduledApprovedPuzzleId(db);
+  const puzzleId = await pickNextApprovedPuzzleId(db, targetDate);
   if (!puzzleId) return null;
 
   const { error: insertError } = await db.from("daily_getting_warmer_puzzles").insert({
@@ -192,7 +238,13 @@ export async function scheduleDailyPuzzle(
     publish_date: targetDate,
   });
 
-  if (insertError && insertError.code !== "23505") {
+  // Another request claimed the date first. Return what it stored, never our
+  // own candidate: the caller caches the answer for the day.
+  if (insertError?.code === "23505") {
+    const winner = await loadAssignment(db, targetDate);
+    if (winner) return { puzzleId: winner, date: targetDate, alreadyScheduled: true };
+  }
+  if (insertError) {
     throw new Error(`Failed to schedule daily puzzle: ${insertError.message}`);
   }
 
