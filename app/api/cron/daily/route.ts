@@ -5,11 +5,18 @@ import { scheduleDailyCategory as scheduleBallKnowledge } from "@/lib/ball-knowl
 import { getDailyQuestions as buildBrainDead } from "@/lib/brain-dead/daily-service";
 import { topUpDailyChains } from "@/lib/chainlink/top-up";
 import { runJobs } from "@/lib/cron/run-jobs";
-import { scheduleDailyPuzzle as scheduleFreezeFrames } from "@/lib/freezeframes/schedule-service";
+import { generatePuzzleBundles } from "@/lib/freezeframes/generator";
+import {
+  countUnscheduledApproved as freezeFramesQueue,
+  scheduleDailyPuzzle as scheduleFreezeFrames,
+} from "@/lib/freezeframes/schedule-service";
 import { scheduleDailyPuzzle as scheduleGettingWarmer } from "@/lib/getting-warmer/schedule-service";
 import { scheduleDailyCategory as scheduleHotTakes } from "@/lib/hot-takes/schedule-service";
 
 export const maxDuration = 300;
+
+/** A game with fewer unused days of content than this is flagged in the report. */
+const LOW_QUEUE_DAYS = 7;
 
 /**
  * GET /api/cron/daily
@@ -21,7 +28,8 @@ export const maxDuration = 300;
  * Games that pick their daily from a stored pool have today's and tomorrow's
  * rows created here, so no visitor triggers the pick. Chain Link is topped up
  * a week ahead because its chains are generated and LLM-checked. Brain Dead's
- * question sets are fetched and stored a day ahead.
+ * question sets are fetched and stored a day ahead. FreezeFrames reports how
+ * many unused days of content remain and is flagged when that runs low.
  *
  * Security: requires `Authorization: Bearer $CRON_SECRET`.
  */
@@ -40,6 +48,13 @@ export async function GET(request: Request) {
     <T>(schedule: (date: string) => Promise<T>) =>
     async () => ({ today: await schedule(today), tomorrow: await schedule(tomorrow) });
 
+  /** Days of never-used content left; logged when low so a dry queue is seen coming. */
+  const queueDepth = (game: string, unusedDays: number) => {
+    const low = unusedDays < LOW_QUEUE_DAYS;
+    if (low) console.warn(`[cron/daily] ${game} has ${unusedDays} unused day(s) of content left`);
+    return { unusedDays, low };
+  };
+
   const report = await runJobs({
     chainlink: () => topUpDailyChains(db),
     // Store today's and tomorrow's lineups before rebuilding puzzles, so the
@@ -52,7 +67,12 @@ export async function GET(request: Request) {
       const generate = await generateAll(db);
       return { stored, generated: `${generate.succeeded}/${generate.total}` };
     },
-    freezeframes: todayAndTomorrow((date) => scheduleFreezeFrames(db, date)),
+    freezeframes: async () => {
+      // Approved clips become puzzles here, so approving them is the only manual step.
+      const bundled = (await generatePuzzleBundles(db, { maxBundles: 50 })).bundlesCreated;
+      const scheduled = await todayAndTomorrow((date) => scheduleFreezeFrames(db, date))();
+      return { bundled, ...scheduled, ...queueDepth("freezeframes", await freezeFramesQueue(db)) };
+    },
     "getting-warmer": todayAndTomorrow((date) => scheduleGettingWarmer(db, date)),
     "ball-knowledge": todayAndTomorrow((date) => scheduleBallKnowledge(db, date)),
     "hot-takes": todayAndTomorrow((date) => scheduleHotTakes(db, date)),

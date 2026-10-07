@@ -46,7 +46,8 @@ export async function generatePuzzleBundles(
         song: seedEntryToRoundJson(picks.song),
         show: seedEntryToRoundJson(picks.show),
         album: seedEntryToRoundJson(picks.album),
-        status: "draft",
+        // Every entry in a bundle was approved individually, so the bundle is ready to run.
+        status: "approved",
       })
       .select("id")
       .single();

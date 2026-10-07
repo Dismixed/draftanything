@@ -30,6 +30,18 @@ function stableIndex(seed: string, mod: number): number {
   return h % mod;
 }
 
+/** Options for picking between several possible matches and frames. */
+export interface ResolveOptions {
+  /** Release or first-air year, to tell a film or show from others with its title. */
+  year?: number;
+  /** Which frame to take; raise it to get a different frame for the same title. */
+  variant?: number;
+}
+
+export function frameSeed(query: string, variant = 0): string {
+  return variant > 0 ? `${query}#${variant}` : query;
+}
+
 function tmdbImageUrl(filePath: string): string {
   return `${TMDB_IMAGE_BASE}${filePath}`;
 }
@@ -191,15 +203,16 @@ async function fetchTvmazeEpisodeStill(
   };
 }
 
-async function resolveMovie(query: string): Promise<ResolvedMedia | null> {
+async function resolveMovie(query: string, options: ResolveOptions): Promise<ResolvedMedia | null> {
   const data = await tmdbGet<{ results?: TmdbSearchMovie[] }>("/search/movie", {
     query,
     include_adult: "false",
+    ...(options.year ? { primary_release_year: String(options.year) } : {}),
   });
   const hit = data?.results?.[0];
   if (!hit) return null;
 
-  const { filePath, imageType } = await fetchMovieFreezeFrame(hit.id, query);
+  const { filePath, imageType } = await fetchMovieFreezeFrame(hit.id, frameSeed(query, options.variant));
   const year = yearFromDate(hit.release_date);
 
   return {
@@ -218,15 +231,16 @@ async function resolveMovie(query: string): Promise<ResolvedMedia | null> {
   };
 }
 
-async function resolveShow(query: string): Promise<ResolvedMedia | null> {
+async function resolveShow(query: string, options: ResolveOptions): Promise<ResolvedMedia | null> {
   const data = await tmdbGet<{ results?: TmdbSearchTv[] }>("/search/tv", {
     query,
     include_adult: "false",
+    ...(options.year ? { first_air_date_year: String(options.year) } : {}),
   });
   const hit = data?.results?.[0];
 
   if (hit) {
-    const frame = await fetchTvEpisodeFreezeFrame(hit.id, query);
+    const frame = await fetchTvEpisodeFreezeFrame(hit.id, frameSeed(query, options.variant));
     if (frame.filePath) {
       const year = yearFromDate(hit.first_air_date);
       return {
@@ -245,7 +259,7 @@ async function resolveShow(query: string): Promise<ResolvedMedia | null> {
     }
   }
 
-  const tvmaze = await fetchTvmazeEpisodeStill(query, query);
+  const tvmaze = await fetchTvmazeEpisodeStill(query, frameSeed(query, options.variant));
   if (tvmaze?.img) {
     return {
       answer: tvmaze.answer ?? query,
@@ -338,6 +352,7 @@ export function mediaComplete(roundKey: RoundKey, media: ResolvedMedia): boolean
 export async function resolveSeedMedia(
   roundKey: RoundKey,
   queryTitle: string,
+  options: ResolveOptions = {},
 ): Promise<ResolvedMedia> {
   const query = queryTitle.trim();
   if (!query) {
@@ -357,8 +372,8 @@ export async function resolveSeedMedia(
 
   try {
     let resolved: ResolvedMedia | null = null;
-    if (roundKey === "movie") resolved = await resolveMovie(query);
-    else if (roundKey === "show") resolved = await resolveShow(query);
+    if (roundKey === "movie") resolved = await resolveMovie(query, options);
+    else if (roundKey === "show") resolved = await resolveShow(query, options);
     else if (roundKey === "song") resolved = await resolveSong(query);
     else if (roundKey === "album") resolved = await resolveAlbum(query);
 
