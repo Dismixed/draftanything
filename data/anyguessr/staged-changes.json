@@ -1,0 +1,644 @@
+[
+  {
+    "id": "2aaaae57-cf40-484f-bee2-3ffa6922e169",
+    "cca3": "ARG",
+    "clue_type": "environment",
+    "from": "Iguazú Falls",
+    "to": {
+      "cca3": "ARG",
+      "country": "Argentina",
+      "clue_type": "environment",
+      "difficulty": "medium",
+      "note": "replaced Iguazú Falls: shared with Brazil, equally valid answer",
+      "wiki_title": "Obelisco de Buenos Aires"
+    }
+  },
+  {
+    "id": "045844a5-022b-4c19-9717-22c578e7c5ee",
+    "cca3": "AUS",
+    "clue_type": "food",
+    "from": "Meat pie",
+    "to": {
+      "cca3": "AUS",
+      "country": "Australia",
+      "clue_type": "food",
+      "difficulty": "medium",
+      "note": "replaced Meat pie: equally British and New Zealand",
+      "wiki_title": "Vegemite"
+    }
+  },
+  {
+    "id": "6b41f81f-5e1a-43dc-b190-20dff7a8e11f",
+    "cca3": "AUS",
+    "clue_type": "person",
+    "from": "Ned Kelly",
+    "to": {
+      "cca3": "AUS",
+      "country": "Australia",
+      "clue_type": "person",
+      "difficulty": "easy",
+      "note": "replaced Ned Kelly: little known outside Australia",
+      "wiki_title": "Steve Irwin"
+    }
+  },
+  {
+    "id": "1df32d00-c4c2-4e5a-af8d-e1ac309c0b7f",
+    "cca3": "BRA",
+    "clue_type": "landmark",
+    "from": "Christ the Redeemer",
+    "to": {
+      "cca3": "BRA",
+      "country": "Brazil",
+      "clue_type": "landmark",
+      "difficulty": "easy",
+      "note": "kept",
+      "wiki_title": "Christ the Redeemer (statue)"
+    }
+  },
+  {
+    "id": "91f812de-da62-4e7e-be4c-e9fab27f03a2",
+    "cca3": "BRA",
+    "clue_type": "environment",
+    "from": "Copacabana (Rio de Janeiro)",
+    "to": {
+      "cca3": "BRA",
+      "country": "Brazil",
+      "clue_type": "environment",
+      "difficulty": "medium",
+      "note": "kept",
+      "wiki_title": "Copacabana, Rio de Janeiro"
+    }
+  },
+  {
+    "id": "a4b120c5-817c-412c-a7b1-9b6d8ec1a15a",
+    "cca3": "BRA",
+    "clue_type": "brand",
+    "from": "Embraer",
+    "to": {
+      "cca3": "BRA",
+      "country": "Brazil",
+      "clue_type": "brand",
+      "difficulty": "medium",
+      "note": "replaced Embraer: not a consumer brand",
+      "wiki_title": "Havaianas"
+    }
+  },
+  {
+    "id": "201358ab-ff7f-49bd-965f-d4b9819c2873",
+    "cca3": "CAN",
+    "clue_type": "person",
+    "from": "Terry Fox",
+    "to": {
+      "cca3": "CAN",
+      "country": "Canada",
+      "clue_type": "person",
+      "difficulty": "medium",
+      "note": "replaced Terry Fox: little known outside Canada",
+      "wiki_title": "Celine Dion"
+    }
+  },
+  {
+    "id": "efd15c69-df79-408f-b6f3-ba0f651f1cfd",
+    "cca3": "CHN",
+    "clue_type": "landmark",
+    "from": "Forbidden City",
+    "to": {
+      "cca3": "CHN",
+      "country": "China",
+      "clue_type": "landmark",
+      "difficulty": "easy",
+      "note": "replaced Forbidden City: swapped with environment, the Wall is the most iconic",
+      "wiki_title": "Great Wall of China"
+    }
+  },
+  {
+    "id": "e69ac2ba-22d6-4037-931b-35af6bcd135a",
+    "cca3": "CHN",
+    "clue_type": "environment",
+    "from": "Great Wall of China",
+    "to": {
+      "cca3": "CHN",
+      "country": "China",
+      "clue_type": "environment",
+      "difficulty": "medium",
+      "note": "replaced Great Wall of China: swapped with landmark",
+      "wiki_title": "Forbidden City"
+    }
+  },
+  {
+    "id": "5a5aec84-f666-4146-8c94-10019adc00f3",
+    "cca3": "CHN",
+    "clue_type": "brand",
+    "from": "Alibaba Group",
+    "to": {
+      "cca3": "CHN",
+      "country": "China",
+      "clue_type": "brand",
+      "difficulty": "medium",
+      "note": "replaced Alibaba Group: less visible to ordinary consumers worldwide",
+      "wiki_title": "Huawei"
+    }
+  },
+  {
+    "id": "2da89ad0-31ca-4e60-b021-df4657f99025",
+    "cca3": "EGY",
+    "clue_type": "environment",
+    "from": "Nile",
+    "to": {
+      "cca3": "EGY",
+      "country": "Egypt",
+      "clue_type": "environment",
+      "difficulty": "medium",
+      "note": "replaced Nile: river runs through many countries and photo is generic",
+      "wiki_title": "Abu Simbel"
+    }
+  },
+  {
+    "id": "88d64d14-dbe8-460b-99d6-f849d082c43c",
+    "cca3": "EGY",
+    "clue_type": "food",
+    "from": "Kushari",
+    "to": {
+      "cca3": "EGY",
+      "country": "Egypt",
+      "clue_type": "food",
+      "difficulty": "hard",
+      "note": "kept",
+      "wiki_title": "Koshary"
+    }
+  },
+  {
+    "id": "f84848a3-6b11-4db9-ab74-82989d871b45",
+    "cca3": "FRA",
+    "clue_type": "environment",
+    "from": "Montmartre",
+    "to": {
+      "cca3": "FRA",
+      "country": "France",
+      "clue_type": "environment",
+      "difficulty": "medium",
+      "note": "replaced Montmartre: less recognisable as a photo and also in Paris",
+      "wiki_title": "Mont-Saint-Michel"
+    }
+  },
+  {
+    "id": "03275b66-2a37-4c79-a947-46f661c1e784",
+    "cca3": "DEU",
+    "clue_type": "environment",
+    "from": "Berlin Wall",
+    "to": {
+      "cca3": "DEU",
+      "country": "Germany",
+      "clue_type": "environment",
+      "difficulty": "medium",
+      "note": "replaced Berlin Wall: more recognisable and not a second Berlin subject",
+      "wiki_title": "Neuschwanstein Castle"
+    }
+  },
+  {
+    "id": "7025ec4c-2f99-4c56-ad45-4430850e8091",
+    "cca3": "GRC",
+    "clue_type": "written_language",
+    "from": "Γειά σου",
+    "to": {
+      "cca3": "GRC",
+      "country": "Greece",
+      "clue_type": "written_language",
+      "difficulty": "medium",
+      "note": "replaced Γειά σου: two-word greeting, below the 3 to 6 word phrase rule",
+      "text": "Καλημέρα, τι κάνεις σήμερα;",
+      "language": "Greek",
+      "english": "Good morning, how are you today?"
+    }
+  },
+  {
+    "id": "3b58dd38-652d-4777-88cc-73276a42b23c",
+    "cca3": "IND",
+    "clue_type": "food",
+    "from": "Biryani",
+    "to": {
+      "cca3": "IND",
+      "country": "India",
+      "clue_type": "food",
+      "difficulty": "medium",
+      "note": "replaced Biryani: equally identified with Pakistan and Bangladesh",
+      "wiki_title": "Masala dosa"
+    }
+  },
+  {
+    "id": "d9917068-aea0-473d-b850-9bc478a0e02a",
+    "cca3": "IND",
+    "clue_type": "written_language",
+    "from": "नमस्ते",
+    "to": {
+      "cca3": "IND",
+      "country": "India",
+      "clue_type": "written_language",
+      "difficulty": "medium",
+      "note": "replaced नमस्ते: single greeting word, also used in Nepal",
+      "text": "आपका नाम क्या है?",
+      "language": "Hindi",
+      "english": "What is your name?"
+    }
+  },
+  {
+    "id": "df9e6284-c14c-4be9-b474-f206b31e1ab4",
+    "cca3": "IDN",
+    "clue_type": "environment",
+    "from": "Ubud",
+    "to": {
+      "cca3": "IDN",
+      "country": "Indonesia",
+      "clue_type": "environment",
+      "difficulty": "medium",
+      "note": "replaced Ubud: town article with no single recognisable lead image",
+      "wiki_title": "Tanah Lot"
+    }
+  },
+  {
+    "id": "d9853597-d3dd-4c24-88b8-aea45d680795",
+    "cca3": "IDN",
+    "clue_type": "brand",
+    "from": "Garuda Indonesia",
+    "to": {
+      "cca3": "IDN",
+      "country": "Indonesia",
+      "clue_type": "brand",
+      "difficulty": "medium",
+      "note": "replaced Garuda Indonesia: name contains the country and is a national airline",
+      "wiki_title": "Indomie"
+    }
+  },
+  {
+    "id": "9f846e40-9565-4ab2-babb-e97395dfc864",
+    "cca3": "IDN",
+    "clue_type": "written_language",
+    "from": "Selamat pagi",
+    "to": {
+      "cca3": "IDN",
+      "country": "Indonesia",
+      "clue_type": "written_language",
+      "difficulty": "hard",
+      "note": "replaced Selamat pagi: identical in Malay (Malaysia); new phrase uses Indonesian spelling",
+      "text": "Apa kabar? Saya baik-baik saja",
+      "language": "Indonesian",
+      "english": "How are you? I am fine"
+    }
+  },
+  {
+    "id": "286a1cae-5b8d-41b8-ad44-f92da17ddb2d",
+    "cca3": "IRL",
+    "clue_type": "landmark",
+    "from": "Giant's Causeway",
+    "to": {
+      "cca3": "IRL",
+      "country": "Ireland",
+      "clue_type": "landmark",
+      "difficulty": "medium",
+      "note": "replaced Giant's Causeway: it is in Northern Ireland (United Kingdom); Cliffs of Moher moved up from environment",
+      "wiki_title": "Cliffs of Moher"
+    }
+  },
+  {
+    "id": "f0d2a753-7611-4151-a421-bc5e94136504",
+    "cca3": "IRL",
+    "clue_type": "environment",
+    "from": "Cliffs of Moher",
+    "to": {
+      "cca3": "IRL",
+      "country": "Ireland",
+      "clue_type": "environment",
+      "difficulty": "medium",
+      "note": "replaced Cliffs of Moher: now used as landmark",
+      "wiki_title": "Temple Bar, Dublin"
+    }
+  },
+  {
+    "id": "0a06ac3a-b188-40dc-a339-f9b64deff20e",
+    "cca3": "IRL",
+    "clue_type": "written_language",
+    "from": "Dia dhuit",
+    "to": {
+      "cca3": "IRL",
+      "country": "Ireland",
+      "clue_type": "written_language",
+      "difficulty": "medium",
+      "note": "replaced Dia dhuit: two-word greeting, below the phrase length",
+      "text": "Conas atá tú inniu?",
+      "language": "Irish",
+      "english": "How are you today?"
+    }
+  },
+  {
+    "id": "a37c4f29-d91b-467b-ac0f-c70f6b5d0e0e",
+    "cca3": "ITA",
+    "clue_type": "environment",
+    "from": "Amalfi Coast",
+    "to": {
+      "cca3": "ITA",
+      "country": "Italy",
+      "clue_type": "environment",
+      "difficulty": "easy",
+      "note": "replaced Amalfi Coast: cliffside coast can be mistaken for Greece or Croatia",
+      "wiki_title": "Grand Canal (Venice)"
+    }
+  },
+  {
+    "id": "d00a8f19-d83f-4b93-b41a-b54e60e06cd7",
+    "cca3": "ITA",
+    "clue_type": "written_language",
+    "from": "Ciao",
+    "to": {
+      "cca3": "ITA",
+      "country": "Italy",
+      "clue_type": "written_language",
+      "difficulty": "easy",
+      "note": "replaced Ciao: single greeting word",
+      "text": "Buongiorno, come stai oggi?",
+      "language": "Italian",
+      "english": "Good morning, how are you today?"
+    }
+  },
+  {
+    "id": "2c481ba1-dbe1-455f-a103-3a7886624484",
+    "cca3": "JPN",
+    "clue_type": "environment",
+    "from": "Shibuya Crossing",
+    "to": {
+      "cca3": "JPN",
+      "country": "Japan",
+      "clue_type": "environment",
+      "difficulty": "medium",
+      "note": "replaced Shibuya Crossing: neon cityscape reads as any East Asian metropolis",
+      "wiki_title": "Fushimi Inari-taisha"
+    }
+  },
+  {
+    "id": "98c068e1-932c-4eb8-830d-8c1424fd90aa",
+    "cca3": "JPN",
+    "clue_type": "person",
+    "from": "Hokusai",
+    "to": {
+      "cca3": "JPN",
+      "country": "Japan",
+      "clue_type": "person",
+      "difficulty": "medium",
+      "note": "replaced Hokusai: no photograph exists and few recognise the name",
+      "wiki_title": "Hayao Miyazaki"
+    }
+  },
+  {
+    "id": "ea960284-492c-4989-bfbf-81b1b196a7f9",
+    "cca3": "JPN",
+    "clue_type": "written_language",
+    "from": "寿司",
+    "to": {
+      "cca3": "JPN",
+      "country": "Japan",
+      "clue_type": "written_language",
+      "difficulty": "easy",
+      "note": "replaced 寿司: single food word in kanji shared with Chinese",
+      "text": "今日はいい天気ですね",
+      "language": "Japanese",
+      "english": "The weather is nice today, isn't it?"
+    }
+  },
+  {
+    "id": "70bb14c4-e9c7-463e-96cf-fd98d7d71af0",
+    "cca3": "JOR",
+    "clue_type": "person",
+    "from": "Queen Rania",
+    "to": {
+      "cca3": "JOR",
+      "country": "Jordan",
+      "clue_type": "person",
+      "difficulty": "medium",
+      "note": "kept; display name must be 'Queen Rania' since the article title contains the country",
+      "wiki_title": "Queen Rania of Jordan"
+    }
+  },
+  {
+    "id": "8f183e74-488d-4bbe-83bf-4645c55d6f0c",
+    "cca3": "MEX",
+    "clue_type": "food",
+    "from": "Mole sauce",
+    "to": {
+      "cca3": "MEX",
+      "country": "Mexico",
+      "clue_type": "food",
+      "difficulty": "easy",
+      "note": "replaced Mole sauce: a bowl of dark sauce is unrecognisable in a photo",
+      "wiki_title": "Taco"
+    }
+  },
+  {
+    "id": "1a6d8d68-7dd5-44f3-8a89-77ac4f3fde94",
+    "cca3": "NLD",
+    "clue_type": "landmark",
+    "from": "Rijksmuseum",
+    "to": {
+      "cca3": "NLD",
+      "country": "Netherlands",
+      "clue_type": "landmark",
+      "difficulty": "easy",
+      "note": "replaced Rijksmuseum: windmills are far more iconic and recognisable than a museum facade",
+      "wiki_title": "Kinderdijk"
+    }
+  },
+  {
+    "id": "88354d28-967b-4dfb-aa53-9fe5b339fc81",
+    "cca3": "NLD",
+    "clue_type": "brand",
+    "from": "Heineken International",
+    "to": {
+      "cca3": "NLD",
+      "country": "Netherlands",
+      "clue_type": "brand",
+      "difficulty": "medium",
+      "note": "replaced Heineken International: same brand, article title is the beer page with the bottle photo",
+      "wiki_title": "Heineken"
+    }
+  },
+  {
+    "id": "56cd814f-af71-46f4-a2e8-808e10a86e2b",
+    "cca3": "NZL",
+    "clue_type": "landmark",
+    "from": "Aoraki / Mount Cook",
+    "to": {
+      "cca3": "NZL",
+      "country": "New Zealand",
+      "clue_type": "landmark",
+      "difficulty": "medium",
+      "note": "replaced Aoraki / Mount Cook: generic snowy peak; Milford Sound moved here from environment",
+      "wiki_title": "Milford Sound"
+    }
+  },
+  {
+    "id": "e5851897-496b-462a-9466-4011d90ddcaa",
+    "cca3": "PER",
+    "clue_type": "environment",
+    "from": "Machu Picchu",
+    "to": {
+      "cca3": "PER",
+      "country": "Peru",
+      "clue_type": "environment",
+      "difficulty": "medium",
+      "note": "replaced Machu Picchu: duplicate of landmark",
+      "wiki_title": "Nazca lines"
+    }
+  },
+  {
+    "id": "ef0349f0-1c8d-4a4c-8976-590c79b9a752",
+    "cca3": "SAU",
+    "clue_type": "landmark",
+    "from": "Mada'in Saleh",
+    "to": {
+      "cca3": "SAU",
+      "country": "Saudi Arabia",
+      "clue_type": "landmark",
+      "difficulty": "easy",
+      "note": "replaced Mada'in Saleh: looks like Petra in Jordan; the Kaaba is the most iconic site",
+      "wiki_title": "Kaaba"
+    }
+  },
+  {
+    "id": "1adbbb43-b0b0-46f1-8d6f-f673f4f4dacd",
+    "cca3": "SAU",
+    "clue_type": "environment",
+    "from": "Empty Quarter",
+    "to": {
+      "cca3": "SAU",
+      "country": "Saudi Arabia",
+      "clue_type": "environment",
+      "difficulty": "hard",
+      "note": "replaced Empty Quarter: generic dunes shared with the UAE",
+      "wiki_title": "Kingdom Centre"
+    }
+  },
+  {
+    "id": "e4485b4c-a440-4007-8aa9-284debdb2ef4",
+    "cca3": "ARG",
+    "clue_type": "written_language",
+    "from": "¿Qué tal?",
+    "to": null
+  },
+  {
+    "id": "8d71271e-ca28-40a9-a56b-5eecff2dd7a6",
+    "cca3": "AUS",
+    "clue_type": "written_language",
+    "from": "G'day",
+    "to": null
+  },
+  {
+    "id": "15361933-b9b1-4a82-b971-189f45f7753e",
+    "cca3": "BRA",
+    "clue_type": "wildlife",
+    "from": "Jaguar",
+    "to": null
+  },
+  {
+    "id": "3508516a-ac91-4d80-8abc-07d470aaa4fe",
+    "cca3": "BRA",
+    "clue_type": "written_language",
+    "from": "Olá",
+    "to": null
+  },
+  {
+    "id": "6b247567-3ec4-4ed4-823b-48953d9eaa17",
+    "cca3": "CAN",
+    "clue_type": "written_language",
+    "from": "Bienvenue",
+    "to": null
+  },
+  {
+    "id": "5a95b5c9-5264-49f6-9bae-11d3c7792cbf",
+    "cca3": "CHN",
+    "clue_type": "written_language",
+    "from": "你好",
+    "to": null
+  },
+  {
+    "id": "c2aee313-3578-4c57-91df-ee63bf64c658",
+    "cca3": "EGY",
+    "clue_type": "brand",
+    "from": "EgyptAir",
+    "to": null
+  },
+  {
+    "id": "6fd98765-65c0-4571-bcb1-396ab1daf40c",
+    "cca3": "EGY",
+    "clue_type": "wildlife",
+    "from": "Dromedary",
+    "to": null
+  },
+  {
+    "id": "a6b5c256-466d-4df9-b9d1-f1b85bac9260",
+    "cca3": "EGY",
+    "clue_type": "written_language",
+    "from": "مرحبا",
+    "to": null
+  },
+  {
+    "id": "3a825fb4-a44b-4a50-86c1-faf51aaa58cb",
+    "cca3": "FRA",
+    "clue_type": "written_language",
+    "from": "Bonjour",
+    "to": null
+  },
+  {
+    "id": "8002ccc0-8575-4f6d-b716-e37369bcf82a",
+    "cca3": "DEU",
+    "clue_type": "written_language",
+    "from": "Guten Tag",
+    "to": null
+  },
+  {
+    "id": "f9e70452-e2ba-4233-844f-22021fa6a416",
+    "cca3": "GRC",
+    "clue_type": "brand",
+    "from": "Olympic Air",
+    "to": null
+  },
+  {
+    "id": "b36235aa-a3dc-47c6-958d-d18b238abae5",
+    "cca3": "JOR",
+    "clue_type": "written_language",
+    "from": "أهلاً",
+    "to": null
+  },
+  {
+    "id": "e99bf250-5e0d-49ae-a959-1bdd82e5e971",
+    "cca3": "KEN",
+    "clue_type": "written_language",
+    "from": "Jambo",
+    "to": null
+  },
+  {
+    "id": "4b27f500-5cd7-4055-bbd8-641ae77f0479",
+    "cca3": "MAR",
+    "clue_type": "brand",
+    "from": "Royal Air Maroc",
+    "to": null
+  },
+  {
+    "id": "3bd1df33-b65e-45e4-97db-6d4e67b6a9bb",
+    "cca3": "MAR",
+    "clue_type": "written_language",
+    "from": "سلام",
+    "to": null
+  },
+  {
+    "id": "0527b7b8-f960-4c89-b4c6-1a5ba6aaf8c1",
+    "cca3": "NLD",
+    "clue_type": "written_language",
+    "from": "Goedemorgen",
+    "to": null
+  },
+  {
+    "id": "1b739102-41df-481f-9003-611ee53a6997",
+    "cca3": "SAU",
+    "clue_type": "brand",
+    "from": "Saudi Aramco",
+    "to": null
+  }
+]
