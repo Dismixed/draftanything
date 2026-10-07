@@ -1,0 +1,754 @@
+/* ── Brain Dead ──────────────────────────────────────────────────── */
+/* Base --bd-* colours live in globals.css. These are the extra surfaces the game screens use. */
+
+:root {
+  --bd-hair: #3a4a63;
+  --bd-raise: #253349;
+  --bd-primary-lo: #a55a04;
+  --bd-edge: #131c2e;
+  --bd-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 8px 22px rgba(2, 6, 23, 0.5);
+  --bd-glow-a: rgba(217, 119, 6, 0.14);
+  --bd-glow-b: rgba(14, 165, 233, 0.12);
+}
+
+html[data-theme="light"] {
+  --bd-hair: #cbd5e1;
+  --bd-raise: #f3f5f9;
+  --bd-primary-lo: #8a3f06;
+  --bd-edge: #cfd7e3;
+  --bd-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 6px 18px rgba(15, 23, 42, 0.07);
+  --bd-glow-a: rgba(217, 119, 6, 0.16);
+  --bd-glow-b: rgba(14, 165, 233, 0.13);
+}
+
+/* ── Page ── */
+
+.bd-page {
+  min-height: 100vh;
+  background: var(--bd-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 20px 64px;
+  position: relative;
+  overflow: hidden;
+}
+
+.bd-col {
+  width: 100%;
+  max-width: 480px;
+  position: relative;
+  z-index: 1;
+}
+
+.bd-game {
+  --bd-q-font: 21px;
+  --bd-a-font: 16px;
+  --bd-a-h: 54px;
+  --bd-letter: 30px;
+  width: 100%;
+  margin: 0 auto;
+  font-family: "Outfit", system-ui, sans-serif;
+  color: var(--bd-text);
+}
+
+.bd-state {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bd-text-secondary);
+  font-size: 14px;
+}
+
+/* ── Header ── */
+
+.bd-head {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  row-gap: 18px;
+  margin-bottom: 14px;
+}
+
+.bd-back {
+  justify-self: start;
+  padding: 6px 0;
+  border: none;
+  background: transparent;
+  font: 500 13px "Outfit", system-ui, sans-serif;
+  color: var(--bd-text-secondary);
+  text-decoration: none;
+  cursor: pointer;
+}
+.bd-back:hover { color: var(--bd-text); }
+
+.bd-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--bd-text);
+}
+
+/* Question count and score. A full-width row under the title on a phone. */
+.bd-stats-line {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+/* ── Status and progress ── */
+
+.bd-count,
+.bd-score {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bd-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.bd-count b,
+.bd-score-n {
+  display: inline-block;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0;
+  color: var(--bd-primary);
+}
+
+/* ── Life signs: the streak as a brain monitor across the whole screen ── */
+
+.bd-ls {
+  --ls: var(--bd-text-muted);
+  position: relative;
+  /* Full width of the window, whatever the column width. .bd-page clips the overflow. */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  height: 56px;
+  overflow: hidden;
+  background:
+    linear-gradient(transparent calc(50% - 0.5px), color-mix(in srgb, var(--bd-text-muted) 22%, transparent) 50%, transparent calc(50% + 0.5px)),
+    repeating-linear-gradient(90deg, color-mix(in srgb, var(--bd-text-muted) 12%, transparent) 0 1px, transparent 1px 40px);
+}
+.bd-ls[data-tier="1"] { --ls: #22c55e; }
+.bd-ls[data-tier="2"] { --ls: #f59e0b; }
+.bd-ls[data-tier="3"] { --ls: #f97316; }
+.bd-ls[data-tier="4"] { --ls: #f43f5e; }
+.bd-ls[data-tier="5"] { --ls: #e879f9; }
+.bd-ls.is-dead { --ls: var(--bd-danger); }
+
+/* Fade the trace out at both edges of the window. */
+.bd-ls::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, var(--bd-bg), transparent 9%, transparent 91%, var(--bd-bg));
+}
+
+.bd-ls-wave { position: absolute; inset: 0; transform-origin: center; }
+.bd-ls svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 200%;
+  height: 100%;
+  animation: bd-ls-scroll 6s linear infinite;
+}
+.bd-ls path {
+  fill: none;
+  stroke: var(--ls);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 5px var(--ls));
+  transition: stroke 0.3s ease;
+}
+.bd-ls.is-dead svg { animation: none; }
+
+/* The streak just went up: the trace kicks, flares and a bright beam sweeps across. */
+.bd-ls.is-surging .bd-ls-wave { animation: bd-ls-kick 0.7s cubic-bezier(0.25, 1.6, 0.4, 1); }
+.bd-ls.is-surging::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 26%;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--ls) 30%, transparent) 75%, rgba(255, 255, 255, 0.85) 97%, transparent);
+  /* Soft top and bottom so it reads as a glow passing through, not a block. */
+  -webkit-mask-image: linear-gradient(transparent, #000 35%, #000 65%, transparent);
+  mask-image: linear-gradient(transparent, #000 35%, #000 65%, transparent);
+  mix-blend-mode: screen;
+  animation: bd-ls-sweep 0.62s cubic-bezier(0.3, 0.1, 0.3, 1) both;
+}
+
+@keyframes bd-ls-scroll {
+  to { transform: translateX(-50%); }
+}
+@keyframes bd-ls-kick {
+  0%   { transform: scaleY(0.4); filter: brightness(2.4) saturate(1.4); }
+  35%  { transform: scaleY(2.1); filter: brightness(1.9) saturate(1.3); }
+  70%  { transform: scaleY(0.88); filter: brightness(1.2); }
+  100% { transform: scaleY(1); filter: none; }
+}
+@keyframes bd-ls-sweep {
+  from { transform: translateX(-100%); opacity: 1; }
+  to   { transform: translateX(400%); opacity: 0; }
+}
+
+/* On a narrow screen the same trace would be squeezed into a barcode, so stretch it. */
+@media (max-width: 700px) {
+  .bd-ls { height: 48px; }
+  .bd-ls svg { width: 520%; }
+  .bd-vitals-next { display: none; }
+}
+
+/* The reading under the trace. */
+.bd-vitals {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bd-text-secondary);
+}
+.bd-vitals-now { display: inline-flex; align-items: baseline; gap: 8px; color: var(--ls, var(--bd-text-secondary)); transform-origin: left center; }
+.bd-vitals-now b { font-size: 20px; font-weight: 800; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.bd-vitals[data-tier="1"] { --ls: #22c55e; }
+.bd-vitals[data-tier="2"] { --ls: #f59e0b; }
+.bd-vitals[data-tier="3"] { --ls: #f97316; }
+.bd-vitals[data-tier="4"] { --ls: #f43f5e; }
+.bd-vitals[data-tier="5"] { --ls: #e879f9; }
+.bd-vitals.is-dead { --ls: var(--bd-danger); }
+.bd-vitals-next { text-align: right; }
+
+/* ── Question and answers ── */
+/* One column on a phone: question, timer, answers, streak. Two columns on a wide screen. */
+
+.bd-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "ask" "answers";
+  row-gap: 26px;
+  margin-top: 40px;
+}
+
+.bd-ask { grid-area: ask; min-width: 0; }
+
+/* No box around the question. The padding gives the right/wrong flash some room. */
+.bd-question-card {
+  position: relative;
+  margin: -14px;
+  padding: 14px;
+  border-radius: 18px;
+}
+
+.bd-q-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--bd-text-secondary);
+}
+.bd-diff {
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bd-diff);
+  background: color-mix(in srgb, var(--bd-diff) 16%, transparent);
+}
+
+.bd-question {
+  font-size: var(--bd-q-font);
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.005em;
+  color: var(--bd-text);
+  text-wrap: balance;
+}
+
+.bd-float {
+  position: absolute;
+  top: 8px;
+  right: 14px;
+  color: var(--bd-success);
+  font-weight: 800;
+  font-size: calc(20px + 3px * var(--juice, 0));
+  text-shadow: 0 0 12px rgba(34, 197, 94, 0.6);
+  pointer-events: none;
+}
+
+.bd-timer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 24px 0 0;
+}
+.bd-timer-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--bd-text-muted) 38%, transparent);
+  overflow: hidden;
+}
+.bd-timer-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.1s linear, background 0.4s;
+}
+.bd-timer-secs {
+  min-width: 2.4em;
+  text-align: right;
+  font-size: 16px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.4s;
+}
+
+.bd-answers {
+  grid-area: answers;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  align-content: center;
+}
+
+.bd-answer {
+  position: relative;
+  min-height: var(--bd-a-h);
+  padding: 8px 16px 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--bd-hair);
+  border-bottom: 3px solid var(--bd-edge);
+  background: var(--bd-surface);
+  color: var(--bd-text);
+  font: 500 var(--bd-a-font) "Outfit", system-ui, sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+.bd-answer:hover:not(:disabled) { border-color: var(--bd-primary); border-bottom-color: var(--bd-primary-lo); }
+.bd-answer:disabled { cursor: default; }
+.bd-answer:focus-visible,
+.bd-cta:focus-visible,
+.bd-btn:focus-visible,
+.bd-name:focus-visible { outline: 2px solid var(--bd-primary); outline-offset: 2px; }
+
+.bd-letter {
+  flex: none;
+  width: var(--bd-letter);
+  height: var(--bd-letter);
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--bd-text);
+  background: var(--bd-raise);
+  box-shadow: inset 0 0 0 1px var(--bd-hair);
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.bd-answer:hover:not(:disabled) .bd-letter { color: #fff; background: var(--bd-primary); box-shadow: none; }
+
+.bd-answer.is-dim { opacity: 0.6; }
+.bd-answer.is-correct {
+  border-color: var(--bd-success);
+  background: color-mix(in srgb, var(--bd-success) 12%, var(--bd-surface));
+}
+.bd-answer.is-correct .bd-letter { color: #fff; background: var(--bd-success); box-shadow: none; }
+.bd-answer.is-wrong {
+  border-color: var(--bd-danger);
+  background: color-mix(in srgb, var(--bd-danger) 10%, var(--bd-surface));
+}
+.bd-answer.is-wrong .bd-letter { color: #fff; background: var(--bd-danger); box-shadow: none; }
+
+/* ── Buttons ── */
+
+.bd-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 13px;
+  font: 700 15px "Outfit", system-ui, sans-serif;
+  color: #fff;
+  text-decoration: none;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bd-primary) 86%, #fff) 0%, var(--bd-primary) 55%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 3px 0 var(--bd-primary-lo),
+    0 8px 16px color-mix(in srgb, var(--bd-primary) 28%, transparent);
+  cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
+}
+.bd-cta:hover:not(:disabled) { filter: brightness(1.06); }
+.bd-cta:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 1px 0 var(--bd-primary-lo);
+}
+.bd-cta:disabled { opacity: 0.7; cursor: default; }
+
+.bd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 12px;
+  border: 1px solid var(--bd-hair);
+  border-bottom: 3px solid var(--bd-edge);
+  background: var(--bd-surface);
+  color: var(--bd-text);
+  font: 600 14px "Outfit", system-ui, sans-serif;
+  text-decoration: none;
+  cursor: pointer;
+}
+.bd-btn:hover:not(:disabled) { border-color: var(--bd-primary); border-bottom-color: var(--bd-primary-lo); }
+.bd-btn:disabled { opacity: 0.7; cursor: default; }
+.bd-btn.is-accent { color: var(--bd-primary); border-color: color-mix(in srgb, var(--bd-primary) 55%, transparent); }
+
+/* ── Intro ── */
+
+.bd-modal-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--bd-overlay);
+  backdrop-filter: blur(6px);
+}
+
+.bd-modal {
+  width: 100%;
+  max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 26px 22px 22px;
+  background: var(--bd-surface);
+  border: 1px solid var(--bd-hair);
+  border-radius: 22px;
+  box-shadow: 0 20px 50px rgba(2, 6, 23, 0.3);
+  font-family: "Outfit", system-ui, sans-serif;
+  color: var(--bd-text);
+}
+.bd-modal-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bd-primary);
+  background: color-mix(in srgb, var(--bd-primary) 14%, transparent);
+}
+.bd-modal h2 {
+  margin: 0;
+  text-align: center;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.bd-modal-sub {
+  margin: 6px 0 0;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bd-text-secondary);
+}
+
+.bd-rules {
+  margin: 20px 0 22px;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 14px;
+}
+.bd-rules li { display: grid; grid-template-columns: 28px 1fr; gap: 12px; }
+.bd-rule-n {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--bd-primary);
+  background: color-mix(in srgb, var(--bd-primary) 16%, transparent);
+}
+.bd-rules b { display: block; font-size: 14px; font-weight: 700; }
+.bd-rules p {
+  margin: 3px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--bd-text-secondary);
+}
+
+/* ── Result ── */
+
+.bd-result {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 8px 0 28px;
+  text-align: center;
+}
+
+.bd-badge {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bd-primary);
+  background: color-mix(in srgb, var(--bd-primary) 14%, transparent);
+  box-shadow: 0 0 0 7px color-mix(in srgb, var(--bd-primary) 8%, transparent);
+}
+
+.bd-eyebrow {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bd-text-secondary);
+}
+
+.bd-result h2 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.bd-result-sub {
+  margin: 6px auto 0;
+  max-width: 340px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--bd-text-secondary);
+}
+
+.bd-big {
+  margin-top: 20px;
+  font-size: 72px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--bd-primary);
+  font-variant-numeric: tabular-nums;
+}
+.bd-big-label {
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bd-text-secondary);
+}
+
+.bd-stats {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 10px;
+  margin-top: 20px;
+}
+.bd-stats div {
+  padding: 12px 8px;
+  border-radius: 14px;
+  background: var(--bd-surface);
+  border: 1px solid var(--bd-hair);
+}
+.bd-stats b {
+  display: block;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.bd-stats span {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bd-text-secondary);
+}
+
+.bd-record {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin-top: 16px;
+}
+.bd-name {
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--bd-border);
+  background: var(--bd-surface);
+  color: var(--bd-text);
+  /* 16px stops iOS Safari zooming the page when the field takes focus. */
+  font: 500 16px "Outfit", system-ui, sans-serif;
+}
+.bd-name::placeholder { color: var(--bd-text-muted); }
+.bd-record-note { grid-column: 1 / -1; margin: 0; font-size: 13px; }
+.bd-record-note.is-error { color: var(--bd-danger); }
+.bd-record-note.is-ok { margin-top: 16px; color: var(--bd-success); font-weight: 600; }
+
+.bd-result-actions {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.bd-result-actions .share-result-wrap { width: 100%; }
+.bd-result-actions .share-result {
+  width: 100%;
+  min-height: 48px;
+  margin: 0;
+  border: none;
+  border-radius: 13px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bd-primary) 86%, #fff) 0%, var(--bd-primary) 55%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 3px 0 var(--bd-primary-lo),
+    0 8px 16px color-mix(in srgb, var(--bd-primary) 28%, transparent);
+}
+.bd-result-actions .share-result-manual { margin: 12px auto 0; text-align: left; }
+
+.bd-links {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.bd-note {
+  margin: 16px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--bd-text-secondary);
+}
+
+/* ── Small phones ── */
+
+
+/* ── Desktop: a larger board, centred, on a soft backdrop ── */
+
+@media (min-width: 900px) {
+  /* The header stays at the top of the page; the question and answers sit in the middle of
+     the space under it, so the two read as separate things. */
+  .bd-page { padding-top: 28px; padding-bottom: 28px; }
+  .bd-col { display: flex; flex-direction: column; flex: 1; }
+  .bd-game { display: flex; flex-direction: column; flex: 1; }
+  .bd-play { display: flex; flex-direction: column; flex: 1; }
+  .bd-result, .bd-state { margin-top: auto; margin-bottom: auto; }
+
+  .bd-page::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(520px 420px at 20% 28%, var(--bd-glow-a), transparent 70%),
+      radial-gradient(560px 460px at 82% 74%, var(--bd-glow-b), transparent 70%);
+  }
+  .bd-page::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    background-image: radial-gradient(var(--bd-hair) 1.2px, transparent 1.2px);
+    background-size: 26px 26px;
+    -webkit-mask-image: radial-gradient(ellipse at center, transparent 30%, #000 85%);
+    mask-image: radial-gradient(ellipse at center, transparent 30%, #000 85%);
+  }
+
+  .bd-col { max-width: 1040px; }
+  .bd-game {
+    --bd-q-font: clamp(23px, 2vw, 28px);
+    --bd-a-font: 17px;
+    --bd-a-h: 64px;
+    --bd-letter: 34px;
+  }
+
+  /* Title in the middle, question count and score on the right of the same row. */
+  .bd-head { margin-bottom: 18px; }
+  .bd-title { font-size: 26px; }
+  .bd-back { font-size: 14px; }
+  .bd-stats-line { grid-column: 3; grid-row: 1; justify-self: end; justify-content: flex-end; }
+  .bd-count, .bd-score { font-size: 13px; }
+  .bd-count b, .bd-score-n { font-size: 20px; }
+  .bd-ls { height: 76px; }
+  .bd-vitals { font-size: 13px; margin-top: 10px; }
+  .bd-vitals-now b { font-size: 24px; }
+
+  /* One centred column: the question on top, the answers in a two-by-two grid under it. */
+  .bd-body {
+    width: 100%;
+    max-width: 760px;
+    row-gap: 40px;
+    /* auto margins centre the block; the extra bottom padding sits it a little above middle */
+    margin: auto;
+    padding: 48px 0 88px;
+  }
+  .bd-ask { text-align: center; }
+  .bd-q-meta { justify-content: center; }
+  .bd-answers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bd-q-meta { font-size: 14px; margin-bottom: 16px; }
+  .bd-diff { font-size: 12px; padding: 4px 12px; }
+  .bd-timer { margin: 32px 0 0; gap: 16px; }
+  .bd-timer-secs { font-size: 16px; }
+  .bd-answers { gap: 12px; }
+  .bd-answer { padding: 0 20px 0 16px; gap: 14px; border-radius: 15px; }
+  .bd-letter { font-size: 15px; border-radius: 10px; }
+}
+
+@media (min-width: 900px) and (max-width: 1339px) {
+  .bd-page { padding-top: 68px; }
+}

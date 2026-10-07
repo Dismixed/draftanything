@@ -28,7 +28,7 @@ import { burstFrom } from "@/lib/motion/burst";
 import { impactRing } from "@/lib/motion/impact-ring";
 import { juiceLevel } from "@/lib/motion/juice-level";
 import { useCountUp } from "@/lib/motion/count-up";
-import { GameBackLink } from "@/components/ui/game-back-link";
+import { GameTitle } from "@/components/ui/game-title";
 import { OtherDailies } from "@/components/daily/other-dailies";
 import { ShareResult } from "@/components/daily/share-result";
 import { brainDeadShare } from "@/lib/share/results";
@@ -36,8 +36,17 @@ import { getDateString as shareDate } from "@/lib/streak/date";
 import { DailyCompleteShell } from "@/components/daily/daily-complete-shell";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
 import DailyIntroModal from "@/components/brain-dead/daily-intro-modal";
+import { LifeSigns } from "@/components/brain-dead/life-signs";
+import { LIFE_SIGNS_LABELS, lifeSignsTier, nextMilestone } from "@/lib/brain-dead/life-signs";
 
 type Screen = "played" | "game" | "result";
+
+/** The finish screen is drawn outside the game page, so it needs the game's colours handed to it. */
+const OVERLAY_THEME = {
+  "--bg": "var(--bd-bg)",
+  "--text": "var(--bd-text)",
+  "--text-dim": "var(--bd-text-muted)",
+} as React.CSSProperties;
 
 interface BrainDeadGameProps {
   mode: GameMode;
@@ -407,53 +416,48 @@ export default function BrainDeadGame({
   const result = getResultCopy(correct);
 
   const freeplayBackHref = "/brain-dead/freeplay";
-  const resultNavBtnStyle: React.CSSProperties = {
-    background: "var(--bd-surface)",
-    border: "1px solid var(--bd-border)",
-    color: "var(--bd-text-muted)",
-    padding: "10px 24px",
-    fontFamily: "inherit",
-    fontSize: "12px",
-    fontWeight: 600,
-    borderRadius: "8px",
-    cursor: "pointer",
-  };
+  const backHref = isDaily ? "/brain-dead" : freeplayBackHref;
 
+  // `bare` drops the header: the finish overlay already has its own Home and close controls.
   const gameShell = (
     children: React.ReactNode,
-    options?: { padTop?: boolean; useRouterBack?: boolean },
+    options?: { bare?: boolean; useRouterBack?: boolean; stats?: React.ReactNode },
   ) => (
-    <div style={{ width: "100%", maxWidth: "480px", margin: "0 auto", position: "relative" }}>
-      {options?.useRouterBack ? (
-        <div style={{ position: "absolute", top: 0, left: 0 }}>
-          <button
-            type="button"
-            onClick={() => router.push(isDaily ? "/brain-dead" : freeplayBackHref)}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "4px",
-              fontSize: "11px",
-              fontWeight: 500,
-              color: "var(--bd-text-muted)",
-              background: "transparent",
-              border: "none",
-              padding: "4px 0",
-              cursor: "pointer",
-              fontFamily: "inherit",
-            }}
-          >
-            &larr; Back
-          </button>
-        </div>
-      ) : (
-        <GameBackLink
-          href={isDaily ? "/brain-dead" : freeplayBackHref}
-          color="var(--bd-text-muted)"
-        />
+    <div className="bd-game">
+      {!options?.bare && (
+        <header className="bd-head">
+          {options?.useRouterBack ? (
+            <button type="button" className="bd-back" onClick={() => router.push(backHref)}>
+              &larr; Back
+            </button>
+          ) : (
+            <Link href={backHref} className="bd-back">
+              &larr; Back
+            </Link>
+          )}
+          <GameTitle game="brain-dead" as="h1" className="bd-title" />
+          <span />
+          {options?.stats && <div className="bd-stats-line">{options.stats}</div>}
+        </header>
       )}
-      <div style={options?.padTop === false ? undefined : { paddingTop: "28px" }}>{children}</div>
+      {children}
     </div>
+  );
+
+  const inOverlay = isDaily && completeOpen;
+
+  const dailyLinks = (
+    <>
+      <div className="bd-links">
+        <Link href="/brain-dead/freeplay" className="bd-btn">
+          Play Free Mode
+        </Link>
+        <Link href="/brain-dead/leaderboard" className="bd-btn">
+          Leaderboard
+        </Link>
+      </div>
+      <p className="bd-note">Daily locked. Come back tomorrow for a new set.</p>
+    </>
   );
 
   /* ── Already played ── */
@@ -464,136 +468,35 @@ export default function BrainDeadGame({
         open={completeOpen}
         onClose={() => setCompleteOpen(false)}
         ariaLabel="Daily complete"
+        style={OVERLAY_THEME}
       >
         {gameShell(
-      <div style={{ textAlign: "center", padding: "24px 0" }}>
-        <div
-          style={{
-            background: "var(--bd-surface)",
-            border: "1px solid var(--bd-border)",
-            borderRadius: "12px",
-            padding: "40px 32px",
-            maxWidth: "380px",
-            margin: "0 auto",
-          }}
-        >
-          <div
-            style={{
-              fontSize: "11px",
-              color: "var(--bd-text-muted)",
-              textTransform: "uppercase",
-              letterSpacing: "1.5px",
-              marginBottom: "8px",
-            }}
-          >
-            Today&apos;s result
-          </div>
-          <div
-            style={{
-              fontSize: "56px",
-              fontWeight: 800,
-              lineHeight: 1,
-              color: "var(--bd-primary)",
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            {todayCorrect}
-          </div>
-          <div
-            style={{
-              fontSize: "14px",
-              fontWeight: 600,
-              color: "var(--bd-text)",
-              marginTop: "6px",
-              marginBottom: "4px",
-            }}
-          >
-            correct
-          </div>
-          <div
-            style={{
-              fontSize: "12px",
-              color: "var(--bd-text-muted)",
-              marginBottom: "24px",
-            }}
-          >
-            Score {todayScore}
-          </div>
-          <div
-            style={{
-              display: "flex",
-              gap: "8px",
-              justifyContent: "center",
-              flexWrap: "wrap",
-              marginBottom: "20px",
-            }}
-          >
-            <Link
-              href="/brain-dead/freeplay"
-              style={{
-                display: "inline-block",
-                textDecoration: "none",
-                background: "var(--bd-primary)",
-                color: "#fff",
-                border: "none",
-                padding: "12px 24px",
-                borderRadius: "8px",
-                fontSize: "13px",
-                fontWeight: 700,
-              }}
-            >
-              Play Free Mode
-            </Link>
-            <Link
-              href="/brain-dead/leaderboard"
-              style={{
-                display: "inline-block",
-                textDecoration: "none",
-                background: "transparent",
-                border: "1px solid var(--bd-border)",
-                color: "var(--bd-text-secondary)",
-                padding: "12px 24px",
-                borderRadius: "8px",
-                fontSize: "13px",
-                fontWeight: 600,
-              }}
-            >
-              View Leaderboard
-            </Link>
-          </div>
-          <p
-            style={{
-              fontSize: "12px",
-              color: "var(--bd-text-muted)",
-              margin: "0 0 4px",
-              lineHeight: 1.5,
-            }}
-          >
-            Daily locked — come back tomorrow for a new set
-          </p>
-          <div
-            style={{
-              fontSize: "11px",
-              color: "var(--bd-text-muted)",
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            Next challenge in {countdown}
-          </div>
-        </div>
+          <div className="bd-result">
+            <p className="bd-eyebrow">Today&apos;s result</p>
+            <div className="bd-big">{todayCorrect}</div>
+            <div className="bd-big-label">correct</div>
+            <div className="bd-stats">
+              <div>
+                <b>{todayScore}</b>
+                <span>Score</span>
+              </div>
+              <div>
+                <b>{countdown}</b>
+                <span>Next challenge</span>
+              </div>
+            </div>
 
-        {isDaily && (
-          <>
-            <WinStreakLine gameId="brain-dead" accentColor="var(--bd-primary)" />
-            <ShareResult
-              gameId="brain-dead"
-              text={brainDeadShare(todayCorrect, todayScore, shareDate())}
-            />
-            <OtherDailies currentGameId="brain-dead" />
-          </>
+            {isDaily && (
+              <div className="bd-result-actions">
+                <WinStreakLine gameId="brain-dead" accentColor="var(--bd-primary)" />
+                <ShareResult gameId="brain-dead" text={brainDeadShare(todayCorrect, todayScore, shareDate())} />
+              </div>
+            )}
+            {dailyLinks}
+            {isDaily && <OtherDailies currentGameId="brain-dead" />}
+          </div>,
+          { bare: inOverlay },
         )}
-      </div>,
-    )}
       </DailyCompleteShell>
     );
   }
@@ -606,331 +509,101 @@ export default function BrainDeadGame({
         open={completeOpen}
         onClose={() => setCompleteOpen(false)}
         ariaLabel="Daily complete"
+        style={OVERLAY_THEME}
       >
         {gameShell(
-      <div className="anim-fade-slide-up" style={{ textAlign: "center", padding: "24px 0" }}>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--bd-primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="8" r="7"/>
-            <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
-          </svg>
-        </div>
-        <h2
-          style={{
-            fontSize: "20px",
-            fontWeight: 700,
-            margin: "0 0 8px",
-            color: "var(--bd-text)",
-          }}
-        >
-          {result.title}
-        </h2>
-        <p
-          style={{
-            color: "var(--bd-text-muted)",
-            fontSize: "12px",
-            maxWidth: "380px",
-            margin: "0 auto 24px",
-            lineHeight: 1.6,
-          }}
-        >
-          {result.sub}
-        </p>
+          <div className="bd-result anim-fade-slide-up">
+            <div className="bd-badge" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="8" r="7" />
+                <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+              </svg>
+            </div>
+            <h2>{result.title}</h2>
+            <p className="bd-result-sub">{result.sub}</p>
 
-        {isDaily ? (
-          <>
-            <div
-              style={{
-                fontSize: "56px",
-                fontWeight: 800,
-                lineHeight: 1,
-                color: "var(--bd-primary)",
-                fontVariantNumeric: "tabular-nums",
-                marginBottom: "6px",
-              }}
-            >
-              {correct}
-            </div>
-            <div
-              style={{
-                fontSize: "14px",
-                fontWeight: 600,
-                color: "var(--bd-text)",
-                marginBottom: "16px",
-              }}
-            >
-              correct
-            </div>
-            <div
-              style={{
-                display: "flex",
-                gap: "16px",
-                justifyContent: "center",
-                marginBottom: "24px",
-                fontSize: "12px",
-                color: "var(--bd-text-muted)",
-              }}
-            >
-              <span>
-                Score{" "}
-                <strong style={{ color: "var(--bd-text)", fontWeight: 700 }}>{score}</strong>
-              </span>
-              <span>
-                Avg{" "}
-                <strong style={{ color: "var(--bd-text)", fontWeight: 700 }}>{avgSpeed}s</strong>
-              </span>
-            </div>
-          </>
-        ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr 1fr",
-              gap: "8px",
-              marginBottom: "24px",
-              maxWidth: "380px",
-              margin: "0 auto 24px",
-            }}
-          >
-            {[
-              { val: correct, lbl: "Correct" },
-              { val: score, lbl: "Score" },
-              { val: `${avgSpeed}s`, lbl: "Avg Time" },
-            ].map(({ val, lbl }) => (
-              <div
-                key={lbl}
-                style={{
-                  background: "var(--bd-surface)",
-                  border: "1px solid var(--bd-border)",
-                  borderRadius: "8px",
-                  padding: "12px",
-                  textAlign: "center",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "20px",
-                    fontWeight: 700,
-                    color: "var(--bd-primary)",
-                    lineHeight: 1,
-                  }}
-                >
-                  {val}
-                </div>
-                <div
-                  style={{
-                    fontSize: "10px",
-                    color: "var(--bd-text-muted)",
-                    marginTop: "2px",
-                  }}
-                >
-                  {lbl}
-                </div>
+            <div className="bd-big">{correct}</div>
+            <div className="bd-big-label">correct</div>
+            <div className="bd-stats">
+              <div>
+                <b>{score}</b>
+                <span>Score</span>
               </div>
-            ))}
-          </div>
-        )}
-
-        {isDaily && !submitted && (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "12px",
-              marginBottom: "16px",
-              maxWidth: "380px",
-              margin: "0 auto 16px",
-            }}
-          >
-            <input
-              placeholder="Enter your name"
-              maxLength={20}
-              value={nameInput}
-              onChange={(e) => setNameInput(e.target.value)}
-              style={{
-                width: "100%",
-                background: "var(--bd-surface)",
-                border: "1px solid var(--bd-border)",
-                borderRadius: "8px",
-                padding: "10px 12px",
-                color: "var(--bd-text)",
-                fontSize: "13px",
-                outline: "none",
-                textAlign: "center",
-                fontFamily: "inherit",
-              }}
-            />
-            <button
-              type="button"
-              onClick={handleSubmitScore}
-              disabled={submitting}
-              style={{
-                width: "100%",
-                background: "transparent",
-                border: "1px solid var(--bd-primary)",
-                color: "var(--bd-primary)",
-                padding: "12px",
-                fontFamily: "inherit",
-                fontSize: "13px",
-                fontWeight: 600,
-                borderRadius: "8px",
-                cursor: submitting ? "default" : "pointer",
-                opacity: submitting ? 0.7 : 1,
-                letterSpacing: "0.5px",
-              }}
-            >
-              {submitting ? "Submitting..." : "RECORD SCORE"}
-            </button>
-            {submitError && (
-              <p style={{ color: "var(--bd-danger)", fontSize: "12px", margin: 0 }}>
-                Could not save score. Try again.
-              </p>
-            )}
-          </div>
-        )}
-
-        {isDaily && (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "12px",
-              marginBottom: "8px",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                gap: "8px",
-                justifyContent: "center",
-                flexWrap: "wrap",
-              }}
-            >
-              <Link
-                href="/brain-dead/freeplay"
-                style={{
-                  display: "inline-block",
-                  background: "var(--bd-primary)",
-                  color: "#fff",
-                  border: "none",
-                  padding: "12px 24px",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  borderRadius: "8px",
-                  textDecoration: "none",
-                }}
-              >
-                Play Free Mode
-              </Link>
-              <Link
-                href="/brain-dead/leaderboard"
-                style={{
-                  display: "inline-block",
-                  background: "transparent",
-                  border: "1px solid var(--bd-border)",
-                  color: "var(--bd-text-secondary)",
-                  padding: "12px 24px",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  borderRadius: "8px",
-                  textDecoration: "none",
-                }}
-              >
-                View Leaderboard
-              </Link>
+              <div>
+                <b>{avgSpeed}s</b>
+                <span>Avg time</span>
+              </div>
             </div>
-            <p
-              style={{
-                fontSize: "12px",
-                color: "var(--bd-text-muted)",
-                margin: 0,
-                lineHeight: 1.5,
-              }}
-            >
-              Daily locked — come back tomorrow for a new set
-            </p>
-            <WinStreakLine gameId="brain-dead" accentColor="var(--bd-primary)" />
-          </div>
-        )}
 
-        {isDaily && (
-          <>
-            <ShareResult
-              gameId="brain-dead"
-              text={brainDeadShare(correct, score, shareDate(), questions.length || 15)}
-            />
-            <OtherDailies currentGameId="brain-dead" />
-          </>
-        )}
+            {isDaily && !submitted && (
+              <div className="bd-record">
+                <input
+                  className="bd-name"
+                  placeholder="Enter your name"
+                  aria-label="Your name for the leaderboard"
+                  maxLength={20}
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                />
+                <button type="button" className="bd-btn is-accent" onClick={handleSubmitScore} disabled={submitting}>
+                  {submitting ? "Saving..." : "Record score"}
+                </button>
+                {submitError && <p className="bd-record-note is-error">Could not save score. Try again.</p>}
+              </div>
+            )}
+            {isDaily && submitted && <p className="bd-record-note is-ok">Score recorded.</p>}
 
-        <div
-          style={{
-            display: "flex",
-            gap: "8px",
-            justifyContent: "center",
-            flexWrap: "wrap",
-            marginTop: "16px",
-          }}
-        >
-          {!isDaily && (
-            <>
-              <button
-                type="button"
-                onClick={handleFreeplayRestart}
-                style={resultNavBtnStyle}
-              >
-                Play Again
-              </button>
-              <button
-                type="button"
-                onClick={() => router.push(freeplayBackHref)}
-                style={resultNavBtnStyle}
-              >
-                Change Category
-              </button>
-            </>
-          )}
-          <button
-            type="button"
-            onClick={() => router.push("/")}
-            style={resultNavBtnStyle}
-          >
-            Home
-          </button>
-        </div>
-      </div>,
-      { useRouterBack: !isDaily },
-    )}
+            {isDaily ? (
+              <>
+                <div className="bd-result-actions">
+                  <WinStreakLine gameId="brain-dead" accentColor="var(--bd-primary)" />
+                  <ShareResult
+                    gameId="brain-dead"
+                    text={brainDeadShare(correct, score, shareDate(), questions.length || 15)}
+                  />
+                </div>
+                {dailyLinks}
+                <OtherDailies currentGameId="brain-dead" />
+              </>
+            ) : (
+              <>
+                <div className="bd-result-actions">
+                  <button type="button" className="bd-cta" onClick={handleFreeplayRestart}>
+                    Play Again
+                  </button>
+                </div>
+                <div className="bd-links">
+                  <button type="button" className="bd-btn" onClick={() => router.push(freeplayBackHref)}>
+                    Change Category
+                  </button>
+                  <button type="button" className="bd-btn" onClick={() => router.push("/")}>
+                    Home
+                  </button>
+                </div>
+              </>
+            )}
+          </div>,
+          { bare: inOverlay, useRouterBack: !isDaily },
+        )}
       </DailyCompleteShell>
     );
   }
+
+  const intro = isDaily && showIntro && (
+    <DailyIntroModal
+      onStart={() => {
+        play("ui.tap");
+        setShowIntro(false);
+      }}
+    />
+  );
 
   /* ── Game ── */
   if (!q) {
     return gameShell(
       <>
-        {isDaily && showIntro && (
-          <DailyIntroModal
-            onStart={() => {
-              play("ui.tap");
-              setShowIntro(false);
-            }}
-          />
-        )}
-        <div
-          style={{
-            minHeight: "200px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "var(--bd-text-muted)",
-            fontSize: "13px",
-          }}
-        >
-          {fetchError ?? "Loading questions…"}
-        </div>
+        {intro}
+        <div className="bd-state">{fetchError ?? "Loading questions…"}</div>
       </>,
     );
   }
@@ -944,198 +617,103 @@ export default function BrainDeadGame({
           ? { color: "var(--bd-danger)", label: "Hard" }
           : { color: "var(--bd-secondary)", label: "Brutal" };
 
+  // A wrong answer or a timeout ends the run, and the monitor flatlines with it.
+  const runOver = answered === "wrong" || answered === "timeout";
+  const milestone = nextMilestone(correct);
+
+  const stats = (
+    <>
+      <span className="bd-count">
+        Question
+        <b>{qi + 1}</b>
+        {isDaily && `/ ${questions.length}`}
+      </span>
+      <span className="bd-score">
+        Score
+        <span ref={scoreRef} className="bd-score-n">
+          {displayScore}
+        </span>
+      </span>
+    </>
+  );
+
   return gameShell(
     <>
-      {isDaily && showIntro && (
-        <DailyIntroModal
-          onStart={() => {
-            play("ui.tap");
-            setShowIntro(false);
-          }}
-        />
-      )}
+      {intro}
 
-      <div
-        ref={playAreaRef}
-        style={{ "--juice": juiceLevel(correct) } as React.CSSProperties}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "16px",
-          }}
-        >
-          <div style={{ fontSize: "11px", color: "var(--bd-text-muted)", fontWeight: 500 }}>
-            <span style={{ color: "var(--bd-primary)" }}>{qi + 1}</span> / {questions.length}
+      <div ref={playAreaRef} className="bd-play" style={{ "--juice": juiceLevel(correct) } as React.CSSProperties}>
+        <LifeSigns streak={correct} dead={runOver} />
+        <div className={`bd-vitals${runOver ? " is-dead" : ""}`} data-tier={lifeSignsTier(runOver ? 0 : correct)}>
+          <div ref={streakRef} className="bd-vitals-now">
+            <b>{correct}</b>
+            {runOver ? "Flatline" : LIFE_SIGNS_LABELS[lifeSignsTier(correct)]}
           </div>
-          <div style={{ fontSize: "11px", color: "var(--bd-text-muted)", fontWeight: 500 }}>
-            Score:{" "}
-            <span
-              ref={scoreRef}
-              style={{ display: "inline-block", color: "var(--bd-primary)", fontWeight: 800, fontSize: "18px" }}
-            >
-              {displayScore}
+          {!runOver && milestone && (
+            <span className="bd-vitals-next">
+              {milestone.label} at {milestone.at}
             </span>
-          </div>
-        </div>
-
-        {/* Timer */}
-        <div style={{ marginBottom: "16px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", marginBottom: "4px" }}>
-            <span style={{ color: "var(--bd-text-muted)" }}>{categoryName}</span>
-            <span style={{ color: "var(--bd-primary)" }}>{timerSecs}s</span>
-          </div>
-          <div
-            style={{
-              width: "100%",
-              height: "4px",
-              background: "var(--bd-surface)",
-              borderRadius: "2px",
-              overflow: "hidden",
-            }}
-          >
-            <div
-              style={{
-                height: "100%",
-                width: `${timerPct}%`,
-                background: timerColor,
-                borderRadius: "2px",
-                transition: "width 0.1s linear, background 0.4s",
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Question */}
-        <div
-          ref={questionCardRef}
-          className={[
-            "bd-question-card",
-            questionAnim === "out" ? "anim-question-out" : "",
-            questionAnim === "in" ? "anim-question-in" : "",
-          ].filter(Boolean).join(" ")}
-          style={{
-            background: "var(--bd-surface)",
-            border: "1px solid var(--bd-border)",
-            borderRadius: "12px",
-            padding: "20px",
-            marginBottom: "16px",
-            textAlign: "center",
-            position: "relative",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-            <span style={{ fontSize: "10px", color: diffClass.color, fontWeight: 600, textTransform: "uppercase", letterSpacing: "1px" }}>
-              {diffClass.label}
-            </span>
-            <span style={{ fontSize: "10px", color: "var(--bd-border)" }}>|</span>
-            <span style={{ fontSize: "10px", color: "var(--bd-text-muted)" }}>{q.d * 100} pts</span>
-          </div>
-          <div
-            style={{
-              fontSize: "16px",
-              fontWeight: 500,
-              lineHeight: 1.4,
-              color: "var(--bd-text)",
-            }}
-          >
-            {q.q}
-          </div>
-          {scoreFloat !== null && (
-            <div
-              className="anim-score-float"
-              style={{
-                position: "absolute",
-                top: "12px",
-                right: "16px",
-                color: "var(--bd-success)",
-                fontWeight: 800,
-                fontSize: "calc(20px + 3px * var(--juice, 0))",
-                textShadow: "0 0 12px rgba(34,197,94,0.6)",
-                pointerEvents: "none",
-              }}
-            >
-              +{scoreFloat}
-            </div>
           )}
         </div>
 
-        {/* Answers */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "8px",
-            marginBottom: "16px",
-          }}
-        >
-          {q.a.map((ans, i) => {
-            const showCorrect = answered !== "idle" && i === q.c;
-            const showWrong = answered === "wrong" && i === selectedIdx;
-            const disabled = answered !== "idle";
+        <div className="bd-body">
+          <div className="bd-ask">
+            <div
+              ref={questionCardRef}
+              className={[
+                "bd-question-card",
+                questionAnim === "out" ? "anim-question-out" : "",
+                questionAnim === "in" ? "anim-question-in" : "",
+              ].filter(Boolean).join(" ")}
+            >
+              <div className="bd-q-meta">
+                <span className="bd-diff" style={{ "--bd-diff": diffClass.color } as React.CSSProperties}>
+                  {diffClass.label}
+                </span>
+                <span>{q.d * 100} pts</span>
+                <span aria-hidden="true">·</span>
+                <span>{categoryName}</span>
+              </div>
+              <div className="bd-question">{q.q}</div>
+              {scoreFloat !== null && <div className="bd-float anim-score-float">+{scoreFloat}</div>}
+            </div>
 
-            return (
-              <button
-                key={i}
-                type="button"
-                disabled={disabled}
-                onClick={(e) => handleAnswer(i, e.currentTarget)}
-                className={
-                  [
+            <div className="bd-timer">
+              <div className="bd-timer-track">
+                <div className="bd-timer-fill" style={{ width: `${timerPct}%`, background: timerColor }} />
+              </div>
+              <span className="bd-timer-secs" style={{ color: timerColor }}>
+                {timerSecs}s
+              </span>
+            </div>
+          </div>
+
+          <div className="bd-answers">
+            {q.a.map((ans, i) => {
+              const showCorrect = answered !== "idle" && i === q.c;
+              const showWrong = answered === "wrong" && i === selectedIdx;
+              const disabled = answered !== "idle";
+
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  disabled={disabled}
+                  onClick={(e) => handleAnswer(i, e.currentTarget)}
+                  className={[
                     "bd-answer-btn",
-                    showCorrect ? "anim-pop-in" : showWrong ? "anim-shake" : "",
-                  ].filter(Boolean).join(" ") || undefined
-                }
-                style={{
-                  background: showCorrect
-                    ? "rgba(34,197,94,0.1)"
-                    : showWrong
-                      ? "rgba(239,68,68,0.1)"
-                      : "var(--bd-surface)",
-                  border: `1px solid ${
-                    showCorrect ? "var(--bd-success)" : showWrong ? "var(--bd-danger)" : "var(--bd-border)"
-                  }`,
-                  color: "var(--bd-text)",
-                  position: "relative",
-                  padding: "12px",
-                  borderRadius: "8px",
-                  cursor: disabled ? "default" : "pointer",
-                  fontFamily: "inherit",
-                  fontSize: "13px",
-                  fontWeight: 500,
-                  textAlign: "center",
-                  opacity: disabled && !showCorrect && !showWrong ? 0.45 : 1,
-                  transition: "border-color 0.1s, background 0.1s",
-                }}
-              >
-                <div style={{ fontSize: "11px", color: showCorrect || showWrong ? diffClass.color : "var(--bd-text-secondary)", marginBottom: "2px" }}>
-                  {LETTERS[i]}
-                </div>
-                <div>{ans}</div>
-              </button>
-            );
-          })}
-        </div>
-
-        <div ref={streakRef} style={{ textAlign: "center" }}>
-          <div style={{ fontSize: "10px", color: "var(--bd-text-muted)", marginBottom: "4px" }}>Streak</div>
-          <div style={{ display: "flex", justifyContent: "center", gap: "4px" }}>
-            {[0, 1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                style={{
-                  width: "8px",
-                  height: "8px",
-                  background: i < correct ? "var(--bd-primary)" : "var(--bd-border)",
-                  borderRadius: "50%",
-                }}
-              />
-            ))}
+                    "bd-answer",
+                    showCorrect ? "is-correct anim-pop-in" : showWrong ? "is-wrong anim-shake" : disabled ? "is-dim" : "",
+                  ].filter(Boolean).join(" ")}
+                >
+                  <span className="bd-letter">{LETTERS[i]}</span>
+                  <span>{ans}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
     </>,
+    { stats },
   );
 }

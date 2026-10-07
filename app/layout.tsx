@@ -6,6 +6,7 @@ import { SITE_URL } from "@/lib/seo";
 import "./globals.css";
 import "./slippery-slope.css";
 import "./anyguessr.css";
+import "./brain-dead.css";
 import "./chainlink.css";
 import "./freezeframes.css";
 import "./ball-knowledge.css";
