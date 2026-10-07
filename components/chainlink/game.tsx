@@ -3,7 +3,8 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useChainlinkStore } from "@/lib/chainlink/store";
-import { formatPair, getDateString } from "@/lib/chainlink/puzzles";
+import { getDateString } from "@/lib/chainlink/puzzles";
+import { summarizeChain, type ChainSummary } from "@/lib/chainlink/result-summary";
 import type { GameMode } from "@/lib/chainlink/types";
 import { useSound } from "@/lib/audio/sound-context";
 import { fireConfetti } from "@/lib/motion/confetti";
@@ -27,9 +28,23 @@ import { recordDailyCompletion } from "@/lib/streak/storage";
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + "T12:00:00");
   return d.toLocaleDateString("en-US", {
-    month: "long", day: "numeric", year: "numeric",
+    weekday: "long", month: "long", day: "numeric",
   });
 }
+
+function capitalize(word: string): string {
+  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+}
+
+/** Pips shown in the status bar. Matches the store's allowance of four mistakes. */
+const MAX_TRIES = 4;
+
+/** The finish screen is drawn outside the game page, so it needs the game's colours handed to it. */
+const OVERLAY_THEME = {
+  "--bg": "var(--cl-bg)",
+  "--text": "var(--cl-text)",
+  "--text-dim": "var(--cl-gray-dim)",
+} as React.CSSProperties;
 
 function displayChar(ch: string, index: number): string {
   const lower = ch.toLowerCase();
@@ -48,25 +63,10 @@ function unrevealedSlotIndex(revealedLetters: boolean[], position: number): numb
 /*  Chain Link SVG                                                     */
 /* ------------------------------------------------------------------ */
 
-function ChainLink({ active, animated }: { active: boolean; animated: boolean }) {
+function ChainLink({ state, animated }: { state: "joined" | "next" | "dim"; animated: boolean }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "28px",
-        opacity: active ? 1 : 0.15,
-        transition: "opacity 0.5s ease",
-        animation: animated ? "cl-chain-grow 0.4s ease forwards" : undefined,
-        transformOrigin: "center top",
-      }}
-    >
-      <svg width="14" height="18" viewBox="0 0 12 16" fill="none" style={{ display: "block" }}>
-        <circle cx="6" cy="3" r="2.5" stroke={active ? "var(--cl-gray)" : "var(--cl-border)"} strokeWidth="1.5" fill="none" />
-        <circle cx="6" cy="13" r="2.5" stroke={active ? "var(--cl-gray)" : "var(--cl-border)"} strokeWidth="1.5" fill="none" />
-        <line x1="6" y1="5.5" x2="6" y2="10.5" stroke={active ? "var(--cl-gray)" : "var(--cl-border)"} strokeWidth="1.5" />
-      </svg>
+    <div className={`cl-link is-${state}${animated ? " is-growing" : ""}`} aria-hidden="true">
+      <i />
     </div>
   );
 }
@@ -79,8 +79,8 @@ function WordRow({
   word,
   index,
   status,
+  nextStatus,
   previousWord,
-  wordAttempts,
   revealedLetters,
   revealTrigger,
   totalWords,
@@ -89,15 +89,14 @@ function WordRow({
   word: string;
   index: number;
   status: "locked" | "active" | "solved";
+  nextStatus?: "locked" | "active" | "solved";
   previousWord?: string;
-  wordAttempts: string[];
   revealedLetters: boolean[];
   revealTrigger: number;
   totalWords: number;
   onSubmitGuess?: (guess: string) => "correct" | "incorrect" | "already-solved" | Promise<"correct" | "incorrect" | "already-solved">;
 }) {
   const chars = word.split("");
-  const attemptsCount = wordAttempts.length;
   const unrevealedCount = (word.length - 1) - revealedLetters.filter(Boolean).length;
 
   const [localGuess, setLocalGuess] = useState("");
@@ -193,267 +192,107 @@ function WordRow({
     void trySubmit();
   };
 
-  const letterStyle = (i: number): React.CSSProperties => {
-    if (status === "solved") {
-      return {
-        display: "inline-block",
-        animation: `cl-letter-in 0.4s cubic-bezier(0.3, 1.5, 0.5, 1) both`,
-        animationDelay: `${0.055 * i}s`,
-      };
-    }
-    return {};
-  };
+  const letterStyle = (i: number): React.CSSProperties => ({
+    display: "inline-block",
+    animation: `cl-letter-in 0.4s cubic-bezier(0.3, 1.5, 0.5, 1) both`,
+    animationDelay: `${0.055 * i}s`,
+  });
 
-  const linkHint =
-    previousWord && status === "active"
-      ? formatPair(previousWord, "?")
-      : previousWord && status === "solved" && index > 0
-        ? formatPair(previousWord, word)
-        : null;
+  const isLive = status === "active" && Boolean(onSubmitGuess);
+  // The slot the next typed letter lands in, so the caret can sit there.
+  const caretPosition = chars.findIndex(
+    (_, pos) => pos > 0 && !revealedLetters[pos] && unrevealedSlotIndex(revealedLetters, pos) === localGuess.length,
+  );
+
+  const rowClass = [
+    "cl-word-row",
+    "cl-row",
+    `is-${status}`,
+    status === "active" && !onSubmitGuess ? "is-over" : "",
+    wrongFlash ? "is-wrong" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const linkState =
+    status !== "solved" ? "dim" : nextStatus === "solved" ? "joined" : nextStatus === "active" ? "next" : "dim";
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-      {linkHint && (
-        <div
-          style={{
-            fontSize: "10px",
-            fontWeight: 500,
-            letterSpacing: "0.04em",
-            color: status === "active" ? "var(--cl-yellow)" : "var(--cl-gray-dim)",
-            opacity: status === "active" ? 0.85 : 0.55,
-            marginLeft: "2px",
-            marginBottom: "2px",
-          }}
-        >
-          {linkHint}
+    <div>
+      {previousWord && isLive && (
+        <div className="cl-ask">
+          <b>{capitalize(previousWord)}</b> <span aria-hidden="true">____</span> ?
         </div>
       )}
 
-      <div
-        style={{
-          fontSize: "10px",
-          fontWeight: 600,
-          letterSpacing: "0.06em",
-          textTransform: "uppercase",
-          color: status === "locked" ? "var(--cl-gray)" : status === "active" ? "var(--cl-yellow)" : "var(--cl-green)",
-          opacity: status === "locked" ? 1 : 0.9,
-          marginLeft: "2px",
-        }}
-      >
-        {index === 0 ? "Starting word" : `${index + 1} of ${totalWords}`}
-      </div>
-
-      <div
-        ref={rowRef}
-        className="cl-word-row"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "6px",
-          padding: "14px 18px",
-          background:
-            wrongFlash
-              ? "rgba(255, 107, 107, 0.1)"
-              : status === "active"
-                ? "var(--cl-card)"
-                : status === "solved"
-                  ? "var(--cl-green)"
-                  : "var(--cl-card-locked)",
-          border: `2px solid ${
-            wrongFlash
-              ? "#ff6b6b"
-              : status === "active"
-                ? "var(--cl-yellow)"
-                : status === "solved"
-                  ? "var(--cl-green)"
-                  : "var(--cl-card-locked)"
-          }`,
-          borderRadius: "6px",
-          transition: "border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease",
-          boxShadow: wrongFlash ? "0 0 0 1px rgba(255, 107, 107, 0.35), 0 0 20px rgba(255, 107, 107, 0.15)" : "none",
-          position: "relative",
-        }}
-      >
-        <div
-          className="cl-word-letters"
-          style={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            gap: "4px",
-            minHeight: "1.4em",
-            minWidth: 0,
-          }}
-        >
+      <div ref={rowRef} className={rowClass}>
+        <div className="cl-word-letters" onClick={isLive ? () => inputRef.current?.focus() : undefined}>
           {status === "solved" ? (
-            <span
-              style={{
-                fontSize: "clamp(20px, 4vw, 28px)",
-                fontWeight: 700,
-                letterSpacing: "0.06em",
-                color: "#ffffff",
-              }}
-            >
+            <span>
               {chars.map((ch, i) => (
                 <span key={i} style={letterStyle(i)}>{displayChar(ch, i)}</span>
               ))}
             </span>
-          ) : status === "active" && onSubmitGuess ? (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "2px",
-                width: "100%",
-                position: "relative",
-                cursor: "text",
-              }}
-              onClick={() => inputRef.current?.focus()}
-            >
-              {/* First letter */}
-              <span
-                style={{
-                  fontSize: "clamp(20px, 4vw, 28px)",
-                  fontWeight: 700,
-                  letterSpacing: "0.06em",
-                  color: "var(--cl-text)",
-                  flexShrink: 0,
-                }}
-              >
-                {displayChar(word[0], 0)}
-              </span>
-
-              {/* Remaining letters — hints, typed chars, or underscores */}
-              {chars.slice(1).map((ch, idx) => {
-                const pos = idx + 1;
-                if (revealedLetters[pos]) {
-                  return (
-                    <span
-                      key={pos}
-                      style={{
-                        fontSize: "clamp(20px, 4vw, 28px)",
-                        fontWeight: 700,
-                        letterSpacing: "0.06em",
-                        color: "var(--cl-yellow)",
-                      }}
-                    >
-                      {ch.toLowerCase()}
-                    </span>
-                  );
-                }
-                const slot = unrevealedSlotIndex(revealedLetters, pos);
-                const typed = localGuess[slot];
-                return (
-                  <span
-                    key={pos}
-                    style={{
-                      fontSize: "clamp(20px, 4vw, 28px)",
-                      fontWeight: 700,
-                      letterSpacing: "0.06em",
-                      color: typed ? "var(--cl-text)" : "var(--cl-gray)",
-                      opacity: typed ? 1 : 0.5,
-                    }}
-                  >
-                    {typed?.toLowerCase() ?? "_"}
-                  </span>
-                );
-              })}
-
-              {/* Hidden input captures keystrokes; letters render above */}
-              <input
-                ref={inputRef}
-                type="text"
-                value={localGuess}
-                onChange={(e) => setLocalGuess(e.target.value.toLowerCase().slice(0, unrevealedCount))}
-                onKeyDown={handleLocalKeyDown}
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck={false}
-                aria-label={`Guess remaining letters for ${word}`}
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  opacity: 0,
-                  cursor: "text",
-                  background: "transparent",
-                  border: "none",
-                  outline: "none",
-                  padding: 0,
-                  margin: 0,
-                  caretColor: "transparent",
-                }}
-              />
-            </div>
           ) : (
-            <span
-              style={{
-                fontSize: "clamp(20px, 4vw, 28px)",
-                fontWeight: 700,
-                letterSpacing: "0.06em",
-                color: "var(--cl-gray)",
-              }}
-            >
-              {chars.map((ch, i) => {
-                const show = i === 0 || revealedLetters[i];
+            <>
+              {chars.map((ch, pos) => {
+                if (pos === 0) {
+                  return <span key={pos} className="cl-cell">{displayChar(ch, 0)}</span>;
+                }
+                if (revealedLetters[pos]) {
+                  return <span key={pos} className="cl-cell is-hint">{ch.toLowerCase()}</span>;
+                }
+                const typed = isLive ? localGuess[unrevealedSlotIndex(revealedLetters, pos)] : undefined;
+                const caret = isLive && pos === caretPosition ? " is-caret" : "";
                 return (
-                  <span
-                    key={i}
-                    style={{
-                      opacity: show ? 1 : 0.5,
-                      transition: "opacity 0.3s ease, color 0.3s ease",
-                      color: show && i !== 0 ? "var(--cl-yellow)" : undefined,
-                    }}
-                  >
-                    {show ? displayChar(ch, i) : "_"}
-                    {i < word.length - 1 && " "}
+                  <span key={pos} className={`cl-cell${typed ? "" : " is-blank"}${caret}`}>
+                    {typed?.toLowerCase()}
                   </span>
                 );
               })}
-            </span>
+
+              {/* Invisible input captures keystrokes; letters render above */}
+              {isLive && (
+                <input
+                  ref={inputRef}
+                  className="cl-row-input"
+                  type="text"
+                  value={localGuess}
+                  onChange={(e) => setLocalGuess(e.target.value.toLowerCase().slice(0, unrevealedCount))}
+                  onKeyDown={handleLocalKeyDown}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  aria-label={`Guess remaining letters for ${word}`}
+                />
+              )}
+            </>
           )}
         </div>
 
-        {status === "active" && wrongFlash && (
-          <div
-            className="anim-pop-in"
-            style={{
-              marginLeft: "auto",
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-              fontSize: "11px",
-              fontWeight: 700,
-              letterSpacing: "0.04em",
-              textTransform: "uppercase",
-              color: "#ff6b6b",
-              whiteSpace: "nowrap",
-              flexShrink: 0,
-            }}
-          >
+        {status === "solved" ? (
+          index === 0 ? (
+            <span className="cl-row-tag">Start</span>
+          ) : (
+            <span className="cl-row-tick" aria-hidden="true">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2.5 6.5l2.3 2.3 4.7-5.3" />
+              </svg>
+            </span>
+          )
+        ) : status === "active" && wrongFlash ? (
+          <div className="cl-row-miss anim-pop-in">
             <span aria-hidden="true">&#10007;</span>
             Not quite
           </div>
-        )}
-
-        {status === "active" && attemptsCount > 0 && !onSubmitGuess && !wrongFlash && (
-          <div
-            style={{
-              marginLeft: "auto",
-              fontSize: "10px",
-              color: "var(--cl-gray-dim)",
-              opacity: 0.7,
-              whiteSpace: "nowrap",
-              flexShrink: 0,
-            }}
-          >
-            {attemptsCount} {attemptsCount === 1 ? "try" : "tries"}
-          </div>
+        ) : (
+          <span className="cl-row-n">{`${index + 1} / ${totalWords}`}</span>
         )}
       </div>
 
       {index < totalWords - 1 && (
-        <ChainLink active={status === "solved"} animated={status === "solved" && revealTrigger > 0} />
+        <ChainLink state={linkState} animated={status === "solved" && revealTrigger > 0} />
       )}
     </div>
   );
@@ -496,6 +335,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
   // server's HTML. The effect below switches it on once saved progress has loaded.
   const [storeReady, setStoreReady] = useState(false);
   const failCelebratedRef = useRef(false);
+  const playedThisVisitRef = useRef(false);
   const savedFailRef = useRef(false);
 
   const isComplete = gameStatus === "completed";
@@ -529,9 +369,18 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
     };
   }, [mode, initPuzzle]);
 
+  // A finished puzzle is restored on every visit. Only a finish that happens while the page
+  // is open should be celebrated, so note when this visit has seen the puzzle still in play.
+  useEffect(() => {
+    if (storeReady && !loading && puzzleWords.length > 0 && gameStatus === "playing") {
+      playedThisVisitRef.current = true;
+    }
+  }, [storeReady, loading, puzzleWords.length, gameStatus]);
+
   useEffect(() => {
     if (!isComplete || completeCelebratedRef.current) return;
     completeCelebratedRef.current = true;
+    if (!playedThisVisitRef.current) return;
     play("win");
     void fireConfetti("gold");
   }, [isComplete, play]);
@@ -556,6 +405,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
   useEffect(() => {
     if (!isFailed || failCelebratedRef.current) return;
     failCelebratedRef.current = true;
+    if (!playedThisVisitRef.current) return;
     play("wrong");
   }, [isFailed, play]);
 
@@ -638,132 +488,51 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
   const isPuzzleLoading =
     !loadError && (!storeReady || loading || puzzleWords.length === 0);
 
+  const totalTries = Math.max(MAX_TRIES, hintsRemaining);
+  const summary = summarizeChain(puzzleWords, wordStatuses, wordAttempts, revealedLetters);
+  const shareText = chainLinkShare(wordStatuses, wordAttempts, revealedLetters, shareDate());
+
   return (
     <>
       <TutorialModal />
       {loadError ? (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: "300px",
-          gap: "16px",
-          padding: "24px",
-          textAlign: "center",
-        }}
-      >
-        <p style={{ margin: 0, color: "var(--cl-gray-dim)", fontSize: "14px", lineHeight: 1.5, maxWidth: "320px" }}>
-          {loadError}
-        </p>
-        <button
-          type="button"
-          onClick={() => void initPuzzle(mode)}
-          style={{
-            padding: "10px 18px",
-            borderRadius: "8px",
-            border: "1px solid var(--cl-border)",
-            background: "var(--cl-card)",
-            color: "var(--cl-text)",
-            cursor: "pointer",
-            fontSize: "13px",
-          }}
-        >
+      <div className="cl-game cl-state">
+        <p>{loadError}</p>
+        <button type="button" className="cl-quiet-btn" onClick={() => void initPuzzle(mode)}>
           Try again
         </button>
       </div>
       ) : isPuzzleLoading ? (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "300px", color: "var(--cl-gray-dim)" }}>
-        Loading puzzle...
-      </div>
+      <div className="cl-game cl-state">Loading puzzle...</div>
       ) : (
-      <div className="game-shell" style={{ width: "100%", maxWidth: "520px", margin: "0 auto" }}>
+      <div className="game-shell cl-game">
         {/* ---- Header ---- */}
-        <header style={{ textAlign: "center", marginBottom: "32px", position: "relative" }}>
-          <div style={{ position: "absolute", top: 0, left: 0 }}>
-            <Link
-              href="/"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
-                fontSize: "11px",
-                fontWeight: 500,
-                color: "var(--cl-gray-dim)",
-                textDecoration: "none",
-                padding: "4px 0",
-              }}
-            >
+        <header className="cl-head">
+          <div className="cl-head-top">
+            <Link href="/" className="cl-back">
               &larr; Back
             </Link>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", marginBottom: "6px" }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="6" r="4" stroke="var(--cl-text)" strokeWidth="2" fill="none" />
-              <circle cx="12" cy="18" r="4" stroke="var(--cl-text)" strokeWidth="2" fill="none" />
-              <rect x="11" y="9" width="2" height="6" rx="1" fill="var(--cl-text)" />
-            </svg>
-            <GameTitle
-              game="chainlink"
-              as="h1"
-              style={{
-                fontSize: "clamp(24px, 5vw, 32px)",
-                fontWeight: 700,
-                color: "var(--cl-text)",
-                margin: 0,
-                letterSpacing: "-0.02em",
-              }}
-            />
+            <GameTitle game="chainlink" as="h1" className="cl-title" />
+            <span />
           </div>
 
-          <div style={{ fontSize: "11px", fontWeight: 500, color: "var(--cl-gray)", marginBottom: "4px" }}>
-            {`Daily Puzzle · ${formatDate(date || getDateString())}`}
-          </div>
+          <div className="cl-date">{formatDate(date || getDateString())}</div>
 
           {/* Tries + hint */}
           {gameStatus === "playing" && (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: "8px",
-                marginTop: "8px",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  color: hintsRemaining <= 1 ? "#ff6b6b" : "var(--cl-gray-dim)",
-                  letterSpacing: "0.04em",
-                  animation: hintAnim ? "cl-hint-pulse 0.4s ease" : undefined,
-                }}
-              >
-                {hintsRemaining} {hintsRemaining === 1 ? "try" : "tries"} left
-              </span>
-              <button
-                onClick={handleHint}
-                disabled={hintsRemaining <= 0}
-                style={{
-                  width: "auto",
-                  padding: "10px 20px",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  background: "var(--cl-gray)",
-                  color: "#ffffff",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: hintsRemaining > 0 ? "pointer" : "not-allowed",
-                  opacity: hintsRemaining > 0 ? 1 : 0.4,
-                  animation: hintAnim ? "cl-hint-pulse 0.4s ease" : undefined,
-                }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <div className={`cl-bar${hintAnim ? " is-pulsing" : ""}`}>
+              <div className={`cl-tries${hintsRemaining <= 1 ? " is-low" : ""}`}>
+                <span className="cl-pips" aria-hidden="true">
+                  {Array.from({ length: totalTries }, (_, i) => (
+                    <i key={i} className={i < hintsRemaining ? undefined : "is-off"} />
+                  ))}
+                </span>
+                <span>
+                  {hintsRemaining} {hintsRemaining === 1 ? "try" : "tries"} left
+                </span>
+              </div>
+              <button type="button" className="cl-hint" onClick={handleHint} disabled={hintsRemaining <= 0}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M9 18h6" />
                   <path d="M10 22h4" />
                   <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14" />
@@ -772,29 +541,19 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
               </button>
             </div>
           )}
-
         </header>
 
-        {!isOver && (
-          <div className="cl-hint-banner" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginBottom: "24px", padding: "10px 16px", background: "rgba(106,170,100,0.08)", border: "1px solid rgba(106,170,100,0.2)", borderRadius: "6px" }}>
-            <span style={{ fontSize: "14px", color: "var(--cl-green)", opacity: 0.7 }}>&#9670;</span>
-            <span style={{ fontSize: "11px", color: "var(--cl-gray-dim)", letterSpacing: "0.04em" }}>
-              Each word pairs with the one before it — like <em style={{ color: "var(--cl-text)", fontStyle: "normal" }}>apple juice</em>, then <em style={{ color: "var(--cl-text)", fontStyle: "normal" }}>juice box</em>.
-            </span>
-          </div>
-        )}
-
         {/* ---- Word chain + completion overlay ---- */}
-        <div style={{ position: "relative", marginBottom: "16px" }}>
-          <div className="cl-chain" style={{ display: "flex", flexDirection: "column" }}>
+        <div className="cl-chain-wrap">
+          <div className="cl-chain">
             {puzzleWords.map((word, i) => (
               <WordRow
                 key={`${word}-${i}`}
                 word={word}
                 index={i}
                 status={wordStatuses[i]}
+                nextStatus={wordStatuses[i + 1]}
                 previousWord={i > 0 ? puzzleWords[i - 1] : undefined}
-                wordAttempts={wordAttempts[i]}
                 revealedLetters={revealedLetters[i] ?? []}
                 revealTrigger={justSolvedIndex === i ? 1 : 0}
                 totalWords={puzzleWords.length}
@@ -805,258 +564,31 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
 
           {mode === "daily" ? (
             <DailyCompleteOverlay
-              open={showFailOverlay}
-              onClose={() => setShowFailOverlay(false)}
-              ariaLabel="Game over"
+              open={showFailOverlay || showCompleteOverlay}
+              onClose={() => {
+                setShowFailOverlay(false);
+                setShowCompleteOverlay(false);
+              }}
+              ariaLabel={isComplete ? "Chain complete" : "Game over"}
+              style={OVERLAY_THEME}
             >
-              <div
-                style={{
-                  width: "100%",
-                  padding: "12px 4px 28px",
-                  textAlign: "center",
-                }}
-              >
-                <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#ff6b6b", margin: "0 0 8px" }}>
-                  Game Over
-                </h2>
-                <p style={{ fontSize: "12px", color: "var(--cl-gray-dim)", margin: "0 0 20px" }}>
-                  Wrong a fourth time and you&apos;re out. The full chain was:
-                </p>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "center", marginBottom: "20px" }}>
-                  {puzzleWords.slice(1).map((w, i) => (
-                    <span
-                      key={i}
-                      style={{
-                        fontSize: "13px",
-                        padding: "6px 14px",
-                        background: "var(--cl-border)",
-                        borderRadius: "6px",
-                        color: "#ff6b6b",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {formatPair(puzzleWords[i], w)}
-                    </span>
-                  ))}
-                </div>
-
-                <div style={{ fontSize: "11px", color: "var(--cl-gray-dim)", marginBottom: "8px" }}>
-                  Come back tomorrow for a new puzzle!
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: "16px",
-                    marginTop: "16px",
-                  }}
-                >
+              <ChainResult won={isComplete} summary={summary}>
+                <p className="cl-result-note">Come back tomorrow for a new puzzle.</p>
+                <div className="cl-result-actions">
                   <WinStreakLine gameId="chainlink" accentColor="var(--cl-green)" />
-                  <ShareResult
-                    gameId="chainlink"
-                    text={chainLinkShare(wordStatuses, wordAttempts, revealedLetters, shareDate())}
-                  />
+                  <ShareResult gameId="chainlink" text={shareText} />
                   <OtherDailies currentGameId="chainlink" />
                 </div>
-              </div>
+              </ChainResult>
             </DailyCompleteOverlay>
           ) : (
-            showFailOverlay && (
-              <div
-                className="anim-fade-slide-up"
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  zIndex: 10,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: "16px",
-                  background: "var(--cl-overlay)",
-                  backdropFilter: "blur(6px)",
-                  borderRadius: "6px",
-                }}
-              >
-                <div
-                  style={{
-                    width: "100%",
-                    padding: "28px 24px",
-                    textAlign: "center",
-                    border: "2px solid #ff6b6b",
-                    background: "var(--cl-card)",
-                    borderRadius: "6px",
-                  }}
-                >
-                  <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#ff6b6b", margin: "0 0 8px" }}>
-                    Game Over
-                  </h2>
-                  <p style={{ fontSize: "12px", color: "var(--cl-gray-dim)", margin: "0 0 20px" }}>
-                    Wrong a fourth time and you&apos;re out. The full chain was:
-                  </p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "center", marginBottom: "20px" }}>
-                    {puzzleWords.slice(1).map((w, i) => (
-                      <span
-                        key={i}
-                        style={{
-                          fontSize: "13px",
-                          padding: "6px 14px",
-                          background: "var(--cl-border)",
-                          borderRadius: "6px",
-                          color: "#ff6b6b",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {formatPair(puzzleWords[i], w)}
-                      </span>
-                    ))}
-                  </div>
-                  <Link
-                    href="/"
-                    style={{
-                      display: "inline-block",
-                      textDecoration: "none",
-                      background: "var(--cl-gray)",
-                      color: "#ffffff",
-                      padding: "10px 24px",
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      borderRadius: "6px",
-                      letterSpacing: "0.04em",
-                    }}
-                  >
+            (showFailOverlay || showCompleteOverlay) && (
+              <div className="cl-inline-overlay anim-fade-slide-up">
+                <ChainResult won={isComplete} summary={summary}>
+                  <Link href="/" className="cl-quiet-btn">
                     &larr; Back
                   </Link>
-                </div>
-              </div>
-            )
-          )}
-
-          {mode === "daily" ? (
-            <DailyCompleteOverlay
-              open={showCompleteOverlay}
-              onClose={() => setShowCompleteOverlay(false)}
-              ariaLabel="Chain complete"
-            >
-              <div
-                style={{
-                  width: "100%",
-                  padding: "12px 4px 28px",
-                  textAlign: "center",
-                }}
-              >
-                <div style={{ fontSize: "32px", marginBottom: "8px" }}>&#9670;</div>
-                <h2 style={{ fontSize: "22px", fontWeight: 700, color: "var(--cl-green)", margin: "0 0 20px" }}>
-                  Chain Complete!
-                </h2>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "center", marginBottom: "20px" }}>
-                  {puzzleWords.slice(1).map((w, i) => (
-                    <span
-                      key={i}
-                      style={{
-                        fontSize: "13px",
-                        padding: "6px 14px",
-                        background: "var(--cl-border)",
-                        borderRadius: "6px",
-                        color: "var(--cl-green)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {formatPair(puzzleWords[i], w)}
-                    </span>
-                  ))}
-                </div>
-
-                <div style={{ fontSize: "11px", color: "var(--cl-gray-dim)", marginBottom: "4px" }}>
-                  Come back tomorrow for a new puzzle!
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: "16px",
-                    marginTop: "16px",
-                  }}
-                >
-                  <WinStreakLine gameId="chainlink" accentColor="var(--cl-green)" />
-                  <ShareResult
-                    gameId="chainlink"
-                    text={chainLinkShare(wordStatuses, wordAttempts, revealedLetters, shareDate())}
-                  />
-                  <OtherDailies currentGameId="chainlink" />
-                </div>
-              </div>
-            </DailyCompleteOverlay>
-          ) : (
-            showCompleteOverlay && (
-              <div
-                className="anim-fade-slide-up"
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  zIndex: 10,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: "16px",
-                  background: "var(--cl-overlay)",
-                  backdropFilter: "blur(6px)",
-                  borderRadius: "6px",
-                }}
-              >
-                <div
-                  style={{
-                    width: "100%",
-                    padding: "28px 24px",
-                    textAlign: "center",
-                    border: "2px solid var(--cl-green)",
-                    background: "var(--cl-card)",
-                    borderRadius: "6px",
-                  }}
-                >
-                  <div style={{ fontSize: "32px", marginBottom: "8px" }}>&#9670;</div>
-                  <h2 style={{ fontSize: "22px", fontWeight: 700, color: "var(--cl-green)", margin: "0 0 20px" }}>
-                    Chain Complete!
-                  </h2>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "center", marginBottom: "20px" }}>
-                    {puzzleWords.slice(1).map((w, i) => (
-                      <span
-                        key={i}
-                        style={{
-                          fontSize: "13px",
-                          padding: "6px 14px",
-                          background: "var(--cl-border)",
-                          borderRadius: "6px",
-                          color: "var(--cl-green)",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {formatPair(puzzleWords[i], w)}
-                      </span>
-                    ))}
-                  </div>
-                  <Link
-                    href="/"
-                    style={{
-                      display: "inline-block",
-                      textDecoration: "none",
-                      background: "var(--cl-gray)",
-                      color: "#ffffff",
-                      padding: "10px 24px",
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      borderRadius: "6px",
-                      letterSpacing: "0.04em",
-                    }}
-                  >
-                    &larr; Back
-                  </Link>
-                </div>
+                </ChainResult>
               </div>
             )
           )}
@@ -1064,38 +596,61 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
 
         {/* ---- Feedback ---- */}
         {feedback && (
-          <div
-            key={feedback.type + feedback.message}
-            className="anim-pop-in"
-            style={{
-              textAlign: "center",
-              padding: "10px 16px",
-              marginBottom: "16px",
-              fontSize: "13px",
-              fontWeight: 600,
-              color:
-                feedback.type === "correct" ? "var(--cl-green)"
-                : feedback.type === "hint" ? "var(--cl-yellow)"
-                : "#ff6b6b",
-              background:
-                feedback.type === "correct" ? "rgba(106,170,100,0.1)"
-                : feedback.type === "hint" ? "rgba(201,180,88,0.1)"
-                : "rgba(255,107,107,0.08)",
-              border: `1px solid ${
-                feedback.type === "correct" ? "rgba(106,170,100,0.25)"
-                : feedback.type === "hint" ? "rgba(201,180,88,0.25)"
-                : "rgba(255,107,107,0.2)"
-              }`,
-              borderRadius: "6px",
-              transition: "opacity 0.3s ease",
-            }}
-          >
+          <div key={feedback.type + feedback.message} className={`cl-feedback anim-pop-in is-${feedback.type}`}>
             {feedback.message}
           </div>
         )}
 
+        {!isOver && (
+          <p className="cl-tip">
+            Each word pairs with the one before it, like <b>apple juice</b>, then <b>juice box</b>.
+          </p>
+        )}
       </div>
       )}
     </>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Finish screen                                                      */
+/* ------------------------------------------------------------------ */
+
+function resultLead(won: boolean, summary: ChainSummary): string {
+  if (!won) return `You got ${summary.solved} of ${summary.total}. Here is the full chain.`;
+  const plural = (n: number, one: string, many: string) => (n === 0 ? `no ${many}` : `${n} ${n === 1 ? one : many}`);
+  return `Solved with ${plural(summary.misses, "miss", "misses")} and ${plural(summary.hints, "hint", "hints")}.`;
+}
+
+function ChainResult({
+  won,
+  summary,
+  children,
+}: {
+  won: boolean;
+  summary: ChainSummary;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="cl-result">
+      <div className={`cl-badge${won ? "" : " is-bad"}`} aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+          {won ? <path d="M5 12.5l4.5 4.5L19 7" /> : <path d="M6.5 6.5l11 11M17.5 6.5l-11 11" />}
+        </svg>
+      </div>
+      <h2>{won ? "Chain complete" : "Out of tries"}</h2>
+      <p className="cl-result-lead">{resultLead(won, summary)}</p>
+
+      <ol className="cl-mini">
+        {summary.rows.map((row, i) => (
+          <li key={i} className={`is-${row.outcome}`}>
+            {capitalize(row.word)}
+            {row.label && <em>{row.label}</em>}
+          </li>
+        ))}
+      </ol>
+
+      {children}
+    </div>
   );
 }

@@ -619,22 +619,6 @@ body {
     padding-bottom: max(48px, env(safe-area-inset-bottom)) !important;
   }
 
-  .cl-word-row {
-    padding: 12px 14px !important;
-  }
-
-  .cl-word-letters {
-    flex-wrap: wrap;
-    min-width: 0;
-    overflow: hidden;
-  }
-
-  .cl-hint-banner {
-    flex-direction: column !important;
-    text-align: center;
-    gap: 4px !important;
-  }
-
   .bd-answers {
     grid-template-columns: 1fr !important;
   }

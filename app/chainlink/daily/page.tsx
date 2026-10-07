@@ -2,20 +2,8 @@ import ChainlinkGame from "@/components/chainlink/game";
 
 export default function DailyPuzzlePage() {
   return (
-    <main
-      className="game-page"
-      style={{
-        minHeight: "100vh",
-        background: "var(--cl-bg)",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        padding: "32px 20px 64px",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      <div style={{ width: "100%", maxWidth: "560px", position: "relative", zIndex: 1 }}>
+    <main className="game-page cl-page">
+      <div className="cl-col">
         <ChainlinkGame mode="daily" />
       </div>
     </main>
