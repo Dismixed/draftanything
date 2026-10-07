@@ -209,13 +209,24 @@ async function buildClueForEntry(
   return { clue: withLineupMetadata(buildImageClue(entry.clue_type, label, candidates, rank), entry) };
 }
 
+/** The name shown under a person's photo: the article title without qualifiers. */
+export function personDisplayName(title: string, country: string): string {
+  return title
+    .replace(/\s*\(.*\)$/, "")
+    .replace(new RegExp(`\\s+of\\s+${country}$`, "i"), "")
+    .trim();
+}
+
 /**
  * Adds what the lineup and the game read from a clue: its difficulty and,
  * for a person, the name shown under the photo. Both travel in metadata,
  * which reaches the player; the article title does not.
  */
 export function withLineupMetadata(clue: Clue, entry: SeedEntryRow): Clue {
-  const caption = entry.clue_type === "person" ? entry.text_content?.trim() : undefined;
+  const caption =
+    entry.clue_type === "person"
+      ? entry.text_content?.trim() || personDisplayName(entry.wiki_title ?? "", entry.country_common)
+      : undefined;
   return {
     ...clue,
     metadata: {
