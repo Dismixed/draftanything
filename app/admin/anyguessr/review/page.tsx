@@ -54,7 +54,6 @@ export default function AnyGuessrReviewPage() {
   const [search, setSearch] = useState("");
   const [warningsOnly, setWarningsOnly] = useState(false);
   const [page, setPage] = useState(0);
-  const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
   const [bulkArmed, setBulkArmed] = useState(false);
 
   useEffect(() => {
@@ -79,8 +78,19 @@ export default function AnyGuessrReviewPage() {
     };
   }, []);
 
+  /**
+   * Applies a change to the card at once and saves it in the background, so
+   * reviewing is not paced by the network. A failed save puts the card back.
+   */
   const patch = useCallback(async (id: string, change: Partial<ReviewEntry>) => {
-    setBusyIds((prev) => new Set(prev).add(id));
+    let previous: ReviewEntry | undefined;
+    setEntries((prev) =>
+      prev.map((e) => {
+        if (e.id !== id) return e;
+        previous = e;
+        return { ...e, ...change };
+      }),
+    );
     try {
       const res = await fetch(`/api/admin/anyguessr/seed/${id}`, {
         method: "PATCH",
@@ -88,15 +98,9 @@ export default function AnyGuessrReviewPage() {
         body: JSON.stringify(change),
       });
       if (!res.ok) throw new Error("Failed to save");
-      setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, ...change } : e)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save");
-    } finally {
-      setBusyIds((prev) => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
+      setEntries((prev) => prev.map((e) => (e.id === id && previous ? previous : e)));
+      setError(err instanceof Error ? `${err.message}; the change was undone.` : "Failed to save");
     }
   }, []);
 
@@ -140,7 +144,20 @@ export default function AnyGuessrReviewPage() {
       return;
     }
     setBulkArmed(false);
-    for (const e of bulkTargets) await patch(e.id, { status: "approved" });
+    const ids = bulkTargets.map((e) => e.id);
+    const before = entries;
+    setEntries((prev) => prev.map((e) => (ids.includes(e.id) ? { ...e, status: "approved" } : e)));
+    try {
+      const res = await fetch("/api/admin/anyguessr/seed", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "set_status", ids, status: "approved" }),
+      });
+      if (!res.ok) throw new Error("Failed to approve");
+    } catch (err) {
+      setEntries(before);
+      setError(err instanceof Error ? `${err.message}; nothing was changed.` : "Failed to approve");
+    }
   }
 
   return (
@@ -203,7 +220,7 @@ export default function AnyGuessrReviewPage() {
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "14px" }}>
           {shown.map((entry) => (
-            <ClueCard key={entry.id} entry={entry} busy={busyIds.has(entry.id)} onPatch={patch} />
+            <ClueCard key={entry.id} entry={entry} onPatch={patch} />
           ))}
         </div>
       )}
@@ -227,11 +244,9 @@ export default function AnyGuessrReviewPage() {
 
 function ClueCard({
   entry,
-  busy,
   onPatch,
 }: {
   entry: ReviewEntry;
-  busy: boolean;
   onPatch: (id: string, change: Partial<ReviewEntry>) => Promise<void>;
 }) {
   const warnings = reviewWarnings(entry);
@@ -240,7 +255,7 @@ function ClueCard({
   const title = isLanguage ? entry.text_content : entry.wiki_title;
 
   return (
-    <article style={{ background: "#1c1c1e", border: "1px solid #2c2c2e", borderRadius: "12px", overflow: "hidden", opacity: busy ? 0.6 : 1 }}>
+    <article style={{ background: "#1c1c1e", border: "1px solid #2c2c2e", borderRadius: "12px", overflow: "hidden" }}>
       <div style={{ height: "190px", background: "#121213", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {isLanguage ? (
           <p style={{ fontSize: "24px", textAlign: "center", padding: "0 16px", margin: 0 }}>{entry.text_content}</p>
@@ -302,8 +317,7 @@ function ClueCard({
             <button
               key={difficulty}
               type="button"
-              disabled={busy}
-              onClick={() => void onPatch(entry.id, { difficulty })}
+                            onClick={() => void onPatch(entry.id, { difficulty })}
               style={{ ...chip, flex: 1, padding: "5px 0", borderColor: entry.difficulty === difficulty ? "#5bc0de" : "#3a3a3c", color: entry.difficulty === difficulty ? "#5bc0de" : "#c7c7cc" }}
             >
               {difficulty}
@@ -312,10 +326,10 @@ function ClueCard({
         </div>
 
         <div style={{ display: "flex", gap: "6px", marginTop: "8px" }}>
-          <button type="button" disabled={busy || entry.status === "approved"} onClick={() => void onPatch(entry.id, { status: "approved" })} style={{ ...button, flex: 1, borderColor: "#6aaa64", color: "#6aaa64" }}>
+          <button type="button" disabled={entry.status === "approved"} onClick={() => void onPatch(entry.id, { status: "approved" })} style={{ ...button, flex: 1, borderColor: "#6aaa64", color: "#6aaa64" }}>
             Approve
           </button>
-          <button type="button" disabled={busy || entry.status === "rejected"} onClick={() => void onPatch(entry.id, { status: "rejected" })} style={{ ...button, flex: 1, borderColor: "#5a2c2c", color: "#ff6b6b" }}>
+          <button type="button" disabled={entry.status === "rejected"} onClick={() => void onPatch(entry.id, { status: "rejected" })} style={{ ...button, flex: 1, borderColor: "#5a2c2c", color: "#ff6b6b" }}>
             Reject
           </button>
         </div>
