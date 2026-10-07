@@ -10,6 +10,7 @@ import {
 import { GameBackLink } from "@/components/ui/game-back-link";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
 import { OtherDailies } from "@/components/daily/other-dailies";
+import { ballKnowledgeShare } from "@/lib/share/results";
 import { DailyCompleteShell } from "@/components/daily/daily-complete-shell";
 import { useGameHowItWorks } from "@/lib/game-how-it-works";
 import { useTheme, setThemeColorOverride } from "@/lib/theme/theme-context";
@@ -340,7 +341,7 @@ export default function BallKnowledgeGame({
     };
   }, []);
 
-  const shareText = `I named ${score} ${score === 1 ? "thing" : "things"} in "${category}" on Ball Knowledge. Think you know more? Play on Stim Games.`;
+  const shareText = ballKnowledgeShare(category, score);
 
   const copyShareText = async (platform: string) => {
     try {

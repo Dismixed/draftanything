@@ -12,6 +12,8 @@ import Link from "next/link";
 import { GameTitle } from "@/components/ui/game-title";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
 import { OtherDailies } from "@/components/daily/other-dailies";
+import { ShareResult } from "@/components/daily/share-result";
+import { hotTakesShare } from "@/lib/share/results";
 import { DailyCompleteShell } from "@/components/daily/daily-complete-shell";
 import { useGameHowItWorks } from "@/lib/game-how-it-works";
 import { HotTakesImage } from "@/components/hot-takes/optimized-image";
@@ -265,9 +267,11 @@ export default function HotTakesGame({
     return { rows, avg, hottest };
   }, [submitted, category.items, placements, consensus]);
 
-  const shareText = results
-    ? `Hot Takes — ${category.name}\nI'm ${results.avg}% aligned with the crowd today. Think you can do better?`
-    : "";
+  // Shares the player's own S tier. The crowd percentages shown in the game are simulated.
+  const shareText = hotTakesShare(
+    category.name,
+    category.items.filter((item) => placements[item.id] === "S").map((item) => item.label),
+  );
 
   useEffect(() => {
     if (!submitted) {
@@ -447,17 +451,7 @@ export default function HotTakesGame({
             ))}
 
             <div style={{ marginTop: 20 }}>
-              <button
-                type="button"
-                className="hot-takes-btn hot-takes-btn-ghost"
-                onClick={() => {
-                  if (shareText) {
-                    void navigator.clipboard?.writeText(shareText);
-                  }
-                }}
-              >
-                Copy share text
-              </button>
+              <ShareResult gameId="hot-takes" text={shareText} />
             </div>
 
             <OtherDailies currentGameId="hot-takes" />

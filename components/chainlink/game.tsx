@@ -11,6 +11,9 @@ import { triggerAnimation } from "@/lib/motion/trigger-class";
 import { GameTitle } from "@/components/ui/game-title";
 import TutorialModal from "./tutorial-modal";
 import { OtherDailies } from "@/components/daily/other-dailies";
+import { ShareResult } from "@/components/daily/share-result";
+import { chainLinkShare } from "@/lib/share/results";
+import { getDateString as shareDate } from "@/lib/streak/date";
 import { DailyCompleteOverlay } from "@/components/daily/daily-complete-overlay";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
 import { recordDailyCompletion } from "@/lib/streak/storage";
@@ -836,6 +839,10 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                   }}
                 >
                   <WinStreakLine gameId="chainlink" accentColor="var(--cl-green)" />
+                  <ShareResult
+                    gameId="chainlink"
+                    text={chainLinkShare(wordStatuses, wordAttempts, shareDate())}
+                  />
                   <OtherDailies currentGameId="chainlink" />
                 </div>
               </div>
@@ -961,6 +968,10 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                   }}
                 >
                   <WinStreakLine gameId="chainlink" accentColor="var(--cl-green)" />
+                  <ShareResult
+                    gameId="chainlink"
+                    text={chainLinkShare(wordStatuses, wordAttempts, shareDate())}
+                  />
                   <OtherDailies currentGameId="chainlink" />
                 </div>
               </div>

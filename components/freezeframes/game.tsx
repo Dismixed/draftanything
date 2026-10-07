@@ -36,6 +36,9 @@ import { fireConfetti } from "@/lib/motion/confetti";
 import { useSound } from "@/lib/audio/sound-context";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
 import { OtherDailies } from "@/components/daily/other-dailies";
+import { ShareResult } from "@/components/daily/share-result";
+import { freezeFramesShare } from "@/lib/share/results";
+import { getDateString as shareDate } from "@/lib/streak/date";
 import { DailyCompleteShell } from "@/components/daily/daily-complete-shell";
 import { useGameHowItWorks } from "@/lib/game-how-it-works";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
@@ -589,6 +592,11 @@ export default function FreezeFramesGame() {
 
           <WinStreakLine gameId="freezeframes" accentColor="#a855f7" />
 
+          <ShareResult
+            gameId="freezeframes"
+            text={freezeFramesShare(null, playedScore ?? 0, shareDate())}
+          />
+
           <OtherDailies currentGameId="freezeframes" />
         </div>
       </div>
@@ -774,6 +782,11 @@ export default function FreezeFramesGame() {
         ) : null}
 
         <WinStreakLine gameId="freezeframes" accentColor="#a855f7" />
+
+        <ShareResult
+          gameId="freezeframes"
+          text={freezeFramesShare(roundResults, totalScore, shareDate())}
+        />
 
         <OtherDailies currentGameId="freezeframes" />
 

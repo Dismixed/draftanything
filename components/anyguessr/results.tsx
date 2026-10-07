@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import ClueCard from "@/components/anyguessr/clue-card";
 import { OtherDailies } from "@/components/daily/other-dailies";
+import { ShareResult } from "@/components/daily/share-result";
+import { anyGuessrShare } from "@/lib/share/results";
 import { DAILY_CLUE_TYPE_LABEL, formatDistanceKm } from "@/lib/anyguessr/daily";
 import { useCountUp } from "@/lib/motion/count-up";
 import { useAnyGuessrStore } from "@/lib/anyguessr/store";
@@ -126,6 +128,10 @@ export default function Results({
         </div>
       ) : null}
 
+      <ShareResult
+        gameId="anyguessr"
+        text={anyGuessrShare(rounds, store.totalScore, store.date)}
+      />
       <OtherDailies currentGameId="anyguessr" />
 
       <div className="ag-results-footer">
