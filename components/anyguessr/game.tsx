@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
-import { DAILY_CLUE_TYPE_LABEL, DAILY_ROUND_COUNT } from "@/lib/anyguessr/daily";
+import { DAILY_CLUE_TYPE_LABEL } from "@/lib/anyguessr/daily";
+import { LINEUP_ROUNDS } from "@/lib/anyguessr/lineup";
 import { useAnyGuessrStore } from "@/lib/anyguessr/store";
 import { useSound } from "@/lib/audio/sound-context";
 import { fireConfetti } from "@/lib/motion/confetti";
@@ -152,7 +153,7 @@ export default function AnyGuessrGame() {
 
   const howItWorksModal = showHowItWorks ? (
     <GameHowItWorksModal
-      subtitle={`${DAILY_ROUND_COUNT} rounds · One puzzle a day`}
+      subtitle={`${store.dailyRounds.length || LINEUP_ROUNDS} rounds · One puzzle a day`}
       rules={ANYGUESSR_HOW_IT_WORKS}
       onDismiss={() => {
         dismissHowItWorks();
@@ -331,7 +332,7 @@ export default function AnyGuessrGame() {
             <div style={{ marginTop: "20px" }}>
               <ProgressDots
                 current={Math.max(roundsComplete, store.currentRound + 1)}
-                total={DAILY_ROUND_COUNT}
+                total={store.dailyRounds.length}
                 active={store.currentRound}
               />
             </div>

@@ -5,8 +5,6 @@ import { generateJson } from "@/features/ai/gemini";
 import type { SeedClueType } from "./seed-types";
 
 const ClueTypeEnum = z.enum([
-  "currency",
-  "jersey",
   "brand",
   "landmark",
   "written_language",
@@ -48,8 +46,6 @@ export async function proposeSeedEntriesWithLlm(options: {
       "Each clue type needs a distinct, recognizable, country-specific reference.",
       "Prefer articles with strong lead photos on Wikipedia.",
       "For written_language return a short native script sample or greeting in text_content (not wiki_title).",
-      "For currency prefer a banknote/coin article title, not just the currency code.",
-      "For jersey use the most iconic national sports kit article (football unless another sport dominates).",
       "For brand pick a company strongly associated with the country, not a global multinational.",
       "For wildlife pick the national animal, an endemic species, or the most iconic wild animal with a strong Wikipedia lead photo.",
       "Return exactly one entry per clue type.",

@@ -11,6 +11,9 @@
  *             data/anyguessr/staged-changes.json instead of applying them
  *   images  — slowly fetch and vision-check images for this run's drafts,
  *             moving each to needs_review (or needs_image)
+ *   staged  — apply data/anyguessr/staged-changes.json: replaced clues go
+ *             back to draft for images and review, removed ones are rejected
+ *   flags   — give every pool country an approved flag clue
  *
  * Usage:
  *   npx tsx scripts/anyguessr-bulk-seed.ts plan   data/anyguessr/proposals-2026-10.json
@@ -40,8 +43,8 @@ const MAX_CANDIDATES = 4;
 const IMAGE_DELAY_MS = 1500;
 
 const [mode, proposalsPath] = process.argv.slice(2);
-if (!["plan", "apply", "images"].includes(mode) || !proposalsPath) {
-  console.error("Usage: npx tsx scripts/anyguessr-bulk-seed.ts <plan|apply|images> <proposals.json>");
+if (!["plan", "apply", "images", "staged", "flags"].includes(mode) || !proposalsPath) {
+  console.error("Usage: npx tsx scripts/anyguessr-bulk-seed.ts <plan|apply|images|staged|flags> <proposals.json>");
   process.exit(1);
 }
 
@@ -79,7 +82,74 @@ async function main() {
   const proposals = JSON.parse(readFileSync(proposalsPath, "utf8")) as ClueProposal[];
   const existing = await listSeedEntries(db, { limit: 5000 });
 
+  const stagedFields = (p: ClueProposal) => ({
+    wiki_title: p.wiki_title ?? null,
+    text_content: p.clue_type === "person" && p.wiki_title ? displayName(p.wiki_title, p.country) : (p.text ?? null),
+    difficulty: p.difficulty,
+    notes: [p.note, p.language && `${p.language}: "${p.english}"`].filter(Boolean).join(" | ") || null,
+    // A language clue has no image to wait for.
+    status: p.clue_type === "written_language" ? ("needs_review" as const) : ("draft" as const),
+  });
+
+
   if (mode === "images") return fetchImages(db, existing.filter((e) => e.proposed_by === RUN_TAG && e.status === "draft"));
+
+  if (mode === "flags") {
+    const { POOL_COUNTRIES } = await import("../lib/anyguessr/countries");
+    const { getFlagUrlForCca3 } = await import("../lib/anyguessr/country-geo");
+    const have = new Set(existing.filter((e) => e.clue_type === "flag").map((e) => e.cca3));
+    let created = 0;
+    for (const country of POOL_COUNTRIES) {
+      if (have.has(country.cca3)) continue;
+      const flagUrl = getFlagUrlForCca3(country.cca3);
+      if (!flagUrl) {
+        console.warn(`No flag image for ${country.common}`);
+        continue;
+      }
+      // A flag is unambiguous and needs no review.
+      await upsertSeedEntry(db, {
+        cca3: country.cca3,
+        country_common: country.common,
+        clue_type: "flag",
+        status: "approved",
+        difficulty: "easy",
+        image_candidates: [{ image_url: flagUrl, thumb_url: flagUrl, source: "flagcdn" }],
+        proposed_by: RUN_TAG,
+      });
+      created++;
+    }
+    console.log(`Created ${created} approved flag clues.`);
+    return;
+  }
+
+  if (mode === "staged") {
+    const staged = JSON.parse(readFileSync(STAGED_PATH, "utf8")) as import("../lib/anyguessr/seed-plan").StagedChange[];
+    const byId = new Map(existing.map((e) => [e.id, e]));
+    let replaced = 0;
+    let removed = 0;
+    for (const change of staged) {
+      const current = byId.get(change.id);
+      // Skip anything already applied or since changed by hand.
+      if (!current || current.status !== "approved") continue;
+      if (!change.to) {
+        await updateSeedEntry(db, change.id, { status: "rejected" });
+        removed++;
+        continue;
+      }
+      await updateSeedEntry(db, change.id, {
+        ...stagedFields(change.to),
+        image_candidates: [],
+        selected_candidate_index: 0,
+        vision_pass: null,
+        vision_notes: null,
+      });
+      const { error } = await db.from("ag_seed_entries").update({ proposed_by: RUN_TAG }).eq("id", change.id);
+      if (error) throw new Error(error.message);
+      replaced++;
+    }
+    console.log(`Staged changes applied: ${replaced} clues replaced (now drafts), ${removed} removed.`);
+    return;
+  }
 
   const plan = planSeedChanges(existing, proposals);
   console.log(
@@ -94,20 +164,11 @@ async function main() {
     return;
   }
 
-  const fields = (p: ClueProposal) => ({
-    wiki_title: p.wiki_title ?? null,
-    text_content: p.clue_type === "person" && p.wiki_title ? displayName(p.wiki_title, p.country) : (p.text ?? null),
-    difficulty: p.difficulty,
-    notes: [p.note, p.language && `${p.language}: "${p.english}"`].filter(Boolean).join(" | ") || null,
-    // A language clue has no image to wait for.
-    status: p.clue_type === "written_language" ? ("needs_review" as const) : ("draft" as const),
-  });
-
   for (const p of plan.create) {
-    await upsertSeedEntry(db, { cca3: p.cca3, country_common: p.country, clue_type: p.clue_type, proposed_by: RUN_TAG, ...fields(p) });
+    await upsertSeedEntry(db, { cca3: p.cca3, country_common: p.country, clue_type: p.clue_type, proposed_by: RUN_TAG, ...stagedFields(p) });
   }
   for (const { id, proposal } of plan.replace) {
-    await updateSeedEntry(db, id, { ...fields(proposal), image_candidates: [], selected_candidate_index: 0, vision_pass: null, vision_notes: null });
+    await updateSeedEntry(db, id, { ...stagedFields(proposal), image_candidates: [], selected_candidate_index: 0, vision_pass: null, vision_notes: null });
     // updateSeedEntry cannot set proposed_by; mark the row so `images` picks it up.
     const { error } = await db.from("ag_seed_entries").update({ proposed_by: RUN_TAG }).eq("id", id);
     if (error) throw new Error(error.message);

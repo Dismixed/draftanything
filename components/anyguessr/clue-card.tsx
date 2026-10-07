@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import type { ClientClue } from "@/lib/anyguessr/types";
 
 const CLUE_TYPE_LABEL: Record<string, string> = {
-  environment: "Environment",
-  person: "Person / Identity",
+  environment: "Place",
+  person: "Person",
   food: "Food",
   written_language: "Written Language",
-  landmark: "Landmark",
+  landmark: "Place",
   flag: "Flag",
   currency: "Currency",
   jersey: "Jersey",
@@ -150,6 +150,26 @@ export default function ClueCard({
               display: "block",
             }}
           />
+        )}
+
+        {imageUrl && typeof clue.metadata?.caption === "string" && (
+          // A person's name: the round asks where they are from, not who they are.
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              bottom: 0,
+              padding: "28px 14px 10px",
+              background: "linear-gradient(transparent, rgba(0, 0, 0, 0.78))",
+              color: "#fff",
+              fontSize: "16px",
+              fontWeight: 600,
+              textAlign: "center",
+            }}
+          >
+            {clue.metadata.caption}
+          </div>
         )}
 
         {audioUrl && (

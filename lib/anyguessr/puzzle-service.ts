@@ -10,13 +10,13 @@ import type {
   Puzzle,
 } from "./types";
 import {
-  buildDailyRoundsFromPuzzles,
-  canFillDailyRounds,
+  buildDailyRound,
   dailySessionId,
-  DAILY_ROUND_COUNT,
-  pickDailyPuzzles,
+  isDailyCluePlayable,
+  MAX_DAILY_ROUNDS,
   scoreFromDistanceKm,
 } from "./daily";
+import { LINEUP_ROUNDS, pickLineup, type LineupClue, type LineupDay, type LineupDifficulty } from "./lineup";
 import { expandAltAnswers, resolveAliasToCca3 } from "./country-aliases";
 import { getLatLngForCca3, haversineKm, resolveGuessToCca3 } from "./geo";
 import { looseEqual } from "./normalize";
@@ -125,6 +125,52 @@ async function loadStoredLineup(
   return data ? (data.puzzle as unknown as ClientDailyPuzzle) : null;
 }
 
+/** How far back stored lineups are read when avoiding repeats. */
+const RECENT_LINEUP_DAYS = 30;
+
+const DIFFICULTIES: readonly string[] = ["easy", "medium", "hard"];
+
+/** Every playable clue in the approved puzzles, one puzzle per country. */
+function cluePool(rows: AgPuzzleRow[]): LineupClue[] {
+  const pool: LineupClue[] = [];
+  for (const row of rows) {
+    for (const clue of row.clues ?? []) {
+      if (!isDailyCluePlayable(clue.type, clue)) continue;
+      const rated = clue.metadata?.difficulty;
+      pool.push({
+        puzzleId: row.id,
+        clueType: clue.type,
+        // A flag opens every game as an easy round; anything unrated is treated as medium.
+        difficulty:
+          clue.type === "flag"
+            ? "easy"
+            : typeof rated === "string" && DIFFICULTIES.includes(rated)
+              ? (rated as LineupDifficulty)
+              : "medium",
+      });
+    }
+  }
+  return pool;
+}
+
+/** What the days before `date` actually showed, from the stored lineups. */
+async function loadRecentLineups(db: SupabaseClient<Database>, date: string): Promise<LineupDay[]> {
+  const since = new Date(`${date}T12:00:00Z`);
+  since.setUTCDate(since.getUTCDate() - RECENT_LINEUP_DAYS);
+
+  const { data, error } = await db
+    .from("ag_daily_lineups")
+    .select("play_date, puzzle")
+    .gte("play_date", since.toISOString().slice(0, 10))
+    .lt("play_date", date);
+  if (error) throw error;
+
+  return (data ?? []).map((row) => ({
+    date: row.play_date,
+    rounds: (row.puzzle as unknown as ClientDailyPuzzle).rounds ?? [],
+  }));
+}
+
 /**
  * The daily for `date`. The first caller computes the lineup from the
  * approved pool and stores it; every later caller gets the stored copy, so
@@ -147,20 +193,21 @@ export async function getDailyPuzzle(
     .limit(500);
 
   if (apprErr) throw apprErr;
-  if (!approved || approved.length < DAILY_ROUND_COUNT) return null;
+  const rows = (approved ?? []) as unknown as AgPuzzleRow[];
 
-  const rows = approved as unknown as AgPuzzleRow[];
-  if (!canFillDailyRounds(rows)) return null;
+  const picked = pickLineup(cluePool(rows), targetDate, await loadRecentLineups(db, targetDate));
+  if (!picked) return null;
 
-  const picked = pickDailyPuzzles(rows, targetDate);
-
+  const byId = new Map(rows.map((row) => [row.id, row]));
   const clientPuzzle: ClientDailyPuzzle = {
     id: dailySessionId(targetDate),
     date: targetDate,
     mode: "daily",
     answer_type: "country",
-    totalRounds: DAILY_ROUND_COUNT,
-    rounds: buildDailyRoundsFromPuzzles(picked, targetDate),
+    totalRounds: picked.length,
+    rounds: picked.map((clue, roundIndex) =>
+      buildDailyRound(byId.get(clue.puzzleId)!, clue.clueType, roundIndex, targetDate),
+    ),
     difficulty: "medium",
   };
 
@@ -187,7 +234,7 @@ export async function validateDailyGuess(
   guess: string,
   roundIndex: number,
 ): Promise<DailyGuessResult> {
-  if (roundIndex < 0 || roundIndex >= DAILY_ROUND_COUNT) {
+  if (roundIndex < 0 || roundIndex >= MAX_DAILY_ROUNDS) {
     throw new Error("Invalid round index");
   }
 
@@ -231,7 +278,7 @@ export async function validateDailyGuess(
           : 20_000;
 
   const roundScore = scoreFromDistanceKm(distanceKm);
-  const completed = roundIndex >= DAILY_ROUND_COUNT - 1;
+  const completed = roundIndex >= LINEUP_ROUNDS - 1;
 
   return {
     exact,
@@ -256,7 +303,7 @@ export async function revealDailyRound(
   puzzleId: string,
   roundIndex: number,
 ): Promise<DailyGuessResult> {
-  if (roundIndex < 0 || roundIndex >= DAILY_ROUND_COUNT) {
+  if (roundIndex < 0 || roundIndex >= MAX_DAILY_ROUNDS) {
     throw new Error("Invalid round index");
   }
 
@@ -280,7 +327,7 @@ export async function revealDailyRound(
   if (!answerCca3) throw new Error("Puzzle missing country id");
 
   const answerCoords = getLatLngForCca3(answerCca3);
-  const completed = roundIndex >= DAILY_ROUND_COUNT - 1;
+  const completed = roundIndex >= LINEUP_ROUNDS - 1;
 
   return {
     exact: false,

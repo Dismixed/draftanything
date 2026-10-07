@@ -10,11 +10,7 @@ import {
   listSeedEntries,
 } from "@/lib/anyguessr/seed-db";
 import { REVIEW_COLUMNS, toReviewEntry } from "@/lib/anyguessr/review";
-import {
-  computeDailyUsageIndex,
-  dailyUsageForSeedEntry,
-  type DailyPickRow,
-} from "@/lib/anyguessr/daily-usage";
+import { dailyUsageForSeedEntry, usageIndexFromLineups } from "@/lib/anyguessr/daily-usage";
 
 export async function GET(req: NextRequest) {
   const admin = await checkAdmin();
@@ -47,24 +43,32 @@ export async function GET(req: NextRequest) {
 
     const { data: puzzles, error: puzzleErr } = await db
       .from("ag_puzzles")
-      .select("id, answer_id, clues")
+      .select("id, answer_id")
       .in("status", ["approved", "published"])
       .order("id", { ascending: true })
       .limit(500);
 
     if (puzzleErr) throw puzzleErr;
 
-    const puzzleRows = (puzzles ?? []) as unknown as DailyPickRow[];
-
     const puzzleIdByCca3: Record<string, string> = {};
-    for (const row of puzzleRows) {
+    for (const row of puzzles ?? []) {
       if (row.answer_id && !puzzleIdByCca3[row.answer_id]) {
         puzzleIdByCca3[row.answer_id] = row.id;
       }
     }
 
-    // Today only — rotation is computed live, not stored (nothing to reset in DB).
-    const dailyUsage = computeDailyUsageIndex(puzzleRows, { lookbackDays: 0 });
+    // Today's game, read from the stored lineup.
+    const today = new Date().toISOString().slice(0, 10);
+    const { data: lineup } = await db
+      .from("ag_daily_lineups")
+      .select("play_date, puzzle")
+      .eq("play_date", today)
+      .maybeSingle();
+    const dailyUsage = usageIndexFromLineups(
+      lineup
+        ? [{ date: lineup.play_date, rounds: (lineup.puzzle as { rounds?: { puzzleId: string; clueType: string }[] }).rounds ?? [] }]
+        : [],
+    );
     const entriesWithUsage = entries.map((entry) => ({
       ...entry,
       daily_dates: dailyUsageForSeedEntry(

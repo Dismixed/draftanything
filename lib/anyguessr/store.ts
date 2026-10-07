@@ -4,7 +4,6 @@ import { recordDailyCompletion } from "@/lib/streak/storage";
 import { readDailyPuzzleCache, writeDailyPuzzleCache } from "@/lib/daily-puzzle-cache";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { DAILY_ROUND_COUNT } from "./daily";
 import { isValidLatLng } from "./map-projection";
 import {
   STORAGE_VERSION,
@@ -58,7 +57,7 @@ function isToday(dateStr: string | undefined | null): boolean {
 
 function hasValidDailyRounds(rounds: ClientDailyRound[]): boolean {
   return (
-    rounds.length === DAILY_ROUND_COUNT &&
+    rounds.length > 0 &&
     rounds.every((r) => typeof r.puzzleId === "string" && r.puzzleId.length > 0)
   );
 }
@@ -224,7 +223,7 @@ export const useAnyGuessrStore = create<AnyGuessrStore>()(
         const roundResults = [...get().roundResults, roundResult];
         const totalScore = get().totalScore + res.roundScore;
         const currentRound = get().currentRound;
-        const isLastRound = currentRound >= DAILY_ROUND_COUNT - 1;
+        const isLastRound = currentRound >= get().dailyRounds.length - 1;
 
         set({
           roundResults,
@@ -271,7 +270,7 @@ export const useAnyGuessrStore = create<AnyGuessrStore>()(
       advanceDailyRound: () => {
         const s = get();
         if (!isDailyState(s)) return;
-        if (s.currentRound >= DAILY_ROUND_COUNT - 1) return;
+        if (s.currentRound >= s.dailyRounds.length - 1) return;
         set({ currentRound: s.currentRound + 1, feedback: null });
       },
 
@@ -329,7 +328,7 @@ export const useAnyGuessrStore = create<AnyGuessrStore>()(
 
         const roundResults = [...get().roundResults, roundResult];
         const currentRound = get().currentRound;
-        const isLastRound = currentRound >= DAILY_ROUND_COUNT - 1;
+        const isLastRound = currentRound >= get().dailyRounds.length - 1;
 
         set({
           roundResults,

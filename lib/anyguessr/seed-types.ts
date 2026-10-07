@@ -1,7 +1,8 @@
-/** Image/text clue types from seed.ts (excludes auto-managed flag). */
+/**
+ * Image/text clue types from seed.ts (excludes auto-managed flag). Currency
+ * and jersey were retired: they showed the country's name. Old rows remain.
+ */
 export const SEED_CLUE_TYPES = [
-  "currency",
-  "jersey",
   "brand",
   "landmark",
   "written_language",

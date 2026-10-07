@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { DAILY_ROUND_CLUE_TYPES } from "@/lib/anyguessr/daily";
+import { LINEUP_ROUNDS } from "@/lib/anyguessr/lineup";
+
+const CLUE_TYPES = ["flag", "landmark", "environment", "food", "person", "brand", "wildlife"];
 import { getDailyPuzzle } from "@/lib/anyguessr/puzzle-service";
 
 const puzzle = (n: number) => ({
@@ -9,7 +11,7 @@ const puzzle = (n: number) => ({
   answer: `Country ${n}`,
   answer_id: `C${String(n).padStart(2, "0")}`,
   status: "approved",
-  clues: DAILY_ROUND_CLUE_TYPES.map((type) => ({
+  clues: CLUE_TYPES.map((type) => ({
     type,
     content: `${type} of country ${n}`,
     difficulty_rank: 1,
@@ -28,6 +30,12 @@ function lineupDb(state: { pool: ReturnType<typeof puzzle>[]; stored: Record<str
               eq: (_c: string, date: string) => ({
                 maybeSingle: async () => ({
                   data: state.stored[date] ? { puzzle: state.stored[date] } : null,
+                  error: null,
+                }),
+              }),
+              gte: () => ({
+                lt: async () => ({
+                  data: Object.entries(state.stored).map(([play_date, puzzle]) => ({ play_date, puzzle })),
                   error: null,
                 }),
               }),
@@ -57,7 +65,9 @@ describe("getDailyPuzzle", () => {
 
     const daily = await getDailyPuzzle(db, "2026-10-20");
 
-    expect(daily!.rounds).toHaveLength(DAILY_ROUND_CLUE_TYPES.length);
+    expect(daily!.rounds).toHaveLength(LINEUP_ROUNDS);
+    expect(daily!.totalRounds).toBe(LINEUP_ROUNDS);
+    expect(daily!.rounds[0].clueType).toBe("flag");
     expect(inserts).toHaveLength(1);
     expect(inserts[0].play_date).toBe("2026-10-20");
   });
@@ -91,5 +101,18 @@ describe("getDailyPuzzle", () => {
 
     expect(await getDailyPuzzle(db, "2026-10-20")).toBeNull();
     expect(inserts).toEqual([]);
+  });
+});
+
+describe("getDailyPuzzle repeat avoidance", () => {
+  it("does not repeat yesterday's countries when the pool allows", async () => {
+    const state = { pool: Array.from({ length: 30 }, (_, i) => puzzle(i + 1)), stored: {} as Record<string, unknown> };
+    const { db } = lineupDb(state);
+
+    const first = await getDailyPuzzle(db, "2026-10-20");
+    const second = await getDailyPuzzle(db, "2026-10-21");
+
+    const yesterday = new Set(first!.rounds.map((r) => r.puzzleId));
+    expect(second!.rounds.filter((r) => yesterday.has(r.puzzleId))).toEqual([]);
   });
 });
