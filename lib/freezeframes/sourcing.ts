@@ -1,4 +1,5 @@
 import "server-only";
+import { pickItunesHit, type ExpectedMedia } from "./match";
 
 import { fetchWithRetry } from "@/lib/anyguessr/async-pool";
 import type { RoundKey } from "./types";
@@ -36,6 +37,8 @@ export interface ResolveOptions {
   year?: number;
   /** Which frame to take; raise it to get a different frame for the same title. */
   variant?: number;
+  /** The intended song or album, to pick the right one among store search results. */
+  expected?: ExpectedMedia;
 }
 
 export function frameSeed(query: string, variant = 0): string {
@@ -289,21 +292,26 @@ async function resolveShow(query: string, options: ResolveOptions): Promise<Reso
 async function itunesSearch(
   term: string,
   entity: "song" | "album",
+  expected?: ExpectedMedia,
 ): Promise<ItunesTrack | null> {
+  // A combined "album artist" search ranks tributes and singles first, so
+  // when the artist is known, list that artist's albums and match the title.
+  const byArtist = entity === "album" && Boolean(expected?.artist);
   const qs = new URLSearchParams({
-    term,
+    term: byArtist ? expected!.artist! : term,
     entity,
-    limit: "5",
+    limit: byArtist ? "200" : expected ? "25" : "5",
     media: "all",
+    ...(byArtist ? { attribute: "artistTerm" } : {}),
   });
   const res = await fetchWithRetry(`${ITUNES_SEARCH}?${qs}`);
   if (!res.ok) return null;
   const data = (await res.json()) as { results?: ItunesTrack[] };
-  return data.results?.[0] ?? null;
+  return pickItunesHit(data.results ?? [], entity, expected);
 }
 
-async function resolveSong(query: string): Promise<ResolvedMedia | null> {
-  const hit = await itunesSearch(query, "song");
+async function resolveSong(query: string, options: ResolveOptions): Promise<ResolvedMedia | null> {
+  const hit = await itunesSearch(query, "song", options.expected);
   if (!hit?.trackName) return null;
 
   const year = yearFromDate(hit.releaseDate);
@@ -321,8 +329,8 @@ async function resolveSong(query: string): Promise<ResolvedMedia | null> {
   };
 }
 
-async function resolveAlbum(query: string): Promise<ResolvedMedia | null> {
-  const hit = await itunesSearch(query, "album");
+async function resolveAlbum(query: string, options: ResolveOptions): Promise<ResolvedMedia | null> {
+  const hit = await itunesSearch(query, "album", options.expected);
   if (!hit?.artistName) return null;
 
   return {
@@ -374,8 +382,8 @@ export async function resolveSeedMedia(
     let resolved: ResolvedMedia | null = null;
     if (roundKey === "movie") resolved = await resolveMovie(query, options);
     else if (roundKey === "show") resolved = await resolveShow(query, options);
-    else if (roundKey === "song") resolved = await resolveSong(query);
-    else if (roundKey === "album") resolved = await resolveAlbum(query);
+    else if (roundKey === "song") resolved = await resolveSong(query, options);
+    else if (roundKey === "album") resolved = await resolveAlbum(query, options);
 
     if (!resolved) {
       return {

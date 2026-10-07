@@ -23,6 +23,8 @@ function fold(text: string): string {
     .normalize("NFKD")
     .replace(/[̀-ͯ]/g, "")
     .replace(/\s*[([].*?[)\]]/g, "")
+    .replace(/\s+-\s+(single|ep)$/i, "")
+    .replace(/&/g, " and ")
     .toLowerCase()
     .replace(/^(the|a|an)\s+/, "")
     .replace(/[^a-z0-9]/g, "");
@@ -66,4 +68,21 @@ export function matchProblems(roundKey: RoundKey, expected: ExpectedMedia, found
     problems.push(`Matched the ${found.year} release, expected ${expected.year}`);
   }
   return problems;
+}
+
+/**
+ * Chooses among search results. A store search for "Nevermind Nirvana" can
+ * rank a tribute album first, so prefer the result that matches the intended
+ * artist and title, then the right artist alone, then the store's own order.
+ */
+export function pickItunesHit<T extends { artistName?: string; collectionName?: string; trackName?: string }>(
+  results: readonly T[],
+  entity: "song" | "album",
+  expected?: ExpectedMedia,
+): T | null {
+  if (!expected?.artist) return results[0] ?? null;
+
+  const byArtist = results.filter((hit) => hit.artistName && overlaps(hit.artistName, expected.artist!));
+  const titleOf = (hit: T) => (entity === "song" ? hit.trackName : hit.collectionName) ?? "";
+  return byArtist.find((hit) => sameText(titleOf(hit), expected.title)) ?? byArtist[0] ?? results[0] ?? null;
 }

@@ -36,6 +36,14 @@ describe("matchProblems", () => {
     expect(matchProblems("song", { title: "Dancing Queen", artist: "ABBA" }, { answer: "Dancing Queen (Remastered)", artist: "ABBA" })).toEqual([]);
   });
 
+  it("treats '&' and 'and' as the same, and ignores store suffixes like '- Single'", () => {
+    const expected = { title: "Ram", artist: "Paul and Linda McCartney" };
+    expect(matchProblems("album", expected, { answer: "Paul & Linda McCartney", albumName: "Ram" })).toEqual([]);
+    expect(
+      matchProblems("album", { title: "Mañana Será Bonito", artist: "Karol G" }, { answer: "KAROL G", albumName: "Mañana Será Bonito - EP" }),
+    ).toEqual([]);
+  });
+
   it("checks an album by its artist, which is the answer, and its title", () => {
     const expected = { title: "Nevermind", artist: "Nirvana" };
     expect(matchProblems("album", expected, { answer: "Nirvana", albumName: "Nevermind (Remastered)" })).toEqual([]);

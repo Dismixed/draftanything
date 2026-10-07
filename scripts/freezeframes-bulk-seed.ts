@@ -135,7 +135,10 @@ async function main() {
     const proposal = byKey.get(seedEntryKey(entry.round_key, entry.query_title));
     const isImageRound = entry.round_key !== "song";
     const notes: string[] = [];
-    let resolved = await resolveSeedMedia(entry.round_key, entry.query_title, { year: proposal?.expect.year });
+    let resolved = await resolveSeedMedia(entry.round_key, entry.query_title, {
+      year: proposal?.expect.year,
+      expected: proposal?.expect,
+    });
     if (entry.round_key === "song" || entry.round_key === "album") await sleep(ITUNES_DELAY_MS);
 
     let frameOk = !isImageRound;
