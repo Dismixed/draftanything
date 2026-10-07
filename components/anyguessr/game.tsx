@@ -6,6 +6,8 @@ import { DAILY_CLUE_TYPE_LABEL, DAILY_ROUND_COUNT } from "@/lib/anyguessr/daily"
 import { useAnyGuessrStore } from "@/lib/anyguessr/store";
 import { useSound } from "@/lib/audio/sound-context";
 import { fireConfetti } from "@/lib/motion/confetti";
+import { burstFrom } from "@/lib/motion/burst";
+import { impactRing } from "@/lib/motion/impact-ring";
 import { GameBackLink } from "@/components/ui/game-back-link";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
 import { GameTitle } from "@/components/ui/game-title";
@@ -38,6 +40,7 @@ export default function AnyGuessrGame() {
   const store = useAnyGuessrStore();
   const { play } = useSound();
   const celebratedRef = useRef(false);
+  const feedbackRef = useRef<HTMLDivElement>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerKey, setPickerKey] = useState(0);
   const [showResultsOverlay, setShowResultsOverlay] = useState(false);
@@ -123,6 +126,12 @@ export default function AnyGuessrGame() {
     const t = setTimeout(() => store.clearFeedback(), delay);
     return () => clearTimeout(t);
   }, [feedback, store, showRoundRecap]);
+
+  useEffect(() => {
+    if (!feedback || showRoundRecap || feedback.type !== "correct") return;
+    impactRing(feedbackRef.current, "var(--ag-accent)");
+    void burstFrom(feedbackRef.current, 1, "gold");
+  }, [feedback, showRoundRecap]);
 
   const handlePick = (name: string) => {
     setPickerOpen(false);
@@ -332,8 +341,16 @@ export default function AnyGuessrGame() {
 
       {feedback && !showRoundRecap && (
         <div
-          className={!isOver && feedback.type === "round" ? undefined : "anim-pop-in"}
+          ref={feedbackRef}
+          className={
+            feedback.type === "wrong"
+              ? "anim-shake"
+              : !isOver && feedback.type === "round"
+                ? undefined
+                : "anim-pop-in"
+          }
           style={{
+            position: "relative",
             textAlign: "center",
             padding: !isOver ? "6px 10px" : "10px 14px",
             marginBottom: !isOver ? "12px" : "16px",

@@ -14,6 +14,9 @@ import { DailyCompleteShell } from "@/components/daily/daily-complete-shell";
 import { useGameHowItWorks } from "@/lib/game-how-it-works";
 import { useTheme, setThemeColorOverride } from "@/lib/theme/theme-context";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
+import { burstFrom } from "@/lib/motion/burst";
+import { juiceLevel } from "@/lib/motion/juice-level";
+import { triggerAnimation } from "@/lib/motion/trigger-class";
 import {
   CLOCK_CIRCUMFERENCE,
   TOTAL_TIME,
@@ -88,6 +91,8 @@ export default function BallKnowledgeGame({
   const { theme } = useTheme();
 
   const answerInputRef = useRef<HTMLInputElement>(null);
+  const scoreNumRef = useRef<HTMLDivElement>(null);
+  const prevScoreRef = useRef(0);
   const entryCounterRef = useRef(0);
   const pendingCountRef = useRef(0);
   const judgeQueueRef = useRef(Promise.resolve());
@@ -97,6 +102,14 @@ export default function BallKnowledgeGame({
   const acceptedRef = useRef<string[]>([]);
 
   const score = accepted.length;
+
+  useEffect(() => {
+    if (score > prevScoreRef.current) {
+      triggerAnimation(scoreNumRef.current, "anim-score-slam", 320);
+      void burstFrom(scoreNumRef.current, juiceLevel(score), "blue");
+    }
+    prevScoreRef.current = score;
+  }, [score]);
 
   useEffect(() => {
     acceptedRef.current = accepted;
@@ -534,7 +547,7 @@ export default function BallKnowledgeGame({
             />
             <div className="bk-score-row">
               <div className="bk-label">Score</div>
-              <div className="bk-num">{score}</div>
+              <div ref={scoreNumRef} className="bk-num">{score}</div>
             </div>
             <div className="bk-answer-list">
               {entries.map((entry) => (

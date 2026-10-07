@@ -21,6 +21,10 @@ import type {
 } from "@/features/slippery-slope/schema";
 import { useLiveSsProjection, useSlipperySlopeStore } from "@/features/slippery-slope/store";
 import { useSlipperyRoom } from "@/features/slippery-slope/use-slippery-room";
+import { burstFrom } from "@/lib/motion/burst";
+import { impactRing } from "@/lib/motion/impact-ring";
+import { triggerAnimation } from "@/lib/motion/trigger-class";
+import { fireConfetti } from "@/lib/motion/confetti";
 
 interface MultiplayerGameProps {
   initial: SsRoomProjection;
@@ -68,6 +72,7 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
   );
 
   const boardGridRef = useRef<HTMLDivElement>(null);
+  const qcardRef = useRef<HTMLDivElement>(null);
   const [cellCenters, setCellCenters] = useState<Record<number, { x: number; y: number }>>({});
   const [gridSize, setGridSize] = useState<{ w: number; h: number } | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -94,6 +99,20 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
       setActiveQuestion(room.currentQuestion);
     }
   }, [room.currentQuestion]);
+
+  useEffect(() => {
+    if (answered === "correct") {
+      impactRing(qcardRef.current, "var(--ss-lime)");
+      void burstFrom(qcardRef.current, 1, "lime");
+    } else if (answered === "wrong" || answered === "timeout") {
+      triggerAnimation(qcardRef.current, "anim-screen-shake", 250);
+    }
+  }, [answered]);
+
+  const iWonRoom = room.phase === "WIN" && room.winnerPlayerId === myPlayerId;
+  useEffect(() => {
+    if (iWonRoom) void fireConfetti("gold");
+  }, [iWonRoom]);
 
   const submitAnswer = useCallback(
     async (answerIndex: number | null, timedOut = false) => {
@@ -524,7 +543,7 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
 
             {displayQuestion && (
               <>
-                <div className="ss-qcard">
+                <div ref={qcardRef} className="ss-qcard" style={{ position: "relative" }}>
                   <div className="ss-qmeta">
                     <span className="ss-qlabel">Wager: {displayWager}</span>
                     <span className={`ss-diff-pip ${DCLASS[wagerToDiff(displayWager ?? 5)]}`}>

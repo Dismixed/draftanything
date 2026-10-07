@@ -18,6 +18,10 @@ import {
 import { appendUniqueQuestions } from "@/lib/brain-dead/trivia-api";
 import { resolveWagerTopicHint } from "@/features/slippery-slope/topic-hint";
 import { PREVIEW_WAGER } from "@/features/slippery-slope/game-logic";
+import { burstFrom } from "@/lib/motion/burst";
+import { impactRing } from "@/lib/motion/impact-ring";
+import { triggerAnimation } from "@/lib/motion/trigger-class";
+import { fireConfetti } from "@/lib/motion/confetti";
 
 /* ══════════════════════════════════
    Types
@@ -163,6 +167,7 @@ export default function SlipperySlopeGame() {
   const [cellCenters, setCellCenters] = useState<Record<number, { x: number; y: number }>>({});
   const [gridSize, setGridSize] = useState<{ w: number; h: number } | null>(null);
   const boardGridRef = useRef<HTMLDivElement>(null);
+  const qcardRef = useRef<HTMLDivElement>(null);
 
   /* Animation */
   const [hopAnimating, setHopAnimating] = useState(false);
@@ -403,6 +408,20 @@ export default function SlipperySlopeGame() {
      These are all regular function declarations so they hoist
      within the component scope and can reference each other.
      ══════════════════════════════════ */
+
+  useEffect(() => {
+    if (answered === "correct") {
+      impactRing(qcardRef.current, "var(--ss-lime)");
+      void burstFrom(qcardRef.current, 1, "lime");
+    } else if (answered === "wrong" || answered === "timeout") {
+      triggerAnimation(qcardRef.current, "anim-screen-shake", 250);
+    }
+  }, [answered]);
+
+  const humanWon = screen === "win" && !!G.players[G.currentIdx]?.isHuman;
+  useEffect(() => {
+    if (humanWon) void fireConfetti("gold");
+  }, [humanWon]);
 
   function triggerWin(winnerIdx: number) {
     clearTimerFn();
@@ -1341,7 +1360,7 @@ export default function SlipperySlopeGame() {
               {/* QUESTION PHASE */}
               {phase === "question" && currentQ && (
                 <>
-                  <div className="ss-qcard">
+                  <div ref={qcardRef} className="ss-qcard" style={{ position: "relative" }}>
                     <div className="ss-qmeta">
                       <span className="ss-qlabel">Wager: {currentW}</span>
                       <span className={`ss-diff-pip ${DCLASS[wagerToDiff(currentW)]}`}>

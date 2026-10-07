@@ -8,6 +8,8 @@ import type { GameMode } from "@/lib/chainlink/types";
 import { useSound } from "@/lib/audio/sound-context";
 import { fireConfetti } from "@/lib/motion/confetti";
 import { triggerAnimation } from "@/lib/motion/trigger-class";
+import { burstFrom } from "@/lib/motion/burst";
+import { impactRing } from "@/lib/motion/impact-ring";
 import { GameTitle } from "@/components/ui/game-title";
 import TutorialModal from "./tutorial-modal";
 import { OtherDailies } from "@/components/daily/other-dailies";
@@ -115,6 +117,15 @@ function WordRow({
     setSubmitting(false);
   }, [word]);
 
+  useEffect(() => {
+    if (!revealTrigger) return;
+    const timer = window.setTimeout(() => {
+      impactRing(rowRef.current, "var(--cl-green)");
+      void burstFrom(rowRef.current, 1, "correct");
+    }, 260);
+    return () => window.clearTimeout(timer);
+  }, [revealTrigger]);
+
   const buildFullGuess = useCallback((typed: string) => {
     let typedIdx = 0;
     let fullGuess = word[0].toLowerCase();
@@ -155,6 +166,11 @@ function WordRow({
       setWrongFlash(true);
       triggerAnimation(rowRef.current, "anim-shake", 450);
       triggerAnimation(rowRef.current, "anim-flash-red", 500);
+      triggerAnimation(
+        rowRef.current?.closest<HTMLElement>(".cl-chain") ?? null,
+        "anim-screen-shake",
+        250,
+      );
       window.setTimeout(() => setWrongFlash(false), 1400);
     } else if (result === "already-solved") {
       play("ui.tap");
@@ -178,8 +194,8 @@ function WordRow({
     if (status === "solved") {
       return {
         display: "inline-block",
-        animation: `cl-letter-in 0.35s ease both`,
-        animationDelay: `${0.05 * i}s`,
+        animation: `cl-letter-in 0.4s cubic-bezier(0.3, 1.5, 0.5, 1) both`,
+        animationDelay: `${0.055 * i}s`,
       };
     }
     return {};
@@ -767,7 +783,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
 
         {/* ---- Word chain + completion overlay ---- */}
         <div style={{ position: "relative", marginBottom: "16px" }}>
-          <div style={{ display: "flex", flexDirection: "column" }}>
+          <div className="cl-chain" style={{ display: "flex", flexDirection: "column" }}>
             {puzzleWords.map((word, i) => (
               <WordRow
                 key={`${word}-${i}`}

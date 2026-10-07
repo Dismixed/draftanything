@@ -633,7 +633,7 @@ html[data-theme="light"] {
 }
 
 .freezeframes-guess-inp.shake {
-  animation: freezeframes-shake 0.35s ease;
+  animation: anim-shake-kf 0.38s ease-out;
 }
 
 @keyframes freezeframes-shake {

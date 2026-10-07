@@ -24,6 +24,10 @@ import {
 import { useSound } from "@/lib/audio/sound-context";
 import { fireConfetti } from "@/lib/motion/confetti";
 import { triggerAnimation } from "@/lib/motion/trigger-class";
+import { burstFrom } from "@/lib/motion/burst";
+import { impactRing } from "@/lib/motion/impact-ring";
+import { juiceLevel } from "@/lib/motion/juice-level";
+import { useCountUp } from "@/lib/motion/count-up";
 import { GameBackLink } from "@/components/ui/game-back-link";
 import { OtherDailies } from "@/components/daily/other-dailies";
 import { DailyCompleteShell } from "@/components/daily/daily-complete-shell";
@@ -71,6 +75,10 @@ export default function BrainDeadGame({
   const seenIdsRef = useRef<string[]>([]);
   const { play } = useSound();
   const questionCardRef = useRef<HTMLDivElement>(null);
+  const playAreaRef = useRef<HTMLDivElement>(null);
+  const scoreRef = useRef<HTMLSpanElement>(null);
+  const streakRef = useRef<HTMLDivElement>(null);
+  const displayScore = useCountUp(score, true, 400, true);
   const lastTickSecondRef = useRef<number | null>(null);
   const timeoutSoundPlayedRef = useRef(false);
   const resultCelebratedRef = useRef(false);
@@ -88,6 +96,10 @@ export default function BrainDeadGame({
   useEffect(() => {
     screenRef.current = screen;
   }, [screen]);
+
+  useEffect(() => {
+    if (score > 0) triggerAnimation(scoreRef.current, "anim-score-slam", 320);
+  }, [score]);
 
   useEffect(() => {
     if (!isDaily || (screen !== "played" && screen !== "result")) {
@@ -150,7 +162,8 @@ export default function BrainDeadGame({
         if (!timeoutSoundPlayedRef.current) {
           timeoutSoundPlayedRef.current = true;
           play("wrong", { volumeScale: 0.6 });
-          triggerAnimation(questionCardRef.current, "anim-flash-red", 450);
+          triggerAnimation(questionCardRef.current, "anim-flash-red", 500);
+          triggerAnimation(playAreaRef.current, "anim-screen-shake", 250);
         }
         setAnswered("timeout");
         advanceRef.current = setTimeout(endGame, 1200);
@@ -292,7 +305,7 @@ export default function BrainDeadGame({
     return clearIntervalTimer;
   }, [screen, qi, q, answered, showIntro, startTimer, clearIntervalTimer]);
 
-  const handleAnswer = (idx: number) => {
+  const handleAnswer = (idx: number, btn: HTMLElement) => {
     if (!q || answered !== "idle") return;
     play("ui.tap");
     clearIntervalTimer();
@@ -303,9 +316,15 @@ export default function BrainDeadGame({
     if (idx === q.c) {
       const points = calcScore(q.d, timeTaken);
       play("correct");
-      triggerAnimation(questionCardRef.current, "anim-flash-green", 450);
+      const nextCorrect = correct + 1;
+      triggerAnimation(questionCardRef.current, "anim-flash-green", 500);
+      impactRing(btn, "var(--bd-success)");
+      void burstFrom(btn, juiceLevel(nextCorrect), "correct");
+      if (nextCorrect === 3 || nextCorrect === 5 || nextCorrect === 8) {
+        triggerAnimation(streakRef.current, "anim-streak-pulse", 400);
+      }
       setScoreFloat(points);
-      setTimeout(() => setScoreFloat(null), 700);
+      setTimeout(() => setScoreFloat(null), 900);
       setAnswered("correct");
       setCorrect((c) => {
         const next = c + 1;
@@ -328,7 +347,9 @@ export default function BrainDeadGame({
       }, 650);
     } else {
       play("wrong");
-      triggerAnimation(questionCardRef.current, "anim-flash-red", 450);
+      triggerAnimation(questionCardRef.current, "anim-flash-red", 500);
+      impactRing(btn, "var(--bd-danger)");
+      triggerAnimation(playAreaRef.current, "anim-screen-shake", 250);
       setAnswered("wrong");
       advanceRef.current = setTimeout(endGame, 1200);
     }
@@ -922,170 +943,184 @@ export default function BrainDeadGame({
       )}
 
       <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "16px",
-        }}
+        ref={playAreaRef}
+        style={{ "--juice": juiceLevel(correct) } as React.CSSProperties}
       >
-        <div style={{ fontSize: "11px", color: "var(--bd-text-muted)", fontWeight: 500 }}>
-          <span style={{ color: "var(--bd-primary)" }}>{qi + 1}</span> / {questions.length}
-        </div>
-        <div style={{ fontSize: "11px", color: "var(--bd-text-muted)", fontWeight: 500 }}>
-          Score: <span style={{ color: "var(--bd-primary)", fontWeight: 600 }}>{score}</span>
-        </div>
-      </div>
-
-      {/* Timer */}
-      <div style={{ marginBottom: "16px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", marginBottom: "4px" }}>
-          <span style={{ color: "var(--bd-text-muted)" }}>{categoryName}</span>
-          <span style={{ color: "var(--bd-primary)" }}>{timerSecs}s</span>
-        </div>
         <div
           style={{
-            width: "100%",
-            height: "4px",
-            background: "var(--bd-surface)",
-            borderRadius: "2px",
-            overflow: "hidden",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "16px",
           }}
         >
+          <div style={{ fontSize: "11px", color: "var(--bd-text-muted)", fontWeight: 500 }}>
+            <span style={{ color: "var(--bd-primary)" }}>{qi + 1}</span> / {questions.length}
+          </div>
+          <div style={{ fontSize: "11px", color: "var(--bd-text-muted)", fontWeight: 500 }}>
+            Score:{" "}
+            <span
+              ref={scoreRef}
+              style={{ display: "inline-block", color: "var(--bd-primary)", fontWeight: 800, fontSize: "18px" }}
+            >
+              {displayScore}
+            </span>
+          </div>
+        </div>
+
+        {/* Timer */}
+        <div style={{ marginBottom: "16px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", marginBottom: "4px" }}>
+            <span style={{ color: "var(--bd-text-muted)" }}>{categoryName}</span>
+            <span style={{ color: "var(--bd-primary)" }}>{timerSecs}s</span>
+          </div>
           <div
             style={{
-              height: "100%",
-              width: `${timerPct}%`,
-              background: timerColor,
+              width: "100%",
+              height: "4px",
+              background: "var(--bd-surface)",
               borderRadius: "2px",
-              transition: "width 0.1s linear, background 0.4s",
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Question */}
-      <div
-        ref={questionCardRef}
-        className={[
-          "bd-question-card",
-          questionAnim === "out" ? "anim-question-out" : "",
-          questionAnim === "in" ? "anim-question-in" : "",
-        ].filter(Boolean).join(" ")}
-        style={{
-          background: "var(--bd-surface)",
-          border: "1px solid var(--bd-border)",
-          borderRadius: "12px",
-          padding: "20px",
-          marginBottom: "16px",
-          textAlign: "center",
-          position: "relative",
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-          <span style={{ fontSize: "10px", color: diffClass.color, fontWeight: 600, textTransform: "uppercase", letterSpacing: "1px" }}>
-            {diffClass.label}
-          </span>
-          <span style={{ fontSize: "10px", color: "var(--bd-border)" }}>|</span>
-          <span style={{ fontSize: "10px", color: "var(--bd-text-muted)" }}>{q.d * 100} pts</span>
-        </div>
-        <div
-          style={{
-            fontSize: "16px",
-            fontWeight: 500,
-            lineHeight: 1.4,
-            color: "var(--bd-text)",
-          }}
-        >
-          {q.q}
-        </div>
-        {scoreFloat !== null && (
-          <div
-            className="anim-score-float"
-            style={{
-              position: "absolute",
-              top: "12px",
-              right: "16px",
-              color: "var(--bd-success)",
-              fontWeight: 800,
-              fontSize: "14px",
+              overflow: "hidden",
             }}
           >
-            +{scoreFloat}
-          </div>
-        )}
-      </div>
-
-      {/* Answers */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "8px",
-          marginBottom: "16px",
-        }}
-      >
-        {q.a.map((ans, i) => {
-          const showCorrect = answered !== "idle" && i === q.c;
-          const showWrong = answered === "wrong" && i === selectedIdx;
-          const disabled = answered !== "idle";
-
-          return (
-            <button
-              key={i}
-              type="button"
-              disabled={disabled}
-              onClick={() => handleAnswer(i)}
-              className={
-                [
-                  "bd-answer-btn",
-                  showCorrect ? "anim-pop-in" : showWrong ? "anim-shake" : "",
-                ].filter(Boolean).join(" ") || undefined
-              }
-              style={{
-                background: showCorrect
-                  ? "rgba(34,197,94,0.1)"
-                  : showWrong
-                    ? "rgba(239,68,68,0.1)"
-                    : "var(--bd-surface)",
-                border: `1px solid ${
-                  showCorrect ? "var(--bd-success)" : showWrong ? "var(--bd-danger)" : "var(--bd-border)"
-                }`,
-                color: "var(--bd-text)",
-                padding: "12px",
-                borderRadius: "8px",
-                cursor: disabled ? "default" : "pointer",
-                fontFamily: "inherit",
-                fontSize: "13px",
-                fontWeight: 500,
-                textAlign: "center",
-                opacity: disabled && !showCorrect && !showWrong ? 0.45 : 1,
-                transition: "border-color 0.1s, background 0.1s",
-              }}
-            >
-              <div style={{ fontSize: "11px", color: showCorrect || showWrong ? diffClass.color : "var(--bd-text-secondary)", marginBottom: "2px" }}>
-                {LETTERS[i]}
-              </div>
-              <div>{ans}</div>
-            </button>
-          );
-        })}
-      </div>
-
-      <div style={{ textAlign: "center" }}>
-        <div style={{ fontSize: "10px", color: "var(--bd-text-muted)", marginBottom: "4px" }}>Streak</div>
-        <div style={{ display: "flex", justifyContent: "center", gap: "4px" }}>
-          {[0, 1, 2, 3, 4].map((i) => (
             <div
-              key={i}
               style={{
-                width: "8px",
-                height: "8px",
-                background: i < correct ? "var(--bd-primary)" : "var(--bd-border)",
-                borderRadius: "50%",
+                height: "100%",
+                width: `${timerPct}%`,
+                background: timerColor,
+                borderRadius: "2px",
+                transition: "width 0.1s linear, background 0.4s",
               }}
             />
-          ))}
+          </div>
+        </div>
+
+        {/* Question */}
+        <div
+          ref={questionCardRef}
+          className={[
+            "bd-question-card",
+            questionAnim === "out" ? "anim-question-out" : "",
+            questionAnim === "in" ? "anim-question-in" : "",
+          ].filter(Boolean).join(" ")}
+          style={{
+            background: "var(--bd-surface)",
+            border: "1px solid var(--bd-border)",
+            borderRadius: "12px",
+            padding: "20px",
+            marginBottom: "16px",
+            textAlign: "center",
+            position: "relative",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+            <span style={{ fontSize: "10px", color: diffClass.color, fontWeight: 600, textTransform: "uppercase", letterSpacing: "1px" }}>
+              {diffClass.label}
+            </span>
+            <span style={{ fontSize: "10px", color: "var(--bd-border)" }}>|</span>
+            <span style={{ fontSize: "10px", color: "var(--bd-text-muted)" }}>{q.d * 100} pts</span>
+          </div>
+          <div
+            style={{
+              fontSize: "16px",
+              fontWeight: 500,
+              lineHeight: 1.4,
+              color: "var(--bd-text)",
+            }}
+          >
+            {q.q}
+          </div>
+          {scoreFloat !== null && (
+            <div
+              className="anim-score-float"
+              style={{
+                position: "absolute",
+                top: "12px",
+                right: "16px",
+                color: "var(--bd-success)",
+                fontWeight: 800,
+                fontSize: "calc(20px + 3px * var(--juice, 0))",
+                textShadow: "0 0 12px rgba(34,197,94,0.6)",
+                pointerEvents: "none",
+              }}
+            >
+              +{scoreFloat}
+            </div>
+          )}
+        </div>
+
+        {/* Answers */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "8px",
+            marginBottom: "16px",
+          }}
+        >
+          {q.a.map((ans, i) => {
+            const showCorrect = answered !== "idle" && i === q.c;
+            const showWrong = answered === "wrong" && i === selectedIdx;
+            const disabled = answered !== "idle";
+
+            return (
+              <button
+                key={i}
+                type="button"
+                disabled={disabled}
+                onClick={(e) => handleAnswer(i, e.currentTarget)}
+                className={
+                  [
+                    "bd-answer-btn",
+                    showCorrect ? "anim-pop-in" : showWrong ? "anim-shake" : "",
+                  ].filter(Boolean).join(" ") || undefined
+                }
+                style={{
+                  background: showCorrect
+                    ? "rgba(34,197,94,0.1)"
+                    : showWrong
+                      ? "rgba(239,68,68,0.1)"
+                      : "var(--bd-surface)",
+                  border: `1px solid ${
+                    showCorrect ? "var(--bd-success)" : showWrong ? "var(--bd-danger)" : "var(--bd-border)"
+                  }`,
+                  color: "var(--bd-text)",
+                  position: "relative",
+                  padding: "12px",
+                  borderRadius: "8px",
+                  cursor: disabled ? "default" : "pointer",
+                  fontFamily: "inherit",
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  textAlign: "center",
+                  opacity: disabled && !showCorrect && !showWrong ? 0.45 : 1,
+                  transition: "border-color 0.1s, background 0.1s",
+                }}
+              >
+                <div style={{ fontSize: "11px", color: showCorrect || showWrong ? diffClass.color : "var(--bd-text-secondary)", marginBottom: "2px" }}>
+                  {LETTERS[i]}
+                </div>
+                <div>{ans}</div>
+              </button>
+            );
+          })}
+        </div>
+
+        <div ref={streakRef} style={{ textAlign: "center" }}>
+          <div style={{ fontSize: "10px", color: "var(--bd-text-muted)", marginBottom: "4px" }}>Streak</div>
+          <div style={{ display: "flex", justifyContent: "center", gap: "4px" }}>
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                style={{
+                  width: "8px",
+                  height: "8px",
+                  background: i < correct ? "var(--bd-primary)" : "var(--bd-border)",
+                  borderRadius: "50%",
+                }}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </>,

@@ -1,6 +1,11 @@
-const PRESETS = {
+export const PRESETS = {
   gold: ["#c9a84c", "#f0c860", "#7c3aff", "#00e5ff", "#ffffff"],
   "brain-dead": ["#ff3c3c", "#f0c860", "#ffffff", "#ef4444", "#c9a84c"],
+  correct: ["#22c55e", "#86efac", "#f0c860", "#ffffff"],
+  ember: ["#ff6b1a", "#ffb347", "#ffd9a0", "#ffffff"],
+  blue: ["#5b9ee8", "#a8cdf5", "#f0c860", "#ffffff"],
+  lime: ["#b5f23d", "#d9f99d", "#f0c860", "#ffffff"],
+  purple: ["#a855f7", "#d8b4fe", "#f0c860", "#ffffff"],
 } as const;
 
 export type ConfettiPreset = keyof typeof PRESETS;

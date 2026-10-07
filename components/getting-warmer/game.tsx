@@ -21,6 +21,9 @@ import {
 } from "@/lib/getting-warmer/storage";
 import type { DailyPuzzleClient, LeaderboardEntry } from "@/lib/getting-warmer/types";
 import { GettingWarmerResultsModal } from "./results-modal";
+import { burstFrom } from "@/lib/motion/burst";
+import { impactRing } from "@/lib/motion/impact-ring";
+import { triggerAnimation } from "@/lib/motion/trigger-class";
 
 type Screen = "loading" | "game" | "results" | "played";
 
@@ -110,6 +113,7 @@ export default function GettingWarmerGame() {
   const [showResultsModal, setShowResultsModal] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const submittedEntryIdRef = useRef<string | null>(getSubmittedEntryId());
   const extraCluesRef = useRef<string[]>([]);
   const wrongGuessesRef = useRef<string[]>([]);
@@ -327,6 +331,9 @@ export default function GettingWarmerGame() {
       setGuessInput("");
 
       if (data.correct && data.answer) {
+        const tries = data.attempts ?? 1;
+        impactRing(cardRef.current, "var(--gw-orange-bright)");
+        void burstFrom(cardRef.current, tries === 1 ? 3 : tries <= 3 ? 2 : tries <= 6 ? 1 : 0, "ember");
         await finishGame({
           won: true,
           finalAnswer: data.answer,
@@ -338,6 +345,7 @@ export default function GettingWarmerGame() {
       setWrongGuesses((prev) => [...prev, val.toUpperCase()]);
       wrongGuessesRef.current = [...wrongGuessesRef.current, val.toUpperCase()];
       setShakeInput(true);
+      triggerAnimation(cardRef.current, "anim-screen-shake", 250);
       setTimeout(() => setShakeInput(false), 350);
 
       const clueText = prefetchedClue ?? data.nextClue;
@@ -475,7 +483,7 @@ export default function GettingWarmerGame() {
 
         {(screen === "game" || screen === "results") && puzzle && (
           <>
-            <div className="gw-card">
+            <div ref={cardRef} className="gw-card" style={{ position: "relative" }}>
               <div className="gw-back-link">
                 <GameBackLink href="/" color="var(--gw-ink-dim)" />
               </div>
@@ -540,7 +548,7 @@ export default function GettingWarmerGame() {
               )}
 
               {feedback && (
-                <div className={`gw-feedback ${feedbackClass}`}>{feedback}</div>
+                <div className={`gw-feedback ${feedbackClass}${feedbackClass === "win" ? " anim-pop-in" : ""}`}>{feedback}</div>
               )}
 
               {wrongGuesses.length > 0 && !finished && (

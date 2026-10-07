@@ -33,6 +33,10 @@ import type {
   SongRound,
 } from "@/lib/freezeframes/types";
 import { fireConfetti } from "@/lib/motion/confetti";
+import { burstFrom } from "@/lib/motion/burst";
+import { impactRing } from "@/lib/motion/impact-ring";
+import { triggerAnimation } from "@/lib/motion/trigger-class";
+import { useCountUp } from "@/lib/motion/count-up";
 import { useSound } from "@/lib/audio/sound-context";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
 import { OtherDailies } from "@/components/daily/other-dailies";
@@ -145,6 +149,8 @@ export default function FreezeFramesGame() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const guessesRef = useRef<GuessHistoryRow[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const gameWrapRef = useRef<HTMLDivElement>(null);
+  const resultCardRef = useRef<HTMLDivElement>(null);
   const songIvRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [songPlaying, setSongPlaying] = useState(false);
   const [songPos, setSongPos] = useState(0);
@@ -328,6 +334,14 @@ export default function FreezeFramesGame() {
     [clearRoundTimer, pauseSong, guesses, playSound],
   );
 
+  const lastResult = roundResults[roundResults.length - 1];
+  useEffect(() => {
+    if (!roundComplete || !lastResult?.correct) return;
+    const level = lastResult.score >= 800 ? 2 : lastResult.score >= 500 ? 1 : 0;
+    impactRing(resultCardRef.current, "var(--ff-green)");
+    void burstFrom(resultCardRef.current, level, "purple");
+  }, [roundComplete, lastResult]);
+
   const submitGuess = useCallback(async () => {
     const val = guessInput.trim();
     if (!val || submitting || roundComplete) return;
@@ -356,6 +370,7 @@ export default function FreezeFramesGame() {
       } else {
         setShakeInput(true);
         playSound("wrong");
+        triggerAnimation(gameWrapRef.current, "anim-screen-shake", 250);
         setTimeout(() => setShakeInput(false), 400);
         setGuessInput("");
       }
@@ -414,6 +429,8 @@ export default function FreezeFramesGame() {
       saveDailyPlayed(finishResultsTotal, MAX_DAILY_SCORE);
     }
   }, [screen, roundResults.length, finishResultsTotal]);
+
+  const displayTotal = useCountUp(finishResultsTotal, screen === "results", 900);
 
   const submitToLeaderboard = useCallback(async () => {
     if (lbSubmitting || lbSubmitted) return;
@@ -596,7 +613,7 @@ export default function FreezeFramesGame() {
       <div
         className={`freezeframes-screen freezeframes-game-screen${screen === "game" ? " active" : ""}`}
       >
-        <div className="freezeframes-game-wrap">
+        <div ref={gameWrapRef} className="freezeframes-game-wrap">
           <div className="freezeframes-progress-row">
             <div className="freezeframes-progress-steps">
               {ROUNDS.map((_, i) => (
@@ -685,9 +702,11 @@ export default function FreezeFramesGame() {
 
           {roundComplete && currentResult ? (
             <div
+              ref={resultCardRef}
               className={`freezeframes-round-result show ${
-                currentResult.correct ? "freezeframes-rr-ok" : "freezeframes-rr-skip"
+                currentResult.correct ? "freezeframes-rr-ok anim-pop-in" : "freezeframes-rr-skip"
               }`}
+              style={{ position: "relative" }}
             >
               <div className="freezeframes-rr-title">
                 {currentResult.correct
@@ -727,7 +746,7 @@ export default function FreezeFramesGame() {
         <div style={{ fontSize: "0.78rem", color: "var(--ff-muted)" }}>
           {displayDate}
         </div>
-        <div className="freezeframes-total-score">{finishResultsTotal}</div>
+        <div className="freezeframes-total-score">{displayTotal}</div>
         <div className="freezeframes-score-max">out of {MAX_DAILY_SCORE}</div>
 
         <div className="freezeframes-breakdown">

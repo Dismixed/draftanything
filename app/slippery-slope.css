@@ -180,9 +180,9 @@ select.ss-inp { cursor:pointer; }
 .ss-abtn { background:var(--ss-surface); border:1.5px solid var(--ss-border); color:var(--ss-text); padding:0.65rem 0.8rem; border-radius:8px; cursor:pointer; font-family:inherit; font-size:0.83rem; font-weight:500; text-align:left; display:flex; align-items:center; gap:0.5rem; transition:all 0.12s; line-height:1.3; }
 .ss-abtn:hover:not(:disabled) { border-color:var(--ss-lime); background:rgba(181,242,61,0.06); }
 .ss-aletter { background:var(--ss-surface2); color:var(--ss-muted); width:22px; height:22px; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:700; font-family:'Syne Mono',monospace; flex-shrink:0; }
-.ss-abtn.correct { border-color:var(--ss-lime)!important; background:rgba(181,242,61,0.1)!important; }
+.ss-abtn.correct { border-color:var(--ss-lime)!important; background:rgba(181,242,61,0.1)!important; animation:anim-pop-in-kf 0.42s ease-out both; }
 .ss-abtn.correct .ss-aletter { background:var(--ss-lime); color:var(--ss-on-accent); }
-.ss-abtn.wrong { border-color:var(--ss-red)!important; background:rgba(248,113,113,0.1)!important; }
+.ss-abtn.wrong { border-color:var(--ss-red)!important; background:rgba(248,113,113,0.1)!important; animation:anim-shake-kf 0.38s ease-out; }
 .ss-abtn.wrong .ss-aletter { background:var(--ss-red); color:#fff; }
 .ss-abtn:disabled { cursor:default; }
 .ss-abtn.pending { border-color:var(--ss-lime); background:rgba(181,242,61,0.06); opacity:1!important; }

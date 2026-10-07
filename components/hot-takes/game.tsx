@@ -16,6 +16,8 @@ import { DailyCompleteShell } from "@/components/daily/daily-complete-shell";
 import { useGameHowItWorks } from "@/lib/game-how-it-works";
 import { HotTakesImage } from "@/components/hot-takes/optimized-image";
 import type { HotTakesDailyCategory, HotTakesDailyItem } from "@/lib/hot-takes/types";
+import { burstFrom } from "@/lib/motion/burst";
+import { useCountUp } from "@/lib/motion/count-up";
 
 const TIERS = ["S", "A", "B", "C", "D"] as const;
 type Tier = (typeof TIERS)[number];
@@ -80,6 +82,7 @@ function TierItem({
   dragging,
   selected,
   disabled,
+  popped = false,
   onPointerDown,
   onPointerMove,
   onPointerUp,
@@ -89,6 +92,7 @@ function TierItem({
   dragging: boolean;
   selected: boolean;
   disabled: boolean;
+  popped?: boolean;
   onPointerDown: (e: ReactPointerEvent<HTMLDivElement>, id: string) => void;
   onPointerMove: (e: ReactPointerEvent<HTMLDivElement>) => void;
   onPointerUp: (e: ReactPointerEvent<HTMLDivElement>) => void;
@@ -96,7 +100,7 @@ function TierItem({
 }) {
   return (
     <div
-      className={`hot-takes-item${dragging ? " dragging" : ""}${selected ? " selected" : ""}`}
+      className={`hot-takes-item${dragging ? " dragging" : ""}${selected ? " selected" : ""}${popped ? " anim-pop-in" : ""}`}
       role="button"
       tabIndex={disabled ? -1 : 0}
       aria-pressed={selected}
@@ -136,6 +140,8 @@ export default function HotTakesGame({
   const [trayShuffle, setTrayShuffle] = useState(0);
   const { showHowItWorks, dismissHowItWorks } = useGameHowItWorks("hot-takes");
   const [completeOpen, setCompleteOpen] = useState(false);
+  const [lastPlacedId, setLastPlacedId] = useState<string | null>(null);
+  const scoreNumRef = useRef<HTMLDivElement>(null);
   const consensus = useMemo(() => generateConsensus(category.items), [category.items]);
   const pointerDragRef = useRef<{
     id: string;
@@ -160,6 +166,7 @@ export default function HotTakesGame({
 
   const moveItem = useCallback((itemId: string, zone: DropZone) => {
     setPlacements((prev) => ({ ...prev, [itemId]: zone }));
+    setLastPlacedId(zone === "tray" ? null : itemId);
     setSelectedId(null);
   }, []);
 
@@ -264,6 +271,16 @@ export default function HotTakesGame({
     return { rows, avg, hottest };
   }, [submitted, category.items, placements, consensus]);
 
+  const displayAvg = useCountUp(results?.avg ?? 0, submitted, 900);
+  const resultsAvg = results?.avg;
+  useEffect(() => {
+    if (resultsAvg === undefined) return;
+    const timer = setTimeout(() => {
+      void burstFrom(scoreNumRef.current, resultsAvg >= 70 ? 2 : resultsAvg >= 50 ? 1 : 0, "gold");
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [resultsAvg]);
+
   const shareText = results
     ? `Hot Takes — ${category.name}\nI'm ${results.avg}% aligned with the crowd today. Think you can do better?`
     : "";
@@ -352,6 +369,7 @@ export default function HotTakesGame({
                       <TierItem
                         key={item.id}
                         item={item}
+                        popped={lastPlacedId === item.id}
                         dragging={draggingId === item.id}
                         selected={selectedId === item.id}
                         disabled={submitted}
@@ -398,8 +416,8 @@ export default function HotTakesGame({
             <h2>How you stack up</h2>
             <p className="hot-takes-sub">Here&apos;s how everyone else ranked today&apos;s category.</p>
 
-            <div className="hot-takes-score-banner">
-              <div className="hot-takes-score-num">{results.avg}%</div>
+            <div className="hot-takes-score-banner anim-pop-in">
+              <div ref={scoreNumRef} className="hot-takes-score-num">{displayAvg}%</div>
               <div className="hot-takes-score-text">
                 average agreement with the crowd across your 15 picks.
                 {results.hottest && (

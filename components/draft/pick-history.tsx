@@ -3,6 +3,8 @@
 import { useCallback, useMemo, useRef, useEffect, useState } from "react";
 import type { SafePick, SafePlayer, PickSlot } from "@/features/draft/types";
 import { ButtonLoadingLabel } from "@/components/ui/button-spinner";
+import { burstFrom } from "@/lib/motion/burst";
+import { impactRing } from "@/lib/motion/impact-ring";
 
 interface PickHistoryProps {
   picks: SafePick[];
@@ -51,13 +53,23 @@ export function PickHistory({
       if (newest) {
         setAnimatedPickId(newest.id);
         const t = window.setTimeout(() => setAnimatedPickId(null), 400);
+        const mine = newest.playerId === myPlayerId;
+        const burst = window.setTimeout(() => {
+          if (!mine) return;
+          const row = listRef.current?.querySelector<HTMLElement>(`[data-pick-id="${newest.id}"]`) ?? null;
+          impactRing(row, "var(--gold)");
+          void burstFrom(row, 0, "gold");
+        }, 350);
         prevLengthRef.current = picks.length;
         if (listRef.current) listRef.current.scrollTop = 0;
-        return () => window.clearTimeout(t);
+        return () => {
+          window.clearTimeout(t);
+          window.clearTimeout(burst);
+        };
       }
     }
     prevLengthRef.current = picks.length;
-  }, [picks]);
+  }, [picks, myPlayerId]);
 
   const handleInitiateVeto = useCallback(async () => {
     if (!onInitiateVeto || initiatingVeto) return;
@@ -190,8 +202,10 @@ export function PickHistory({
           return (
             <li
               key={pick.id}
+              data-pick-id={pick.id}
               className={pick.id === animatedPickId ? "anim-slide-in-top" : undefined}
               style={{
+                position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
