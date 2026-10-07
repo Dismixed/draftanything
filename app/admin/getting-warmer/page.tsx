@@ -233,6 +233,11 @@ export default function AdminGettingWarmerPage() {
 
   return (
     <AdminShell title="Getting Warmer Admin">
+      <p style={{ margin: "0 0 14px", fontSize: 14 }}>
+        <a href="/admin/getting-warmer/review" style={{ color: "#5bc0de" }}>
+          Open the review queue →
+        </a>
+      </p>
       <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
         {(["puzzles", "schedule"] as Tab[]).map((t) => (
           <button
