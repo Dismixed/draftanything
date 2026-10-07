@@ -1489,8 +1489,13 @@ html[data-theme="light"] .home-card {
     min-height: 120px;
     order: -1;
   }
+  /* The enlarged preview is too wide for a phone-width box at its desktop size. */
+  .home-featured-preview .od-preview-frame-lg {
+    transform: scale(1.25);
+  }
+  /* One card per row on phones, so each keeps its preview beside the text. */
   .home-lineup {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
   }
   .home-party {
     grid-template-columns: 1fr;
@@ -1498,14 +1503,6 @@ html[data-theme="light"] .home-card {
   .home-cta {
     width: 100%;
     justify-content: center;
-  }
-  .home-card-preview {
-    display: none;
-  }
-}
-@media (max-width: 420px) {
-  .home-lineup {
-    grid-template-columns: 1fr;
   }
 }
 /* ── Game about (shared section below each game) ─────────────────── */
