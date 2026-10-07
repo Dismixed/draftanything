@@ -4,8 +4,8 @@ import { generateAll, scheduleDailyPuzzle } from "@/lib/anyguessr/generator";
 
 /**
  * Pipeline: fetch all approved puzzles from the curated country seed, persist
- * them, and schedule today's daily puzzle. Protected by either CRON_SECRET
- * (the Vercel cron) or ADMIN_EMAILS (manual runs from the admin surface).
+ * them, and schedule today's daily puzzle. The scheduled run now happens in
+ * /api/cron/daily; this route remains for manual runs with CRON_SECRET.
  */
 export async function POST(req: NextRequest) {
   try {
