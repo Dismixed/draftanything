@@ -16,6 +16,13 @@ describe("withLineupMetadata", () => {
     expect(withLineupMetadata(clue, entry({})).metadata?.caption).toBe("Queen Rania");
   });
 
+  it("falls back to the article title, without qualifiers, when no name was stored", () => {
+    const older = entry({ text_content: null, wiki_title: "Queen Rania of Jordan", country_common: "Jordan" });
+    expect(withLineupMetadata(clue, older).metadata?.caption).toBe("Queen Rania");
+    const bracketed = entry({ text_content: null, wiki_title: "Pelé (footballer)", country_common: "Brazil" });
+    expect(withLineupMetadata(clue, bracketed).metadata?.caption).toBe("Pelé");
+  });
+
   it("does not caption other clue types, whose text would name the answer", () => {
     const landmark = withLineupMetadata({ ...clue, type: "landmark" }, entry({ clue_type: "landmark", text_content: "Petra" }));
     expect(landmark.metadata && "caption" in landmark.metadata).toBe(false);

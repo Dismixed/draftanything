@@ -60,14 +60,6 @@ function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
   ]);
 }
 
-/** The name shown under a person's photo: the article title without qualifiers. */
-function displayName(title: string, country: string): string {
-  return title
-    .replace(/\s*\(.*\)$/, "")
-    .replace(new RegExp(`\\s+of\\s+${country}$`, "i"), "")
-    .trim();
-}
-
 async function main() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -76,6 +68,7 @@ async function main() {
   const { createClient } = await import("@supabase/supabase-js");
   const { planSeedChanges } = await import("../lib/anyguessr/seed-plan");
   const { listSeedEntries, updateSeedEntry, upsertSeedEntry } = await import("../lib/anyguessr/seed-db");
+  const { personDisplayName } = await import("../lib/anyguessr/generator");
   type ClueProposal = import("../lib/anyguessr/seed-plan").ClueProposal;
 
   const db = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
@@ -84,7 +77,7 @@ async function main() {
 
   const stagedFields = (p: ClueProposal) => ({
     wiki_title: p.wiki_title ?? null,
-    text_content: p.clue_type === "person" && p.wiki_title ? displayName(p.wiki_title, p.country) : (p.text ?? null),
+    text_content: p.clue_type === "person" && p.wiki_title ? personDisplayName(p.wiki_title, p.country) : (p.text ?? null),
     difficulty: p.difficulty,
     notes: [p.note, p.language && `${p.language}: "${p.english}"`].filter(Boolean).join(" | ") || null,
     // A language clue has no image to wait for.
