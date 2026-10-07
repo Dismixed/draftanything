@@ -22,6 +22,19 @@ describe("buildVisionPrompt", () => {
   });
 });
 
+describe("buildVisionPrompt for brands", () => {
+  const prompt = buildVisionPrompt({ clueType: "brand", country: "Austria", wikiTitle: "Red Bull" });
+
+  it("asks for the brand's logo or product rather than rejecting logos", () => {
+    expect(prompt).toMatch(/logo .* is the ideal image/i);
+    expect(prompt).not.toMatch(/reject[^.]*logos/i);
+  });
+
+  it("still rejects logos for other clue types", () => {
+    expect(buildVisionPrompt({ clueType: "food", country: "Austria" })).toMatch(/reject[^.]*logos/i);
+  });
+});
+
 describe("visionAccepts", () => {
   const good = { pass: true, score: 0.9, reason: "", shows_country_name: false };
 

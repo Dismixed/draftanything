@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkAdmin } from "@/lib/chainlink/admin-guard";
-import { SEED } from "@/lib/anyguessr/seed";
+import { POOL_COUNTRIES } from "@/lib/anyguessr/countries";
 import { upsertSeedEntry } from "@/lib/anyguessr/seed-db";
 import { proposeSeedEntriesWithLlm } from "@/lib/anyguessr/seed-propose";
 
@@ -16,9 +16,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "cca3 is required" }, { status: 400 });
     }
 
-    const seed = SEED.find((s) => s.cca3 === cca3);
+    const seed = POOL_COUNTRIES.find((s) => s.cca3 === cca3);
     if (!seed) {
-      return NextResponse.json({ error: "Unknown country in seed" }, { status: 404 });
+      return NextResponse.json({ error: "Unknown country" }, { status: 404 });
     }
 
     const proposals = await proposeSeedEntriesWithLlm({

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkAdmin } from "@/lib/chainlink/admin-guard";
 import { getSeedEntry, updateSeedEntry } from "@/lib/anyguessr/seed-db";
-import type { SeedEntryStatus } from "@/lib/anyguessr/seed-types";
+import { CLUE_DIFFICULTIES, type SeedEntryStatus } from "@/lib/anyguessr/seed-types";
 
 export async function GET(
   _req: NextRequest,
@@ -39,6 +39,7 @@ export async function PATCH(
       wiki_title: body.wiki_title,
       text_content: body.text_content,
       status: body.status as SeedEntryStatus | undefined,
+      difficulty: CLUE_DIFFICULTIES.includes(body.difficulty) ? body.difficulty : undefined,
       image_candidates: body.image_candidates,
       selected_candidate_index: body.selected_candidate_index,
       vision_pass: body.vision_pass,

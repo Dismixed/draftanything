@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { generateAll, scheduleDailyPuzzle as scheduleAnyGuessr } from "@/lib/anyguessr/generator";
+import { generateAll } from "@/lib/anyguessr/generator";
+import { getDailyPuzzle as buildAnyGuessr } from "@/lib/anyguessr/puzzle-service";
 import { scheduleDailyCategory as scheduleBallKnowledge } from "@/lib/ball-knowledge/schedule-service";
 import { getDailyQuestions as buildBrainDead } from "@/lib/brain-dead/daily-service";
 import { topUpDailyChains } from "@/lib/chainlink/top-up";
@@ -41,7 +42,16 @@ export async function GET(request: Request) {
 
   const report = await runJobs({
     chainlink: () => topUpDailyChains(db),
-    anyguessr: async () => ({ generate: await generateAll(db), daily: await scheduleAnyGuessr(db) }),
+    // Store today's and tomorrow's lineups before rebuilding puzzles, so the
+    // rebuild can only affect days that do not exist yet.
+    anyguessr: async () => {
+      const stored = {
+        today: (await buildAnyGuessr(db, today))?.rounds.length ?? 0,
+        tomorrow: (await buildAnyGuessr(db, tomorrow))?.rounds.length ?? 0,
+      };
+      const generate = await generateAll(db);
+      return { stored, generated: `${generate.succeeded}/${generate.total}` };
+    },
     freezeframes: todayAndTomorrow((date) => scheduleFreezeFrames(db, date)),
     "getting-warmer": todayAndTomorrow((date) => scheduleGettingWarmer(db, date)),
     "ball-knowledge": todayAndTomorrow((date) => scheduleBallKnowledge(db, date)),

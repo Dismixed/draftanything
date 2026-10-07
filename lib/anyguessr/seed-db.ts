@@ -2,9 +2,11 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/supabase/database.types";
+import { POOL_COUNTRIES } from "./countries";
 import { SEED, type SeedEntry } from "./seed";
 import { SEED_IMAGE_ALTS } from "./seed-image-alts";
 import type {
+  ClueDifficulty,
   CountryAliasRow,
   GenerateCoverageReport,
   ImageCandidate,
@@ -33,6 +35,7 @@ function rowToSeedEntry(row: Record<string, unknown>): SeedEntryRow {
     wiki_title: (row.wiki_title as string | null) ?? null,
     text_content: (row.text_content as string | null) ?? null,
     status: row.status as SeedEntryStatus,
+    difficulty: (row.difficulty as ClueDifficulty | null | undefined) ?? null,
     image_candidates: parseCandidates(row.image_candidates),
     selected_candidate_index: (row.selected_candidate_index as number) ?? 0,
     vision_pass: (row.vision_pass as boolean | null) ?? null,
@@ -85,6 +88,7 @@ export async function updateSeedEntry(
     wiki_title: string | null;
     text_content: string | null;
     status: SeedEntryStatus;
+    difficulty: ClueDifficulty | null;
     image_candidates: ImageCandidate[];
     selected_candidate_index: number;
     vision_pass: boolean | null;
@@ -116,6 +120,7 @@ export async function upsertSeedEntry(
     wiki_title?: string | null;
     text_content?: string | null;
     status?: SeedEntryStatus;
+    difficulty?: ClueDifficulty | null;
     image_candidates?: ImageCandidate[];
     selected_candidate_index?: number;
     vision_pass?: boolean | null;
@@ -134,6 +139,7 @@ export async function upsertSeedEntry(
         wiki_title: entry.wiki_title ?? null,
         text_content: entry.text_content ?? null,
         status: entry.status ?? "draft",
+        difficulty: entry.difficulty ?? null,
         image_candidates: (entry.image_candidates ?? []) as unknown as Json,
         selected_candidate_index: entry.selected_candidate_index ?? 0,
         vision_pass: entry.vision_pass ?? null,
@@ -431,7 +437,7 @@ export async function loadCountrySeedBundles(
   const byKey = new Map(rows.map((r) => [`${r.cca3}:${r.clue_type}`, r]));
 
   const bundles: CountrySeedBundle[] = [];
-  for (const seed of SEED) {
+  for (const seed of POOL_COUNTRIES) {
     const entries: SeedEntryRow[] = [];
     for (const clueType of ADMIN_CLUE_TYPES) {
       const dbRow = byKey.get(`${seed.cca3}:${clueType}`);
@@ -474,7 +480,7 @@ export async function getGenerationReadiness(
   let countriesWithApprovedClues = 0;
   let fullyReadyCountries = 0;
 
-  for (const seed of SEED) {
+  for (const seed of POOL_COUNTRIES) {
     const missing: string[] = [];
     let approvedCount = 0;
     for (const clueType of ADMIN_CLUE_TYPES) {
@@ -496,7 +502,7 @@ export async function getGenerationReadiness(
   }
 
   return {
-    totalCountries: SEED.length,
+    totalCountries: POOL_COUNTRIES.length,
     countriesWithApprovedClues,
     fullyReadyCountries,
     readyCountries: fullyReadyCountries,

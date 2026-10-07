@@ -182,6 +182,11 @@ export interface ResolveImageOptions {
   country: string;
   wikiTitle?: string | null;
   extraTitles?: string[];
+  /**
+   * Leave out the loose "<country> <clue type>" Commons search, whose results
+   * are rarely about the clue ("Austria brand" finds Brand Pilsener).
+   */
+  articleImagesOnly?: boolean;
 }
 
 /** Gather lead + in-article + Commons search candidates for a clue. */
@@ -212,8 +217,10 @@ export async function resolveImageCandidates(
     collected.push(...inArticle);
   }
 
-  const commonsQuery = `${options.country} ${options.clueType.replace(/_/g, " ")}`;
-  collected.push(...(await searchCommonsFiles(commonsQuery, 5)));
+  if (!options.articleImagesOnly) {
+    const commonsQuery = `${options.country} ${options.clueType.replace(/_/g, " ")}`;
+    collected.push(...(await searchCommonsFiles(commonsQuery, 5)));
+  }
 
   return dedupeCandidates(collected).slice(0, 8);
 }
