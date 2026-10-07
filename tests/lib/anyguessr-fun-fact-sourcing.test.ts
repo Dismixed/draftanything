@@ -26,19 +26,50 @@ describe("sourceFunFact", () => {
     expect(record.checks).toEqual({ article: true, quote: true, numbers: true, timeless: true, shape: true, judge: "supported" });
   });
 
+  it("asks the independent check twice before verifying", async () => {
+    const judge = vi.fn<(input: JudgeInput) => Promise<"supported">>(async () => "supported");
+    const record = await sourceFunFact(entry, deps({ judge }));
+    expect(record.verdict).toBe("verified");
+    expect(judge).toHaveBeenCalledTimes(2);
+  });
+
+  it("rejects a fact the independent check supports once and then doubts", async () => {
+    let calls = 0;
+    const judge = vi.fn<(input: JudgeInput) => Promise<"supported" | "partly_supported">>(async () => (++calls % 2 === 1 ? "supported" : "partly_supported"));
+    const record = await sourceFunFact(entry, deps({ judge }));
+    expect(record.verdict).toBe("rejected");
+    expect(record.reason).toMatch(/partly supported/);
+    expect(judge).toHaveBeenCalledTimes(6);
+  });
+
   it("reports a clue with no article as having no source", async () => {
     const record = await sourceFunFact(entry, deps({ getArticle: async () => null }));
     expect(record.verdict).toBe("no_source");
     expect(record.fun_fact).toBeNull();
   });
 
-  it("rejects evidence the article does not contain, after a second try", async () => {
+  it("rejects evidence the article does not contain, after three tries", async () => {
     const draft = vi.fn<(input: DraftInput) => Promise<{ fun_fact: string; evidence: string }>>(async () => ({ fun_fact: "Feijoada was invented in 1500.", evidence: "Feijoada was invented by sailors in the year 1500 off the coast." }));
     const record = await sourceFunFact(entry, deps({ draft }));
     expect(record.verdict).toBe("rejected");
     expect(record.checks.quote).toBe(false);
-    expect(draft).toHaveBeenCalledTimes(2);
+    expect(draft).toHaveBeenCalledTimes(3);
     expect(draft.mock.calls[1][0].feedback).toMatch(/copied exactly/);
+  });
+
+  it("tells a retry which facts already failed, so it picks a different one", async () => {
+    const draft = vi.fn<(input: DraftInput) => Promise<{ fun_fact: string; evidence: string }>>(async () => ({
+      fun_fact: "Feijoada was invented in 1500.",
+      evidence: "Feijoada was invented by sailors in the year 1500 off the coast.",
+    }));
+    await sourceFunFact(entry, deps({ draft }));
+    expect(draft.mock.calls[2][0].previous).toContain("Feijoada was invented in 1500.");
+  });
+
+  it("rejects a fact the independent check finds unsuitable for a family game", async () => {
+    const record = await sourceFunFact(entry, deps({ judge: async () => "unsuitable" }));
+    expect(record.verdict).toBe("rejected");
+    expect(record.reason).toMatch(/unsuitable/);
   });
 
   it("recovers when the second attempt is sound", async () => {

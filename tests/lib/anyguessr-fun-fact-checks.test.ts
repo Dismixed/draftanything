@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeForMatch, quoteInArticle, shapeIssue, timeRelativeWords, unsupportedNumbers } from "@/lib/anyguessr/fun-fact-checks";
+import { normalizeForMatch, quoteInArticle, sensitiveWord, shapeIssue, timeRelativeWords, unsupportedNumbers } from "@/lib/anyguessr/fun-fact-checks";
 
 const article = "Feijoada is a stew of beans with beef and pork.\nThe dish is usually served with rice, collard greens and orange slices – a classic pairing.";
 
@@ -44,5 +44,14 @@ describe("timeRelativeWords and shapeIssue", () => {
     expect(shapeIssue("See https://example.com for more")).toMatch(/link/);
     expect(shapeIssue("One. Two. Three. Four.")).toMatch(/sentences/);
     expect(shapeIssue("A short, plain sentence.")).toBeNull();
+  });
+
+  it("steers clear of violence, death and scandal", () => {
+    expect(shapeIssue("Vargas Llosa punched García Márquez at a screening")).toMatch(/sensitive/);
+    expect(shapeIssue("The sultan was assassinated in the palace")).toMatch(/sensitive/);
+    expect(shapeIssue("Paella is a rice dish from Valencia")).toBeNull();
+    expect(shapeIssue("The executive board met in Helsinki")).toBeNull();
+    expect(shapeIssue("Tortilla is made with beaten eggs")).toBeNull();
+    expect(sensitiveWord("A warm welcome awaits")).toBeNull();
   });
 });

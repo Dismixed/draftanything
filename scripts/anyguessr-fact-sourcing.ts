@@ -7,6 +7,8 @@
  *
  *   draft   — read the clues, fetch each clue's article, draft a fact with the sentence that
  *             supports it, and check it; writes a record file and touches nothing else
+ *   rejudge — run the verified facts through the independent check again, and mark any
+ *             that no longer pass as rejected (so `draft --retry` redoes them)
  *   report  — summarise a record file: what verified, what was rejected and why
  *   import  — store the verified facts on their clues, as unreviewed (needs the
  *             ag_seed_entries fun-fact migration)
@@ -19,7 +21,8 @@
  * Usage:
  *   npx tsx scripts/anyguessr-fact-sourcing.ts draft  [--out=data/anyguessr/facts-2026-10.json] [--limit=N] [--type=food] [--retry]
  *   npx tsx scripts/anyguessr-fact-sourcing.ts report [--out=...]
- *   npx tsx scripts/anyguessr-fact-sourcing.ts import [--out=...] [--overwrite] [--dry-run]
+ *   npx tsx scripts/anyguessr-fact-sourcing.ts rejudge [--out=...]
+ *   npx tsx scripts/anyguessr-fact-sourcing.ts import [--out=...] [--overwrite] [--dry-run] [--approve]
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -34,8 +37,8 @@ const require = createRequire(import.meta.url);
 require("./stub-server-only.cjs");
 
 const [mode, ...flags] = process.argv.slice(2);
-if (!["draft", "report", "import"].includes(mode)) {
-  console.error("Usage: npx tsx scripts/anyguessr-fact-sourcing.ts <draft|report|import> [--out=file] [--limit=N] [--type=clue_type] [--retry] [--overwrite]");
+if (!["draft", "rejudge", "report", "import"].includes(mode)) {
+  console.error("Usage: npx tsx scripts/anyguessr-fact-sourcing.ts <draft|rejudge|report|import> [--out=file] [--limit=N] [--type=clue_type] [--retry] [--overwrite]");
   process.exit(1);
 }
 const flag = (name: string) => flags.find((f) => f.startsWith(`--${name}=`))?.slice(name.length + 3);
@@ -124,6 +127,52 @@ async function draft() {
   report();
 }
 
+async function rejudge() {
+  const { mapPool } = await import("../lib/anyguessr/async-pool");
+  const { judgeAgainstEvidence, subjectLabel } = await import("../lib/anyguessr/fun-fact-sourcing");
+  const { shapeIssue, timeRelativeWords } = await import("../lib/anyguessr/fun-fact-checks");
+
+  const records = readRecords();
+  const verified = records.filter((r) => r.verdict === "verified" && r.fun_fact && r.evidence);
+  console.log(`Re-checking ${verified.length} verified facts.`);
+
+  let demoted = 0;
+  await mapPool(verified, CONCURRENCY, async (r) => {
+    const isLanguage = r.clue_type === "written_language";
+    const subject = subjectLabel({
+      clue_type: r.clue_type,
+      country_common: r.country,
+      wiki_title: isLanguage ? null : r.subject,
+      text_content: isLanguage ? r.subject : null,
+    });
+    const issue = shapeIssue(r.fun_fact!) ?? (timeRelativeWords(r.fun_fact!) && "time-relative wording");
+    if (issue) {
+      r.verdict = "rejected";
+      r.checks.shape = false;
+      r.reason = `the fact is ${issue}`;
+      demoted++;
+      console.log(`DEMOTED ${r.country} ${r.clue_type}: ${issue}: ${r.fun_fact}`);
+      return;
+    }
+    try {
+      const verdict = await judgeAgainstEvidence({ fact: r.fun_fact!, evidence: r.evidence!, subject });
+      r.checks.judge = verdict;
+      if (verdict !== "supported") {
+        r.verdict = "rejected";
+        r.reason = verdict === "unsuitable" ? "an independent check found the fact unsuitable for a family game" : `an independent re-check found the fact ${verdict.replace("_", " ")}`;
+        demoted++;
+        console.log(`DEMOTED ${r.country} ${r.clue_type}: ${verdict}: ${r.fun_fact}`);
+      }
+    } catch (err) {
+      console.error(`ERR ${r.country} ${r.clue_type}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  });
+
+  writeRecords(records);
+  console.log(`Demoted ${demoted} of ${verified.length}.`);
+  report();
+}
+
 function report() {
   const records = readRecords();
   const by = (pick: (r: FactRecord) => string) => {
@@ -169,6 +218,8 @@ async function importVerified() {
       fun_fact: record.fun_fact,
       fun_fact_source_url: record.source_url,
       fun_fact_evidence: record.evidence,
+      // Only with --approve: the facts go live without a person reading them.
+      fun_fact_reviewed: has("approve"),
     });
     imported++;
   }
@@ -177,10 +228,14 @@ async function importVerified() {
     console.log(`Dry run: would import ${imported} verified facts; would skip ${skipped} (clue changed since sourcing, or already has a fact).${probe.error ? " The fun_fact column does not exist yet." : ""}`);
     return;
   }
-  console.log(`Imported ${imported} facts as unreviewed; skipped ${skipped}. Approve them on /admin/anyguessr/review (Only facts awaiting review).`);
+  console.log(
+    has("approve")
+      ? `Imported ${imported} facts and approved them; skipped ${skipped}. They are live.`
+      : `Imported ${imported} facts as unreviewed; skipped ${skipped}. Approve them on /admin/anyguessr/review (Only facts awaiting review).`,
+  );
 }
 
-(mode === "draft" ? draft() : mode === "report" ? Promise.resolve(report()) : importVerified()).catch((err) => {
+(mode === "draft" ? draft() : mode === "rejudge" ? rejudge() : mode === "report" ? Promise.resolve(report()) : importVerified()).catch((err) => {
   console.error("Fact sourcing failed:", err);
   process.exit(1);
 });

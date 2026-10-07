@@ -18,7 +18,7 @@ const FACT_ABOUT: Record<string, string> = {
   written_language: "the language of the text sample, or its script",
 };
 
-export type JudgeVerdict = "supported" | "partly_supported" | "unsupported" | "off_topic";
+export type JudgeVerdict = "supported" | "partly_supported" | "unsupported" | "off_topic" | "unsuitable";
 
 export interface FactRecord {
   id: string;
@@ -83,11 +83,13 @@ export interface DraftInput {
   avoid: readonly string[];
   /** What was wrong with the previous attempt, if there was one. */
   feedback?: string;
+  /** Facts already tried for this clue that did not pass. */
+  previous?: readonly string[];
 }
 
 const DraftSchema = z.object({ fun_fact: z.string().nullable(), evidence: z.string().nullable() });
 const JudgeSchema = z.object({
-  verdict: z.enum(["supported", "partly_supported", "unsupported", "off_topic"]),
+  verdict: z.enum(["supported", "partly_supported", "unsupported", "off_topic", "unsuitable"]),
   reason: z.string(),
 });
 
@@ -105,6 +107,8 @@ export async function draftFromArticle(input: DraftInput): Promise<Draft | null>
       "Write fun_fact as one plain sentence of at most 200 characters, in your own words.",
       "Write evidence as the single sentence from the article that states the fact, copied exactly, character for character.",
       "Never use 'currently', 'today', 'as of' or similar. Avoid rankings and figures that change over time.",
+      "The fact must suit a general audience of all ages: no violence, crime, death, abuse, sex, scandal, or contested politics or religion. Pick something curious and pleasant instead.",
+      "Do not repeat any fact in facts_already_used or in previous_attempts.",
       "Return null for both fields if the article has no suitable fact.",
     ].join(" "),
     userPrompt: JSON.stringify(
@@ -112,6 +116,7 @@ export async function draftFromArticle(input: DraftInput): Promise<Draft | null>
         country: input.country,
         subject: input.subject,
         facts_already_used: input.avoid,
+        ...(input.previous?.length ? { previous_attempts: input.previous } : {}),
         ...(input.feedback ? { previous_attempt_problem: input.feedback } : {}),
         article: input.article,
       },
@@ -133,8 +138,9 @@ export async function judgeAgainstEvidence(input: JudgeInput): Promise<JudgeVerd
     schemaName: "AnyGuessrFactCheck",
     systemPrompt: [
       "You check claims against a quote from a source.",
-      "'off_topic': the claim is not about the subject, for example it is about a different thing that shares its article.",
-      "'supported': the claim is about the subject and the quote by itself establishes everything the claim says, including every name, number, date and comparison.",
+      "'off_topic': the claim is not about the subject, for example it is about a different thing that shares its article, a historical or military version of a flag rather than the national flag, or a different person or place.",
+      "'unsuitable': the claim is about violence, crime, death, abuse, sex, scandal, or a contested political or religious matter, or would embarrass a family game.",
+      "'supported': the claim is about the subject and the quote by itself establishes everything the claim says, including every name, number, date, superlative ('first', 'oldest', 'only') and comparison.",
       "'partly_supported': the claim says something the quote does not, even if small.",
       "'unsupported': the quote does not establish the claim.",
       "Be strict. Give a one-sentence reason.",
@@ -150,7 +156,7 @@ export const defaultSourcingDeps = {
   judge: judgeAgainstEvidence,
 } satisfies Pick<SourcingDeps, "draft" | "judge">;
 
-const ATTEMPTS = 2;
+const ATTEMPTS = 3;
 
 /**
  * Drafts a fact from a real article and checks it. A fact comes back "verified" only when its
@@ -196,6 +202,7 @@ export async function sourceFunFact(
   record.verdict = "rejected";
 
   let feedback: string | undefined;
+  const previous: string[] = [];
   for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
     const draft = await deps.draft({
       country: entry.country_common,
@@ -204,6 +211,7 @@ export async function sourceFunFact(
       article,
       avoid,
       feedback,
+      previous,
     });
     if (!draft) {
       record.reason = "the article has no suitable fact";
@@ -212,6 +220,7 @@ export async function sourceFunFact(
 
     record.fun_fact = draft.fun_fact;
     record.evidence = draft.evidence;
+    previous.push(draft.fun_fact);
 
     const quote = quoteInArticle(draft.evidence, article);
     const extraNumbers = unsupportedNumbers(draft.fun_fact, draft.evidence);
@@ -241,13 +250,21 @@ export async function sourceFunFact(
       continue;
     }
 
-    record.checks.judge = await deps.judge({ fact: draft.fun_fact, evidence: draft.evidence, subject: subjectLabel(entry) });
+    const subject = subjectLabel(entry);
+    record.checks.judge = await deps.judge({ fact: draft.fun_fact, evidence: draft.evidence, subject });
+    // The judge is a model and flips on borderline facts, so a fact must pass it twice.
+    if (record.checks.judge === "supported") {
+      record.checks.judge = await deps.judge({ fact: draft.fun_fact, evidence: draft.evidence, subject });
+    }
     if (record.checks.judge === "supported") {
       record.verdict = "verified";
       record.reason = null;
       return record;
     }
-    if (record.checks.judge === "off_topic") {
+    if (record.checks.judge === "unsuitable") {
+      record.reason = "an independent check found the fact unsuitable for a family game";
+      feedback = "the fact must be light and suitable for all ages; choose a different, pleasant fact";
+    } else if (record.checks.judge === "off_topic") {
       record.reason = "an independent check found the fact is not about the clue's subject";
       feedback = `the fact must be about ${subjectLabel(entry)}, not something else in the article`;
     } else {

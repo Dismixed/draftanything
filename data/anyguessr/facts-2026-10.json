@@ -175,18 +175,18 @@
     "subject": "Perito Moreno Glacier",
     "source_title": "Perito Moreno Glacier",
     "source_url": "https://en.wikipedia.org/wiki/Perito_Moreno_Glacier",
-    "fun_fact": "A tiny insect called the Andiperla willinki, also known as the dragon of Patagonia, lives its whole life on the surface of the glacier while feeding on wind-blown bacteria.",
-    "evidence": "A small glacier stonefly called Andiperla willinki inhabits the glacier.",
+    "fun_fact": "The glacier periodically blocks part of a lake, causing water to build up and eventually burst through the ice in a spectacular natural display.",
+    "evidence": "Intermittently, the pressure produced by the height of the dammed water breaks through the ice barrier causing a spectacular rupture, sending a massive outpouring of water from the Brazo Rico section to the main body of Lake Argentino and the Santa Cruz river.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "afe54e29-dc2a-4c93-a1fb-2f0c42e03d0f",
@@ -259,18 +259,18 @@
     "subject": "Lionel Messi",
     "source_title": "Lionel Messi",
     "source_url": "https://en.wikipedia.org/wiki/Lionel_Messi",
-    "fun_fact": "As a youth player, Messi once played through a final while wearing a protective plastic mask for a broken cheekbone, only to take it off and score two goals when it hindered his play.",
-    "evidence": "A week after suffering a broken cheekbone during a league match, Messi was allowed to play on the condition that he wear a protective plastic mask.",
+    "fun_fact": "Because he was such a reserved child after moving to Barcelona, his teammates initially suspected that he might be mute.",
+    "evidence": "He was reserved by nature, and was so quiet that some of his teammates initially believed he was mute.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "045844a5-022b-4c19-9717-22c578e7c5ee",
@@ -280,18 +280,18 @@
     "subject": "Vegemite",
     "source_title": "Vegemite",
     "source_url": "https://en.wikipedia.org/wiki/Vegemite",
-    "fun_fact": "Because Vegemite has a high yeast content, Victorian prisons have banned the spread to prevent inmates from using it to brew alcohol.",
-    "evidence": "Vegemite is banned from Victorian prisons, with the bans beginning to come into effect from the 1990s, to prevent inmates from brewing alcohol using the paste's high yeast content—even though Vegemite contains no live yeast.",
+    "fun_fact": "This iconic spread is made by using autolysis to break down yeast cells from waste obtained from a brewery.",
+    "evidence": "Callister used autolysis to break down the yeast cells from waste obtained from the Carlton & United brewery.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "a85dfa1c-b1a4-4c86-865b-756e8647fc52",
@@ -385,8 +385,8 @@
     "subject": "Hallstatt",
     "source_title": "Hallstatt",
     "source_url": "https://en.wikipedia.org/wiki/Hallstatt",
-    "fun_fact": "Due to a lack of burial space in the town, bones were historically exhumed every ten years and moved to an ossuary to make room for new interments.",
-    "evidence": "There is so little space for cemeteries that every ten years bones used to be exhumed and removed into an ossuary, to make room for new burials.",
+    "fun_fact": "Tourists in this town are told that the local salt mine features the oldest pipeline in the world, which was built 400 years ago using 13,000 hollowed-out trees.",
+    "evidence": "Tourists are told that Hallstatt is the site of \"the world's oldest pipeline\", which was constructed 400 years ago from 13,000 hollowed-out trees.",
     "checks": {
       "article": true,
       "quote": true,
@@ -427,18 +427,18 @@
     "subject": null,
     "source_title": "Flag of Austria",
     "source_url": "https://en.wikipedia.org/wiki/Flag_of_Austria",
-    "fun_fact": "A legend claims the flag was inspired by Duke Leopold V, whose white tunic became blood-stained during the Siege of Acre except for the area under his belt, leaving a red-white-red pattern.",
-    "evidence": "According to legend, the flag was invented by Duke Leopold V of Austria as a consequence of his fighting during the Siege of Acre.",
+    "fun_fact": "Unlike many other flags, the red-white-red design was historically associated with the nation itself rather than with a specific reigning monarch or royal family.",
+    "evidence": "As opposed to other flags, such as the black-and-yellow banner of the Habsburgs, the red-white-red flag was from very early on associated, not with a reigning family or monarch, but with the country itself.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "899335cb-5f60-44e5-8fa8-71b2eee17eec",
@@ -490,18 +490,18 @@
     "subject": "Wolfgang Amadeus Mozart",
     "source_title": "Wolfgang Amadeus Mozart",
     "source_url": "https://en.wikipedia.org/wiki/Wolfgang_Amadeus_Mozart",
-    "fun_fact": "When visiting Rome as a teenager, Mozart managed to transcribe the Vatican's strictly guarded Miserere by Gregorio Allegri entirely from memory after hearing it performed twice.",
-    "evidence": "According to a letter Leopold wrote home to Salzburg, while in Rome Wolfgang heard Gregorio Allegri's Miserere twice in performance in the Sistine Chapel.",
+    "fun_fact": "When Mozart was a child, he could already play the clavier faultlessly and with great delicacy after his father began teaching him simple pieces as a game.",
+    "evidence": "In the fourth year of his age his father, for a game as it were, began to teach him a few minuets and pieces at the clavier. ... He could play it faultlessly and with the greatest delicacy, and keeping exactly in time.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "96815188-c097-4c25-b43e-82164f06aef7",
@@ -595,18 +595,18 @@
     "subject": "Stella Artois",
     "source_title": "Stella Artois",
     "source_url": "https://en.wikipedia.org/wiki/Stella_Artois",
-    "fun_fact": "The beer's name Stella Artois combines Artois from the brewmaster's family name and Stella, which refers to the Christmas star.",
-    "evidence": "Stella Artois beer was first brewed in October 1925 under the code name ‘X' and then launched the following January as \"Stella Artois,\" named after the Christmas star and marketed as a Christmas beer.",
+    "fun_fact": "Since 2009, the beer has been suitable for vegans because the brand stopped using fish bladder to remove yeast during production.",
+    "evidence": "Since 2009, Stella Artois has been suitable for vegans, as isinglass (fish bladder) is no longer used to remove trace amounts of yeast.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "f335bd30-3824-4d00-b819-126a4e3763cf",
@@ -616,18 +616,18 @@
     "subject": "আজ আপনি কেমন আছেন?",
     "source_title": "Bengali language",
     "source_url": "https://en.wikipedia.org/wiki/Bengali_language",
-    "fun_fact": "During the 19th and 20th centuries, two distinct styles of written Bengali coexisted: the colloquial Chôlitôbhasha and the formal, genteel Sadhubhasha.",
-    "evidence": "In the 19th and 20th centuries, there were two standard forms of written Bengali:",
+    "fun_fact": "During the 19th and early 20th centuries, Bengali had two distinct written forms: a formal, genteel style known as Sadhubhasha and a colloquial style called Cholitobhasha.",
+    "evidence": "In the 19th and 20th centuries, there were two standard forms of written Bengali:\nচলিতভাষা Chôlitôbhasha, a colloquial form of Bengali using simplified inflections.\nসাধুভাষা Sadhubhasha, a formal and genteel form of Bengali.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "8d280271-e88a-482a-a70f-f6755b4df18c",
@@ -973,8 +973,8 @@
     "subject": "Ta Prohm",
     "source_title": "Ta Prohm",
     "source_url": "https://en.wikipedia.org/wiki/Ta_Prohm",
-    "fun_fact": "This temple is often called the Tomb Raider Temple because it was featured in the 2001 film starring Angelina Jolie.",
-    "evidence": "The temple is referred to as the \"Tomb Raider Temple\" or the \"Angelina Jolie Temple\" due to its depiction in the film Lara Croft: Tomb Raider (2001).",
+    "fun_fact": "When restoration work began in the early 20th century, the temple was left in its overgrown state to satisfy the popular desire for picturesque scenery.",
+    "evidence": "When the effort to conserve and restore the temples of Angkor began in the early 20th century, the École française d'Extrême-Orient decided that Ta Prohm would be left largely as it had been found, as a \"concession to the general taste for the picturesque.\"",
     "checks": {
       "article": true,
       "quote": true,
@@ -1141,18 +1141,18 @@
     "subject": "Tim Hortons",
     "source_title": "Tim Hortons",
     "source_url": "https://en.wikipedia.org/wiki/Tim_Hortons",
-    "fun_fact": "The company removed the apostrophe from its name to maintain a consistent sign image across Canada and avoid potential issues with Quebec's language laws.",
-    "evidence": "The company had removed the apostrophe after signs using the apostrophe was interpreted by some to be breaking the language sign laws of the province of Quebec in 1993.",
+    "fun_fact": "The restaurant chain once had an outlet located at a military base in Kandahar, Afghanistan, primarily to serve Canadian Armed Forces and their allies.",
+    "evidence": "Tim Hortons had a presence on a number of military bases, including Kandahar in Afghanistan, although this latter outlet was principally intended for Canadian Armed Forces and allied military personnel.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "15026ac3-245a-46b5-a089-06af230c9e1a",
@@ -1162,8 +1162,8 @@
     "subject": "Poutine",
     "source_title": "Poutine",
     "source_url": "https://en.wikipedia.org/wiki/Poutine",
-    "fun_fact": "Fresh cheese curds should be less than a day old to maintain their characteristic squeaky sound when chewed.",
-    "evidence": "The curds should be less than a day old, which requires proximity to a dairy.",
+    "fun_fact": "When served correctly, the hot gravy is poured over room-temperature cheese curds so that they warm up without melting entirely.",
+    "evidence": "The hot gravy is usually poured over room-temperature cheese curds, so they are warmed without melting completely.",
     "checks": {
       "article": true,
       "quote": true,
@@ -1204,18 +1204,18 @@
     "subject": "CN Tower",
     "source_title": "CN Tower",
     "source_url": "https://en.wikipedia.org/wiki/CN_Tower",
-    "fun_fact": "A heavy-lifting helicopter nicknamed Olga was used to assemble the tower's antenna in just over three weeks.",
-    "evidence": "Use of the helicopter saved months of construction time, with this phase taking only three and a half weeks instead of the planned six months.",
+    "fun_fact": "The tower's construction was so precise that it deviates from a true vertical line by only 29 millimeters over its entire height.",
+    "evidence": "Over the height of the tower, it varies from true vertical accuracy by only 29 mm (1.1 in).",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "3604ae48-ec08-4798-bc9c-73f9f97f49b6",
@@ -1330,18 +1330,18 @@
     "subject": "Moai",
     "source_title": "Moai",
     "source_url": "https://en.wikipedia.org/wiki/Moai",
-    "fun_fact": "Rather than being just heads, the Moai are whole-body statues, although many appear to be heads because they are partially buried in the ground.",
-    "evidence": "Though moai are whole-body statues, they are often referred to as \"Easter Island heads\" in some popular literature.",
+    "fun_fact": "The moai statues were designed with eye sockets intended to hold coral eyes with pupils made of obsidian or red scoria.",
+    "evidence": "In 1979, Sergio Rapu Haoa and a team of archaeologists discovered that the hemispherical or deep elliptical eye sockets were designed to hold coral eyes with either black obsidian or red scoria pupils.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "5a5aec84-f666-4146-8c94-10019adc00f3",
@@ -1372,8 +1372,8 @@
     "subject": "Forbidden City",
     "source_title": "Forbidden City",
     "source_url": "https://en.wikipedia.org/wiki/Forbidden_City",
-    "fun_fact": "Unauthorized entry into the Forbidden City was historically punishable by immediate execution.",
-    "evidence": "The punishment for unauthorised entry to the palace was immediate execution.",
+    "fun_fact": "The four corner towers of the Forbidden City were designed to reproduce the appearance of two famous pavilions depicted in Song dynasty paintings.",
+    "evidence": "At the four corners of the wall (fortifications dating to the 15th and 18th centuries) sit corner towers (E) with intricate roofs boasting 72 ridges, reproducing the Pavilion of Prince Teng and the Yellow Crane Pavilion as they appeared in Song dynasty paintings.",
     "checks": {
       "article": true,
       "quote": true,
@@ -1477,18 +1477,18 @@
     "subject": "Caño Cristales",
     "source_title": "Caño Cristales",
     "source_url": "https://en.wikipedia.org/wiki/Ca%C3%B1o_Cristales",
-    "fun_fact": "This river is known as the Liquid Rainbow because of the striking colors created by specific plants on its bed.",
-    "evidence": "The river is commonly called the \"River of Five Colors\" or the \"Liquid Rainbow,\" and is noted for its striking colors.",
+    "fun_fact": "The water in this river is exceptionally clear because it contains very few nutrients or small particles.",
+    "evidence": "The water of the river is extremely clear due to the lack of nutrients and small particles.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "da91bde6-bab1-446e-a820-33f238c1a533",
@@ -1540,18 +1540,18 @@
     "subject": null,
     "source_title": "Flag of Colombia",
     "source_url": "https://en.wikipedia.org/wiki/Flag_of_Colombia",
-    "fun_fact": "The flag's design was inspired by a conversation between creator Francisco de Miranda and the philosopher Johann Wolfgang von Goethe regarding the nature of primary colors.",
-    "evidence": "In a letter written to the Russian count Semyon Vorontsov and the German philosopher Johann Wolfgang von Goethe, Miranda described a late-night conversation he had had with Goethe at a party in Weimar during the winter of 1785.",
+    "fun_fact": "The design of the flag is quite unique because its three colored stripes are not all the same size.",
+    "evidence": "The stripes of the Colombian and Ecuadorian flags are different from most other tricolor flags because the three stripes are not equal sizes.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "unsupported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence unsupported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "0dca1c28-8635-40cc-9447-cc8026281aa6",
@@ -1666,18 +1666,18 @@
     "subject": "Gallo pinto",
     "source_title": "Gallo pinto",
     "source_url": "https://en.wikipedia.org/wiki/Gallo_pinto",
-    "fun_fact": "In Costa Rica, this dish is traditionally prepared at home using rice and beans leftover from the previous day's meals.",
-    "evidence": "Traditionally in home preparation the dish is made from leftover rice and beans from the previous day's meals.",
+    "fun_fact": "In Costa Rica, this dish is traditionally seasoned with a specific condiment called Lizano sauce.",
+    "evidence": "In Costa Rica it is eaten with Lizano sauce.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "82694bd9-f1d7-4cc4-8a24-7e64ff05595e",
@@ -1708,18 +1708,18 @@
     "subject": "Plitvice Lakes National Park",
     "source_title": "Plitvice Lakes National Park",
     "source_url": "https://en.wikipedia.org/wiki/Plitvice_Lakes_National_Park",
-    "fun_fact": "The name Plitvice refers to shallow basins, which is derived from the Croatian word for shallow.",
-    "evidence": "This name was designated because of natural phenomena that have created the lakes.",
+    "fun_fact": "The park is home to a massive variety of flowers, including 55 different species of orchids.",
+    "evidence": "Within the national park area 55 different species of orchids occur.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "unsupported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence unsupported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "6c8e3150-7996-42c6-8c56-1b6a1b244f35",
@@ -1813,8 +1813,8 @@
     "subject": "Luka Modrić",
     "source_title": "Luka Modrić",
     "source_url": "https://en.wikipedia.org/wiki/Luka_Modri%C4%87",
-    "fun_fact": "During his childhood, Luka Modrić lived in a hotel for seven years as a refugee while his family was displaced by the Croatian War of Independence.",
-    "evidence": "Modrić became a refugee and lived with his family in the Hotel Kolovare for seven years; he later moved to the Hotel Iž, both in Zadar.",
+    "fun_fact": "As a young child, Luka Modrić helped his family by shepherding goats.",
+    "evidence": "Modrić mostly spent his early years in the stone house where his paternal grandfather usually lived after whom he was named, located on the road above the hamlet of Modrići, and was shepherding goats as a five-year-old.",
     "checks": {
       "article": true,
       "quote": true,
@@ -1834,18 +1834,18 @@
     "subject": "Gdje je najbliža plaža?",
     "source_title": "Croatian language",
     "source_url": "https://en.wikipedia.org/wiki/Croatian_language",
-    "fun_fact": "The Croatian language utilizes a specific version of the Latin alphabet that was standardized in the mid-19th century.",
+    "fun_fact": "The Croatian language utilizes Gaj's Latin alphabet for its writing system.",
     "evidence": "Croatian is written in Gaj's Latin alphabet.",
     "checks": {
       "article": true,
       "quote": true,
-      "numbers": false,
+      "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": null
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "the fact states 19, which the evidence does not"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "63a2e1c4-e4b3-4f53-8026-23701d01d027",
@@ -1897,18 +1897,18 @@
     "subject": "Old Havana",
     "source_title": "Old Havana",
     "source_url": "https://en.wikipedia.org/wiki/Old_Havana",
-    "fun_fact": "Every night, soldiers in historical uniforms fire a cannon to signal the closing of the city's ancient walls.",
-    "evidence": "Every night at 9 p.m., soldiers dressed in uniforms of the era shoot from here, the \"el cañonazo de las nueve\", (gunshot of the nine).",
+    "fun_fact": "To defend the port in 1629, the Chapter of Havana decided to connect two fortresses at night using a heavy chain to block enemy ships.",
+    "evidence": "It was constructed in 1590, and in 1629 the Chapter of Havana decided that to defend better the port, to join it, at night, with the El Morro by using a thick chain that prevented the entry of enemy ships.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "40928403-5b92-42f8-a7c6-ab378c991e96",
@@ -2107,18 +2107,18 @@
     "subject": "Kde je nejbližší nádraží, prosím?",
     "source_title": "Czech language",
     "source_url": "https://en.wikipedia.org/wiki/Czech_language",
-    "fun_fact": "The Czech language features a rare sound, represented by the letter ř, which is an alveolar trill found in very few other languages.",
-    "evidence": "The phoneme represented by the letter ř (capital Ř) is very rare among languages and often claimed to be unique to Czech, though it also occurs in some dialects of Kashubian, and formerly occurred in Polish.",
+    "fun_fact": "Czech includes a famous tongue twister that manages to form a coherent sentence without using a single vowel.",
+    "evidence": "Strč prst skrz krk (\"Stick [your] finger through [your] throat\") is a well-known Czech tongue twister using syllabic consonants but no vowels.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "5ff9637b-3aa8-4d0a-8a37-fe198c03747e",
@@ -2128,7 +2128,7 @@
     "subject": null,
     "source_title": "Flag of Denmark",
     "source_url": "https://en.wikipedia.org/wiki/Flag_of_Denmark",
-    "fun_fact": "The Danish flag holds the Guinness world record for being the oldest national flag that has been continuously in use.",
+    "fun_fact": "Denmark's national flag holds the record as the oldest continuously used national flag in the world.",
     "evidence": "The flag holds the Guinness world record of being the oldest continuously used national flag, that is since 1625.",
     "checks": {
       "article": true,
@@ -2170,8 +2170,8 @@
     "subject": "The Little Mermaid (statue)",
     "source_title": "The Little Mermaid (statue)",
     "source_url": "https://en.wikipedia.org/wiki/The_Little_Mermaid_(statue)",
-    "fun_fact": "Although the ballerina Ellen Price was the initial inspiration for the statue, the sculptor instead used his own wife as the model because Price refused to pose in the nude.",
-    "evidence": "Eriksen asked Price to model for the statue, but as the ballerina did not agree to model in the nude, the statue was instead modelled completely on the sculptor's wife, Eline Eriksen.",
+    "fun_fact": "A replica of the statue was presented by Denmark to Brazil in 1960 to honor the inauguration of their new capital, Brasília.",
+    "evidence": "In 1960, a replica of the statue was presented by Denmark to Brazil in honor of the construction of Brasília, the country's new capital that was inaugurated in the year.",
     "checks": {
       "article": true,
       "quote": true,
@@ -2254,7 +2254,7 @@
     "subject": "Cotopaxi",
     "source_title": "Cotopaxi",
     "source_url": "https://en.wikipedia.org/wiki/Cotopaxi",
-    "fun_fact": "NASA once used a station on the slopes of Cotopaxi to track the orbits of early satellites and support the Apollo and Space Shuttle missions.",
+    "fun_fact": "Cotopaxi once hosted a NASA station that monitored the orbits of early satellites and supported space missions.",
     "evidence": "Cotopaxi was the location of one of the original Minitrack stations, established in 1957 by NASA to track the orbits of early satellites.",
     "checks": {
       "article": true,
@@ -2262,10 +2262,10 @@
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "98aad682-440c-424d-8883-cf556550e79a",
@@ -2338,18 +2338,18 @@
     "subject": "Antonio Valencia",
     "source_title": "Antonio Valencia",
     "source_url": "https://en.wikipedia.org/wiki/Antonio_Valencia",
-    "fun_fact": "Antonio Valencia helped his mother sell drinks at a stadium and collected empty bottles for his father to sell to a deposit in Quito when he was a child.",
-    "evidence": "Valencia helped his mother sell drinks outside the stadium of his local club at Lago Agrio and would then search for empty bottles for his father to sell to a bottle-deposit in the capital, Quito.",
+    "fun_fact": "Antonio Valencia was offered the iconic number 7 shirt at Manchester United by Sir Alex Ferguson after it had been worn by legendary players like David Beckham and Cristiano Ronaldo.",
+    "evidence": "On 3 July 2012, it was confirmed that Valencia would wear the number 7 shirt, worn by past players such as Johnny Berry, Steve Coppell, Bryan Robson, Eric Cantona, David Beckham and Cristiano Ronaldo, after Sir Alex Ferguson offered the number upon Michael Owen's departure from the club.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "2da89ad0-31ca-4e60-b021-df4657f99025",
@@ -2359,8 +2359,8 @@
     "subject": "Abu Simbel",
     "source_title": "Abu Simbel",
     "source_url": "https://en.wikipedia.org/wiki/Abu_Simbel",
-    "fun_fact": "When the explorer Giovanni Belzoni first entered the Great Temple, he compared the hot and humid atmosphere inside to a Turkish bath.",
-    "evidence": "Unlike all the other grottoes in Egypt and Nubia, its atmosphere, instead of presenting a refreshing coolness, was a hot and moist vapour, not unlike that of a Turkish bath, and so penetrating, that paper, carried within, soon became as much saturated with wet as if it had been dropped into the river.",
+    "fun_fact": "The historic temples at Abu Simbel were moved in their entirety to higher ground in 1968 to save them from being submerged by the waters of the Aswan Dam.",
+    "evidence": "The complex was relocated in its entirety in 1968 to higher ground to avoid it being submerged by Lake Nasser, the Aswan Dam reservoir.",
     "checks": {
       "article": true,
       "quote": true,
@@ -2401,8 +2401,8 @@
     "subject": null,
     "source_title": "Flag of Egypt",
     "source_url": "https://en.wikipedia.org/wiki/Flag_of_Egypt",
-    "fun_fact": "The red band of the flag represents the blood shed by Egyptians in the war against colonization.",
-    "evidence": "The red band symbolizes the Egyptians’ blood in the war against colonization.",
+    "fun_fact": "The eagle centered on Egypt's flag is known as the eagle of Saladin, and it is a nod to the ancient Egyptian vulture.",
+    "evidence": "The Eagle in the center is regarded as the Egyptian eagle of Saladin, which in itself reflects a much older origin in Egyptian history, as it represents the Egyptian vulture.",
     "checks": {
       "article": true,
       "quote": true,
@@ -2443,18 +2443,18 @@
     "subject": "Tutankhamun",
     "source_title": "Tutankhamun",
     "source_url": "https://en.wikipedia.org/wiki/Tutankhamun",
-    "fun_fact": "Tutankhamun was one of the few kings who was worshipped as a deity while he was still alive.",
+    "fun_fact": "Tutankhamun was one of the few kings who received worship as a deity while they were alive.",
     "evidence": "Tutankhamun was one of only a few kings known to be worshipped as a deity during their lifetime.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
-      "timeless": false,
+      "timeless": true,
       "shape": true,
-      "judge": null
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "the fact says \"still\", which goes out of date"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "1036e0b7-f338-4bea-bb23-efa66649dd7a",
@@ -2569,7 +2569,7 @@
     "subject": "Gelada",
     "source_title": "Gelada",
     "source_url": "https://en.wikipedia.org/wiki/Gelada",
-    "fun_fact": "Geladas have been observed engaging in secret mating behavior, suggesting they understand the concept of cheating and fear discovery by dominant males.",
+    "fun_fact": "Geladas have been observed engaging in acts of infidelity where the monkeys actively work to hide their behavior from dominant males.",
     "evidence": "A nondominant male mates surreptitiously with a female, with both suppressing their normal mating cries so as not to be overheard.",
     "checks": {
       "article": true,
@@ -2611,18 +2611,18 @@
     "subject": "ስምህ ማን ነው?",
     "source_title": "Amharic language",
     "source_url": "https://en.wikipedia.org/wiki/Amharic_language",
-    "fun_fact": "The Amharic writing system, which uses an abugida script called fidäl, features over 280 distinct letter forms.",
-    "evidence": "All together, the alphabet has some 280 letters.",
+    "fun_fact": "The Amharic script is an abugida where each character's basic shape represents a consonant, and the shape is then modified to indicate which vowel sound follows it.",
+    "evidence": "Each character represents a consonant+vowel sequence, but the basic shape of each character is determined by the consonant, which is modified for the vowel.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "5470a531-9901-4c99-8a0f-87f725567980",
@@ -2716,18 +2716,18 @@
     "subject": "Bula vinaka, vakacava tiko?",
     "source_title": "Fijian language",
     "source_url": "https://en.wikipedia.org/wiki/Fijian_language",
-    "fun_fact": "The Fijian alphabet is based on the Latin script and maintains an almost perfect one-to-one relationship between its letters and the sounds they represent.",
-    "evidence": "The Fijian alphabet is based on the Latin script and consists of the following letters.",
+    "fun_fact": "The name of the country, Fiji, actually comes from an allophonic pronunciation of the native name Viti.",
+    "evidence": "Hence, the Fijian name for Fiji, ⟨Viti⟩, from an allophonic pronunciation of [βitʃi] as [ɸidʒi].",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "979310f6-0765-4648-98a1-6fba72bac188",
@@ -2737,8 +2737,8 @@
     "subject": "Nokia",
     "source_title": "Nokia",
     "source_url": "https://en.wikipedia.org/wiki/Nokia",
-    "fun_fact": "When Nokia first started moving into mobile phones, the executive board was skeptical and compared the devices to niche, futuristic gadgets from James Bond movies.",
-    "evidence": "At that time, the company had no interest in producing mobile phones, which the executive board regarded as akin to James Bond's gadgets: improbably futuristic and niche devices.",
+    "fun_fact": "Before it was known for mobile technology, Nokia produced protective gear like respirators for civilian and military use for over half a century.",
+    "evidence": "Nokia at the time also made respirators for both civilian and military use, from the 1930s well into the early 1990s.",
     "checks": {
       "article": true,
       "quote": true,
@@ -2884,8 +2884,8 @@
     "subject": "Mont-Saint-Michel",
     "source_title": "Mont-Saint-Michel",
     "source_url": "https://en.wikipedia.org/wiki/Mont-Saint-Michel",
-    "fun_fact": "This island was used as a prison for political figures following the French Revolution.",
-    "evidence": "The abbey was closed and converted into a prison, initially to hold clerical opponents of the republican regime.",
+    "fun_fact": "During the summer, dolphins from the Atlantic Ocean are frequently spotted swimming near the small traditional fishing boats in the bay.",
+    "evidence": "In summer, dolphins from the warmer waters of the Atlantic Ocean follow ocean currents into the bay, where they are often seen near local fishermen's traditional boats, known as barquettes.",
     "checks": {
       "article": true,
       "quote": true,
@@ -2905,7 +2905,7 @@
     "subject": "Missä on lähin rautatieasema?",
     "source_title": "Finnish language",
     "source_url": "https://en.wikipedia.org/wiki/Finnish_language",
-    "fun_fact": "The Finnish writing system uses a colon to separate the base of a word from its grammatical suffix, a common practice due to the language's extensive use of endings.",
+    "fun_fact": "In Finnish, the colon is often used to connect the stem of a word to its grammatical suffix, particularly when dealing with acronyms.",
     "evidence": "Modern Finnish punctuation, along with that of Swedish, uses the colon (:) to separate the stem of a word and its grammatical ending in some cases, for example after acronyms, as in EU:ssa 'in the EU'.",
     "checks": {
       "article": true,
@@ -2913,10 +2913,10 @@
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "246d425c-db75-4df5-8de8-761c612fe2b3",
@@ -3178,18 +3178,18 @@
     "subject": "Kenkey",
     "source_title": "Kenkey",
     "source_url": "https://en.wikipedia.org/wiki/Kenkey",
-    "fun_fact": "This staple food is prepared by letting maize dough ferment for several days before it is partially cooked, wrapped in husks or leaves, and steamed.",
-    "evidence": "Unlike ugali, making kenkey involves letting the maize ferment before cooking.",
+    "fun_fact": "Ice kenkey is a refreshing variation of this traditional dish that is prepared by blending the dough with water, sugar, powdered milk, and ice.",
+    "evidence": "Ice kenkey is a meal made from kenkey mixed with water, sugar, powdered milk, and ice.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "17b8d102-0695-45ba-b062-5b80340b9a20",
@@ -3199,8 +3199,8 @@
     "subject": "Cape Coast Castle",
     "source_title": "Cape Coast Castle",
     "source_url": "https://en.wikipedia.org/wiki/Cape_Coast_Castle",
-    "fun_fact": "In 1722, the fort served as the location where 54 crew members from the pirate Bartholomew Roberts were condemned to death, with 52 of them being hanged.",
-    "evidence": "In 1722, the fort was the site where 54 men of the crew of the pirate Bartholomew Roberts were condemned to death, of whom 52 were hanged and two reprieved.",
+    "fun_fact": "The name Cape Coast is derived from the Portuguese phrase Cabo Corso, which translates to Short Cape.",
+    "evidence": "It was originally a Portuguese \"feitoria\" or trading post, established in 1555, which was named Cabo Corso, meaning \"Short Cape.\"",
     "checks": {
       "article": true,
       "quote": true,
@@ -3262,8 +3262,8 @@
     "subject": "Moussaka",
     "source_title": "Moussaka",
     "source_url": "https://en.wikipedia.org/wiki/Moussaka",
-    "fun_fact": "The modern Greek version of moussaka was created in the 1920s by the French-trained chef Nikolaos Tselementes.",
-    "evidence": "The modern Greek variant was created in the 1920s by Nikolaos Tselementes.",
+    "fun_fact": "The modern Greek version of moussaka was created in the 1920s by a French-trained chef named Nikolaos Tselementes.",
+    "evidence": "The modern Greek version was created by the French-trained Greek chef Nikolaos Tselementes in the 1920s.",
     "checks": {
       "article": true,
       "quote": true,
@@ -3283,8 +3283,8 @@
     "subject": null,
     "source_title": "Flag of Greece",
     "source_url": "https://en.wikipedia.org/wiki/Flag_of_Greece",
-    "fun_fact": "A popular, though unofficial, theory is that the flag's nine stripes represent the syllables of the phrase Freedom or Death.",
-    "evidence": "While the nine stripes do not have any official meaning, the most popular interpretation says that they represent the syllables of the phrase Ελευθερία ή Θάνατος (Freedom or Death): the five blue stripes for the syllables in Ελευθερία, the four white for those of ή Θάνατος.",
+    "fun_fact": "The government has never specified an exact shade of blue for the flag, so its color remains open to interpretation by flag manufacturers.",
+    "evidence": "The Government of Greece has never specified exactly which shade of blue should be used for the flag, and as such flags with many varying shades exist.",
     "checks": {
       "article": true,
       "quote": true,
@@ -3514,8 +3514,8 @@
     "subject": "Hol van a legközelebbi fürdő?",
     "source_title": "Hungarian language",
     "source_url": "https://en.wikipedia.org/wiki/Hungarian_language",
-    "fun_fact": "Historically, Hungarian was written using a special alphabetic script that is thought to have originated from the Old Turkic script.",
-    "evidence": "Historically, the language was written using the Old Hungarian script, an alphabetic writing system believed to derive from the Old Turkic script.",
+    "fun_fact": "The Hungarian word for Hungary, Magyarország, features a specific voiced palatal plosive sound represented by the letters 'gy'.",
+    "evidence": "The voiced palatal plosive /ɟ/, written ⟨gy⟩, occurs in the name of the country, \"Magyarország\" (Hungary), pronounced /ˈmɒɟɒrorsaːɡ/.",
     "checks": {
       "article": true,
       "quote": true,
@@ -3640,18 +3640,18 @@
     "subject": "Það er kalt í dag",
     "source_title": "Icelandic language",
     "source_url": "https://en.wikipedia.org/wiki/Icelandic_language",
-    "fun_fact": "Because the written form of Icelandic has not changed significantly since the 11th century, modern speakers can read original sagas and Eddas from eight centuries ago.",
-    "evidence": "Apart from the addition of new vocabulary, written Icelandic has not changed substantially since the 11th century, when the first texts were written on vellum.",
+    "fun_fact": "The Icelandic language keeps its vocabulary very stable by preferring to create new words from older native terms instead of adopting loanwords from other languages.",
+    "evidence": "Icelandic vocabulary is also deeply conservative, with the country's language regulator maintaining an active policy of coining terms based on older Icelandic words rather than directly taking in loanwords from other languages.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "e1919322-087b-4a4f-83de-3fa48f6f31ed",
@@ -3724,8 +3724,8 @@
     "subject": "Taj Mahal",
     "source_title": "Taj Mahal",
     "source_url": "https://en.wikipedia.org/wiki/Taj_Mahal",
-    "fun_fact": "The four minarets flanking the Taj Mahal were built to lean slightly outward so that they would fall away from the main tomb in the event of a collapse.",
-    "evidence": "The minarets were constructed slightly oriented towards the outside of the plinth so that in the event of collapse, the material from the towers would tend to fall away from the tomb.",
+    "fun_fact": "The main and smaller domes of the building are decorated with a pattern that looks like a lotus flower.",
+    "evidence": "The main and the smaller domes are decorated with a design resembling a lotus flower.",
     "checks": {
       "article": true,
       "quote": true,
@@ -3913,7 +3913,7 @@
     "subject": "Sukarno",
     "source_title": "Sukarno",
     "source_url": "https://en.wikipedia.org/wiki/Sukarno",
-    "fun_fact": "During his period of internal exile in the town of Ende, Sukarno used his limited freedom to start a theatre for children.",
+    "fun_fact": "During his exile in the remote town of Ende on the island of Flores, Sukarno established a children's theatre.",
     "evidence": "During his time in Flores, he utilised his limited freedom of movement to establish a children's theatre.",
     "checks": {
       "article": true,
@@ -3921,10 +3921,10 @@
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "3e1e70de-c58e-439f-9cf4-47deafa6ed76",
@@ -3934,18 +3934,18 @@
     "subject": "Komodo dragon",
     "source_title": "Komodo dragon",
     "source_url": "https://en.wikipedia.org/wiki/Komodo_dragon",
-    "fun_fact": "Komodo dragons use their long, deeply forked yellow tongues to detect, taste, and smell stimuli from several kilometers away.",
-    "evidence": "As with many other reptiles, the Komodo dragon primarily relies on its tongue to detect, taste, and smell stimuli, with the vomeronasal sense using the Jacobson's organ, rather than using the nostrils.",
+    "fun_fact": "To help them swallow large meals whole, Komodo dragons have a special tube under their tongue that lets them breathe while they eat.",
+    "evidence": "A small tube under the tongue that connects to the lungs allows it to breathe while swallowing.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "9f846e40-9565-4ab2-babb-e97395dfc864",
@@ -3955,18 +3955,18 @@
     "subject": "Apa kabar? Saya baik-baik saja",
     "source_title": "Indonesian language",
     "source_url": "https://en.wikipedia.org/wiki/Indonesian_language",
-    "fun_fact": "Ancient inscriptions from the 7th century used Indian-influenced scripts, such as Pallava and Nagari, to write the Old Malay language.",
-    "evidence": "All these Old Malay inscriptions used either scripts of Indian origin such as Pallava, Nagari or the Indian-influenced old Sumatran characters.",
+    "fun_fact": "During the colonial era, the Indonesian language absorbed a large number of loanwords from the Dutch language.",
+    "evidence": "The use of Latin script began to expand in the fields of administration and education whereby the influence of Dutch literatures and languages started to penetrate and spread gradually into the language. Nevertheless, it did have a significant influence on the development of Malay in the colony: during the colonial era, the language that would be standardized as Indonesian absorbed a large amount of Dutch vocabulary in the form of loanwords.",
     "checks": {
       "article": true,
       "quote": true,
-      "numbers": false,
+      "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": null
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "the fact states 7, which the evidence does not"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "7f167e87-43c6-4d3e-aaee-224d77f8a416",
@@ -4018,18 +4018,18 @@
     "subject": "Azadi Tower",
     "source_title": "Azadi Tower",
     "source_url": "https://en.wikipedia.org/wiki/Azadi_Tower",
-    "fun_fact": "The tower's 8,000 blocks of white marble from Isfahan were supplied by a man nicknamed Iran's Sultan of Stone.",
-    "evidence": "Built with white marble from Isfahan province, the monument includes 8,000 blocks of stone.",
+    "fun_fact": "The tower's complex woven exterior was designed using computer technology, which was a novel technique during the construction process.",
+    "evidence": "Computers were used to \"define its complex woven surfaces,\" which, at the time, was a new technological technique.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "8c5d4e39-45e7-46af-9882-4e3041d45029",
@@ -4060,7 +4060,7 @@
     "subject": "حال شما چطور است؟",
     "source_title": "Persian language",
     "source_url": "https://en.wikipedia.org/wiki/Persian_language",
-    "fun_fact": "The modern name Farsi for the Persian language is due to a sound shift where the letter p changed to f because the phoneme p does not exist in standard Arabic.",
+    "fun_fact": "The modern Persian word for the language, Farsi, changed from its earlier form because Arabic speakers in the Middle Ages did not have the letter 'p' in their alphabet.",
     "evidence": "The phonemic shift from /p/ to /f/ is due to the influence of Arabic in the Middle Ages, from the lack of the phoneme /p/ in Standard Arabic.",
     "checks": {
       "article": true,
@@ -4081,8 +4081,8 @@
     "subject": "Ruhollah Khomeini",
     "source_title": "Ruhollah Khomeini",
     "source_url": "https://en.wikipedia.org/wiki/Ruhollah_Khomeini",
-    "fun_fact": "His state funeral is recognized as the second-largest funeral in history, with up to 10 million attendees.",
-    "evidence": "His state funeral was attended by up to 10 million people, one fifth of Iran's population at the time, and is considered the second-largest funeral in history.",
+    "fun_fact": "Ruhollah Khomeini had an impressive memory for poetry and could recite the subsequent line of any verse recited to him by other poets.",
+    "evidence": "Every single line I recited from any poet, he recited the next.",
     "checks": {
       "article": true,
       "quote": true,
@@ -4165,8 +4165,8 @@
     "subject": "Ziggurat of Ur",
     "source_title": "Ziggurat of Ur",
     "source_url": "https://en.wikipedia.org/wiki/Ziggurat_of_Ur",
-    "fun_fact": "The ancient Sumerian name for this ziggurat translates to a house whose foundation creates terror.",
-    "evidence": "The Ziggurat (or Great Ziggurat) of Ur (Sumerian: 𒂍𒋼𒅎𒅍 é-temen-ní-gùru \"Etemenniguru\", meaning \"house whose foundation creates terror\") is a Neo-Sumerian ziggurat in what was the city of Ur near Nasiriyah, in present-day Dhi Qar Province, Iraq.",
+    "fun_fact": "This ancient structure was originally built as a temple dedicated to the moon god Nanna, who was the patron deity of the city of Ur.",
+    "evidence": "The ziggurat was a piece in a temple complex that served as an administrative center for the city, and which was a shrine of the moon god Nanna, the patron deity of Ur.",
     "checks": {
       "article": true,
       "quote": true,
@@ -4186,8 +4186,8 @@
     "subject": "Saddam Hussein",
     "source_title": "Saddam Hussein",
     "source_url": "https://en.wikipedia.org/wiki/Saddam_Hussein",
-    "fun_fact": "His mother was so depressed by his father's death before he was born that she unsuccessfully tried to abort her pregnancy and commit suicide.",
-    "evidence": "This made Saddam's mother, Subha, so depressed that she unsuccessfully attempted to abort her pregnancy and commit suicide.",
+    "fun_fact": "Saddam Hussein's name translates to mean the fighter who stands steadfast.",
+    "evidence": "Saddam's name means \"the fighter who stands steadfast\".",
     "checks": {
       "article": true,
       "quote": true,
@@ -4438,7 +4438,7 @@
     "subject": "David Ben-Gurion",
     "source_title": "David Ben-Gurion",
     "source_url": "https://en.wikipedia.org/wiki/David_Ben-Gurion",
-    "fun_fact": "Inspired by the teachings of Tolstoy, David Ben-Gurion became a vegetarian during his time in Warsaw.",
+    "fun_fact": "Before he became a prominent political leader, David Ben-Gurion was inspired by the works of Leo Tolstoy and decided to become a vegetarian.",
     "evidence": "Inspired by Tolstoy he had become a vegetarian.",
     "checks": {
       "article": true,
@@ -4446,10 +4446,10 @@
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "3905cb82-4ff4-43eb-9a0e-3c42a03d69ad",
@@ -4480,18 +4480,18 @@
     "subject": "Ferrari",
     "source_title": "Ferrari",
     "source_url": "https://en.wikipedia.org/wiki/Ferrari",
-    "fun_fact": "During the 1930s, Ferrari operated a motorcycle racing division that used British bikes from Norton and Rudge instead of Italian brands.",
-    "evidence": "From 1932 to 1935 Scuderia Ferrari operated a motorcycle racing division, which was conceived as a way to scout and train future Grand Prix drivers.",
+    "fun_fact": "Scuderia Ferrari once operated a motorcycle racing division that competed using British-made Norton and Rudge bikes.",
+    "evidence": "Instead of Italian motorcycles, the team used British ones manufactured by Norton and Rudge.",
     "checks": {
       "article": true,
       "quote": true,
-      "numbers": false,
+      "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": null
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "the fact states 1930, which the evidence does not"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "a37c4f29-d91b-467b-ac0f-c70f6b5d0e0e",
@@ -4501,18 +4501,18 @@
     "subject": "Grand Canal (Venice)",
     "source_title": "Grand Canal (Venice)",
     "source_url": "https://en.wikipedia.org/wiki/Grand_Canal_(Venice)",
-    "fun_fact": "Every year on the first Sunday of September, the canal hosts the Historical Regatta, a boat competition and procession celebrating the 1489 arrival of Queen Catherine Cornaro.",
-    "evidence": "On the first Sunday of September the Historical Regatta (\"Regata Storica\") takes place, a competition between Venetian boats watched by thousands of people from the banks or from floating stands.",
+    "fun_fact": "Because most of the traffic travels along the Grand Canal rather than across it, the Rialto Bridge remained the only bridge spanning the waterway until the 19th century.",
+    "evidence": "Because most of the city's traffic goes along the Canal rather than across it, only one bridge crossed the canal until the 19th century, the Rialto Bridge.",
     "checks": {
       "article": true,
       "quote": true,
-      "numbers": false,
+      "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": null
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "the fact states 1489, which the evidence does not"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "ee3ce4d0-6fed-4d52-8556-9ef15035582d",
@@ -4753,18 +4753,18 @@
     "subject": null,
     "source_title": "Flag of Japan",
     "source_url": "https://en.wikipedia.org/wiki/Flag_of_Japan",
-    "fun_fact": "Before the 1964 Tokyo Olympics, the size of the central sun disc was adjusted to appear more striking when displayed alongside other nations' flags.",
-    "evidence": "Before the Olympic Games, the size of the sun disc of the national flag was changed partly because the sun disc was not considered striking when it was being flown with other national flags.",
+    "fun_fact": "Japan's flag is officially called the Nisshōki, meaning 'flag of the sun', but most people call it the Hinomaru, 'circle of the sun'.",
+    "evidence": "The flag is officially called the Nisshōki (日章旗, 'flag of the sun'), but is more commonly known in Japan as the Hinomaru (日の丸, 'circle of the sun').",
     "checks": {
       "article": true,
       "quote": true,
-      "numbers": false,
+      "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": null
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "the fact states 1964, which the evidence does not"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "e62add34-547c-41c1-aed3-5da4f12803e4",
@@ -4963,18 +4963,18 @@
     "subject": "Mansaf",
     "source_title": "Mansaf",
     "source_url": "https://en.wikipedia.org/wiki/Mansaf",
-    "fun_fact": "Jameed, the yogurt used in this dish, is created by boiling sheep or goat's milk and shaping the resulting dense mixture into balls after drying and fermenting.",
-    "evidence": "Jameed is a hard dry yogurt that is prepared by the boiling of sheep or goat's milk, which is then left to dry and ferment.",
+    "fun_fact": "The name of this traditional dish is derived from a term meaning large tray or large dish.",
+    "evidence": "The name of the dish comes from the term \"large tray\" or \"large dish\", and is speculated to have biblical, ancient roots.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "2fa48a4c-951d-437c-b7cb-a663ef2df63e",
@@ -5005,18 +5005,18 @@
     "subject": "Queen Rania of Jordan",
     "source_title": "Queen Rania of Jordan",
     "source_url": "https://en.wikipedia.org/wiki/Queen_Rania_of_Jordan",
-    "fun_fact": "Queen Rania has authored several children's books, including one inspired by a childhood incident where she and a friend argued over their sandwiches.",
-    "evidence": "The Sandwich Swap is a book inspired by an incident in her childhood.",
+    "fun_fact": "To mark Mother's Day in 2008, Queen Rania wrote a children's book about a little girl looking for the most beautiful thing in the world while talking to a small sheep.",
+    "evidence": "Her second book, entitled Eternal Beauty, which she wrote in celebration of Mother's Day 2008 tells the story of a young girl's conversation with a little sheep as she searches for the most beautiful thing in the world.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "4cf17e66-ee52-41b1-92d5-bfb7d6b5369a",
@@ -5110,18 +5110,18 @@
     "subject": "Eliud Kipchoge",
     "source_title": "Eliud Kipchoge",
     "source_url": "https://en.wikipedia.org/wiki/Eliud_Kipchoge",
-    "fun_fact": "During the 2015 Berlin Marathon, Kipchoge won despite his insoles flapping out of his shoes for most of the race, which left his feet bloodied and blistered.",
-    "evidence": "His win and then-personal best time (2:04:00) occurred even though his shoes malfunctioned, causing his insoles to flap out of both shoes from 10 km onward; rather than risk time lost from an adjustment, he finished the race with bloodied, blistered feet.",
+    "fun_fact": "During his childhood, Eliud Kipchoge would run three kilometers to get to school every single day.",
+    "evidence": "He ran three kilometres (2 mi) to school on a daily basis.",
     "checks": {
       "article": true,
       "quote": true,
-      "numbers": false,
+      "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": null
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "the fact states 2015, which the evidence does not"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "d58ddc7c-9263-4f99-960e-e44d59dbe9fe",
@@ -5131,18 +5131,18 @@
     "subject": null,
     "source_title": "Flag of Lebanon",
     "source_url": "https://en.wikipedia.org/wiki/Flag_of_Lebanon",
-    "fun_fact": "Before the flag design was amended in 1990, the cedar tree was often depicted with a brown trunk, but the rule now requires it to be entirely green.",
+    "fun_fact": "The 1990 amendment of the constitution officially mandated that the cedar tree on the national flag must be colored entirely green.",
     "evidence": "The 1990 amendment specified that the entire cedar tree must be green.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
-      "timeless": false,
+      "timeless": true,
       "shape": true,
-      "judge": null
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "the fact says \"now\", which goes out of date"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "2da112c6-5a83-4857-b4eb-df4427722c04",
@@ -5215,8 +5215,8 @@
     "subject": "Fairuz",
     "source_title": "Fairuz",
     "source_url": "https://en.wikipedia.org/wiki/Fairuz",
-    "fun_fact": "For her first major live performance at the Baalbeck International Festival, Fairuz was paid only one Lebanese pound.",
-    "evidence": "Fairuz was paid one Lebanese pound for that show, but she and the Rahbani brothers would become staples of the festival and featured most years until the civil war in Lebanon.",
+    "fun_fact": "Her stage name, Fairuz, is the Arabic word for the gemstone turquoise.",
+    "evidence": "He also went on to compose several songs for her and chose for her the stage name Fairuz, which is the Arabic word for turquoise and had been adopted as a stage name by Syrian singer Fayrouz Al Halabiya.",
     "checks": {
       "article": true,
       "quote": true,
@@ -5320,8 +5320,8 @@
     "subject": "Ranavalona III",
     "source_title": "Ranavalona III",
     "source_url": "https://en.wikipedia.org/wiki/Ranavalona_III",
-    "fun_fact": "An American journalist who visited the royal palace reported that Queen Ranavalona III enjoyed spending her leisure time flying kites or playing a parlor game called lotto with her companions.",
-    "evidence": "An American journalist who visited her palace reported that Ranavalona spent much of her leisure time flying kites or playing lotto, a parlor game, with her relatives and other ladies at court.",
+    "fun_fact": "The queen had a great passion for fashion and was the only Malagasy sovereign to import the majority of her clothing from Paris rather than London.",
+    "evidence": "She had a great love of fine garments and was the only Malagasy sovereign to import the majority of her clothing from Paris rather than London.",
     "checks": {
       "article": true,
       "quote": true,
@@ -5341,18 +5341,18 @@
     "subject": "Manao ahoana ianao?",
     "source_title": "Malagasy language",
     "source_url": "https://en.wikipedia.org/wiki/Malagasy_language",
-    "fun_fact": "Before Western missionaries introduced the Latin alphabet in the early 1800s, Malagasy was written using a local script derived from the Arabic alphabet called Sorabe.",
-    "evidence": "Malagasy is written in the Latin script, which was introduced by Western missionaries in the early 19th century.",
+    "fun_fact": "The Malagasy alphabet consists of 21 letters and does not include the letters c, q, u, w, or x.",
+    "evidence": "The current Malagasy alphabet consists of 21 letters: a, b, d, e, f, g, h, i, j, k, l, m, n, o, p, r, s, t, v, y, z.",
     "checks": {
       "article": true,
       "quote": true,
-      "numbers": false,
+      "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": null
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "the fact states 1800, which the evidence does not"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "19093375-c7b8-4f6c-87c5-5f398f63ab2c",
@@ -5383,18 +5383,18 @@
     "subject": null,
     "source_title": "Flag of Malaysia",
     "source_url": "https://en.wikipedia.org/wiki/Flag_of_Malaysia",
-    "fun_fact": "The winning design for the national flag was created by Mohamed Hamzah, a 29-year-old architect who completed four entries in just three days.",
-    "evidence": "The Malayan flag was designed by Mohamed Hamzah, a 29-year-old architect working for the Public Works Department (JKR) in Johor Bahru, in the state of Johor.",
+    "fun_fact": "The flag that became one of the three finalists was said to be inspired by the flag of Johor, but with five white stripes added to the blue field.",
+    "evidence": "The flag that became one of the three finalists was said to be inspired by the flag of Johor, but with five white stripes added to the blue field.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "4b3fb996-5c21-4c9b-99e1-0658193c5589",
@@ -5509,18 +5509,18 @@
     "subject": "Teotihuacan",
     "source_title": "Teotihuacan",
     "source_url": "https://en.wikipedia.org/wiki/Teotihuacan",
-    "fun_fact": "Unlike many other ancient civilizations in the region that showcased royal authority through palaces and monuments, Teotihuacan lacks evidence of kings, suggesting it may have been governed collectively.",
-    "evidence": "Evidence of a king or other authoritarian ruler is strikingly absent in Teotihuacan.",
+    "fun_fact": "Typical art pieces from this ancient city include funerary masks created from green stone and decorated with mosaics made of materials like turquoise, shell, or obsidian.",
+    "evidence": "Typical artistic artifacts of this period are funeral masks, crafted mainly from green stone and covered with mosaics of turquoise, shell or obsidian.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "8f183e74-488d-4bbe-83bf-4645c55d6f0c",
@@ -5530,18 +5530,18 @@
     "subject": "Taco",
     "source_title": "Taco",
     "source_url": "https://en.wikipedia.org/wiki/Taco",
-    "fun_fact": "Tacos sudados are kept warm inside a cloth-covered basket, where the trapped steam softens the tortillas.",
-    "evidence": "Tacos sudados (\"sweaty tacos\") are made by filling soft tortillas with a spicy meat mixture, then placing them in a basket covered with cloth.",
+    "fun_fact": "Some taco variations, such as the mulita, feature meat sandwiched between two tortillas and topped with Oaxaca-style cheese.",
+    "evidence": "Also, prepared on the grill is a sandwiched taco called mulita (\"little mule\") made with meat served between two tortillas and garnished with Oaxaca style cheese.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "a49b5861-c155-4913-8968-7b66938f7aa4",
@@ -5614,18 +5614,18 @@
     "subject": "Axolotl",
     "source_title": "Axolotl",
     "source_url": "https://en.wikipedia.org/wiki/Axolotl",
-    "fun_fact": "Axolotls have the extraordinary ability to regrow not just their limbs and tail, but also vital organs like their heart and parts of their brain without any scarring.",
-    "evidence": "The characteristic of the axolotl that attracts the most attention is its unusual healing ability; axolotls do not heal by scarring but are instead capable of tissue regeneration.",
+    "fun_fact": "Axolotls can accept transplants from other individuals, including eyes and parts of the brain, and successfully restore these alien organs to full functionality.",
+    "evidence": "They can readily accept transplants from other individuals—including eyes and parts of the brain—restoring these \"alien organs\" to full functionality.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "649c00df-0860-436a-b786-54871d680a42",
@@ -5971,18 +5971,18 @@
     "subject": "Heineken",
     "source_title": "Heineken",
     "source_url": "https://en.wikipedia.org/wiki/Heineken",
-    "fun_fact": "Two of the historical awards earned by the beer in its early years are still featured on the bottle's label.",
-    "evidence": "The two awards that are still mentioned on the label are the Medaille d'Or and Diplome d'Honneurs.",
+    "fun_fact": "The original brewery where Gerard Adriaan Heineken first began crafting his beer has been transformed into a museum known as the Heineken Experience.",
+    "evidence": "The original brewery where Gerard Adriaan Heineken first started making Heineken is now the Heineken Experience museum.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
-      "timeless": false,
+      "timeless": true,
       "shape": true,
-      "judge": null
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "the fact says \"still\", which goes out of date"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "5f040e2c-c8cd-4ca9-b2bd-54ac934b91bb",
@@ -6097,18 +6097,18 @@
     "subject": "Kinderdijk",
     "source_title": "Kinderdijk",
     "source_url": "https://en.wikipedia.org/wiki/Kinderdijk",
-    "fun_fact": "A local legend suggests the name Kinderdijk came from a baby found in a cradle that was kept afloat and balanced by a cat during a flood.",
-    "evidence": "Kinderdijk first originated its name in 1421 from a legend where a wave was said to have washed ashore a cradle that contained a sleeping baby.",
+    "fun_fact": "This village features nineteen historic windmills that were constructed in the mid-eighteenth century to help drain the local polder.",
+    "evidence": "To drain the polder, a system of 19 windmills was built around 1740.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "08ea023e-a3cb-48ef-9c7f-1a0198cd6d17",
@@ -6223,8 +6223,8 @@
     "subject": "Kiwi (bird)",
     "source_title": "Kiwi (bird)",
     "source_url": "https://en.wikipedia.org/wiki/Kiwi_(bird)",
-    "fun_fact": "Kiwi are unusual among birds because they possess a functioning pair of ovaries instead of just the left one.",
-    "evidence": "They are unusual among other birds in that, along with some raptors, they have a functioning pair of ovaries.",
+    "fun_fact": "Kiwi eggs are so large relative to the bird's size that a female kiwi must eat three times her normal amount of food to produce one.",
+    "evidence": "Producing the huge egg places significant physiological stress on the female; for the thirty days it takes to grow the fully developed egg, the female must eat three times her normal amount of food.",
     "checks": {
       "article": true,
       "quote": true,
@@ -6349,18 +6349,18 @@
     "subject": "Fela Kuti",
     "source_title": "Fela Kuti",
     "source_url": "https://en.wikipedia.org/wiki/Fela_Kuti",
-    "fun_fact": "In 1978, Fela Kuti famously married 27 women at once to protest harassment from authorities and to mark the anniversary of an attack on his commune.",
-    "evidence": "In 1978, he married 27 women, many of whom were dancers, composers, and singers with whom he worked.",
+    "fun_fact": "Fela Kuti adopted the name Egypt 80 for his band to emphasize that Egyptian knowledge and philosophy are deeply rooted in African history.",
+    "evidence": "At this time, Kuti recreated his band, Egypt 80, which reflected the view that Egyptian civilization, knowledge, philosophy, mathematics, and religious systems are African and must be claimed as such.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "7c0dc7f8-6306-4422-8da5-29c02f0c9365",
@@ -6454,18 +6454,18 @@
     "subject": "Hvor er nærmeste togstasjon?",
     "source_title": "Norwegian language",
     "source_url": "https://en.wikipedia.org/wiki/Norwegian_language",
-    "fun_fact": "The Norwegian alphabet consists of 29 letters, and the letters c, q, w, x, and z are used exclusively for loanwords.",
-    "evidence": "The Norwegian alphabet has 29 letters.",
+    "fun_fact": "The Norwegian language possesses a distinctive singing quality due to its unique system of pitch accents.",
+    "evidence": "The pitch accents (as well as the peculiar phrase accent in the low-tone dialects) give the Norwegian language a \"singing\" quality that makes it easy to distinguish from other languages.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "053cf0cd-ffc3-4d12-83c3-071db797c7b1",
@@ -6643,18 +6643,18 @@
     "subject": "Sancocho",
     "source_title": "Sancocho",
     "source_url": "https://en.wikipedia.org/wiki/Sancocho",
-    "fun_fact": "Panamanian sancocho is often recommended as the best remedy for a hangover.",
-    "evidence": "It is often recommended as the best remedy for a hangover.",
+    "fun_fact": "Panamanian sancocho uses a specific type of yam called ñame both to enhance the flavor and to naturally thicken the stew.",
+    "evidence": "The basic ingredients are chicken, ñame (adding flavor and acting as a thickener, giving it its characteristic texture and brightness) and culantro (giving it most of its characteristic flavor and greenish tone); often yuca, mazorca (corn on the cob) and otoe are added.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "a70192d0-1fae-42d2-9865-261dffcff92f",
@@ -6685,18 +6685,18 @@
     "subject": "Roberto Durán",
     "source_title": "Roberto Durán",
     "source_url": "https://en.wikipedia.org/wiki/Roberto_Dur%C3%A1n",
-    "fun_fact": "On his 32nd birthday, Roberto Durán celebrated his third world title victory as the crowd serenaded him with Happy Birthday while he sobbed.",
-    "evidence": "After the victory, Durán was hoisted up in the air as the crowd sang \"Happy Birthday\" to a sobbing Durán.",
+    "fun_fact": "Roberto Durán started sparring with experienced boxers at a gym when he was only eight years old.",
+    "evidence": "He began sparring with experienced boxers at the Neco de La Guardia gymnasium when he was only eight years old.",
     "checks": {
       "article": true,
       "quote": true,
-      "numbers": false,
+      "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": null
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "the fact states 32, which the evidence does not"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "e5851897-496b-462a-9466-4011d90ddcaa",
@@ -6727,7 +6727,7 @@
     "subject": "Inca Kola",
     "source_title": "Inca Kola",
     "source_url": "https://en.wikipedia.org/wiki/Inca_Kola",
-    "fun_fact": "The unique flavor of Inca Kola is created using thirteen different plant extracts, with its primary ingredient being lemon verbena.",
+    "fun_fact": "When it was first released, Inca Kola was introduced to celebrate the 400th anniversary of the founding of Lima.",
     "evidence": "In 1935, the 400th anniversary of the founding of Lima, Lindely launched Inca Kola, the flavor was derived from Lemon Verbena (Spanish: Verbena de Indias, Hierbaluisa or Cedrón).",
     "checks": {
       "article": true,
@@ -6735,10 +6735,10 @@
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "7a520778-d7aa-45d9-aaf7-d59e5e8af660",
@@ -6790,8 +6790,8 @@
     "subject": "Mario Vargas Llosa",
     "source_title": "Mario Vargas Llosa",
     "source_url": "https://en.wikipedia.org/wiki/Mario_Vargas_Llosa",
-    "fun_fact": "In 1976, Mario Vargas Llosa physically assaulted fellow author Gabriel García Márquez at an event in Mexico City, effectively ending their long-standing friendship.",
-    "evidence": "In 1976, Vargas Llosa punched García Márquez in the face at the Palacio de Bellas Artes in Mexico City, ending the friendship.",
+    "fun_fact": "When Vargas Llosa was ten years old, he lived in Lima and met his father for the first time.",
+    "evidence": "In 1946, at the age of ten, he moved to Lima and met his father for the first time.",
     "checks": {
       "article": true,
       "quote": true,
@@ -6811,18 +6811,18 @@
     "subject": "Machu Picchu",
     "source_title": "Machu Picchu",
     "source_url": "https://en.wikipedia.org/wiki/Machu_Picchu",
-    "fun_fact": "The ancient site likely served as a royal estate for the Inca emperor Pachacuti and was inhabited by a diverse community of people from across the region.",
-    "evidence": "A consensus among archaeologists is that Pachacutec ordered the construction of the royal estate after his conquest of the middle and lower Urubamba; this has been interpreted as part of a broader program of establishing royal estates along the Urubamba River.",
+    "fun_fact": "In the Quechua language, the name Machu Picchu translates to old peak or old mountain.",
+    "evidence": "In the Quechua language, machu means 'old' or 'old person' and wayna (spelled huayna in standard Spanish orthography) means 'young', while pikchu refers to a 'summit', 'peak', or 'pyramid'.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "a0dace79-c6c0-4505-a392-555765ed1f02",
@@ -6832,8 +6832,8 @@
     "subject": "Llama",
     "source_title": "Llama",
     "source_url": "https://en.wikipedia.org/wiki/Llama",
-    "fun_fact": "Because a mother llama has a tongue that can only extend about half an inch, she does not lick her newborn baby, but instead nuzzles and hums to it.",
-    "evidence": "Dams (female llamas) do not lick off their babies, as they have an attached tongue that does not reach outside of the mouth more than 13 millimetres (1⁄2 inch).",
+    "fun_fact": "Because their ears curve slightly inward, they are often described as being banana-shaped.",
+    "evidence": "The ears are rather long and slightly curved inward, characteristically known as \"banana\" shaped.",
     "checks": {
       "article": true,
       "quote": true,
@@ -6895,8 +6895,8 @@
     "subject": null,
     "source_title": "Flag of Philippines",
     "source_url": "https://en.wikipedia.org/wiki/Flag_of_Philippines",
-    "fun_fact": "A unique feature of the flag is that it indicates a state of war when it is flown upside-down with the red side on top.",
-    "evidence": "A unique feature of this flag is its usage to indicate a state of war if it is displayed with the red side on top, which is effectively achieved by flipping the flag upside-down.",
+    "fun_fact": "The original national flag was sewn by three women, including the wife and five-year-old daughter of a revolutionary leader, along with the niece of national hero José Rizal.",
+    "evidence": "It was sewn by Doña Marcela Mariño Agoncillo, her five-year-old daughter Lorenza Mariño Agoncillo, and Mrs. Delfina Herbosa Natividad, Dr. José Rizal's niece by his sister Lucia.",
     "checks": {
       "article": true,
       "quote": true,
@@ -6916,18 +6916,18 @@
     "subject": "Halo-halo",
     "source_title": "Halo-halo",
     "source_url": "https://en.wikipedia.org/wiki/Halo-halo",
-    "fun_fact": "This Filipino dessert likely evolved from a Japanese dish and is often served in a tall clear glass with a long spoon.",
-    "evidence": "The origin of halo-halo is traced to the pre-war Japanese Filipinos and the Japanese kakigōri class of desserts.",
+    "fun_fact": "The name halo-halo literally translates from Filipino to English as mix-mix.",
+    "evidence": "Halo-halo is often literally translated as \"mix-mix\" in English.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "002808da-f59d-406f-ada6-cb0b7c9bf9aa",
@@ -6958,18 +6958,18 @@
     "subject": "Chocolate Hills",
     "source_title": "Chocolate Hills",
     "source_url": "https://en.wikipedia.org/wiki/Chocolate_Hills",
-    "fun_fact": "The unique mounds of the Chocolate Hills are believed by some local legends to be the result of giants who had a mud-throwing battle, cried tears over a lost love, or left behind baked mud cakes.",
-    "evidence": "The Chocolate Hills have inspired many geomyths, most of which revolve around their formation and figures of giants.",
+    "fun_fact": "The Chocolate Hills are featured on the provincial flag and seal to represent the many natural attractions found in Bohol.",
+    "evidence": "The Chocolate Hills are featured on the provincial flag and seal to symbolize the abundance of natural attractions in the province.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "unsupported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence unsupported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "66875f2a-7628-4d5c-9204-37cc7b8d7444",
@@ -6979,18 +6979,18 @@
     "subject": "Philippine tarsier",
     "source_title": "Philippine tarsier",
     "source_url": "https://en.wikipedia.org/wiki/Philippine_tarsier",
-    "fun_fact": "Because their eyes are permanently fixed in their sockets, Philippine tarsiers have a special neck adaptation that allows them to rotate their heads 180 degrees.",
-    "evidence": "Like all tarsiers, the Philippine tarsier's eyes are fixed in its skull; they cannot move in their sockets.",
+    "fun_fact": "When these shy creatures gather, their combined chirping creates a sound similar to that of a locust.",
+    "evidence": "When several tarsiers come together, the combined effect of this chirping is a locust-like sound.",
     "checks": {
       "article": true,
       "quote": true,
-      "numbers": false,
+      "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": null
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "the fact states 180, which the evidence does not"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "6b40c9cf-93f8-4332-9e12-98569966a9d3",
@@ -7021,18 +7021,18 @@
     "subject": "Magandang umaga sa inyong lahat",
     "source_title": "Filipino language",
     "source_url": "https://en.wikipedia.org/wiki/Filipino_language",
-    "fun_fact": "In 1940, the national language standard was set by the introduction of the 20-letter Abakada alphabet.",
-    "evidence": "That same year, the Balarílà ng Wikang Pambansâ (English: Grammar of the National Language) of grammarian Lope K. Santos introduced the 20-letter Abakada alphabet which became the standard of the national language.",
+    "fun_fact": "A student from Ateneo de Manila University successfully registered the Filipino language with the International Organization for Standardization in 2004.",
+    "evidence": "Filipino was presented and registered with the International Organization for Standardization (ISO), by Ateneo de Manila University student Martin Gomez, and was added to the ISO registry of languages on September 21, 2004, with it receiving the ISO 639-2 code fil.",
     "checks": {
       "article": true,
       "quote": true,
-      "numbers": false,
+      "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": null
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "the fact states 1940, which the evidence does not"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "f9a130af-fe8a-43ea-a092-4e17c5c83ebe",
@@ -7084,8 +7084,8 @@
     "subject": "Wawel Castle",
     "source_title": "Wawel Castle",
     "source_url": "https://en.wikipedia.org/wiki/Wawel_Castle",
-    "fun_fact": "A metal statue of a dragon resides at the base of the hill to commemorate the popular local myth of the Wawel Dragon, a beast said to have terrorized the area.",
-    "evidence": "Today, it is commemorated on the lower slopes of the Wawel Hill where by the river, is a modern fire-breathing metal statue of the dragon.",
+    "fun_fact": "The Hen's Foot Tower at Wawel Castle gets its unique name because it is constructed upon three projecting buttresses that look like the foot of a chicken.",
+    "evidence": "The Hen's Foot Tower, built upon three projecting buttresses resembling a chicken foot, and the Danish Tower date from their reigns, as do the Jadwiga and Jogaila Chamber, in which the Polish coronation sword (Szczerbiec) is exhibited.",
     "checks": {
       "article": true,
       "quote": true,
@@ -7105,8 +7105,8 @@
     "subject": "Pope John Paul II",
     "source_title": "Pope John Paul II",
     "source_url": "https://en.wikipedia.org/wiki/Pope_John_Paul_II",
-    "fun_fact": "During his childhood in Wadowice, Poland, the future pope often played as a goalkeeper on Jewish football teams.",
-    "evidence": "School football games were often organised between teams of Jews and Catholics, and Wojtyła often played on the Jewish side.",
+    "fun_fact": "Before becoming pope, the future John Paul II was a talented linguist who learned 15 different languages throughout his life.",
+    "evidence": "During this time, his talent for language blossomed, and he learned as many as 15 languages – Polish, Latin, Italian, English, Spanish, Portuguese, French, German, Luxembourgish, Dutch, Ukrainian, Serbo-Croatian, Czech, Slovak, and Esperanto, nine of which he used extensively as pope.",
     "checks": {
       "article": true,
       "quote": true,
@@ -7126,7 +7126,7 @@
     "subject": "Dziękuję bardzo za pomoc",
     "source_title": "Polish language",
     "source_url": "https://en.wikipedia.org/wiki/Polish_language",
-    "fun_fact": "The traditional Polish alphabet includes nine special characters beyond the standard 26-letter Latin set, including letters with a unique hooked diacritic known as an ogonek.",
+    "fun_fact": "The Polish alphabet includes nine special letters with diacritics, while notably excluding the letters x, q, and v from its traditional set.",
     "evidence": "The traditional 32-letter Polish alphabet has nine additions (ą, ć, ę, ł, ń, ó, ś, ź, ż) to the letters of the basic 26-letter Latin alphabet, while removing three (x, q, v).",
     "checks": {
       "article": true,
@@ -7168,7 +7168,7 @@
     "subject": "Pena Palace",
     "source_title": "Pena Palace",
     "source_url": "https://en.wikipedia.org/wiki/Pena_Palace",
-    "fun_fact": "The palace features a sundial cannon on the Queen's Terrace that once fired every day at noon.",
+    "fun_fact": "The terrace of the palace features a unique sundial cannon that was historically fired every day at noon.",
     "evidence": "The terrace features a sundial cannon that used to fire every day at noon.",
     "checks": {
       "article": true,
@@ -7210,18 +7210,18 @@
     "subject": "Pastel de nata",
     "source_title": "Pastel de nata",
     "source_url": "https://en.wikipedia.org/wiki/Pastel_de_nata",
-    "fun_fact": "These pastries originated because Catholic monks had a surplus of egg yolks after using the whites to starch their religious habits.",
-    "evidence": "At the time, convents and monasteries used large quantities of egg-whites for starching clothes, such as friars and nuns' religious habits.",
+    "fun_fact": "The original recipe for the famous tarts is kept inside a secret room at the Fábrica de Pastéis de Belém.",
+    "evidence": "Since the opening of Fábrica de Pastéis de Belém, the original recipe that inspired pastel de nata varieties is kept in a secret room.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "2a59a3e9-2dde-4489-a1f8-d8742ce7e63e",
@@ -7315,18 +7315,18 @@
     "subject": "Museum of Islamic Art, Doha",
     "source_title": "Museum of Islamic Art, Doha",
     "source_url": "https://en.wikipedia.org/wiki/Museum_of_Islamic_Art%2C_Doha",
-    "fun_fact": "The museum's architect, I. M. Pei, had to be coaxed out of retirement at 91 to design the building.",
-    "evidence": "At 91 years of age, the museum's architect, I. M. Pei had to be coaxed out of retirement to undertake this enterprise.",
+    "fun_fact": "The museum owns a rare page from the Blue Qur'an, which is an indigo-dyed manuscript created over a thousand years ago.",
+    "evidence": "The museum also owns a page of the Blue Qur'an, an indigo-dyed manuscript created over 1,000 years ago that is one of the most elaborate Qur'ans in the world.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
-      "shape": false,
-      "judge": null
+      "shape": true,
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "the fact is more than two sentences"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "006f3c62-0ac9-408b-a6b1-db68cf21fc07",
@@ -7336,8 +7336,8 @@
     "subject": "Tamim bin Hamad Al Thani",
     "source_title": "Tamim bin Hamad Al Thani",
     "source_url": "https://en.wikipedia.org/wiki/Tamim_bin_Hamad_Al_Thani",
-    "fun_fact": "Tamim bin Hamad Al Thani holds the distinction of being the first Qatari ruler from his family to ascend to power through an abdication rather than a bloodless coup.",
-    "evidence": "While the previous two Qatari rulers from the Al Thani family ascended to power in bloodless coups, Tamim was the first to ascend to power via an abdication.",
+    "fun_fact": "Tamim bin Hamad Al Thani attended the prestigious Harrow School in the United Kingdom, where he sat his A-Levels in 1997.",
+    "evidence": "Tamim was educated at the UK's Sherborne School (International College) in Dorset, and at Harrow School, where he sat his A-Levels in 1997.",
     "checks": {
       "article": true,
       "quote": true,
@@ -7378,7 +7378,7 @@
     "subject": null,
     "source_title": "Flag of Romania",
     "source_url": "https://en.wikipedia.org/wiki/Flag_of_Romania",
-    "fun_fact": "During the 1989 revolution, protesters removed the Communist coat of arms from the center of the flag, leaving a hole that became a powerful symbol of the uprising.",
+    "fun_fact": "During the 1989 revolution, protesters removed the Communist coat of arms from the center of their flags, leaving a hole behind.",
     "evidence": "On 20 December 1989, during the revolution at Timișoara, the protesters were waving flags with the Communist coat of arms cut out of the middle.",
     "checks": {
       "article": true,
@@ -7420,8 +7420,8 @@
     "subject": "Bran Castle",
     "source_title": "Bran Castle",
     "source_url": "https://en.wikipedia.org/wiki/Bran_Castle",
-    "fun_fact": "During the Second World War, Princess Ileana used the castle as a hospital.",
-    "evidence": "The castle was inherited by her daughter Princess Ileana who ran a hospital there in World War II.",
+    "fun_fact": "At the base of the hill where the castle stands, there is an open-air museum that displays traditional Romanian peasant buildings like cottages and barns.",
+    "evidence": "At the bottom of the hill is a small open-air museum exhibiting traditional Romanian peasant structures (cottages, barns, water-driven machinery, etc.) from the Bran region.",
     "checks": {
       "article": true,
       "quote": true,
@@ -7441,18 +7441,18 @@
     "subject": "Nadia Comăneci",
     "source_title": "Nadia Comăneci",
     "source_url": "https://en.wikipedia.org/wiki/Nadia_Com%C4%83neci",
-    "fun_fact": "When Nadia Comăneci received her first perfect Olympic score, the scoreboard displayed 1.00 because it was not programmed to show a perfect 10.",
-    "evidence": "Omega SA, the official Olympics scoreboard manufacturer, had been led to believe that competitors could not receive a perfect 10, and had not programmed the scoreboard to display this score.",
+    "fun_fact": "Nadia Comăneci was introduced to gymnastics at a young age because she was so incredibly active and energetic that her mother struggled to manage her.",
+    "evidence": "In a 2011 interview, her mother said that she enrolled Comăneci into gymnastics classes because she was so full of energy and active as a child that she was difficult to manage.",
     "checks": {
       "article": true,
       "quote": true,
-      "numbers": false,
+      "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": null
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "the fact states 1.00, which the evidence does not"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "1038bc96-5d50-4cae-b84d-d3512be48adb",
@@ -7504,18 +7504,18 @@
     "subject": "Bună ziua, ce mai faci?",
     "source_title": "Romanian language",
     "source_url": "https://en.wikipedia.org/wiki/Romanian_language",
-    "fun_fact": "Before the transition to the Latin alphabet in the 19th century, Romanian was written using the Cyrillic alphabet.",
-    "evidence": "The oldest Romanian document precisely dated is Neacșu's letter (1521) and was written using the Romanian Cyrillic alphabet, which was used until the late 19th century.",
+    "fun_fact": "The Romanian language features a unique vowel sound called a schwa, which is represented in writing by the letter ă.",
+    "evidence": "Of the features that individualize Common Romanian, inherited from Latin or subsequently developed, of particular importance are:\nappearance of schwa (written as ă in Romanian) vowel;",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "off_topic"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the fact is not about the clue's subject"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "0e60748e-a846-4b91-91e5-e3dca375c19b",
@@ -7525,18 +7525,18 @@
     "subject": "Pelmeni",
     "source_title": "Pelmeni",
     "source_url": "https://en.wikipedia.org/wiki/Pelmeni",
-    "fun_fact": "To create a juicy interior, ice-water is mixed into the raw meat filling so that it emulsifies with the fats to form a pressurized broth inside.",
-    "evidence": "To achieve the signature soup inside, ice-water is kneaded into the raw meat filling.",
+    "fun_fact": "The name pelmeni comes from the Komi and Udmurt languages and literally means ear bread or dough ears.",
+    "evidence": "The word pelmeni is derived from pel'n'an' (пельнянь), literally \"ear bread\" in the Finno-Ugric Komi and Udmurt languages.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "dea45179-4a29-4f0d-8937-1778fcab541a",
@@ -7651,7 +7651,7 @@
     "subject": null,
     "source_title": "Flag of Saudi Arabia",
     "source_url": "https://en.wikipedia.org/wiki/Flag_of_Saudi_Arabia",
-    "fun_fact": "Because the shahada is a sacred text, the Saudi Arabian flag is never flown at half-mast to avoid being seen as blasphemous.",
+    "fun_fact": "The flag is never flown at half-mast to show mourning, as doing so would be viewed as blasphemous.",
     "evidence": "The flag is never lowered to half-mast as a sign of mourning because lowering it would be considered blasphemous and desecrating.",
     "checks": {
       "article": true,
@@ -7659,10 +7659,10 @@
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "ef0349f0-1c8d-4a4c-8976-590c79b9a752",
@@ -7966,18 +7966,18 @@
     "subject": "Samsung",
     "source_title": "Samsung",
     "source_url": "https://en.wikipedia.org/wiki/Samsung",
-    "fun_fact": "The founder of Samsung chose the name based on the Korean word for three stars, with the stars representing something eternal and the number three representing something big and powerful.",
-    "evidence": "According to Samsung's founder, the meaning of the Korean hanja Samsung (三星) is three stars.",
+    "fun_fact": "In 1995, Samsung's textile department decided to invest in the American hip hop fashion brand FUBU after seeing an advertisement for funding in a newspaper.",
+    "evidence": "In 1995, Samsung's textile department invested in FUBU, an American hip hop apparel company, after the founder placed an advertisement asking for funding in The New York Times.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "4e9eeff9-0fb0-4e16-b11b-4c7182f8418f",
@@ -7987,18 +7987,18 @@
     "subject": null,
     "source_title": "Flag of South Korea",
     "source_url": "https://en.wikipedia.org/wiki/Flag_of_South_Korea",
-    "fun_fact": "The white field of the flag represents peace and purity, reflecting a color that was commonly used in the daily attire of nineteenth-century Koreans.",
-    "evidence": "The flag's field is white, a traditional color in Korean culture that was common in the daily attire of 19th-century Koreans and still appears in contemporary versions of traditional Korean garments such as the hanbok.",
+    "fun_fact": "The flag pole's end cap design is shaped like a Mugunghwa flower bud.",
+    "evidence": "The flag code also designates the color of a flag pole, which should be either white, silver, or green, and provides a construction sheet of the pole's end cap, which is shaped like a flower bud of Mugunghwa.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "0e87f1a5-25da-42fc-90c0-e99ba25c9dcc",
@@ -8029,18 +8029,18 @@
     "subject": "Kimchi",
     "source_title": "Kimchi",
     "source_url": "https://en.wikipedia.org/wiki/Kimchi",
-    "fun_fact": "South Korean scientists created a special bacteria-free version of kimchi for an astronaut to take into space, because they feared cosmic rays might mutate the bacteria.",
-    "evidence": "In 2008, South Korean scientists created a special low-calorie, vitamin-rich \"space kimchi\" for Yi So-yeon, the first Korean astronaut, to take to space.",
+    "fun_fact": "Traditional kimchi was often stored in large underground earthenware vessels called onggi to keep it cool and prevent it from freezing during the winter.",
+    "evidence": "Traditionally, winter kimchi, called gimjang, was stored in large earthenware fermentation vessels, called onggi, in the ground to prevent freezing during the winter months and to keep it cool enough to slow down the fermentation process during summer months.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "7605a920-c995-4152-bfb5-864bdec44a05",
@@ -8092,7 +8092,7 @@
     "subject": "오늘 날씨가 정말 좋네요",
     "source_title": "Korean language",
     "source_url": "https://en.wikipedia.org/wiki/Korean_language",
-    "fun_fact": "The Korean alphabet was intentionally created in the 15th century by King Sejong the Great to help common people learn how to read and write.",
+    "fun_fact": "In the 15th century, King Sejong the Great personally invented an alphabetic writing system known as Hangul to help common people learn how to read and write.",
     "evidence": "In the 15th century King Sejong the Great personally developed an alphabetic featural writing system, known today as Hangul, to promote literacy among the common people.",
     "checks": {
       "article": true,
@@ -8100,10 +8100,10 @@
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "off_topic"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the fact is not about the clue's subject"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "e91e2481-8937-4f29-b19d-384a5e0eac96",
@@ -8134,18 +8134,18 @@
     "subject": "Alhambra",
     "source_title": "Alhambra",
     "source_url": "https://en.wikipedia.org/wiki/Alhambra",
-    "fun_fact": "The name Alhambra is derived from an Arabic term meaning the red one, which refers to the reddish color of its walls made from local clay.",
-    "evidence": "The reference to the colour \"red\" in the name is due to the reddish colour of its walls, which were constructed of rammed earth.",
+    "fun_fact": "During the Nasrid era, the palace complex functioned as a self-contained city that included amenities such as a Friday mosque, public baths, and artisan workshops.",
+    "evidence": "It contained most of the amenities of a Muslim city such as a Friday mosque, hammams (public baths), roads, houses, artisan workshops, a tannery, and a sophisticated water supply system.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "bcf4fd8e-5bd1-45a7-8055-8f1bdd448614",
@@ -8239,7 +8239,7 @@
     "subject": "Rafael Nadal",
     "source_title": "Rafael Nadal",
     "source_url": "https://en.wikipedia.org/wiki/Rafael_Nadal",
-    "fun_fact": "When Rafael Nadal was younger, his uncle Toni encouraged him to train as a left-handed player to gain a natural advantage on the court.",
+    "fun_fact": "To give him a natural advantage on the court, Nadal's uncle encouraged him to switch from playing with his right hand to his left.",
     "evidence": "After studying Nadal's two-handed forehand, Toni encouraged him to play left-handed for a natural advantage on the tennis court.",
     "checks": {
       "article": true,
@@ -8386,18 +8386,18 @@
     "subject": null,
     "source_title": "Flag of Sweden",
     "source_url": "https://en.wikipedia.org/wiki/Flag_of_Sweden",
-    "fun_fact": "A 19th-century Swedish flag that combined the country's colours with Norway's was unpopular and mocked with the name Sillsallaten, which refers to a colourful herring and beet salad dish.",
-    "evidence": "In Sweden, however, the new union mark in particular became quite unpopular and was contemptuously nicknamed the Sillsallaten (Swedish) or Sildesalaten (Norwegian) after a colorful dish of pickled herring, decorated with red beets and apples in a radial pattern.",
+    "fun_fact": "According to local legend, the design of the golden cross on a blue background was inspired by a 12th-century king who saw a cross-shaped sunburst in the sky.",
+    "evidence": "According to early modern legend and popular folklore, the 12th-century King Eric IX saw the sun shine against a golden cross in the sky (alternatively the sun shined like a cross) as he landed in Finland during the First Swedish Crusade in 1157.",
     "checks": {
       "article": true,
       "quote": true,
-      "numbers": false,
+      "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": null
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "the fact states 19, which the evidence does not"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "cef38b64-0e32-4b5d-8d7d-2188a1a32d54",
@@ -8428,18 +8428,18 @@
     "subject": "Surströmming",
     "source_title": "Surströmming",
     "source_url": "https://en.wikipedia.org/wiki/Surstr%C3%B6mming",
-    "fun_fact": "Because the fermentation process continues inside the can, the container noticeably bulges and can potentially release pressurized brine when opened.",
-    "evidence": "Fermentation continues in the can, causing it to bulge noticeably, which would usually be a sign of botulism or other food poisoning concern in non-fermented canned foods.",
+    "fun_fact": "This fermented fish is traditionally enjoyed by making a sandwich called a surströmmingsklämma with two pieces of buttered hard tunnbröd flatbread.",
+    "evidence": "The use of tunnbröd originated in the High Coast area, where the tradition is to make a sandwich (known as a surströmmingsklämma) with two pieces of buttered hard tunnbröd.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "55d400c3-eac0-4208-b79d-3bd65f44af35",
@@ -8470,18 +8470,18 @@
     "subject": "Greta Thunberg",
     "source_title": "Greta Thunberg",
     "source_url": "https://en.wikipedia.org/wiki/Greta_Thunberg",
-    "fun_fact": "Thunberg shares her second name with the fictional adventuring hero created by the Belgian cartoonist Hergé.",
-    "evidence": "Thunberg shares her second name with the adventuring creation of Belgian cartoonist Georges Remi, better known as Hergé.",
+    "fun_fact": "Greta Thunberg considers her diagnosis of Asperger's syndrome to be a superpower.",
+    "evidence": "While acknowledging that Asperger's \"has limited before\", Thunberg views her diagnosis positively and has described it as a \"superpower\".",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "unsupported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence unsupported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "fc492e6a-27c6-4faf-8e35-c61a00c30212",
@@ -8491,18 +8491,18 @@
     "subject": "Var ligger närmaste tågstation?",
     "source_title": "Swedish language",
     "source_url": "https://en.wikipedia.org/wiki/Swedish_language",
-    "fun_fact": "The Swedish letters å, ä, and ö originated from a transitional practice of writing combinations like \"ao\", \"ae\", and \"oe\" in the Nordic countries.",
-    "evidence": "These three were later to evolve into the separate letters ä, å and ö.",
+    "fun_fact": "The Swedish letters å, ä, and ö were first used in print in a book published in 1495 titled By the Devil's temptation.",
+    "evidence": "The first time the new letters were used in print was in Aff dyäffwlsens frästilse (\"By the Devil's temptation\") published by Johan Gerson in 1495.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "unsupported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence unsupported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "dbca38ab-ab56-4e2c-bb84-0cd8958e4cb1",
@@ -8512,8 +8512,8 @@
     "subject": "Kapellbrücke",
     "source_title": "Kapellbrücke",
     "source_url": "https://en.wikipedia.org/wiki/Kapellbr%C3%BCcke",
-    "fun_fact": "The historic Wasserturm connected to the bridge served many grim roles over the centuries, including functioning as both a prison and a torture chamber.",
-    "evidence": "Over the centuries, the tower has been used as a prison, torture chamber, and later a municipal archive as well as a local treasury.",
+    "fun_fact": "This historic wooden bridge is the oldest surviving truss bridge in the entire world.",
+    "evidence": "It is the oldest surviving truss bridge in the world, consisting of strutted and triangulated trusses of moderate span, supported on piled trestles; as such, it is probably an evolution of the strutted bridge.",
     "checks": {
       "article": true,
       "quote": true,
@@ -8554,18 +8554,18 @@
     "subject": "Fondue",
     "source_title": "Fondue",
     "source_url": "https://en.wikipedia.org/wiki/Fondue",
-    "fun_fact": "When finishing a cheese fondue, a thin crust of toasted cheese often forms at the bottom of the pot, which is known as the nun.",
-    "evidence": "If maintained until the fondue is finished, a thin crust of toasted (not burnt) cheese will naturally develop at the bottom of the caquelon.",
+    "fun_fact": "When preparing cheese fondue, a bit of cornstarch or flour is used to stabilize the mixture and create a smooth texture.",
+    "evidence": "The cornstarch or other starch stabilizes and thickens the mixture.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "c7412ddf-a948-4374-9fec-25ff959a5e7e",
@@ -8575,18 +8575,18 @@
     "subject": "Matterhorn",
     "source_title": "Matterhorn",
     "source_url": "https://en.wikipedia.org/wiki/Matterhorn",
-    "fun_fact": "Because it consists of rocks from the Dent Blanche nappe that originated from the African plate, the Matterhorn is often referred to as an African mountain.",
-    "evidence": "For this reason, the Matterhorn has been popularised as an African mountain.",
+    "fun_fact": "Because of its unique geological makeup, the Matterhorn is sometimes described as an African mountain.",
+    "evidence": "The Austroalpine nappes are part of the Apulian plate, a small continent that broke up from Africa before the Alpine orogeny.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "a52f2de8-b590-4802-9ad4-b2c696efa74d",
@@ -8701,18 +8701,18 @@
     "subject": "Taipei 101",
     "source_title": "Taipei 101",
     "source_url": "https://en.wikipedia.org/wiki/Taipei_101",
-    "fun_fact": "To help the skyscraper remain stable during intense winds and earthquakes, it contains a massive 660-metric-ton steel pendulum that acts as a tuned mass damper.",
-    "evidence": "Motioneering designed a 660-metric-ton (728-short-ton) steel pendulum that serves as a tuned mass damper, at a cost of NT$132 million (US$4 million).",
+    "fun_fact": "The skyscraper features glass curtain walls that are designed to block half of the external heat and withstand impacts of seven metric tons.",
+    "evidence": "Taipei 101's characteristic blue-green glass curtain walls are double paned and glazed, offer heat and UV protection sufficient to block external heat by 50%, and can sustain impacts of 7 metric tons (8 short tons).",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "3cd5d9a3-dcf0-4c70-bf4a-b1d4d7c781c3",
@@ -8764,18 +8764,18 @@
     "subject": "Tsai Ing-wen",
     "source_title": "Tsai Ing-wen",
     "source_url": "https://en.wikipedia.org/wiki/Tsai_Ing-wen",
-    "fun_fact": "Tsai Ing-wen is a cat lover who adopted two stray cats named Tsai Xiang Xiang and Tsai a-tsai.",
-    "evidence": "Tsai also has two pet cats, Tsai Xiang Xiang and Tsai a-tsai.",
+    "fun_fact": "Tsai Ing-wen has two pet cats named Tsai Xiang Xiang and Tsai a-tsai, both of which she adopted after they were found as strays.",
+    "evidence": "Tsai also has two pet cats, Tsai Xiang Xiang and Tsai a-tsai. Both were stray cats that Tsai adopted.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "6dd61199-40d8-403a-9004-d19fd6601fe3",
@@ -8785,7 +8785,7 @@
     "subject": "Chipsi mayai",
     "source_title": "Chipsi mayai",
     "source_url": "https://en.wikipedia.org/wiki/Chipsi_mayai",
-    "fun_fact": "This popular street food is essentially a simple omelette made by frying French fries and beaten eggs together in a pan.",
+    "fun_fact": "This dish is created by frying French fries and beaten eggs together in a single pan.",
     "evidence": "It is generally prepared with chips (French fries), oil and beaten eggs fried together in a pan.",
     "checks": {
       "article": true,
@@ -8974,8 +8974,8 @@
     "subject": "Matmata, Tunisia",
     "source_title": "Matmata, Tunisia",
     "source_url": "https://en.wikipedia.org/wiki/Matmata%2C_Tunisia",
-    "fun_fact": "A local hotel served as the filming location for Luke Skywalker's home on the planet Tatooine in the Star Wars films.",
-    "evidence": "The Hotel Sidi Idriss in Matmata was used in 1976 as a filming location in Star Wars Episode IV: A New Hope, in which it was featured as the home of Luke Skywalker, his Aunt Beru Lars and Uncle Owen Lars on the planet Tatooine.",
+    "fun_fact": "Residents of this town often live in unique underground homes created by digging pits into the earth.",
+    "evidence": "Some of the local Berber residents live in traditional underground \"troglodyte\" structures.",
     "checks": {
       "article": true,
       "quote": true,
@@ -9205,18 +9205,18 @@
     "subject": "Mustafa Kemal Atatürk",
     "source_title": "Mustafa Kemal Atatürk",
     "source_url": "https://en.wikipedia.org/wiki/Mustafa_Kemal_Atat%C3%BCrk",
-    "fun_fact": "Mustafa Kemal Atatürk fell in love with the daughter of a Bulgarian general he had fought in the Balkan Wars, but he was twice refused when he asked for permission to marry her.",
-    "evidence": "Mustafa Kemal twice asked Dimitrina's parents for their permission to marry her (the second time was in 1915, during World War I) and was twice refused, which left him with a lifelong sadness.",
+    "fun_fact": "Mustafa Kemal Atatürk's name Kemal, meaning perfection or maturity in Arabic, may have been bestowed upon him by his mathematics teacher.",
+    "evidence": "The origin of his second name Kemal (meaning 'perfection' or 'maturity' in Arabic) is speculated; some claim that this name was given to him by his mathematics teacher, possibly \"in admiration of [Atatürk's] capability and maturity\"; while some others claim that his teacher gave him this name to distinguish him from himself, since his name was also Mustafa.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "b778648e-8617-49a8-aa66-87784379bd4d",
@@ -9436,18 +9436,18 @@
     "subject": "Zayed bin Sultan Al Nahyan",
     "source_title": "Zayed bin Sultan Al Nahyan",
     "source_url": "https://en.wikipedia.org/wiki/Zayed_bin_Sultan_Al_Nahyan",
-    "fun_fact": "Sheikh Zayed helped design the layout of Abu Dhabi by marking out plans in the sand with a camel stick.",
-    "evidence": "Takahashi, working to instructions from Zayed, often marked out in sand with a camel stick, was responsible for a number of key buildings, while also introducing wide roads, the construction of corniches and also greening the city.",
+    "fun_fact": "Sheikh Zayed purchased Tittenhurst Park in Berkshire for five million pounds in 1988 to use as his home in England.",
+    "evidence": "In 1988, he purchased, for £5m, Tittenhurst Park at Sunninghill, Berkshire as his English home.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "72ccce53-b48b-480f-aea2-0be038321ad7",
@@ -9457,8 +9457,8 @@
     "subject": "Stonehenge",
     "source_title": "Stonehenge",
     "source_url": "https://en.wikipedia.org/wiki/Stonehenge",
-    "fun_fact": "A 2024 study of the Altar Stone's composition suggests it originated in north-eastern Scotland, indicating long-distance cultural connections in ancient Britain.",
-    "evidence": "Work announced in 2024 by a team from Curtin University, who analysed the chemical composition of fragments of rock that had fallen off the Altar Stone, and dated them, found that the best match was with rocks in the Orcadian Basin (which includes Caithness, Orkney, and the Moray Firth regions of north-eastern Scotland).",
+    "fun_fact": "The name Stonehenge may originate from Old English terms meaning hanging stones or stones supported in the air.",
+    "evidence": "In 1740, William Stukeley notes: \"Pendulous rocks are now called henges in Yorkshire ... I doubt not, Stonehenge in Saxon signifies the hanging stones.\"",
     "checks": {
       "article": true,
       "quote": true,
@@ -9646,7 +9646,7 @@
     "subject": "Statue of Liberty",
     "source_title": "Statue of Liberty",
     "source_url": "https://en.wikipedia.org/wiki/Statue_of_Liberty",
-    "fun_fact": "The statue features a 'Greek foot' with a second toe longer than the big toe, a common aesthetic detail in ancient Greek art.",
+    "fun_fact": "The second toe on both feet of the Statue of Liberty is longer than her big toe, a condition known as Morton's toe or Greek foot.",
     "evidence": "Its second toe on both feet is longer than its big toe, a condition known as Morton's toe or 'Greek foot'.",
     "checks": {
       "article": true,
@@ -9688,18 +9688,18 @@
     "subject": "Bald eagle",
     "source_title": "Bald eagle",
     "source_url": "https://en.wikipedia.org/wiki/Bald_eagle",
-    "fun_fact": "The bald eagle builds the largest nest of any North American bird, with one recorded in Florida reaching 20 feet in depth.",
-    "evidence": "The largest recorded nest was found in Florida in 1963, and was measured at 2.9 m (9.5 ft) wide and 6.1 m (20 ft) deep.",
+    "fun_fact": "Bald eagles build the largest tree nests ever recorded for any animal species, which can reach massive proportions.",
+    "evidence": "It builds the largest nest of any North American bird and the largest tree nests ever recorded for any animal species, up to 4 m (13 ft) deep, 2.5 m (8.2 ft) wide, and 1 metric ton (1.1 short tons) in weight.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "5bb0e553-23bd-4e09-a083-547c2114c9cd",
@@ -9709,7 +9709,7 @@
     "subject": "Abraham Lincoln",
     "source_title": "Abraham Lincoln",
     "source_url": "https://en.wikipedia.org/wiki/Abraham_Lincoln",
-    "fun_fact": "Abraham Lincoln once held a job at a general store where he became famous for winning a wrestling match against a group of local ruffians.",
+    "fun_fact": "Before becoming president, Abraham Lincoln famously gained a local reputation for his strength and courage after winning a wrestling match against a leader of a group known as the Clary's Grove boys.",
     "evidence": "He gained a reputation for strength and courage after winning a wrestling match with the leader of a group of ruffians known as the Clary's Grove boys.",
     "checks": {
       "article": true,
@@ -9717,10 +9717,10 @@
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "41ef4db8-40b3-467a-87dd-5c5c72999596",
@@ -9772,18 +9772,18 @@
     "subject": "Chivito (sandwich)",
     "source_title": "Chivito (sandwich)",
     "source_url": "https://en.wikipedia.org/wiki/Chivito_(sandwich)",
-    "fun_fact": "The name chivito means little goat, but the dish actually features beef fillet steak because the original creator ran out of goat meat.",
-    "evidence": "Chivito is the diminutive of chivo, goat, and means kid (young goat).",
+    "fun_fact": "This sandwich can be served on a plate without the bun, which is then known as a chivito al plato.",
+    "evidence": "The chivito can be served as a platter rather than a sandwich (chivito al plato).",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "c9d6f1b8-05ea-4f1e-884f-ec80a2837524",
@@ -9961,7 +9961,7 @@
     "subject": "Pho",
     "source_title": "Pho",
     "source_url": "https://en.wikipedia.org/wiki/Pho",
-    "fun_fact": "During the subsidy period after the Vietnam War, a meatless version of the soup was dubbed pilotless pho because it resembled the unmanned reconnaissance drones used by the U.S. military.",
+    "fun_fact": "During a period of food shortages, state-owned eateries served a meatless version of pho jokingly called pilotless pho, named after unmanned reconnaissance drones used by the U.S. Air Force.",
     "evidence": "During the so-called subsidy period following the Vietnam War, state-owned pho eateries served a meatless variety of the dish known as pilotless pho (phở không người lái), in reference to the U.S. Air Force's unmanned reconnaissance drones.",
     "checks": {
       "article": true,
@@ -9982,18 +9982,18 @@
     "subject": "Hạ Long Bay",
     "source_title": "Hạ Long Bay",
     "source_url": "https://en.wikipedia.org/wiki/H%E1%BA%A1_Long_Bay",
-    "fun_fact": "The name Hạ Long translates to \"descending dragon\" in reference to a legend about dragons that were sent by the gods to protect Vietnam by spitting out jade jewels that became islands.",
-    "evidence": "The name Hạ Long means \"descending dragon\".",
+    "fun_fact": "Dau Be island in Hạ Long Bay contains six different enclosed lakes.",
+    "evidence": "For example, Dau Be island has six enclosed lakes.",
     "checks": {
       "article": true,
       "quote": true,
       "numbers": true,
       "timeless": true,
       "shape": true,
-      "judge": "partly_supported"
+      "judge": "supported"
     },
-    "verdict": "rejected",
-    "reason": "an independent check found the evidence partly supported the fact"
+    "verdict": "verified",
+    "reason": null
   },
   {
     "id": "2ea7848a-6212-4152-bc8d-d7fc0c9cca4e",
