@@ -1,13 +1,8 @@
 import type { Metadata } from "next";
+import { gameMetadata } from "@/lib/games/content";
 import { buildGameJsonLd, JsonLdScript } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Draft Anything",
-  description: "A room-code party game where friends draft any topic, defend every pick, and vote on the best roster.",
-  alternates: {
-    canonical: "/draft-anything",
-  },
-};
+export const metadata: Metadata = gameMetadata("draft-anything");
 
 export default function DraftAnythingLayout({
   children,

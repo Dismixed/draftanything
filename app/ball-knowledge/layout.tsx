@@ -1,14 +1,8 @@
 import type { Metadata } from "next";
+import { gameMetadata } from "@/lib/games/content";
 import { buildGameJsonLd, JsonLdScript } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Ball Knowledge — Stim Games",
-  description:
-    "Name as many things as you can in 60 seconds — any category, any topic. Pizza toppings, cartoons, capitals, and more.",
-  alternates: {
-    canonical: "/ball-knowledge/daily",
-  },
-};
+export const metadata: Metadata = gameMetadata("ball-knowledge");
 
 export default function BallKnowledgeLayout({
   children,

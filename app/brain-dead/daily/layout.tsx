@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Daily Brain Dead — Stim Labs",
+  title: "Brain Dead Daily",
   description: "Today's Brain Dead trivia challenge. One wrong answer and you're out.",
 };
 

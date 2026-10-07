@@ -1,21 +1,17 @@
 import type { Metadata } from "next";
+import { GameAbout } from "@/components/games/game-about";
 import GettingWarmerGame from "@/components/getting-warmer/game";
+import { gameMetadata } from "@/lib/games/content";
 import { buildGameJsonLd, JsonLdScript } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Getting Warmer — Daily Word Game",
-  description:
-    "Two clues to start. Guess wrong, get one more. Unlimited guesses with hints that keep generating.",
-  alternates: {
-    canonical: "/getting-warmer/daily",
-  },
-};
+export const metadata: Metadata = gameMetadata("getting-warmer");
 
 export default function GettingWarmerDailyPage() {
   return (
     <>
       <JsonLdScript data={buildGameJsonLd("getting-warmer")} />
       <GettingWarmerGame />
+      <GameAbout gameId="getting-warmer" />
     </>
   );
 }

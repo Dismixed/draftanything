@@ -29,7 +29,7 @@ export function GameAbout({ gameId }: { gameId: GameId }) {
       }
     >
       <div className="game-about-inner">
-        <h2 id={headingId}>About {game.name}</h2>
+        <h2 id={headingId}>{`About ${game.name}`}</h2>
         <p className="game-about-intro">{content.intro}</p>
 
         {content.sections.map((section, index) => (

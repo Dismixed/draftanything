@@ -1,13 +1,7 @@
-import type { Metadata } from "next";
 import BallKnowledgeGame from "@/components/ball-knowledge/game";
+import { GameAbout } from "@/components/games/game-about";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getDailyCategory } from "@/lib/ball-knowledge/puzzle-service";
-
-export const metadata: Metadata = {
-  title: "Ball Knowledge — Daily Challenge",
-  description:
-    "60 seconds. One random category — anything from pizza toppings to state capitals. Type as many correct answers as you can.",
-};
 
 export default async function BallKnowledgeDailyPage() {
   let category: string;
@@ -19,5 +13,10 @@ export default async function BallKnowledgeDailyPage() {
     const { getTodayCategory } = await import("@/lib/ball-knowledge/game-logic");
     category = getTodayCategory();
   }
-  return <BallKnowledgeGame category={category} />;
+  return (
+    <>
+      <BallKnowledgeGame category={category} />
+      <GameAbout gameId="ball-knowledge" />
+    </>
+  );
 }

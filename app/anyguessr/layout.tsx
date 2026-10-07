@@ -1,13 +1,9 @@
 import type { Metadata } from "next";
+import { GameAbout } from "@/components/games/game-about";
+import { gameMetadata } from "@/lib/games/content";
 import { buildGameJsonLd, JsonLdScript } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "AnyGuessr — Stim Games",
-  description: "Guess the country from cultural clues, flags, maps, and geography.",
-  alternates: {
-    canonical: "/anyguessr",
-  },
-};
+export const metadata: Metadata = gameMetadata("anyguessr");
 
 export default function AnyGuessrLayout({
   children,
@@ -18,6 +14,7 @@ export default function AnyGuessrLayout({
     <>
       <JsonLdScript data={buildGameJsonLd("anyguessr")} />
       {children}
+      <GameAbout gameId="anyguessr" />
     </>
   );
 }
