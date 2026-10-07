@@ -1,4 +1,5 @@
 import "server-only";
+import { pickLru } from "@/lib/schedule/lru";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
@@ -127,37 +128,53 @@ export async function autoScheduleApprovedPuzzles(
   };
 }
 
-export async function getScheduledPuzzleIds(
-  db: SupabaseClient<Database>,
-): Promise<Set<string>> {
-  const { data, error } = await db
-    .from("daily_freezeframes_puzzles")
-    .select("puzzle_id");
-
-  if (error) {
-    throw new Error(`Failed to load schedule: ${error.message}`);
-  }
-
-  return new Set((data ?? []).map((row) => row.puzzle_id));
+interface PuzzleUsage {
+  /** Approved puzzle ids, oldest first. */
+  approved: { id: string }[];
+  /** Puzzle id → the most recent date it ran. */
+  lastUsed: Map<string, string>;
 }
 
-export async function pickNextUnscheduledApprovedPuzzleId(
-  db: SupabaseClient<Database>,
-): Promise<string | null> {
-  const usedIds = await getScheduledPuzzleIds(db);
+async function loadPuzzleUsage(db: SupabaseClient<Database>): Promise<PuzzleUsage> {
+  const { data: schedule, error: scheduleError } = await db
+    .from("daily_freezeframes_puzzles")
+    .select("puzzle_id, publish_date");
+  if (scheduleError) {
+    throw new Error(`Failed to load schedule: ${scheduleError.message}`);
+  }
 
   const { data: approved, error } = await db
     .from("freezeframes_puzzles")
     .select("id")
     .eq("status", "approved")
     .order("created_at", { ascending: true });
-
   if (error) {
     throw new Error(`Failed to load approved puzzles: ${error.message}`);
   }
 
-  const pick = (approved ?? []).find((puzzle) => !usedIds.has(puzzle.id));
-  return pick?.id ?? null;
+  const lastUsed = new Map<string, string>();
+  for (const row of schedule ?? []) {
+    const previous = lastUsed.get(row.puzzle_id);
+    if (!previous || row.publish_date > previous) lastUsed.set(row.puzzle_id, row.publish_date);
+  }
+
+  return { approved: approved ?? [], lastUsed };
+}
+
+/**
+ * The next puzzle to schedule: one that has never run if any is left,
+ * otherwise the one that ran longest ago. Recycling means an empty queue
+ * loops through old puzzles instead of repeating a single fallback.
+ */
+export async function pickNextPuzzleId(db: SupabaseClient<Database>): Promise<string | null> {
+  const { approved, lastUsed } = await loadPuzzleUsage(db);
+  return pickLru(approved, (puzzle) => puzzle.id, lastUsed)?.id ?? null;
+}
+
+/** How many approved puzzles have never run: the days left before recycling starts. */
+export async function countUnscheduledApproved(db: SupabaseClient<Database>): Promise<number> {
+  const { approved, lastUsed } = await loadPuzzleUsage(db);
+  return approved.filter((puzzle) => !lastUsed.has(puzzle.id)).length;
 }
 
 export async function scheduleDailyPuzzle(
@@ -184,7 +201,7 @@ export async function scheduleDailyPuzzle(
     };
   }
 
-  const puzzleId = await pickNextUnscheduledApprovedPuzzleId(db);
+  const puzzleId = await pickNextPuzzleId(db);
   if (!puzzleId) return null;
 
   const { error: insertError } = await db.from("daily_freezeframes_puzzles").insert({

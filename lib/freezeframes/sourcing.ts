@@ -1,4 +1,5 @@
 import "server-only";
+import { pickItunesHit, type ExpectedMedia } from "./match";
 
 import { fetchWithRetry } from "@/lib/anyguessr/async-pool";
 import type { RoundKey } from "./types";
@@ -28,6 +29,20 @@ function stableIndex(seed: string, mod: number): number {
     h = (h * 31 + seed.charCodeAt(i)) >>> 0;
   }
   return h % mod;
+}
+
+/** Options for picking between several possible matches and frames. */
+export interface ResolveOptions {
+  /** Release or first-air year, to tell a film or show from others with its title. */
+  year?: number;
+  /** Which frame to take; raise it to get a different frame for the same title. */
+  variant?: number;
+  /** The intended song or album, to pick the right one among store search results. */
+  expected?: ExpectedMedia;
+}
+
+export function frameSeed(query: string, variant = 0): string {
+  return variant > 0 ? `${query}#${variant}` : query;
 }
 
 function tmdbImageUrl(filePath: string): string {
@@ -191,15 +206,16 @@ async function fetchTvmazeEpisodeStill(
   };
 }
 
-async function resolveMovie(query: string): Promise<ResolvedMedia | null> {
+async function resolveMovie(query: string, options: ResolveOptions): Promise<ResolvedMedia | null> {
   const data = await tmdbGet<{ results?: TmdbSearchMovie[] }>("/search/movie", {
     query,
     include_adult: "false",
+    ...(options.year ? { primary_release_year: String(options.year) } : {}),
   });
   const hit = data?.results?.[0];
   if (!hit) return null;
 
-  const { filePath, imageType } = await fetchMovieFreezeFrame(hit.id, query);
+  const { filePath, imageType } = await fetchMovieFreezeFrame(hit.id, frameSeed(query, options.variant));
   const year = yearFromDate(hit.release_date);
 
   return {
@@ -218,15 +234,16 @@ async function resolveMovie(query: string): Promise<ResolvedMedia | null> {
   };
 }
 
-async function resolveShow(query: string): Promise<ResolvedMedia | null> {
+async function resolveShow(query: string, options: ResolveOptions): Promise<ResolvedMedia | null> {
   const data = await tmdbGet<{ results?: TmdbSearchTv[] }>("/search/tv", {
     query,
     include_adult: "false",
+    ...(options.year ? { first_air_date_year: String(options.year) } : {}),
   });
   const hit = data?.results?.[0];
 
   if (hit) {
-    const frame = await fetchTvEpisodeFreezeFrame(hit.id, query);
+    const frame = await fetchTvEpisodeFreezeFrame(hit.id, frameSeed(query, options.variant));
     if (frame.filePath) {
       const year = yearFromDate(hit.first_air_date);
       return {
@@ -245,7 +262,7 @@ async function resolveShow(query: string): Promise<ResolvedMedia | null> {
     }
   }
 
-  const tvmaze = await fetchTvmazeEpisodeStill(query, query);
+  const tvmaze = await fetchTvmazeEpisodeStill(query, frameSeed(query, options.variant));
   if (tvmaze?.img) {
     return {
       answer: tvmaze.answer ?? query,
@@ -275,21 +292,26 @@ async function resolveShow(query: string): Promise<ResolvedMedia | null> {
 async function itunesSearch(
   term: string,
   entity: "song" | "album",
+  expected?: ExpectedMedia,
 ): Promise<ItunesTrack | null> {
+  // A combined "album artist" search ranks tributes and singles first, so
+  // when the artist is known, list that artist's albums and match the title.
+  const byArtist = entity === "album" && Boolean(expected?.artist);
   const qs = new URLSearchParams({
-    term,
+    term: byArtist ? expected!.artist! : term,
     entity,
-    limit: "5",
+    limit: byArtist ? "200" : expected ? "25" : "5",
     media: "all",
+    ...(byArtist ? { attribute: "artistTerm" } : {}),
   });
   const res = await fetchWithRetry(`${ITUNES_SEARCH}?${qs}`);
   if (!res.ok) return null;
   const data = (await res.json()) as { results?: ItunesTrack[] };
-  return data.results?.[0] ?? null;
+  return pickItunesHit(data.results ?? [], entity, expected);
 }
 
-async function resolveSong(query: string): Promise<ResolvedMedia | null> {
-  const hit = await itunesSearch(query, "song");
+async function resolveSong(query: string, options: ResolveOptions): Promise<ResolvedMedia | null> {
+  const hit = await itunesSearch(query, "song", options.expected);
   if (!hit?.trackName) return null;
 
   const year = yearFromDate(hit.releaseDate);
@@ -307,8 +329,8 @@ async function resolveSong(query: string): Promise<ResolvedMedia | null> {
   };
 }
 
-async function resolveAlbum(query: string): Promise<ResolvedMedia | null> {
-  const hit = await itunesSearch(query, "album");
+async function resolveAlbum(query: string, options: ResolveOptions): Promise<ResolvedMedia | null> {
+  const hit = await itunesSearch(query, "album", options.expected);
   if (!hit?.artistName) return null;
 
   return {
@@ -338,6 +360,7 @@ export function mediaComplete(roundKey: RoundKey, media: ResolvedMedia): boolean
 export async function resolveSeedMedia(
   roundKey: RoundKey,
   queryTitle: string,
+  options: ResolveOptions = {},
 ): Promise<ResolvedMedia> {
   const query = queryTitle.trim();
   if (!query) {
@@ -357,10 +380,10 @@ export async function resolveSeedMedia(
 
   try {
     let resolved: ResolvedMedia | null = null;
-    if (roundKey === "movie") resolved = await resolveMovie(query);
-    else if (roundKey === "show") resolved = await resolveShow(query);
-    else if (roundKey === "song") resolved = await resolveSong(query);
-    else if (roundKey === "album") resolved = await resolveAlbum(query);
+    if (roundKey === "movie") resolved = await resolveMovie(query, options);
+    else if (roundKey === "show") resolved = await resolveShow(query, options);
+    else if (roundKey === "song") resolved = await resolveSong(query, options);
+    else if (roundKey === "album") resolved = await resolveAlbum(query, options);
 
     if (!resolved) {
       return {

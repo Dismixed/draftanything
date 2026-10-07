@@ -358,6 +358,12 @@ export default function AdminFreezeFramesPage() {
       {message && <Notice tone="ok" text={message} onDismiss={() => setMessage(null)} />}
       {error && <Notice tone="err" text={error} onDismiss={() => setError(null)} />}
 
+      <p style={{ margin: "0 0 14px", fontSize: "14px" }}>
+        <a href="/admin/freezeframes/review" style={{ color: "#5bc0de" }}>
+          Open the review queue →
+        </a>
+      </p>
+
       <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
         {(["seed", "puzzles", "ops"] as Tab[]).map((t) => (
           <button key={t} onClick={() => setTab(t)} style={tabBtn(tab === t)}>
