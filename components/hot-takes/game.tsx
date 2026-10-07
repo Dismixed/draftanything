@@ -16,6 +16,7 @@ import { DailyCompleteShell } from "@/components/daily/daily-complete-shell";
 import { useGameHowItWorks } from "@/lib/game-how-it-works";
 import { HotTakesImage } from "@/components/hot-takes/optimized-image";
 import type { HotTakesDailyCategory, HotTakesDailyItem } from "@/lib/hot-takes/types";
+import { recordDailyCompletion } from "@/lib/streak/storage";
 
 const TIERS = ["S", "A", "B", "C", "D"] as const;
 type Tier = (typeof TIERS)[number];
@@ -320,7 +321,10 @@ export default function HotTakesGame({
             type="button"
             className="hot-takes-btn hot-takes-btn-primary"
             disabled={remaining !== 0 || submitted}
-            onClick={() => setSubmitted(true)}
+            onClick={() => {
+              setSubmitted(true);
+              recordDailyCompletion("hot-takes");
+            }}
           >
             {remaining === 0
               ? "Lock in my ranking"

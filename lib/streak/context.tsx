@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { track } from "@/lib/analytics/track";
 import { getAllGameStreaks, recordDailyCompletion } from "./storage";
 import {
   GAME_META,
@@ -51,6 +52,7 @@ export function StreakProvider({ children }: { children: ReactNode }) {
       const detail = (event as CustomEvent<StreakCompletionResult>).detail;
       refreshStreaks();
       if (!detail.isNew) return;
+      track("daily_completed", { game: detail.gameId, streak: detail.streak });
       setNotification({
         ...detail,
         label: GAME_META[detail.gameId].label,
