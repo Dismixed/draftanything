@@ -13,16 +13,29 @@ interface PuzzleRow {
   album: Record<string, unknown>;
 }
 
+/**
+ * What the browser may see of a round: everything except the answer and the
+ * written clue, which is fetched separately when the player asks for it.
+ */
+export function toClientRound(round: Record<string, unknown>): Record<string, unknown> {
+  const { answer: _answer, textClue, ...rest } = round;
+  return { ...rest, hasTextClue: typeof textClue === "string" && textClue.length > 0 };
+}
+
 function stripAnswers(puzzle: PuzzleRow): DailyPuzzleClient["rounds"] {
   const keys: RoundKey[] = ["movie", "song", "show", "album"];
   const rounds = {} as DailyPuzzleClient["rounds"];
   for (const key of keys) {
-    const { answer: _answer, ...rest } = puzzle[key] as Record<string, unknown> & {
-      answer?: string;
-    };
-    rounds[key] = rest as unknown as DailyPuzzleClient["rounds"][RoundKey];
+    rounds[key] = toClientRound(puzzle[key]) as unknown as DailyPuzzleClient["rounds"][RoundKey];
   }
   return rounds;
+}
+
+/** Today's written clue for the song round, for players who cannot play audio. */
+export async function getSongTextClue(db: SupabaseClient): Promise<string | null> {
+  const puzzle = (await resolveTodayPuzzleRow(db, getDateString())) ?? getSeedPuzzle();
+  const clue = puzzle.song.textClue;
+  return typeof clue === "string" && clue.length > 0 ? clue : null;
 }
 
 function getSeedPuzzle(): PuzzleRow {

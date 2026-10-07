@@ -654,6 +654,30 @@ html[data-theme="light"] {
   background: rgba(16, 185, 129, 0.08) !important;
 }
 
+.freezeframes-no-audio-btn {
+  display: block;
+  margin-top: 0.75rem;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--ff-muted);
+  font-family: inherit;
+  font-size: 0.78rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.freezeframes-no-audio-btn:hover {
+  color: var(--ff-text);
+}
+
+.freezeframes-text-clue {
+  margin: 0.75rem 0 0;
+  font-size: 1.05rem;
+  line-height: 1.45;
+  color: var(--ff-text);
+}
+
 .freezeframes-skip-btn {
   background: none;
   border: 1px solid var(--ff-border);
