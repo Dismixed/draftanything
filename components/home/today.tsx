@@ -50,7 +50,7 @@ export function Today({ dayNumber }: { dayNumber: number }) {
         <section
           className="home-featured"
           data-testid="home-featured"
-          style={{ "--accent": featured.theme.accent } as CSSProperties}
+          style={{ "--accent": featured.theme.accent, "--brand": featured.brand.color } as CSSProperties}
         >
           <div className="home-featured-copy">
             <p className="home-kicker">

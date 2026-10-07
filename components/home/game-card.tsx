@@ -31,7 +31,7 @@ export function GameCard({
     <Link
       href={game.playHref}
       className={`home-card${played ? " is-done" : ""}`}
-      style={{ "--accent": game.theme.accent } as CSSProperties}
+      style={{ "--accent": game.theme.accent, "--brand": game.brand.color } as CSSProperties}
       onClick={() => track(event, eventProps)}
     >
       <div className="home-card-body">
