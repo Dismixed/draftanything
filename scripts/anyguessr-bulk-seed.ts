@@ -112,7 +112,7 @@ async function main() {
 async function fetchImages(db: unknown, drafts: import("../lib/anyguessr/seed-types").SeedEntryRow[]) {
   const { updateSeedEntry } = await import("../lib/anyguessr/seed-db");
   const { resolveImageCandidates } = await import("../lib/anyguessr/image-sourcing");
-  const { preferArticleImages, scoreImageForClue, visionAccepts } = await import("../lib/anyguessr/vision-filter");
+  const { scoreImageForClue, visionAccepts } = await import("../lib/anyguessr/vision-filter");
   type Db = Parameters<typeof updateSeedEntry>[0];
 
   const todo = drafts.filter((e) => e.clue_type !== "written_language" && e.clue_type !== "flag");
@@ -122,13 +122,12 @@ async function fetchImages(db: unknown, drafts: import("../lib/anyguessr/seed-ty
   for (const [i, entry] of todo.entries()) {
     const label = `${entry.country_common} ${entry.clue_type} (${entry.wiki_title})`;
     try {
-      const raw = preferArticleImages(
-        await resolveImageCandidates({
-          clueType: entry.clue_type,
-          country: entry.country_common,
-          wikiTitle: entry.wiki_title,
-        }),
-      );
+      const raw = await resolveImageCandidates({
+        clueType: entry.clue_type,
+        country: entry.country_common,
+        wikiTitle: entry.wiki_title,
+        articleImagesOnly: true,
+      });
 
       const kept = [];
       const notes: string[] = [];

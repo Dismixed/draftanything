@@ -46,16 +46,6 @@ export function buildVisionPrompt(options: {
     .join("\n");
 }
 
-/**
- * Image sourcing pads its results with a loose Commons search ("Austria
- * brand"), which is usually unrelated. When the clue's own article supplied
- * images, use only those.
- */
-export function preferArticleImages<T extends { source?: string }>(candidates: readonly T[]): T[] {
-  const fromArticle = candidates.filter((c) => !c.source?.startsWith("File:"));
-  return fromArticle.length > 0 ? fromArticle : [...candidates];
-}
-
 /** An image is usable when it fits the clue and does not spell out the answer. */
 export function visionAccepts(vision: VisionResult, minScore: number): boolean {
   return vision.pass && vision.score >= minScore && !vision.shows_country_name;
