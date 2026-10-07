@@ -26,6 +26,11 @@ export const SEED_ENTRY_STATUSES = [
 
 export type SeedEntryStatus = (typeof SEED_ENTRY_STATUSES)[number];
 
+export const CLUE_DIFFICULTIES = ["easy", "medium", "hard"] as const;
+
+/** How hard a clue is to place, judged for a general audience. */
+export type ClueDifficulty = (typeof CLUE_DIFFICULTIES)[number];
+
 export interface ImageCandidate {
   image_url: string;
   thumb_url?: string;
@@ -45,6 +50,7 @@ export interface SeedEntryRow {
   wiki_title: string | null;
   text_content: string | null;
   status: SeedEntryStatus;
+  difficulty: ClueDifficulty | null;
   image_candidates: ImageCandidate[];
   selected_candidate_index: number;
   vision_pass: boolean | null;

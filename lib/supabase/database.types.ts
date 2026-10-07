@@ -158,6 +158,7 @@ export type Database = {
           clue_type: string
           country_common: string
           created_at: string
+          difficulty: string | null
           id: string
           image_candidates: Json
           notes: string | null
@@ -175,6 +176,7 @@ export type Database = {
           clue_type: string
           country_common: string
           created_at?: string
+          difficulty?: string | null
           id?: string
           image_candidates?: Json
           notes?: string | null
@@ -192,6 +194,7 @@ export type Database = {
           clue_type?: string
           country_common?: string
           created_at?: string
+          difficulty?: string | null
           id?: string
           image_candidates?: Json
           notes?: string | null

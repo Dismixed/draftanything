@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { AdminShell } from "@/components/admin/admin-shell";
-import { SEED } from "@/lib/anyguessr/seed";
+import { POOL_COUNTRIES } from "@/lib/anyguessr/countries";
 import { ADMIN_CLUE_TYPES } from "@/lib/anyguessr/seed-types";
 
 interface SeedEntry {
@@ -69,7 +69,7 @@ export default function AdminAnyGuessrPage() {
   const [aliasCca3, setAliasCca3] = useState("NLD");
   const [aliasText, setAliasText] = useState("");
 
-  const countries = useMemo(() => SEED.map((s) => ({ cca3: s.cca3, name: s.common })), []);
+  const countries = useMemo(() => POOL_COUNTRIES.map((s) => ({ cca3: s.cca3, name: s.common })), []);
 
   const fetchEntries = useCallback(async (options?: { silent?: boolean }) => {
     if (!options?.silent) setLoading(true);
