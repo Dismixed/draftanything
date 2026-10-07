@@ -2,7 +2,8 @@
 
 import { DAILY_CLUE_TYPE_LABEL, formatDistanceKm } from "@/lib/anyguessr/daily";
 import type { DailyRoundRecap } from "@/lib/anyguessr/types";
-import GuessMap from "./guess-map";
+import { stampTone } from "./stamps";
+import WorldMap from "./world-map";
 
 interface Props {
   recap: DailyRoundRecap;
@@ -10,192 +11,65 @@ interface Props {
   onContinue: () => void;
 }
 
+/** Shown after each guess: the answer, where it is, and how far off the guess was. */
 export default function RoundRecap({ recap, totalScore, onContinue }: Props) {
   const clueLabel =
-    DAILY_CLUE_TYPE_LABEL[recap.clueType as keyof typeof DAILY_CLUE_TYPE_LABEL] ??
-    recap.clueType;
+    DAILY_CLUE_TYPE_LABEL[recap.clueType as keyof typeof DAILY_CLUE_TYPE_LABEL] ?? recap.clueType;
+
+  const distance = recap.surrendered ? "—" : recap.exact ? "0 km" : formatDistanceKm(recap.distanceKm);
 
   return (
-    <div
-      className="anim-fade-slide-up"
-      style={{
-        padding: "24px 20px",
-        textAlign: "center",
-        border: "1px solid var(--ag-border)",
-        background: "var(--ag-surface)",
-        borderRadius: "14px",
-      }}
-    >
-      <div
-        style={{
-          fontSize: "10px",
-          fontWeight: 600,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: "var(--ag-muted)",
-          marginBottom: "6px",
-        }}
-      >
-        Round {recap.roundIndex + 1} · {clueLabel}
-      </div>
+    <div className={`ag-recap anim-fade-slide-up is-${stampTone(recap)}`}>
+      <p className="ag-recap-kind">
+        <b>Round {recap.roundIndex + 1}</b>
+        {clueLabel}
+      </p>
 
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "10px",
-          marginBottom: "16px",
-        }}
-      >
-        {recap.flagUrl ? (
+      <h2 className="ag-recap-answer">
+        {recap.flagUrl && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={recap.flagUrl}
-            alt=""
-            style={{
-              width: "32px",
-              height: "22px",
-              borderRadius: "3px",
-              objectFit: "cover",
-            }}
-          />
-        ) : null}
-        <span
-          style={{
-            fontSize: "clamp(22px, 5vw, 28px)",
-            fontWeight: 800,
-            color: "var(--ag-text)",
-            letterSpacing: "-0.02em",
-          }}
-        >
-          {recap.answer}
-        </span>
-      </div>
+          <img src={recap.flagUrl} alt="" />
+        )}
+        {recap.answer}
+      </h2>
 
-      <div style={{ marginBottom: "16px" }}>
-        <GuessMap
-          answerLat={recap.answerLat}
-          answerLng={recap.answerLng}
-          guessLat={recap.guessLat}
-          guessLng={recap.guessLng}
-          answerCca3={recap.answerCca3}
-          guessCca3={recap.guessCca3}
-          answerLabel={recap.answer}
-          guessLabel={recap.guess}
-        />
-      </div>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "10px",
-          marginBottom: "20px",
-        }}
-      >
-        <StatBlock
-          label="Distance"
-          value={
-            recap.surrendered
-              ? "—"
-              : recap.exact
-                ? "0 km"
-                : formatDistanceKm(recap.distanceKm)
-          }
-        />
-        <StatBlock
-          label="Round score"
-          value={recap.surrendered ? "0" : `+${recap.roundScore}`}
-          highlight={!recap.surrendered}
-        />
-      </div>
-
-      <p
-        style={{
-          fontSize: "12px",
-          color: "var(--ag-muted)",
-          margin: "0 0 16px",
-        }}
-      >
+      <p className="ag-recap-guess">
         {recap.surrendered ? (
-          <>You gave up on this round.</>
+          "You gave up this round"
+        ) : recap.exact ? (
+          "Spot on"
         ) : (
           <>
-            You guessed <strong style={{ color: "var(--ag-text)" }}>{recap.guess}</strong>
-            {recap.exact ? " — spot on!" : ""}
+            You guessed <b>{recap.guess}</b>
           </>
         )}
       </p>
 
-      <button type="button" onClick={onContinue} style={primaryBtnStyle}>
-        {recap.isFinalRound ? "See results" : "Continue"}
+      <div className="ag-recap-map">
+        <WorldMap
+          answer={{ cca3: recap.answerCca3, lat: recap.answerLat, lng: recap.answerLng }}
+          guess={{ cca3: recap.guessCca3, lat: recap.guessLat, lng: recap.guessLng }}
+        />
+      </div>
+
+      <div className="ag-recap-stats">
+        <div>
+          <b>{distance}</b>
+          <span>Distance</span>
+        </div>
+        <div>
+          <b className="is-score">{recap.surrendered ? "0" : `+${recap.roundScore}`}</b>
+          <span>Round score</span>
+        </div>
+        <div>
+          <b>{totalScore}</b>
+          <span>Total</span>
+        </div>
+      </div>
+
+      <button type="button" className="ag-cta" onClick={onContinue} autoFocus>
+        {recap.isFinalRound ? "See results" : "Next round"}
       </button>
-
-      <div
-        style={{
-          marginTop: "12px",
-          fontSize: "11px",
-          color: "var(--ag-muted)",
-        }}
-      >
-        Total score: <span style={{ color: "var(--ag-accent)", fontWeight: 700 }}>{totalScore}</span>
-      </div>
     </div>
   );
 }
-
-function StatBlock({
-  label,
-  value,
-  highlight,
-}: {
-  label: string;
-  value: string;
-  highlight?: boolean;
-}) {
-  return (
-    <div
-      style={{
-        padding: "10px 12px",
-        background: "var(--ag-surface-hi)",
-        borderRadius: "8px",
-        border: "1px solid var(--ag-border-faint)",
-      }}
-    >
-      <div
-        style={{
-          fontSize: "9px",
-          letterSpacing: "0.14em",
-          textTransform: "uppercase",
-          color: "var(--ag-muted)",
-          marginBottom: "4px",
-        }}
-      >
-        {label}
-      </div>
-      <div
-        style={{
-          fontSize: "18px",
-          fontWeight: 700,
-          color: highlight ? "var(--ag-accent)" : "var(--ag-text)",
-        }}
-      >
-        {value}
-      </div>
-    </div>
-  );
-}
-
-const primaryBtnStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "12px 18px",
-  fontSize: "13px",
-  fontWeight: 600,
-  letterSpacing: "0.04em",
-  borderRadius: "10px",
-  cursor: "pointer",
-  border: "none",
-  background: "var(--ag-accent)",
-  color: "#0b0e1c",
-};

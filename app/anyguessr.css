@@ -29,310 +29,928 @@ html[data-theme="light"] {
   --ag-overlay: rgba(26, 24, 20, 0.38);
 }
 .ag-game-page { background: var(--ag-bg); min-height: 100vh; }
-@keyframes ag-flash-kf {
-  0%   { box-shadow: 0 0 0 rgba(224,168,88,0); }
-  40%  { box-shadow: 0 0 28px rgba(224,168,88,0.28) inset; }
-  100% { box-shadow: 0 0 0 rgba(224,168,88,0); }
-}
-.ag-flash { animation: ag-flash-kf 0.45s ease; }
 
-/* Leaflet recap map */
-.ag-guess-map .leaflet-container {
-  background: #d4e6f1;
+/* ── Extra surfaces for the play screen ── */
+
+:root {
+  --ag-sec: #a3a9bf;
+  --ag-accent-lo: #a8782f;
+  --ag-cta-text: #1a1305;
+  --ag-ok: #34d399;
+  --ag-bad: #f87171;
+  --ag-map-sea: #0a0f1e;
+  --ag-map-land: #1c2440;
+  --ag-map-land-hi: #2a3560;
+  --ag-map-coast: #3a4672;
+  --ag-glass: rgba(14, 19, 34, 0.93);
+  --ag-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+}
+
+html[data-theme="light"] {
+  --ag-sec: #5c5662;
+  --ag-accent-lo: #8a6420;
+  --ag-cta-text: #ffffff;
+  --ag-ok: #15803d;
+  --ag-bad: #dc2626;
+  --ag-map-sea: #dde8ef;
+  --ag-map-land: #fbf8f0;
+  --ag-map-land-hi: #f1e6c8;
+  --ag-map-coast: #b3a78d;
+  --ag-glass: rgba(255, 255, 255, 0.94);
+  --ag-shadow: 0 10px 28px rgba(40, 30, 10, 0.14);
+}
+
+/* ── Stage: the map fills the screen and everything else floats on it ── */
+
+.ag-page { background: var(--ag-bg); }
+
+.ag-stage {
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 540px;
+  overflow: hidden;
+  isolation: isolate;
+  font-family: "Outfit", system-ui, sans-serif;
+  color: var(--ag-text);
+  background: var(--ag-map-sea);
+}
+
+.ag-map-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  transition: filter 0.35s ease;
+}
+/* With the clue enlarged the map steps back. */
+.ag-stage[data-view="clue"] .ag-map-layer { filter: brightness(0.5) blur(2px); pointer-events: none; }
+
+.ag-map-loading {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--ag-sec);
+}
+
+/* ── Map: the game's own country outlines, in the game's colours ── */
+
+.ag-map.leaflet-container {
+  background: var(--ag-map-sea);
   font-family: inherit;
+  outline: none;
 }
-.ag-guess-map .leaflet-control-zoom a {
-  background: #fff;
-  color: #334155;
-  border-color: #cbd5e1;
+.ag-map .ag-land {
+  fill: var(--ag-map-land);
+  fill-opacity: 1;
+  stroke: var(--ag-map-coast);
+  stroke-opacity: 1;
+  stroke-width: 0.8;
+  transition: fill 0.12s ease;
 }
-.ag-guess-map .leaflet-control-zoom a:hover {
-  background: #f8fafc;
-  color: #0f172a;
+/* Leaflet makes clicked shapes focusable; the gold highlight is the feedback, not a focus box. */
+.ag-map path:focus { outline: none; }
+.ag-map.is-playing .ag-land { cursor: pointer; }
+.ag-map.is-playing .ag-land:hover { fill: var(--ag-map-land-hi); }
+.ag-map:not(.is-playing) .ag-land { cursor: grab; }
+.ag-map .ag-land-pick {
+  fill: color-mix(in srgb, var(--ag-accent) 55%, var(--ag-map-land));
+  fill-opacity: 1;
+  stroke: var(--ag-accent);
+  stroke-opacity: 1;
+  stroke-width: 2;
 }
-.ag-guess-map .leaflet-control-attribution {
-  background: rgba(255, 255, 255, 0.88);
-  color: #64748b;
-  font-size: 9px;
+.ag-map .ag-land-answer {
+  fill: color-mix(in srgb, var(--ag-ok) 45%, var(--ag-map-land));
+  fill-opacity: 1;
+  stroke: var(--ag-ok);
+  stroke-opacity: 1;
+  stroke-width: 2;
 }
-.ag-guess-map .leaflet-control-attribution a {
-  color: #707790;
+.ag-map .ag-map-line {
+  fill: none;
+  stroke: var(--ag-bad);
+  stroke-opacity: 1;
+  stroke-width: 2;
+  stroke-dasharray: 6 6;
 }
 
-.ag-map-pin {
-  background: transparent;
-  border: none;
+.ag-map-marker { background: none; border: none; }
+.ag-map-tag {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -150%);
+  padding: 5px 12px;
+  border-radius: 99px;
+  background: var(--ag-glass);
+  border: 1px solid var(--ag-border-hi);
+  box-shadow: var(--ag-shadow);
+  font: 700 13px "Outfit", system-ui, sans-serif;
+  color: var(--ag-text);
+  white-space: nowrap;
 }
-
-.ag-map-pin-guess {
-  display: block;
-  width: 18px;
-  height: 18px;
-  border-radius: 50% 50% 50% 0;
-  transform: rotate(-45deg);
-  background: #f87171;
+.ag-map-tag.is-guess { border-color: var(--ag-bad); }
+.ag-map-tag.is-guess::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 6px);
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  border-radius: 50%;
+  background: var(--ag-bad);
   border: 2px solid #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
 }
 
-.ag-map-pin-preview {
-  display: block;
-  width: 18px;
-  height: 18px;
-  border-radius: 50% 50% 50% 0;
-  transform: rotate(-45deg);
-  background: var(--ag-accent);
-  border: 2px solid #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+.leaflet-tooltip.ag-map-tip {
+  padding: 4px 10px;
+  border-radius: 99px;
+  border: 1px solid var(--ag-border-hi);
+  background: var(--ag-glass);
+  box-shadow: var(--ag-shadow);
+  font: 600 12px "Outfit", system-ui, sans-serif;
+  color: var(--ag-text);
+}
+.leaflet-tooltip.ag-map-tip::before { display: none; }
+
+/* ── Header ── */
+
+.ag-top {
+  position: relative;
+  z-index: 3;
+  padding: 22px 20px 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(var(--ag-bg) 58%, transparent);
+  pointer-events: none;
+}
+.ag-top > * { pointer-events: auto; }
+
+.ag-head {
+  width: 100%;
+  max-width: 1040px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  row-gap: 12px;
 }
 
-.ag-map-pin-legend {
-  width: 10px;
-  height: 10px;
-  border-width: 1px;
-  box-shadow: none;
+.ag-back {
+  justify-self: start;
+  padding: 6px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ag-sec);
+  text-decoration: none;
 }
+.ag-back:hover { color: var(--ag-text); }
 
-.ag-guess-map-picker .leaflet-container {
-  cursor: crosshair;
-}
-
-/* Daily complete — round carousel */
-.ag-results {
-  padding: 8px 4px 28px;
-  text-align: center;
+.ag-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
   color: var(--ag-text);
 }
 
-.ag-results:not(.ag-results--embedded) {
-  padding: 28px 24px;
-  border: 1px solid var(--ag-border);
-  background: var(--ag-surface);
-  border-radius: 14px;
+.ag-stats {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+}
+.ag-stats span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ag-sec);
+  font-variant-numeric: tabular-nums;
+}
+.ag-stats b { font-size: 20px; font-weight: 800; letter-spacing: 0; color: var(--ag-accent); }
+
+/* ── Passport stamps ── */
+
+.ag-stamps {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  width: 100%;
+  max-width: 1040px;
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+}
+.ag-stamp {
+  --ink: var(--ag-sec);
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px dashed color-mix(in srgb, var(--ag-sec) 40%, transparent);
+  background: color-mix(in srgb, var(--ag-bg) 72%, transparent);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ag-sec);
+}
+.ag-stamp.is-now { border: 2px solid var(--ag-text); color: var(--ag-text); }
+.ag-stamp.is-got {
+  border: 3px double var(--ink);
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 14%, var(--ag-bg));
+  transform: rotate(var(--tilt, 0deg));
+  animation: ag-stamp-in 0.45s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+.ag-stamp.is-exact { --ink: var(--ag-ok); }
+.ag-stamp.is-close { --ink: var(--ag-accent); }
+.ag-stamp.is-far { --ink: var(--ag-bad); }
+.ag-stamp img { width: 24px; height: 16px; object-fit: cover; border-radius: 2px; }
+.ag-stamp b { font-size: 12px; font-weight: 800; line-height: 1; }
+.ag-stamp-code { font-size: 10px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+
+@keyframes ag-stamp-in {
+  0%   { opacity: 0; transform: rotate(calc(var(--tilt, 0deg) - 24deg)) scale(2.4); }
+  60%  { opacity: 1; transform: rotate(var(--tilt, 0deg)) scale(0.9); }
+  100% { opacity: 1; transform: rotate(var(--tilt, 0deg)) scale(1); }
 }
 
-.ag-results-header {
-  margin-bottom: 18px;
+/* ── Clue card: shares the screen with the map, or takes it over, or tucks away ── */
+
+.ag-clue {
+  position: absolute;
+  z-index: 4;
+  left: 40px;
+  top: var(--ag-clue-top, 178px);
+  width: min(600px, 44vw);
+  padding: 14px;
+  border-radius: 24px;
+  background: var(--ag-glass);
+  border: 1px solid var(--ag-border-hi);
+  box-shadow: var(--ag-shadow);
+  backdrop-filter: blur(8px);
+  transition:
+    left 0.35s cubic-bezier(0.3, 1.2, 0.4, 1),
+    width 0.35s cubic-bezier(0.3, 1.2, 0.4, 1),
+    padding 0.3s ease;
+}
+
+.ag-clue-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  height: 34px;
+  margin: 0 2px 12px 4px;
+  overflow: hidden;
+  transition: height 0.3s ease, margin 0.3s ease, opacity 0.2s ease;
+}
+.ag-clue-kind {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ag-sec);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ag-clue-kind b {
+  flex: none;
+  padding: 4px 11px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ag-accent);
+  background: color-mix(in srgb, var(--ag-accent) 16%, transparent);
+}
+.ag-clue-btns { flex: none; display: flex; gap: 8px; }
+.ag-clue-btns button {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--ag-border-hi);
+  background: var(--ag-surface-hi);
+  color: var(--ag-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.ag-clue-btns button:hover { border-color: var(--ag-accent); color: var(--ag-accent); }
+
+.ag-clue-media {
+  position: relative;
+  height: min(360px, calc(100dvh - 400px));
+  min-height: 150px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--ag-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: height 0.35s cubic-bezier(0.3, 1.2, 0.4, 1);
+}
+.ag-clue-blur {
+  position: absolute;
+  inset: -30px;
+  background-position: center;
+  background-size: cover;
+  filter: blur(28px) saturate(1.2);
+  opacity: 0.45;
+}
+.ag-clue-media img {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 16px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 22px rgba(0, 0, 0, 0.45));
+  transition: opacity 0.35s ease;
+}
+.ag-clue-loading { position: absolute; font-size: 13px; color: var(--ag-sec); }
+.ag-clue-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 28px 14px 10px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.78));
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+}
+.ag-clue-media audio { position: relative; width: 92%; max-width: 320px; }
+.ag-clue-text {
+  position: relative;
+  padding: 24px;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(28px, 5vw, 48px);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-align: center;
+  color: var(--ag-text);
+}
+.ag-clue-restore {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 0 6px;
+  border: none;
+  background: linear-gradient(transparent 40%, rgba(0, 0, 0, 0.72));
+  font: 800 11px "Outfit", system-ui, sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  cursor: pointer;
+}
+
+.ag-stage[data-view="clue"] .ag-clue { left: max(20px, calc(50% - 520px)); width: min(1040px, calc(100vw - 40px)); }
+/* Leaves room under the card for the "Back to the map" button. */
+.ag-stage[data-view="clue"] .ag-clue-media { height: calc(100dvh - var(--ag-clue-top, 178px) - 180px); }
+.ag-stage[data-view="map"] .ag-clue { width: 170px; padding: 6px; border-radius: 16px; }
+.ag-stage[data-view="map"] .ag-clue-bar { height: 0; margin: 0; opacity: 0; }
+.ag-stage[data-view="map"] .ag-clue-media { height: 100px; min-height: 0; border-radius: 11px; }
+.ag-stage[data-view="map"] .ag-clue-media img { padding: 8px; }
+
+/* The same card on the results page: in the flow, nothing to resize. */
+.ag-clue.is-static {
+  position: static;
+  width: 100%;
+  padding: 10px;
+  border-radius: 18px;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.ag-clue.is-static .ag-clue-media { height: auto; aspect-ratio: 4 / 3; }
+
+/* ── Guess bar ── */
+
+.ag-controls {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  bottom: 22px;
+  width: min(680px, calc(100vw - 28px));
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: opacity 0.25s ease, transform 0.3s ease;
+}
+.ag-stage[data-view="clue"] .ag-controls { opacity: 0; transform: translate(-50%, 30px); pointer-events: none; }
+
+.ag-dock {
+  position: relative;
+  width: 100%;
+  padding: 10px;
+  border-radius: 22px;
+  background: var(--ag-glass);
+  border: 1px solid var(--ag-border-hi);
+  box-shadow: var(--ag-shadow);
+  backdrop-filter: blur(8px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.ag-search {
+  height: 52px;
+  padding: 0 16px;
+  border-radius: 14px;
+  background: var(--ag-surface-hi);
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ag-sec);
+  cursor: text;
+}
+.ag-search:focus-within { border-color: var(--ag-accent); }
+.ag-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  /* 16px stops iOS Safari zooming the page when the field takes focus. */
+  font: 600 16px "Outfit", system-ui, sans-serif;
+  color: var(--ag-text);
+}
+.ag-search input::placeholder { font-weight: 500; color: var(--ag-sec); }
+
+.ag-suggest {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: calc(100% + 8px);
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border-radius: 16px;
+  background: var(--ag-glass);
+  border: 1px solid var(--ag-border-hi);
+  box-shadow: var(--ag-shadow);
+  backdrop-filter: blur(8px);
+}
+.ag-suggest button {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 11px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font: 600 16px "Outfit", system-ui, sans-serif;
+  color: var(--ag-text);
+  text-align: left;
+  cursor: pointer;
+}
+.ag-suggest button.is-active { background: color-mix(in srgb, var(--ag-accent) 16%, transparent); }
+
+.ag-cta {
+  min-height: 52px;
+  padding: 0 26px;
+  border: none;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font: 800 16px "Outfit", system-ui, sans-serif;
+  color: var(--ag-cta-text);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ag-accent) 82%, #fff), var(--ag-accent) 60%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 3px 0 var(--ag-accent-lo),
+    0 10px 22px color-mix(in srgb, var(--ag-accent) 25%, transparent);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease, opacity 0.2s ease;
+}
+.ag-cta:hover:not(:disabled) { filter: brightness(1.05); }
+.ag-cta:active:not(:disabled) { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 0 var(--ag-accent-lo); }
+.ag-cta:disabled { opacity: 0.45; cursor: default; }
+.ag-cta:focus-visible,
+.ag-clue-btns button:focus-visible,
+.ag-giveup button:focus-visible,
+.ag-quiet-btn:focus-visible { outline: 2px solid var(--ag-accent); outline-offset: 2px; }
+
+.ag-giveup {
+  padding: 4px 12px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--ag-bg) 70%, transparent);
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ag-sec);
+}
+.ag-giveup button {
+  padding: 2px 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--ag-sec);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.ag-giveup button:hover { color: var(--ag-text); }
+
+.ag-to-map {
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  right: 0;
+  bottom: 30px;
+  width: fit-content;
+  margin: 0 auto;
+}
+
+.ag-toast {
+  position: absolute;
+  z-index: 6;
+  left: 0;
+  right: 0;
+  bottom: 150px;
+  width: fit-content;
+  max-width: calc(100vw - 40px);
+  margin: 0 auto;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: var(--ag-glass);
+  border: 1px solid var(--ag-border-hi);
+  box-shadow: var(--ag-shadow);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--ag-sec);
+}
+.ag-toast.is-correct { color: var(--ag-accent); border-color: color-mix(in srgb, var(--ag-accent) 45%, transparent); }
+.ag-toast.is-wrong { color: var(--ag-bad); border-color: color-mix(in srgb, var(--ag-bad) 45%, transparent); }
+
+.ag-notice {
+  position: relative;
+  z-index: 2;
+  max-width: 400px;
+  margin: 12vh auto 0;
+  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--ag-sec);
+}
+.ag-notice b { font-size: 16px; color: var(--ag-text); }
+.ag-notice p { margin: 0; }
+.ag-quiet-btn {
+  min-height: 40px;
+  padding: 0 18px;
+  border-radius: 10px;
+  border: 1px solid var(--ag-border-hi);
+  background: var(--ag-surface-hi);
+  font: 600 14px "Outfit", system-ui, sans-serif;
+  color: var(--ag-text);
+  cursor: pointer;
+}
+
+/* ── After each guess ── */
+
+.ag-recap-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  background: var(--ag-overlay);
+  backdrop-filter: blur(3px);
+}
+
+.ag-recap {
+  --ink: var(--ag-accent);
+  width: 100%;
+  max-width: 540px;
+  margin: auto;
+  padding: 20px;
+  border-radius: 26px;
+  background: var(--ag-surface);
+  border: 1px solid var(--ag-border-hi);
+  box-shadow: var(--ag-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family: "Outfit", system-ui, sans-serif;
+  text-align: center;
+  color: var(--ag-text);
+}
+.ag-recap.is-exact { --ink: var(--ag-ok); }
+.ag-recap.is-far { --ink: var(--ag-bad); }
+
+.ag-recap-kind {
+  margin: 0;
+  display: inline-flex;
+  align-self: center;
+  align-items: center;
+  gap: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ag-sec);
+}
+.ag-recap-kind b {
+  padding: 4px 11px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ag-accent);
+  background: color-mix(in srgb, var(--ag-accent) 16%, transparent);
+}
+.ag-recap-answer {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.ag-recap-answer img { width: 40px; height: 27px; object-fit: cover; border-radius: 4px; box-shadow: 0 0 0 1px var(--ag-border-hi); }
+.ag-recap-guess { margin: -6px 0 0; font-size: 15px; color: var(--ag-sec); }
+.ag-recap-guess b { color: var(--ag-text); }
+
+.ag-recap-map {
+  height: min(260px, 32dvh);
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--ag-border-hi);
+  background: var(--ag-map-sea);
+}
+
+.ag-recap-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.ag-recap-stats div { padding: 12px 6px; border-radius: 16px; background: var(--ag-surface-hi); }
+.ag-recap-stats b { display: block; font-size: 22px; font-weight: 800; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.ag-recap-stats b.is-score { color: var(--ink); }
+.ag-recap-stats span { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ag-sec); }
+.ag-recap .ag-cta { width: 100%; min-height: 56px; font-size: 17px; }
+
+
+/* ── Mid-width windows: keep the header clear of the sound and theme buttons ── */
+
+@media (min-width: 701px) and (max-width: 1339px) {
+  .ag-top { padding-top: 62px; }
+  .ag-stage { --ag-clue-top: 218px; }
+}
+
+/* ── Phones ── */
+
+@media (max-width: 700px) {
+  .ag-top { padding: 20px 16px 26px; }
+  .ag-title { font-size: 23px; }
+  .ag-back { font-size: 13px; }
+  .ag-stats { grid-column: 1 / -1; grid-row: 2; justify-self: stretch; justify-content: space-between; }
+  .ag-stamps { margin-top: 12px; }
+  /* Shrink to fit however many rounds the day has. */
+  .ag-stamps { gap: 3px; }
+  .ag-stamp { flex: 1 1 0; min-width: 0; max-width: 34px; width: auto; height: auto; aspect-ratio: 1; font-size: 11px; border-width: 1.5px; }
+  .ag-stamp.is-got { border-width: 2px; border-style: solid; }
+  .ag-stamp img { width: 60%; height: auto; aspect-ratio: 3 / 2; }
+  .ag-stamp b { display: none; }
+
+  .ag-stage { --ag-clue-top: 166px; }
+  .ag-clue { left: 14px; width: calc(100vw - 28px); padding: 10px; border-radius: 20px; }
+  .ag-clue-bar { height: 32px; margin: 0 0 10px 2px; }
+  .ag-clue-kind { font-size: 13px; }
+  .ag-clue-btns button { width: 32px; height: 32px; }
+  .ag-clue-media { height: min(230px, calc(100dvh - 470px)); min-height: 120px; border-radius: 13px; }
+  .ag-clue-media img { padding: 12px; }
+  .ag-stage[data-view="clue"] .ag-clue { left: 14px; width: calc(100vw - 28px); }
+  /* Leaves room under the card for the "Back to the map" button. */
+.ag-stage[data-view="clue"] .ag-clue-media { height: calc(100dvh - var(--ag-clue-top, 178px) - 180px); }
+  .ag-stage[data-view="map"] .ag-clue { width: 112px; padding: 5px; border-radius: 13px; }
+  .ag-stage[data-view="map"] .ag-clue-media { height: 66px; border-radius: 9px; }
+  .ag-stage[data-view="map"] .ag-clue-media img { padding: 5px; }
+  .ag-clue-restore { font-size: 9px; padding-bottom: 3px; }
+
+  .ag-controls { bottom: 12px; gap: 6px; }
+  .ag-dock { grid-template-columns: minmax(0, 1fr); gap: 8px; border-radius: 20px; }
+  .ag-search, .ag-cta { height: 50px; min-height: 50px; }
+  .ag-toast { bottom: 190px; }
+
+  .ag-recap-scrim { padding: 12px; }
+  .ag-recap { padding: 16px; border-radius: 22px; gap: 10px; }
+  .ag-recap-answer { font-size: 26px; }
+  .ag-recap-stats b { font-size: 18px; }
+}
+
+/* ── Results: the run as a passport page ── */
+
+.ag-results {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  font-family: "Outfit", system-ui, sans-serif;
+  text-align: center;
+  color: var(--ag-text);
 }
 
 .ag-results-kicker {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--ag-accent);
-  margin-bottom: 10px;
-}
-
-.ag-results-total {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 12px;
-  padding: 8px 16px;
-  background: var(--ag-surface-hi);
-  border: 1px solid var(--ag-border-faint);
-  border-radius: 999px;
-}
-
-.ag-results-total-label {
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ag-muted);
-}
-
-.ag-results-total-value {
-  font-size: 20px;
+  margin: 0;
+  font-size: 12px;
   font-weight: 800;
-  color: var(--ag-text);
-  letter-spacing: -0.02em;
-}
-
-.ag-results-total-value--win {
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--ag-accent);
 }
-
-.ag-results-carousel {
-  margin-bottom: 8px;
+.ag-results-score {
+  margin-top: 4px;
+  font-size: 76px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--ag-text);
+  font-variant-numeric: tabular-nums;
 }
+.ag-results-score span { margin-left: 10px; font-size: 22px; font-weight: 700; letter-spacing: 0; color: var(--ag-sec); }
+.ag-results-tally { margin: 8px 0 0; font-size: 15px; font-weight: 600; color: var(--ag-sec); }
 
-.ag-results-card {
-  padding: 16px;
+.ag-passport {
+  margin-top: 26px;
+  padding: 22px 18px 18px;
+  border-radius: 24px;
   background: var(--ag-surface);
-  border: 1px solid var(--ag-border);
-  border-radius: 14px;
-  text-align: left;
-}
-
-.ag-results-card-label {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ag-muted);
-  text-align: center;
-  margin-bottom: 12px;
-}
-
-.ag-results-clue {
-  margin-bottom: 14px;
-}
-
-.ag-results-compare {
+  border: 1px solid var(--ag-border-hi);
+  box-shadow: var(--ag-shadow);
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 12px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px 8px;
 }
-
-.ag-results-compare-cell {
-  padding: 10px 12px;
-  background: var(--ag-surface-hi);
-  border: 1px solid var(--ag-border-faint);
-  border-radius: 10px;
+.ag-pass {
   min-width: 0;
-}
-
-.ag-results-compare-cell--good {
-  border-color: rgba(224, 168, 88, 0.35);
-}
-
-.ag-results-compare-cell--bad {
-  border-color: rgba(255, 107, 107, 0.28);
-}
-
-.ag-results-compare-cell--answer {
-  border-color: var(--ag-border-hi);
-}
-
-.ag-results-compare-label {
-  font-size: 9px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ag-muted);
-  margin-bottom: 6px;
-}
-
-.ag-results-compare-value {
+  padding: 6px 2px 8px;
+  border: none;
+  border-radius: 16px;
+  background: transparent;
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--ag-text);
-  line-height: 1.3;
-  word-break: break-word;
-}
-
-.ag-results-compare-cell--good .ag-results-compare-value {
-  color: var(--ag-accent);
-}
-
-.ag-results-compare-cell--bad .ag-results-compare-value {
-  color: #ff8a8a;
-}
-
-.ag-results-compare-cell--muted .ag-results-compare-value {
-  color: var(--ag-muted);
-  font-style: italic;
-}
-
-.ag-results-flag {
-  width: 24px;
-  height: 16px;
-  border-radius: 2px;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-
-.ag-results-round-score {
-  text-align: center;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--ag-muted);
-  letter-spacing: 0.02em;
-}
-
-.ag-results-round-score--exact {
-  color: var(--ag-accent);
-}
-
-.ag-results-nav {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 14px;
-}
-
-.ag-results-nav-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  border: 1px solid var(--ag-border);
-  background: var(--ag-surface-hi);
-  color: var(--ag-text);
-  font-size: 16px;
+  font: inherit;
+  color: var(--ag-sec);
   cursor: pointer;
+  transition: background 0.15s ease;
+}
+.ag-pass:hover { background: color-mix(in srgb, var(--ag-text) 5%, transparent); }
+.ag-pass.is-open { background: color-mix(in srgb, var(--ag-accent) 14%, transparent); color: var(--ag-text); }
+.ag-pass:focus-visible { outline: 2px solid var(--ag-accent); outline-offset: 2px; }
+.ag-pass .ag-stamp { width: 74px; height: 74px; gap: 3px; }
+.ag-pass .ag-stamp img { width: 32px; height: 21px; }
+.ag-pass .ag-stamp b { display: block; font-size: 15px; }
+.ag-pass-name {
+  max-width: 100%;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ag-round {
+  --ink: var(--ag-accent);
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 24px;
+  background: var(--ag-surface);
+  border: 1px solid var(--ag-border-hi);
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: center;
+  text-align: left;
+}
+.ag-round.is-exact { --ink: var(--ag-ok); }
+.ag-round.is-far { --ink: var(--ag-bad); }
+.ag-round-clue .ag-clue.is-static { padding: 0; border: none; background: none; }
+.ag-round-clue .ag-clue-bar { display: none; }
+.ag-round-clue .ag-clue-media { aspect-ratio: 4 / 3; }
+
+.ag-round-kind {
+  margin: 0;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 0;
-  flex-shrink: 0;
-  transition: opacity 0.15s ease, border-color 0.15s ease;
+  gap: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ag-sec);
 }
-
-.ag-results-nav-btn:hover:not(:disabled) {
-  border-color: var(--ag-border-hi);
+.ag-round-kind b {
+  padding: 4px 11px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ag-accent);
+  background: color-mix(in srgb, var(--ag-accent) 16%, transparent);
 }
-
-.ag-results-nav-btn:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-
-.ag-results-dots {
+.ag-round-answer {
+  margin: 12px 0 0;
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  justify-content: center;
-  max-width: min(100%, 280px);
+  align-items: center;
+  gap: 12px;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
 }
+.ag-round-answer img { width: 40px; height: 27px; object-fit: cover; border-radius: 4px; box-shadow: 0 0 0 1px var(--ag-border-hi); }
+.ag-round-guess { margin: 6px 0 0; font-size: 15px; color: var(--ag-sec); }
+.ag-round-guess b { color: var(--ag-text); }
 
-.ag-results-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: none;
-  padding: 0;
-  background: var(--ag-border);
+.ag-round-stats { margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ag-round-stats div { padding: 12px 8px; border-radius: 16px; background: var(--ag-surface-hi); text-align: center; }
+.ag-round-stats b { display: block; font-size: 22px; font-weight: 800; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.ag-round-stats b.is-score { color: var(--ink); }
+.ag-round-stats span { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ag-sec); }
+
+.ag-round-nav { margin-top: 14px; display: flex; gap: 8px; }
+.ag-round-nav button {
+  width: 44px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--ag-border-hi);
+  background: var(--ag-surface-hi);
+  font-size: 17px;
+  color: var(--ag-text);
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
+.ag-round-nav button:hover:not(:disabled) { border-color: var(--ag-accent); color: var(--ag-accent); }
+.ag-round-nav button:disabled { opacity: 0.35; cursor: default; }
+.ag-round-nav button:focus-visible { outline: 2px solid var(--ag-accent); outline-offset: 2px; }
 
-.ag-results-dot--active {
-  transform: scale(1.25);
-  box-shadow: 0 0 0 2px var(--ag-bg), 0 0 0 3px var(--ag-accent);
-  background: var(--ag-accent);
+.ag-results-actions { max-width: 400px; margin: 22px auto 0; }
+.ag-results-actions .share-result-wrap { width: 100%; }
+.ag-results-actions .share-result {
+  width: 100%;
+  min-height: 54px;
+  margin: 0;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ag-cta-text);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ag-accent) 82%, #fff), var(--ag-accent) 60%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 3px 0 var(--ag-accent-lo),
+    0 10px 22px color-mix(in srgb, var(--ag-accent) 25%, transparent);
 }
+.ag-results-actions .share-result-manual { margin: 12px auto 0; text-align: left; }
+.ag-results-foot { margin: 22px 0 0; font-size: 13px; color: var(--ag-sec); }
 
-.ag-results-dot--exact:not(.ag-results-dot--active) {
-  background: color-mix(in srgb, var(--ag-accent) 55%, var(--ag-border));
-}
-
-.ag-results-dot--miss:not(.ag-results-dot--active) {
-  background: color-mix(in srgb, #ff6b6b 45%, var(--ag-border));
-}
-
-.ag-results-counter {
-  margin-top: 8px;
-  font-size: 11px;
-  color: var(--ag-muted);
-}
-
-.ag-results-footer {
-  margin-top: 18px;
-  font-size: 10px;
-  color: var(--ag-muted);
-  opacity: 0.7;
+@media (max-width: 700px) {
+  .ag-results-score { font-size: 60px; }
+  .ag-results-score span { font-size: 18px; }
+  .ag-passport { margin-top: 20px; padding: 14px 8px 10px; border-radius: 20px; gap: 8px 2px; }
+  .ag-pass { padding: 5px 1px 6px; gap: 5px; border-radius: 12px; }
+  .ag-pass .ag-stamp { width: 52px; height: 52px; max-width: none; flex: none; border-width: 2px; border-style: double; }
+  .ag-pass .ag-stamp img { width: 24px; height: 16px; aspect-ratio: auto; }
+  .ag-pass .ag-stamp b { font-size: 12px; }
+  .ag-pass-name { font-size: 11px; }
+  .ag-round { grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 12px; border-radius: 20px; }
+  .ag-round-answer { font-size: 26px; }
 }

@@ -1,202 +1,130 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { ClientClue } from "@/lib/anyguessr/types";
+
+/** How much of the screen the clue takes: shared with the map, enlarged, or tucked away. */
+export type ClueView = "both" | "clue" | "map";
 
 const CLUE_TYPE_LABEL: Record<string, string> = {
   environment: "Place",
   person: "Person",
   food: "Food",
-  written_language: "Written Language",
+  written_language: "Written language",
   landmark: "Place",
   flag: "Flag",
   currency: "Currency",
   jersey: "Jersey",
   brand: "Brand",
   wildlife: "Wildlife",
-  audio: "Spoken Language",
+  audio: "Spoken language",
+};
+
+const CLUE_PROMPT: Record<string, string> = {
+  person: "Where is this person from?",
+  food: "Where is this dish from?",
+  written_language: "Where is this written?",
+  audio: "Where is this spoken?",
+  brand: "Where is this brand from?",
+  wildlife: "Where does this live?",
+  currency: "Whose money is this?",
+  jersey: "Whose jersey is this?",
 };
 
 function labelFor(clue: ClientClue): string {
-  return CLUE_TYPE_LABEL[clue.type] ?? capitalize(clue.type);
+  return CLUE_TYPE_LABEL[clue.type] ?? clue.type.charAt(0).toUpperCase() + clue.type.slice(1);
 }
 
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
+/**
+ * The round's clue, floating over the map. The whole image is always shown (a cropped flag
+ * can hide the part that gives it away), with a blurred copy filling the space around it.
+ */
 export default function ClueCard({
   clue,
-  index,
-  revealed,
-  headerLabel,
+  view = "both",
+  onView,
+  label,
 }: {
   clue: ClientClue;
-  index: number;
-  revealed: boolean;
-  headerLabel?: string;
+  view?: ClueView;
+  /** Present on the play screen, where the card can be resized. Absent on the results page. */
+  onView?: (next: ClueView) => void;
+  /** Replaces the question beside the clue type, for example "Round 3" on the results page. */
+  label?: string;
 }) {
-  const [loaded, setLoaded] = useState(false);
-  const boxRef = useRef<HTMLDivElement>(null);
-
-  // Preload the *next* clue's image silently so the reveal flips open instantly.
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const url = clue.metadata?.image_url ?? clue.metadata?.thumb_url;
-    if (url) {
-      const img = new Image();
-      img.src = url;
-    }
-  }, [clue]);
-
-  if (!revealed) {
-    return (
-      <div
-        ref={boxRef}
-        style={{
-          width: "100%",
-          aspectRatio: "4 / 3",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "10px",
-          background: "var(--ag-surface)",
-          border: "1px solid var(--ag-border)",
-          borderRadius: "14px",
-          color: "var(--ag-muted)",
-        }}
-        aria-label={`Clue ${index + 1} — locked`}
-      >
-        <div style={{ fontSize: "32px", opacity: 0.4 }}>🔒</div>
-        <div style={{ fontSize: "11px", letterSpacing: "0.16em", textTransform: "uppercase" }}>
-          Locked
-        </div>
-      </div>
-    );
-  }
-
   const imageUrl = clue.metadata?.image_url ?? clue.metadata?.thumb_url;
   const audioUrl = clue.metadata?.audio_url;
+  const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
+  const loaded = loadedUrl === imageUrl;
+  const minimised = view === "map";
+
+  // Escape steps back from the enlarged clue.
+  useEffect(() => {
+    if (view !== "clue" || !onView) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onView("both");
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [view, onView]);
 
   return (
-    <div
-      ref={boxRef}
-      style={{
-        width: "100%",
-        background: "var(--ag-surface)",
-        border: "1px solid var(--ag-border)",
-        borderRadius: "14px",
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-      }}
-      aria-label={`Clue ${index + 1}: ${labelFor(clue)}`}
-    >
-      <div
-        style={{
-          padding: "10px 14px",
-          fontSize: "10px",
-          fontWeight: 600,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: "var(--ag-accent)",
-          borderBottom: "1px solid var(--ag-border)",
-        }}
-      >
-        {headerLabel ?? `Clue ${index + 1} · ${labelFor(clue)}`}
+    <section className={`ag-clue${onView ? "" : " is-static"}`} aria-label={`Clue: ${labelFor(clue)}`}>
+      <div className="ag-clue-bar">
+        <span className="ag-clue-kind">
+          <b>{labelFor(clue)}</b>
+          {label ?? CLUE_PROMPT[clue.type] ?? "Which country is this?"}
+        </span>
+        {onView && <span className="ag-clue-btns">
+          {view === "clue" ? (
+            <button type="button" onClick={() => onView("both")} aria-label="Show the clue and the map">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+              </svg>
+            </button>
+          ) : (
+            <button type="button" onClick={() => onView("clue")} aria-label="Enlarge the clue">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+              </svg>
+            </button>
+          )}
+          <button type="button" onClick={() => onView("map")} aria-label="Minimise the clue">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+              <path d="M5 12h14" />
+            </svg>
+          </button>
+        </span>}
       </div>
 
-      <div
-        style={{
-          width: "100%",
-          aspectRatio: "4 / 3",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "var(--ag-bg)",
-          position: "relative",
-        }}
-      >
-        {!loaded && imageUrl && (
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "var(--ag-muted)",
-              fontSize: "12px",
-            }}
-          >
-            Loading…
-          </div>
-        )}
-
+      <div className="ag-clue-media">
+        {imageUrl && <div className="ag-clue-blur" style={{ backgroundImage: `url(${JSON.stringify(imageUrl)})` }} aria-hidden="true" />}
+        {imageUrl && !loaded && <span className="ag-clue-loading">Loading…</span>}
         {imageUrl && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={imageUrl}
             alt={clue.metadata?.alt_text ?? `${clue.type} clue`}
-            loading="lazy"
-            onLoad={() => setLoaded(true)}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              opacity: loaded ? 1 : 0,
-              transition: "opacity 0.35s ease",
-              display: "block",
-            }}
+            onLoad={() => setLoadedUrl(imageUrl)}
+            style={{ opacity: loaded ? 1 : 0 }}
           />
         )}
 
-        {imageUrl && typeof clue.metadata?.caption === "string" && (
+        {imageUrl && typeof clue.metadata?.caption === "string" && !minimised && (
           // A person's name: the round asks where they are from, not who they are.
-          <div
-            style={{
-              position: "absolute",
-              left: 0,
-              right: 0,
-              bottom: 0,
-              padding: "28px 14px 10px",
-              background: "linear-gradient(transparent, rgba(0, 0, 0, 0.78))",
-              color: "#fff",
-              fontSize: "16px",
-              fontWeight: 600,
-              textAlign: "center",
-            }}
-          >
-            {clue.metadata.caption}
-          </div>
+          <div className="ag-clue-caption">{clue.metadata.caption}</div>
         )}
 
-        {audioUrl && (
-          <audio
-            controls
-            src={audioUrl}
-            aria-label={`${clue.type} audio clue`}
-            style={{ width: "92%", maxWidth: "320px" }}
-          />
-        )}
+        {audioUrl && !minimised && <audio controls src={audioUrl} aria-label={`${clue.type} audio clue`} />}
 
-        {!imageUrl && !audioUrl && (
-          <div
-            style={{
-              fontFamily: '"Playfair Display", serif',
-              fontSize: "clamp(28px, 7vw, 48px)",
-              fontWeight: 700,
-              color: "var(--ag-text)",
-              letterSpacing: "0.02em",
-              padding: "24px",
-              textAlign: "center",
-            }}
-          >
-            {clue.content || "·"}
-          </div>
+        {!imageUrl && !audioUrl && <div className="ag-clue-text">{clue.content || "·"}</div>}
+
+        {minimised && onView && (
+          <button type="button" className="ag-clue-restore" onClick={() => onView("both")}>
+            Show clue
+          </button>
         )}
       </div>
-    </div>
+    </section>
   );
 }

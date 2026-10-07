@@ -15,7 +15,8 @@ function isValidCca3(value: unknown): value is string {
   return typeof value === "string" && value.length === 3 && value !== "-99";
 }
 
-function cca3FromFeature(feature: CountryFeature): string | null {
+/** The ISO 3166-1 alpha-3 code a border feature stands for, if it has one. */
+export function cca3FromFeature(feature: CountryFeature): string | null {
   const props = feature.properties;
   if (!props) return null;
   if (isValidCca3(props.ISO_A3)) return props.ISO_A3;
