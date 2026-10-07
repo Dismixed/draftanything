@@ -3,6 +3,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { generateChains } from "./generator";
+import { scheduleNextApprovedPuzzle } from "./schedule-service";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -42,10 +43,8 @@ export interface HintResult {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Daily — in-memory cache so fallback is same for everyone on a day  */
+/*  Daily                                                              */
 /* ------------------------------------------------------------------ */
-
-const fallbackCache = new Map<string, PlayablePuzzle>();
 
 /**
  * Reads the puzzle scheduled for `targetDate` (or null if none). Raises on
@@ -91,13 +90,14 @@ async function loadScheduledPuzzle(
  *
  * Note: the LLM semantic pass is intentionally skipped here — this is the hot
  * path that runs on a user's page load, and the phrase graph is already
- * curated. The LLM pass belongs in the batch/admin pipeline instead.
+ * curated. The generator still applies the ambiguity, particle and repeat
+ * rules, and nobody reviews this chain, so it is held to medium or easier.
  */
 async function generateOnDemandPuzzle(
   db: SupabaseClient<Database>,
   targetDate: string,
 ): Promise<PlayablePuzzle | null> {
-  const chains = await generateChains(db, { length: 5, count: 1 });
+  const chains = await generateChains(db, { length: 5, count: 1, minLinkScore: 5 });
   if (chains.length === 0) return null;
 
   const chain = chains[0];
@@ -147,45 +147,45 @@ async function generateOnDemandPuzzle(
   );
 }
 
+/**
+ * Resolves the daily puzzle for `date`. Whatever is chosen is written to
+ * `daily_chain_puzzles`, which is what makes it the same for every visitor;
+ * nothing is cached here, so a schedule change shows up on the next read.
+ */
 export async function getDailyPuzzle(
   db: SupabaseClient<Database>,
   date?: string,
 ): Promise<PlayablePuzzle | null> {
   const targetDate = date ?? new Date().toISOString().slice(0, 10);
 
-  // Check fallback cache first
-  const cached = fallbackCache.get(targetDate);
-  if (cached) return cached;
-
-  // 1. Today's scheduled puzzle
+  // 1. The scheduled puzzle.
   const scheduled = await loadScheduledPuzzle(db, targetDate);
-  if (scheduled) {
-    fallbackCache.set(targetDate, scheduled);
-    return scheduled;
+  if (scheduled) return scheduled;
+
+  // 2. Nothing scheduled: take the next approved puzzle, so reviewed content
+  //    is always used before anything is generated.
+  try {
+    if (await scheduleNextApprovedPuzzle(db, targetDate)) {
+      const approved = await loadScheduledPuzzle(db, targetDate);
+      if (approved) return approved;
+    }
+  } catch (err) {
+    console.error("[chainlink] scheduling an approved puzzle failed:", err);
   }
 
-  // 2. Nothing scheduled — generate one on demand and load it, so the game
-  //    always has a puzzle for the day.
+  // 3. No approved puzzle left: generate one on demand, so the game always
+  //    has a puzzle for the day.
   try {
     const generated = await generateOnDemandPuzzle(db, targetDate);
-    if (generated) {
-      fallbackCache.set(targetDate, generated);
-      return generated;
-    }
+    if (generated) return generated;
   } catch (err) {
     console.error("[chainlink] on-demand generation failed:", err);
     // Fall through to the approved fallback below.
   }
 
-  // 3. Last resort: pick a random approved puzzle, persist it to the daily
-  //    schedule so every later visitor gets the same one, then return it.
-  const fallback = await scheduleApprovedFallback(db, targetDate);
-  if (fallback) {
-    fallbackCache.set(targetDate, fallback);
-    return fallback;
-  }
-
-  return null;
+  // 4. Last resort: pick a random approved or published puzzle and persist
+  //    it to the daily schedule so every later visitor gets the same one.
+  return scheduleApprovedFallback(db, targetDate);
 }
 
 /**
@@ -229,24 +229,49 @@ async function scheduleApprovedFallback(
 /*  Infinite (random) puzzle                                           */
 /* ------------------------------------------------------------------ */
 
-export async function getRandomApprovedPuzzle(
+/**
+ * A random puzzle for infinite mode, drawn from the archive: puzzles whose
+ * daily has already run. Approved puzzles are kept out because they are
+ * future dailies and showing them here would spoil them; they are only a
+ * fallback for when no daily has run yet.
+ */
+export async function getInfinitePuzzle(
   db: SupabaseClient<Database>,
   options?: {
     difficulty?: string;
     excludeIds?: string[];
   },
 ): Promise<PlayablePuzzle | null> {
-  const query = db
-    .from("chain_puzzles")
-    .select("*")
-    .in("status", ["approved", "published"])
-    .order("score", { ascending: false })
-    .limit(50);
+  const today = new Date().toISOString().slice(0, 10);
 
-  const { data: puzzles, error } = await query;
+  const { data: past, error: pastError } = await db
+    .from("daily_chain_puzzles")
+    .select("puzzle_id")
+    .lt("publish_date", today);
+  if (pastError) throw pastError;
+
+  const pastIds = (past ?? []).map((row) => row.puzzle_id);
+  const { data, error } =
+    pastIds.length > 0
+      ? await db.from("chain_puzzles").select("*").in("id", pastIds)
+      : await db
+          .from("chain_puzzles")
+          .select("*")
+          .in("status", ["approved", "published"])
+          .order("score", { ascending: false })
+          .limit(50);
 
   if (error) throw error;
-  if (!puzzles || puzzles.length === 0) return null;
+  if (!data || data.length === 0) return null;
+
+  // The same chain can sit on the calendar under several ids; offer it once.
+  const seen = new Set<string>();
+  const puzzles = data.filter((puzzle) => {
+    const key = (puzzle.words as string[]).join("|").toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 
   // Filter by difficulty if provided
   let filtered = puzzles;

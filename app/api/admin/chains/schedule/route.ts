@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
+import { dailyChainTag } from "@/lib/chainlink/daily-cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkAdmin } from "@/lib/chainlink/admin-guard";
 
@@ -89,6 +91,9 @@ export async function POST(req: NextRequest) {
         updated_at: new Date().toISOString(),
       })
       .eq("id", puzzleId);
+
+    // Players must see a newly scheduled daily on their next request.
+    revalidateTag(dailyChainTag(date), { expire: 0 });
 
     return NextResponse.json({ schedule: data });
   } catch (err) {

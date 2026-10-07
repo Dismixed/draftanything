@@ -47,3 +47,6 @@ yarn-error.log*
 next-env.d.ts
 .omx/
 .env.local
+
+# downloaded corpus counts and LLM verdict caches
+/.cache/

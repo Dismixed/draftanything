@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkAdmin } from "@/lib/chainlink/admin-guard";
+import { chainProblems } from "@/lib/chainlink/chain-rules";
 import {
   generateChains,
+  loadChainRules,
   saveDraftChains,
   type CandidateChain,
 } from "@/lib/chainlink/generator";
@@ -93,8 +95,11 @@ export async function POST(req: NextRequest) {
           length: 5,
           perSeed: 2,
         });
+        // LLM chains skip the phrase graph, so hold them to the same rules.
+        const rules = await loadChainRules(db);
         const extra = proposals
           .filter((words) => words.length === 5)
+          .filter((words) => chainProblems(words, rules).length === 0)
           .map(toCandidateChain);
         allChains = dedupeChains([...allChains, ...extra]);
       } catch (err) {

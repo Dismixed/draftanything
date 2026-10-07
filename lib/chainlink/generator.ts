@@ -2,6 +2,16 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import {
+  MAX_PARTICLES,
+  classifyDifficulty,
+  countParticles,
+  findAmbiguousLinks,
+  linkKey,
+  type ChainRules,
+  type Difficulty,
+} from "./chain-rules";
+import { loadExistingChainIndex } from "./novelty";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -9,20 +19,30 @@ import type { Database } from "@/lib/supabase/database.types";
 
 export interface GenerateOptions {
   length?: number;
-  difficulty?: "easy" | "medium" | "hard";
+  difficulty?: Difficulty;
   category?: string;
   count?: number;
+  /** Leave out links scoring below this, whatever the difficulty. */
+  minLinkScore?: number;
+}
+
+export interface BuildOptions extends GenerateOptions {
+  /** Lowercase "first second" keys of links to avoid, e.g. recent dailies. */
+  excludeLinks?: ReadonlySet<string>;
+  /** Lowercase "a|b|c|d|e" keys of chains that already exist as puzzles. */
+  excludeChains?: ReadonlySet<string>;
+  random?: () => number;
 }
 
 export interface CandidateChain {
   words: string[];
   phrases: string[];
-  difficulty: "easy" | "medium" | "hard";
+  difficulty: Difficulty;
   theme: string | null;
   score: number;
 }
 
-interface PhraseNode {
+export interface PhraseNode {
   word_a: string;
   word_b: string;
   phrase: string;
@@ -30,15 +50,19 @@ interface PhraseNode {
   category: string | null;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Difficulty scoring constants                                       */
-/* ------------------------------------------------------------------ */
+/** Lowest link score a chain of each difficulty may contain. */
+const MIN_LINK_SCORE: Record<Difficulty, number> = { easy: 8, medium: 5, hard: 1 };
 
-const DIFFICULTY_RANGES: Record<string, [number, number]> = {
-  easy: [7, 10],
-  medium: [5, 8],
-  hard: [4, 7],
-};
+/** How many days back a daily's links stay off limits. */
+const RECENT_DAILY_DAYS = 30;
+
+/** Search steps allowed per start word before giving up on it. */
+const MAX_WALK_STEPS = 2000;
+
+/** A start word may have this many outgoing links at most. */
+const MAX_START_LINKS = 20;
+
+const PAGE_SIZE = 1000;
 
 /* ------------------------------------------------------------------ */
 /*  Graph builder                                                      */
@@ -54,10 +78,13 @@ function buildGraph(phrases: PhraseNode[]): Map<string, PhraseNode[]> {
   return graph;
 }
 
-function classifyDifficulty(score: number): "easy" | "medium" | "hard" {
-  if (score >= 7) return "easy";
-  if (score >= 5) return "medium";
-  return "hard";
+function shuffled<T>(items: readonly T[], random: () => number): T[] {
+  const result = [...items];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
 }
 
 /* ------------------------------------------------------------------ */
@@ -100,75 +127,40 @@ function scoreChain(words: string[], phrases: PhraseNode[]): number {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Chain walk — DFS with depth limit                                  */
+/*  Chain walk — randomised depth-first search                         */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Finds one chain of `targetLength` words from `startWord` that `accept`
+ * approves, trying links in random order and backtracking from dead ends.
+ */
 function walkChain(
   graph: Map<string, PhraseNode[]>,
   startWord: string,
   targetLength: number,
-  maxAttempts: number = 200,
+  random: () => number,
+  accept: (words: string[], links: PhraseNode[]) => boolean,
 ): { words: string[]; phraseNodes: PhraseNode[] } | null {
-  const visited = new Set<string>();
-  const wordPath: string[] = [startWord];
-  const phrasePath: PhraseNode[] = [];
-  visited.add(startWord.toLowerCase());
+  const words = [startWord];
+  const links: PhraseNode[] = [];
+  let steps = 0;
 
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    // Backtrack if we hit a dead end
-    while (phrasePath.length > 0 && phrasePath.length < targetLength - 1) {
-      const lastWord = wordPath[wordPath.length - 1];
-      const candidates = graph.get(lastWord) ?? [];
-      const available = candidates.filter(
-        (c) => !visited.has(c.word_b.toLowerCase()),
-      );
+  const extend = (): boolean => {
+    if (words.length === targetLength) return accept(words, links);
+    if (++steps > MAX_WALK_STEPS) return false;
 
-      if (available.length > 0) {
-        break;
-      }
-
-      // Backtrack
-      phrasePath.pop();
-      const removed = wordPath.pop()!;
-      visited.delete(removed.toLowerCase());
-
-      if (wordPath.length === 0) return null;
+    for (const link of shuffled(graph.get(words[words.length - 1]) ?? [], random)) {
+      if (words.includes(link.word_b)) continue;
+      words.push(link.word_b);
+      links.push(link);
+      if (countParticles(words) <= MAX_PARTICLES && extend()) return true;
+      words.pop();
+      links.pop();
     }
+    return false;
+  };
 
-    if (phrasePath.length >= targetLength - 1) break;
-
-    const currentWord = wordPath[wordPath.length - 1];
-    const candidates = graph.get(currentWord) ?? [];
-    const available = candidates.filter(
-      (c) => !visited.has(c.word_b.toLowerCase()),
-    );
-
-    if (available.length === 0) {
-      // Dead end — backtrack
-      if (phrasePath.length === 0) return null;
-      phrasePath.pop();
-      const removed = wordPath.pop()!;
-      visited.delete(removed.toLowerCase());
-      continue;
-    }
-
-    // Pick the best available candidate (highest score)
-    const sorted = [...available].sort(
-      (a, b) => b.commonness_score - a.commonness_score,
-    );
-    // Add some randomness: pick from top 3
-    const pick = sorted[Math.floor(Math.random() * Math.min(3, sorted.length))];
-
-    phrasePath.push(pick);
-    wordPath.push(pick.word_b);
-    visited.add(pick.word_b.toLowerCase());
-  }
-
-  if (wordPath.length !== targetLength || phrasePath.length !== targetLength - 1) {
-    return null;
-  }
-
-  return { words: wordPath, phraseNodes: phrasePath };
+  return extend() ? { words, phraseNodes: links } : null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -198,120 +190,138 @@ function inferTheme(words: string[], phraseNodes: PhraseNode[]): string | null {
   return best || null;
 }
 
-export async function generateChains(
-  db: SupabaseClient<Database>,
-  options: GenerateOptions = {},
-): Promise<CandidateChain[]> {
+/**
+ * Builds chains from a set of phrases. Pure: all database state arrives as
+ * arguments, so every caller applies the same rules.
+ */
+export function buildChains(phrases: PhraseNode[], options: BuildOptions = {}): CandidateChain[] {
   const {
     length = 5,
     difficulty,
     category,
     count = 25,
+    minLinkScore = 1,
+    excludeLinks,
+    excludeChains,
+    random = Math.random,
   } = options;
 
-  // 1. Load active phrases
-  let query = db
-    .from("chain_phrases")
-    .select("word_a, word_b, phrase, commonness_score, category")
-    .eq("is_active", true);
+  // Ambiguity is judged against every phrase, not just the ones this run
+  // may use: a rival in another category still confuses the player.
+  const ambiguous = findAmbiguousLinks(phrases);
+  const floor = Math.max(minLinkScore, difficulty ? MIN_LINK_SCORE[difficulty] : 1);
 
-  if (category) {
-    query = query.eq("category", category);
-  }
+  const graph = buildGraph(
+    phrases.filter((p) => {
+      const key = linkKey(p.word_a, p.word_b);
+      if (ambiguous.has(key) || excludeLinks?.has(key)) return false;
+      if (p.commonness_score < floor) return false;
+      return !category || p.category === category;
+    }),
+  );
 
-  if (difficulty) {
-    const [minScore] = DIFFICULTY_RANGES[difficulty];
-    query = query.gte("commonness_score", minScore);
-  }
+  // Hub words ("over", "home") make dull openers; start elsewhere when possible.
+  let starts = [...graph.entries()].filter(([, edges]) => edges.length <= MAX_START_LINKS);
+  if (starts.length === 0) starts = [...graph.entries()];
 
-  const { data: phrases, error } = await query;
-
-  if (error) {
-    throw new Error(`Failed to load phrases: ${error.message}`);
-  }
-
-  if (!phrases || phrases.length < length - 1) {
-    throw new Error(
-      `Not enough phrases in database (need at least ${length - 1}, have ${phrases?.length ?? 0})`,
-    );
-  }
-
-  // 2. Build graph
-  const graph = buildGraph(phrases);
-
-  if (graph.size === 0) {
-    throw new Error("No phrase pairs available to build chains");
-  }
-
-  // 3. Collect candidate start words
-  // Prefer words that have multiple outgoing edges (branching factor >= 2)
-  const startCandidates = [...graph.entries()]
-    .filter((entry) => { const [, edges] = entry; return edges.length >= 2 && edges.length <= 20; })
-    .sort((a, b) => b[1].length - a[1].length);
-
-  if (startCandidates.length === 0) {
-    // Fallback: any word with at least one edge
-    startCandidates.push(...graph.entries());
-  }
-
-  // 4. Walk graph to generate chains
   const candidates: CandidateChain[] = [];
-  const seenKeys = new Set<string>();
-  const shuffledStarts = [...startCandidates].sort(() => Math.random() - 0.5);
-
-  for (const [startWord] of shuffledStarts) {
+  for (const [startWord] of shuffled(starts, random)) {
     if (candidates.length >= count) break;
 
-    const result = walkChain(graph, startWord, length);
+    const result = walkChain(graph, startWord, length, random, (words, links) => {
+      if (excludeChains?.has(words.map((w) => w.toLowerCase()).join("|"))) return false;
+      return !difficulty || classifyDifficulty(links.map((l) => l.commonness_score)) === difficulty;
+    });
     if (!result) continue;
-
-    const key = result.words.join("-");
-    if (seenKeys.has(key)) continue;
-    seenKeys.add(key);
-
-    // Validate all phrases exist
-    const phraseNodes: PhraseNode[] = [];
-    let valid = true;
-    for (let i = 0; i < result.words.length - 1; i++) {
-      const a = result.words[i];
-      const b = result.words[i + 1];
-      // Find the actual phrase node
-      const edges = graph.get(a) ?? [];
-      const match = edges.find(
-        (e) => e.word_b.toLowerCase() === b.toLowerCase(),
-      );
-      if (!match) {
-        valid = false;
-        break;
-      }
-      phraseNodes.push(match);
-    }
-
-    if (!valid || phraseNodes.length !== length - 1) continue;
-
-    const score = scoreChain(result.words, phraseNodes);
-
-    // Enforce difficulty filter
-    const chainDifficulty = classifyDifficulty(
-      phraseNodes.reduce((sum, p) => sum + p.commonness_score, 0) /
-        phraseNodes.length,
-    );
-
-    if (difficulty && chainDifficulty !== difficulty) continue;
-
-    const theme = inferTheme(result.words, phraseNodes);
 
     candidates.push({
       words: result.words,
-      phrases: phraseNodes.map((p) => p.phrase),
-      difficulty: chainDifficulty,
-      theme,
-      score,
+      phrases: result.phraseNodes.map((p) => p.phrase),
+      difficulty: classifyDifficulty(result.phraseNodes.map((p) => p.commonness_score)),
+      theme: inferTheme(result.words, result.phraseNodes),
+      score: scoreChain(result.words, result.phraseNodes),
     });
   }
 
-  // 5. Sort by score descending and return top
-  return candidates.sort((a, b) => b.score - a.score).slice(0, count);
+  return candidates.sort((a, b) => b.score - a.score);
+}
+
+/** Every active phrase, paged because a single response stops at 1000 rows. */
+export async function loadActivePhrases(db: SupabaseClient<Database>): Promise<PhraseNode[]> {
+  const phrases: PhraseNode[] = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await db
+      .from("chain_phrases")
+      .select("word_a, word_b, phrase, commonness_score, category")
+      .eq("is_active", true)
+      .order("id", { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
+
+    if (error) throw new Error(`Failed to load phrases: ${error.message}`);
+    phrases.push(...(data ?? []));
+    if (!data || data.length < PAGE_SIZE) return phrases;
+  }
+}
+
+/** Links used in dailies over the last `RECENT_DAILY_DAYS` days. */
+async function loadRecentDailyLinks(db: SupabaseClient<Database>): Promise<Set<string>> {
+  const since = new Date(Date.now() - RECENT_DAILY_DAYS * 86_400_000).toISOString().slice(0, 10);
+
+  const { data: scheduled, error: scheduleError } = await db
+    .from("daily_chain_puzzles")
+    .select("puzzle_id")
+    .gte("publish_date", since);
+  if (scheduleError) throw new Error(`Failed to load recent dailies: ${scheduleError.message}`);
+
+  const ids = (scheduled ?? []).map((row) => row.puzzle_id);
+  const links = new Set<string>();
+  if (ids.length === 0) return links;
+
+  const { data: puzzles, error: puzzleError } = await db
+    .from("chain_puzzles")
+    .select("words")
+    .in("id", ids);
+  if (puzzleError) throw new Error(`Failed to load recent puzzles: ${puzzleError.message}`);
+
+  for (const row of puzzles ?? []) {
+    const words = Array.isArray(row.words) ? (row.words as string[]) : [];
+    for (let i = 0; i < words.length - 1; i++) links.add(linkKey(words[i], words[i + 1]));
+  }
+  return links;
+}
+
+/**
+ * The rules a chain from any source must pass, loaded from current data.
+ * Use with `chainProblems` to vet chains the phrase graph did not build.
+ */
+export async function loadChainRules(db: SupabaseClient<Database>): Promise<ChainRules> {
+  const [phrases, recentLinks] = await Promise.all([loadActivePhrases(db), loadRecentDailyLinks(db)]);
+  return { ambiguous: findAmbiguousLinks(phrases), recentLinks };
+}
+
+export async function generateChains(
+  db: SupabaseClient<Database>,
+  options: GenerateOptions = {},
+): Promise<CandidateChain[]> {
+  const length = options.length ?? 5;
+
+  const [phrases, recentLinks, existing] = await Promise.all([
+    loadActivePhrases(db),
+    loadRecentDailyLinks(db),
+    loadExistingChainIndex(db),
+  ]);
+
+  if (phrases.length < length - 1) {
+    throw new Error(
+      `Not enough phrases in database (need at least ${length - 1}, have ${phrases.length})`,
+    );
+  }
+
+  return buildChains(phrases, {
+    ...options,
+    excludeLinks: recentLinks,
+    excludeChains: existing.chains,
+  });
 }
 
 /* ------------------------------------------------------------------ */

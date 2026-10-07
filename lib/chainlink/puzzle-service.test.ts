@@ -6,13 +6,21 @@ vi.mock("./generator", () => ({
   generateChains: vi.fn(),
 }));
 
+vi.mock("./schedule-service", () => ({
+  scheduleNextApprovedPuzzle: vi.fn(),
+}));
+
 import { generateChains } from "./generator";
-import { getDailyPuzzle } from "./puzzle-service";
+import { getDailyPuzzle, getInfinitePuzzle } from "./puzzle-service";
+import { scheduleNextApprovedPuzzle } from "./schedule-service";
 
 const mockGenerateChains = generateChains as unknown as ReturnType<typeof vi.fn>;
+const mockScheduleNextApproved = scheduleNextApprovedPuzzle as unknown as ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   mockGenerateChains.mockReset();
+  mockScheduleNextApproved.mockReset();
+  mockScheduleNextApproved.mockResolvedValue(false);
 });
 
 /** Minimal supabase mock — each test wires the exact query chain it needs. */
@@ -62,6 +70,9 @@ describe("getDailyPuzzle on-demand generation", () => {
     expect(result!.words).toEqual(["sun", "light", "house", "boat", "yard"]);
     expect(result!.mode).toBe("daily");
     expect(result!.date).toBe("2026-08-26");
+
+    // An unreviewed daily must never contain a link players would hesitate over.
+    expect(mockGenerateChains).toHaveBeenCalledWith(db, { length: 5, count: 1, minLinkScore: 5 });
 
     expect(chainInsert).toHaveBeenCalledTimes(1);
     expect(dailyInsert).toHaveBeenCalledTimes(1);
@@ -180,5 +191,120 @@ describe("getDailyPuzzle on-demand generation", () => {
     expect(result).not.toBeNull();
     expect(result!.id).toBe("p3");
     expect(mockGenerateChains).not.toHaveBeenCalled();
+  });
+});
+
+describe("getDailyPuzzle approved queue", () => {
+  it("uses the next approved puzzle before generating one", async () => {
+    mockScheduleNextApproved.mockResolvedValue(true);
+
+    const dailyMaybeSingle = vi
+      .fn()
+      .mockResolvedValueOnce({ data: null, error: null })
+      .mockResolvedValueOnce({
+        data: { puzzle_id: "approved-1", publish_date: "2026-09-02" },
+        error: null,
+      });
+    const dailySelect = vi
+      .fn()
+      .mockReturnValue({ eq: vi.fn().mockReturnValue({ maybeSingle: dailyMaybeSingle }) });
+    const chainSingle = vi.fn().mockResolvedValue({
+      data: { id: "approved-1", words: ["sun", "light", "house", "boat", "yard"], difficulty: "easy" },
+      error: null,
+    });
+    const chainSelect = vi
+      .fn()
+      .mockReturnValue({ eq: vi.fn().mockReturnValue({ single: chainSingle }) });
+
+    const db = dbFrom({
+      daily_chain_puzzles: { select: dailySelect },
+      chain_puzzles: { select: chainSelect },
+    });
+
+    const result = await getDailyPuzzle(db, "2026-09-02");
+
+    expect(result!.id).toBe("approved-1");
+    expect(mockScheduleNextApproved).toHaveBeenCalledWith(db, "2026-09-02");
+    expect(mockGenerateChains).not.toHaveBeenCalled();
+  });
+
+  it("reads the schedule on every call so an admin change is picked up", async () => {
+    const dailyMaybeSingle = vi
+      .fn()
+      .mockResolvedValueOnce({ data: { puzzle_id: "first", publish_date: "2026-09-03" }, error: null })
+      .mockResolvedValueOnce({ data: { puzzle_id: "second", publish_date: "2026-09-03" }, error: null });
+    const dailySelect = vi
+      .fn()
+      .mockReturnValue({ eq: vi.fn().mockReturnValue({ maybeSingle: dailyMaybeSingle }) });
+    const chainSingle = vi
+      .fn()
+      .mockResolvedValueOnce({ data: { id: "first", words: ["a", "b", "c", "d", "e"], difficulty: "easy" }, error: null })
+      .mockResolvedValueOnce({ data: { id: "second", words: ["f", "g", "h", "i", "j"], difficulty: "easy" }, error: null });
+    const chainSelect = vi
+      .fn()
+      .mockReturnValue({ eq: vi.fn().mockReturnValue({ single: chainSingle }) });
+    const db = dbFrom({
+      daily_chain_puzzles: { select: dailySelect },
+      chain_puzzles: { select: chainSelect },
+    });
+
+    expect((await getDailyPuzzle(db, "2026-09-03"))!.id).toBe("first");
+    expect((await getDailyPuzzle(db, "2026-09-03"))!.id).toBe("second");
+  });
+});
+
+describe("getInfinitePuzzle", () => {
+  const row = (id: string, words: string[], status: string) => ({ id, words, status, difficulty: "medium" });
+
+  it("draws from puzzles whose daily has already run", async () => {
+    const dailyLt = vi.fn().mockResolvedValue({ data: [{ puzzle_id: "past" }], error: null });
+    const chainIn = vi.fn().mockResolvedValue({
+      data: [row("past", ["sun", "light", "house", "boat", "yard"], "scheduled")],
+      error: null,
+    });
+    const db = dbFrom({
+      daily_chain_puzzles: { select: vi.fn().mockReturnValue({ lt: dailyLt }) },
+      chain_puzzles: { select: vi.fn().mockReturnValue({ in: chainIn }) },
+    });
+
+    const puzzle = await getInfinitePuzzle(db);
+
+    expect(puzzle).toMatchObject({ id: "past", mode: "infinite" });
+    expect(dailyLt).toHaveBeenCalledWith("publish_date", new Date().toISOString().slice(0, 10));
+    expect(chainIn).toHaveBeenCalledWith("id", ["past"]);
+  });
+
+  it("offers each word sequence once even if it ran as a daily several times", async () => {
+    const words = ["sun", "light", "house", "boat", "yard"];
+    const dailyLt = vi.fn().mockResolvedValue({ data: [{ puzzle_id: "a" }, { puzzle_id: "b" }], error: null });
+    const chainIn = vi.fn().mockResolvedValue({
+      data: [row("a", words, "scheduled"), row("b", words, "scheduled")],
+      error: null,
+    });
+    const db = dbFrom({
+      daily_chain_puzzles: { select: vi.fn().mockReturnValue({ lt: dailyLt }) },
+      chain_puzzles: { select: vi.fn().mockReturnValue({ in: chainIn }) },
+    });
+
+    // "a" is excluded as already played; its duplicate "b" must not come back.
+    const puzzle = await getInfinitePuzzle(db, { excludeIds: ["a"] });
+
+    expect(puzzle!.id).toBe("a");
+  });
+
+  it("falls back to approved puzzles when no daily has run yet", async () => {
+    const dailyLt = vi.fn().mockResolvedValue({ data: [], error: null });
+    const chainLimit = vi.fn().mockResolvedValue({
+      data: [row("approved", ["a", "b", "c", "d", "e"], "approved")],
+      error: null,
+    });
+    const chainIn = vi.fn().mockReturnValue({ order: vi.fn().mockReturnValue({ limit: chainLimit }) });
+    const db = dbFrom({
+      daily_chain_puzzles: { select: vi.fn().mockReturnValue({ lt: dailyLt }) },
+      chain_puzzles: { select: vi.fn().mockReturnValue({ in: chainIn }) },
+    });
+
+    expect((await getInfinitePuzzle(db))!.id).toBe("approved");
+    expect(chainIn).toHaveBeenCalledWith("status", ["approved", "published"]);
   });
 });
