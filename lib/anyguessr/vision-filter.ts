@@ -26,9 +26,16 @@ export function buildVisionPrompt(options: {
     `Clue type: ${options.clueType}`,
     options.wikiTitle ? `Wikipedia article: ${options.wikiTitle}` : "",
     "",
-    `Does this image plausibly depict the clue type for this country?`,
-    `Reject maps, flags (unless clue type is flag), collages, logos unrelated to the country,`,
-    `diagrams, charts, and generic stock photos.`,
+    ...(options.clueType === "brand"
+      ? [
+          `Does this image clearly show this brand? The brand's logo or a clearly branded product is the ideal image; a storefront or building with the brand's signage is acceptable.`,
+          `Reject images that do not show the brand at all, other companies' marks, maps, flags, collages, diagrams, charts, and generic stock photos.`,
+        ]
+      : [
+          `Does this image plausibly depict the clue type for this country?`,
+          `Reject maps, flags (unless clue type is flag), collages, logos unrelated to the country,`,
+          `diagrams, charts, and generic stock photos.`,
+        ]),
     "",
     options.clueType === "flag"
       ? `This is a flag clue, so set shows_country_name to false.`
@@ -37,6 +44,16 @@ export function buildVisionPrompt(options: {
   ]
     .filter(Boolean)
     .join("\n");
+}
+
+/**
+ * Image sourcing pads its results with a loose Commons search ("Austria
+ * brand"), which is usually unrelated. When the clue's own article supplied
+ * images, use only those.
+ */
+export function preferArticleImages<T extends { source?: string }>(candidates: readonly T[]): T[] {
+  const fromArticle = candidates.filter((c) => !c.source?.startsWith("File:"));
+  return fromArticle.length > 0 ? fromArticle : [...candidates];
 }
 
 /** An image is usable when it fits the clue and does not spell out the answer. */

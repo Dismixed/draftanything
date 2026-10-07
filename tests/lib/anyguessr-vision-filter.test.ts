@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildVisionPrompt, visionAccepts } from "@/lib/anyguessr/vision-filter";
+import { buildVisionPrompt, preferArticleImages, visionAccepts } from "@/lib/anyguessr/vision-filter";
 
 describe("buildVisionPrompt", () => {
   const prompt = buildVisionPrompt({ clueType: "brand", country: "Egypt", wikiTitle: "EgyptAir" });
@@ -19,6 +19,35 @@ describe("buildVisionPrompt", () => {
     const flag = buildVisionPrompt({ clueType: "flag", country: "Egypt" });
     expect(flag).toContain("shows_country_name");
     expect(flag).toMatch(/flag clue/i);
+  });
+});
+
+describe("buildVisionPrompt for brands", () => {
+  const prompt = buildVisionPrompt({ clueType: "brand", country: "Austria", wikiTitle: "Red Bull" });
+
+  it("asks for the brand's logo or product rather than rejecting logos", () => {
+    expect(prompt).toMatch(/logo .* is the ideal image/i);
+    expect(prompt).not.toMatch(/reject[^.]*logos/i);
+  });
+
+  it("still rejects logos for other clue types", () => {
+    expect(buildVisionPrompt({ clueType: "food", country: "Austria" })).toMatch(/reject[^.]*logos/i);
+  });
+});
+
+describe("preferArticleImages", () => {
+  const image = (name: string, source: string) => ({ image_url: `https://x/${name}`, source });
+
+  it("keeps only images taken from the clue's own article when there are any", () => {
+    const kept = preferArticleImages(
+      [image("logo.png", "Red Bull"), image("glass.svg", "File:Goblet Glass.svg"), image("can.jpg", "Red Bull")],
+    );
+    expect(kept.map((c) => c.image_url)).toEqual(["https://x/logo.png", "https://x/can.jpg"]);
+  });
+
+  it("falls back to search results when the article gave no image", () => {
+    const search = [image("a.jpg", "File:A.jpg"), image("b.jpg", "File:B.jpg")];
+    expect(preferArticleImages(search)).toEqual(search);
   });
 });
 
