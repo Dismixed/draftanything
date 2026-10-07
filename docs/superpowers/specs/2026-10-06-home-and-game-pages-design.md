@@ -30,10 +30,10 @@ The home page is where most people arrive and where half of them leave. The game
 
 - Archive of past puzzles. This is the next phase.
 - Submitting each daily to daily-game directories (Listdle, DailyDles and similar). This is the first marketing task after release and needs no code.
-- Shareable results. Recommended after directory submission, since social traffic is one visitor in 30 days.
+- Share images (a picture card of the result). Text sharing is in scope; see section 6.
 - A teaser of today's puzzle content on the home page.
 - Link preview (Open Graph) images.
-- New game modes, and any change to the game screens themselves.
+- New game modes, and any change to the game screens beyond adding the share button to each finish screen.
 - URL changes. Every game stays at the address where it is played today.
 
 ## 1. Game registry
@@ -229,12 +229,26 @@ End to end (Playwright):
 
 `pnpm verify` passes.
 
+## 6. Share buttons
+
+Added after an adversarial review found that sharing, the main way daily games spread, was deferred while social traffic stood at one visitor in 30 days.
+
+- One shared button on every daily's finish screen, above "More dailies".
+- On a touch device with the Web Share API it opens the share sheet. Otherwise it copies the text and shows "Copied".
+- The text is the game name and a label (the date, or the category for Ball Knowledge and Hot Takes), the result as a short line or a row of squares, and a link to the game ending in `?ref=share`.
+- No answers are included.
+- Hot Takes shares the player's S tier picks. Its previous share text, which quoted the simulated crowd percentage, is removed.
+- Ball Knowledge's existing copy, tweet and text-message controls are replaced by the shared button.
+- A `result_shared` event records the game and whether the text was shared or copied.
+
 ## Build order
 
 1. Registry, with the three existing modules deriving from it.
 2. Home page, including the Hot Takes completion fix.
 3. Tracking.
-4. Shared section component, then content for all nine games. All nine ship in this build. They are written in this order so the most promising pages are reviewed first: Hot Takes, FreezeFrames, Ball Knowledge, Brain Dead, Chain Link, Getting Warmer, AnyGuessr, Draft Anything, Slippery Slope.
+4. Shared section component, then content for all nine games, then share buttons (section 6).
+
+Detail for step 4:  All nine ship in this build. They are written in this order so the most promising pages are reviewed first: Hot Takes, FreezeFrames, Ball Knowledge, Brain Dead, Chain Link, Getting Warmer, AnyGuessr, Draft Anything, Slippery Slope.
 
 ## Success measures
 

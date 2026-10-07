@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - No URL changes. Every game stays at the address where it is played today.
-- Game components under `components/<game>/` are not modified. The one exception is a single line in `components/hot-takes/game.tsx` (Task 3).
+- Game components under `components/<game>/` are not modified, with two exceptions: a single line in `components/hot-takes/game.tsx` (Task 3), and the share button added to each daily's finish screen (Task 9).
 - The puzzle day is a UTC day. Use `getDateString()` from `lib/streak/date.ts` or `utcDayNumber()` from `lib/games/today.ts`. Never use local dates.
 - Home page `<h1>` is exactly `Stim Games`. The page title starts with `Stim Games`.
 - Home page copy, exact: `Seven free daily games. New puzzles every day.` and `Trivia, geography, word chains, pop culture and tier lists, in the style of Wordle and Connections. No sign-up.`
@@ -22,7 +22,8 @@
 - No play-time estimates ("about 2 minutes") anywhere.
 - Each game's long-form content is 400–800 words across intro, sections and FAQ. Sections and FAQ render as native `<details>` in server-rendered HTML. The first section is headed `How to play` and is open; the rest are collapsed.
 - Copy states only what the game's code does. Hot Takes copy makes no claim about other players or "the crowd" (its crowd percentages are simulated).
-- PostHog event names, exact: `home_game_clicked`, `daily_completed`, `game_about_link_clicked`.
+- PostHog event names, exact: `home_game_clicked`, `daily_completed`, `game_about_link_clicked`, `result_shared`.
+- Share text never reveals an answer and never includes Hot Takes' simulated crowd percentage.
 - `pnpm verify` passes at the end of every task.
 - End every commit message with the trailer `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
 
@@ -3040,7 +3041,288 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 ---
 
-### Task 9: Final checks
+### Task 9: Share buttons on every daily
+
+Every daily's finish screen gets the same share button. On a touch device with the Web Share API it opens the share sheet; otherwise it copies the text and shows "Copied".
+
+**Files:**
+- Create: `lib/share/share-text.ts`
+- Create: `components/daily/share-result.tsx`
+- Create: `tests/lib/share/share-text.test.ts`
+- Create: `tests/components/share-result.test.tsx`
+- Modify: `components/chainlink/game.tsx`, `components/brain-dead/game.tsx`, `components/anyguessr/results.tsx`, `components/freezeframes/game.tsx`, `components/ball-knowledge/game.tsx`, `components/hot-takes/game.tsx`, `components/getting-warmer/results-modal.tsx` (finish screens only)
+- Modify: `app/globals.css` (append the "Share result" block)
+
+**Interfaces:**
+- Consumes: `getGame`, `DailyGameId` (Task 1); `track` (Task 3); `absoluteUrl` from `@/lib/seo`; `getDateString` from `@/lib/streak/date`.
+- Produces:
+  - `formatShareDate(dateString: string): string` (`"2026-10-06"` → `"Oct 6"`)
+  - `shareUrl(gameId: DailyGameId): string` (the game's play address with `?ref=share`)
+  - `buildShareText(input: { gameId: DailyGameId; label: string; lines: string[] }): string`
+  - `squares(values: Array<"good" | "ok" | "bad">): string` (🟩 / 🟨 / 🟥)
+  - `ShareResult(props: { gameId: DailyGameId; text: string })`
+
+- [ ] **Step 1: Write the failing tests**
+
+Create `tests/lib/share/share-text.test.ts`:
+
+```ts
+import { describe, expect, it } from "vitest";
+import { buildShareText, formatShareDate, shareUrl, squares } from "@/lib/share/share-text";
+
+describe("share text", () => {
+  it("formats a puzzle date without the year", () => {
+    expect(formatShareDate("2026-10-06")).toBe("Oct 6");
+    expect(formatShareDate("2026-01-31")).toBe("Jan 31");
+  });
+
+  it("links to where the game is played, marked as a share", () => {
+    expect(shareUrl("chainlink")).toBe("https://stimgames.com/chainlink?ref=share");
+    expect(shareUrl("brain-dead")).toBe("https://stimgames.com/brain-dead/daily?ref=share");
+  });
+
+  it("puts the game name and label first and the link last", () => {
+    const text = buildShareText({ gameId: "brain-dead", label: "Oct 6", lines: ["11 of 15 · 4,250 pts"] });
+    expect(text.split("\n")).toEqual([
+      "Brain Dead · Oct 6",
+      "11 of 15 · 4,250 pts",
+      "https://stimgames.com/brain-dead/daily?ref=share",
+    ]);
+  });
+
+  it("drops empty lines", () => {
+    const text = buildShareText({ gameId: "chainlink", label: "Oct 6", lines: ["", "🟩🟩"] });
+    expect(text.split("\n")).toHaveLength(3);
+  });
+
+  it("draws one square per value", () => {
+    expect(squares(["good", "ok", "bad"])).toBe("🟩🟨🟥");
+  });
+});
+```
+
+Create `tests/components/share-result.test.tsx`:
+
+```tsx
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ShareResult } from "@/components/daily/share-result";
+import { track } from "@/lib/analytics/track";
+
+vi.mock("@/lib/analytics/track", () => ({ track: vi.fn() }));
+
+function setPointer(coarse: boolean) {
+  window.matchMedia = vi.fn().mockReturnValue({ matches: coarse }) as unknown as typeof window.matchMedia;
+}
+
+describe("ShareResult", () => {
+  beforeEach(() => {
+    vi.mocked(track).mockReset();
+  });
+
+  afterEach(() => {
+    Reflect.deleteProperty(navigator, "share");
+  });
+
+  it("copies the text on a computer and confirms it", async () => {
+    const user = userEvent.setup();
+    setPointer(false);
+    const writeText = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
+    render(<ShareResult gameId="chainlink" text="Chain Link · Oct 6" />);
+
+    await user.click(screen.getByRole("button", { name: "Share result" }));
+
+    expect(writeText).toHaveBeenCalledWith("Chain Link · Oct 6");
+    expect(await screen.findByText("Copied")).toBeInTheDocument();
+    expect(track).toHaveBeenCalledWith("result_shared", { game: "chainlink", method: "copy" });
+  });
+
+  it("opens the share sheet on a touch device", async () => {
+    const user = userEvent.setup();
+    setPointer(true);
+    const share = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "share", { value: share, configurable: true });
+    render(<ShareResult gameId="hot-takes" text="Hot Takes · Pizza toppings" />);
+
+    await user.click(screen.getByRole("button", { name: "Share result" }));
+
+    expect(share).toHaveBeenCalledWith({ text: "Hot Takes · Pizza toppings" });
+    expect(track).toHaveBeenCalledWith("result_shared", { game: "hot-takes", method: "share" });
+  });
+
+  it("does not count a share the person cancelled", async () => {
+    const user = userEvent.setup();
+    setPointer(true);
+    const share = vi.fn().mockRejectedValue(new DOMException("cancelled", "AbortError"));
+    Object.defineProperty(navigator, "share", { value: share, configurable: true });
+    render(<ShareResult gameId="hot-takes" text="x" />);
+
+    await user.click(screen.getByRole("button", { name: "Share result" }));
+
+    expect(track).not.toHaveBeenCalled();
+  });
+});
+```
+
+- [ ] **Step 2: Run the tests to verify they fail**
+
+Run: `pnpm vitest run tests/lib/share tests/components/share-result.test.tsx`
+Expected: FAIL, cannot resolve `@/lib/share/share-text` and `@/components/daily/share-result`.
+
+- [ ] **Step 3: Write the share text helpers**
+
+Create `lib/share/share-text.ts`:
+
+```ts
+import { getGame, type DailyGameId } from "@/lib/games/registry";
+import { absoluteUrl } from "@/lib/seo";
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** "2026-10-06" → "Oct 6". Takes the puzzle's own date string, so no timezone maths. */
+export function formatShareDate(dateString: string): string {
+  const [, month, day] = dateString.split("-").map(Number);
+  return `${MONTHS[month - 1]} ${day}`;
+}
+
+export function shareUrl(gameId: DailyGameId): string {
+  return `${absoluteUrl(getGame(gameId).playHref)}?ref=share`;
+}
+
+export function buildShareText(input: { gameId: DailyGameId; label: string; lines: string[] }): string {
+  return [
+    `${getGame(input.gameId).name} · ${input.label}`,
+    ...input.lines.filter((line) => line.trim() !== ""),
+    shareUrl(input.gameId),
+  ].join("\n");
+}
+
+const SQUARE = { good: "🟩", ok: "🟨", bad: "🟥" } as const;
+
+export function squares(values: Array<keyof typeof SQUARE>): string {
+  return values.map((value) => SQUARE[value]).join("");
+}
+```
+
+- [ ] **Step 4: Write the share button**
+
+Create `components/daily/share-result.tsx`:
+
+```tsx
+"use client";
+
+import { useState } from "react";
+import { track } from "@/lib/analytics/track";
+import type { DailyGameId } from "@/lib/games/registry";
+
+function prefersShareSheet(): boolean {
+  return (
+    typeof navigator.share === "function" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(pointer: coarse)").matches
+  );
+}
+
+export function ShareResult({ gameId, text }: { gameId: DailyGameId; text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function handleClick() {
+    if (prefersShareSheet()) {
+      try {
+        await navigator.share({ text });
+        track("result_shared", { game: gameId, method: "share" });
+      } catch {
+        // The person closed the share sheet. Nothing was shared.
+      }
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      track("result_shared", { game: gameId, method: "copy" });
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard access was refused; leave the button as it was.
+    }
+  }
+
+  return (
+    <button type="button" className="share-result" onClick={handleClick} aria-label="Share result">
+      {copied ? "Copied" : "Share result"}
+    </button>
+  );
+}
+```
+
+Append to `app/globals.css`:
+
+```css
+/* ── Share result ────────────────────────────────────────────────── */
+
+.share-result {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 150px;
+  padding: 11px 18px;
+  border-radius: 10px;
+  border: 1.5px solid currentColor;
+  background: transparent;
+  color: inherit;
+  font: 600 14px "Outfit", system-ui, sans-serif;
+  cursor: pointer;
+  margin: 4px 0 12px;
+}
+.share-result:hover {
+  opacity: 0.8;
+}
+```
+
+- [ ] **Step 5: Run the tests to verify they pass**
+
+Run: `pnpm vitest run tests/lib/share tests/components/share-result.test.tsx`
+Expected: PASS, 8 tests.
+
+- [ ] **Step 6: Add the button to each finish screen**
+
+For each game below: open the file, find the finish screen (the block that renders `<OtherDailies currentGameId="…" />`), read which result values are in scope there, build the text with `buildShareText`, and render `<ShareResult gameId="…" text={…} />` directly above `<OtherDailies />`. Where a finish screen appears twice (win and loss), add it to both. Change nothing else in the file.
+
+Use the puzzle's own date for the label where the component has one; otherwise `formatShareDate(getDateString())`.
+
+| Game | File | Label | Lines |
+|---|---|---|---|
+| Chain Link | `components/chainlink/game.tsx` | date | One square per link after the first word: 🟩 solved with no wrong guesses, 🟨 solved after wrong guesses, 🟥 not solved. If the component does not keep wrong guesses per word, use a single line `Solved N of M links`. Never include the words. |
+| Brain Dead | `components/brain-dead/game.tsx` | date | `{correct} of 15 · {score with thousands separators} pts`, then one ✅ per correct answer followed by ❌ if the run ended on a wrong answer or timeout. Daily mode only. |
+| AnyGuessr | `components/anyguessr/results.tsx` | date | `{totalScore} pts`, then one square per entry in `store.roundResults`: 🟩 full points for the round, 🟥 zero, 🟨 anything between. Never include country names. |
+| FreezeFrames | `components/freezeframes/game.tsx` | date | `🎬{✅ or ❌} 🎵{…} 📺{…} 💿{…} · {total} pts`, one mark per round in order. Never include titles. |
+| Ball Knowledge | `components/ball-knowledge/game.tsx` | the category | `I named {score} in 60 seconds`. Remove the existing `shareText` constant and the copy, tweet and text-message controls that use it; `ShareResult` replaces them. |
+| Hot Takes | `components/hot-takes/game.tsx` | `category.name` | `My S tier: {labels of items placed in S, comma separated}`; if S is empty, `Nothing made my S tier`. Remove the existing `shareText` constant and the copy button that uses it. The text must not contain a percentage. |
+| Getting Warmer | `components/getting-warmer/results-modal.tsx` | date | If won: `{shareEmojis} Got it in {attempts} {guess/guesses}`. If not: `{shareEmojis} Didn't get it`. Never include `answer`. |
+
+`components/brain-dead/game.tsx` and `components/chainlink/game.tsx` are also being edited by another work stream on `main`. Keep the change in each to the import lines and the one inserted element so a later merge is simple.
+
+- [ ] **Step 7: Check each game in the browser**
+
+Run `pnpm dev`. For each of the seven dailies, finish the puzzle, press "Share result", paste into a text editor and confirm: the first line is the game name and label, no answer appears, the last line is the game's address ending in `?ref=share`. To replay a daily, clear that game's saved state in the browser's local storage.
+
+- [ ] **Step 8: Verify and commit**
+
+Run: `pnpm typecheck && pnpm test && pnpm build`
+Expected: PASS.
+
+```bash
+git add lib/share components app/globals.css tests/lib/share tests/components/share-result.test.tsx
+git commit -m "feat(daily): share button with a spoiler-free result on every daily
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01JiWGJWEJWAyzrsEm5p7BPa"
+```
+
+---
+
+### Task 10: Final checks
 
 **Files:** none, unless a check fails.
 
@@ -3069,7 +3351,7 @@ Expected: every line shows `about:1`, a `details` count between 7 and 11, and a 
 
 - [ ] **Step 4: Events arrive in PostHog**
 
-With `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` set in `.env.local`, open the home page, click the featured game, finish that daily, then click one of the "More daily games" cards under it. In the browser's network tab, filter for `/ingest` and confirm three events were sent: `home_game_clicked` (with `slot: "featured"`), `daily_completed` (with the game id), and `game_about_link_clicked` (with `from_game` and `to_game`).
+With `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` set in `.env.local`, open the home page, click the featured game, finish that daily, then click one of the "More daily games" cards under it. In the browser's network tab, filter for `/ingest` and confirm three events were sent: `home_game_clicked` (with `slot: "featured"`), `daily_completed` (with the game id), and `game_about_link_clicked` (with `from_game` and `to_game`). Then press "Share result" on a finish screen and confirm `result_shared` is sent.
 
 - [ ] **Step 5: Hand off**
 
