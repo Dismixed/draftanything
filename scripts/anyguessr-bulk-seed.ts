@@ -47,6 +47,16 @@ if (!["plan", "apply", "images"].includes(mode) || !proposalsPath) {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** Longest one clue may take; a stalled request must not hang the whole run. */
+const CLUE_TIMEOUT_MS = 120_000;
+
+function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    work,
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`timed out after ${ms / 1000}s`)), ms)),
+  ]);
+}
+
 /** The name shown under a person's photo: the article title without qualifiers. */
 function displayName(title: string, country: string): string {
   return title
@@ -122,6 +132,12 @@ async function fetchImages(db: unknown, drafts: import("../lib/anyguessr/seed-ty
   for (const [i, entry] of todo.entries()) {
     const label = `${entry.country_common} ${entry.clue_type} (${entry.wiki_title})`;
     try {
+      await withTimeout(processEntry(), CLUE_TIMEOUT_MS);
+    } catch (err) {
+      console.error(`${i + 1}/${todo.length} FAIL ${label}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+
+    async function processEntry() {
       const raw = await resolveImageCandidates({
         clueType: entry.clue_type,
         country: entry.country_common,
@@ -155,8 +171,6 @@ async function fetchImages(db: unknown, drafts: import("../lib/anyguessr/seed-ty
       });
       if (kept.length > 0) ok++;
       console.log(`${i + 1}/${todo.length} ${kept.length > 0 ? "OK  " : "NONE"} ${label}: ${kept.length}/${Math.min(raw.length, MAX_CANDIDATES)} images`);
-    } catch (err) {
-      console.error(`${i + 1}/${todo.length} FAIL ${label}: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 

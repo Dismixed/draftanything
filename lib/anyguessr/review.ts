@@ -25,3 +25,28 @@ export function reviewWarnings(entry: {
 
   return warnings;
 }
+
+/** Columns the review page needs; `vision_notes` alone is a sixth of the full payload. */
+export const REVIEW_COLUMNS =
+  "id, cca3, country_common, clue_type, wiki_title, text_content, status, difficulty, image_candidates, selected_candidate_index, notes";
+
+/** A seed entry cut down to what a review card shows. */
+export function toReviewEntry(row: Record<string, unknown>) {
+  const candidates = Array.isArray(row.image_candidates) ? row.image_candidates : [];
+  return {
+    id: row.id as string,
+    cca3: row.cca3 as string,
+    country_common: row.country_common as string,
+    clue_type: row.clue_type as string,
+    wiki_title: (row.wiki_title as string | null) ?? null,
+    text_content: (row.text_content as string | null) ?? null,
+    status: row.status as string,
+    difficulty: (row.difficulty as string | null) ?? null,
+    selected_candidate_index: (row.selected_candidate_index as number | null) ?? 0,
+    notes: (row.notes as string | null) ?? null,
+    image_candidates: candidates.map((c: { image_url: string; thumb_url?: string }) => ({
+      image_url: c.image_url,
+      thumb_url: c.thumb_url,
+    })),
+  };
+}
