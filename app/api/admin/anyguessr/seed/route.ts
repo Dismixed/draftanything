@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { parseBulkStatus } from "@/lib/admin/bulk-status";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkAdmin } from "@/lib/chainlink/admin-guard";
 import {
@@ -88,6 +89,17 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
     const db = createAdminClient();
+
+    if (body.action === "set_status") {
+      const change = parseBulkStatus(body, ["approved", "rejected", "needs_review"] as const);
+      if (!change) return NextResponse.json({ error: "Invalid ids or status" }, { status: 400 });
+      const { error } = await db
+        .from("ag_seed_entries")
+        .update({ status: change.status, updated_at: new Date().toISOString() })
+        .in("id", change.ids);
+      if (error) throw error;
+      return NextResponse.json({ updated: change.ids.length });
+    }
 
     if (body.action === "import") {
       const result = await importSeedFileToDb(db);

@@ -48,7 +48,6 @@ export default function FreezeFramesReviewPage() {
   const [search, setSearch] = useState("");
   const [warningsOnly, setWarningsOnly] = useState(false);
   const [page, setPage] = useState(0);
-  const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
   const [bulkArmed, setBulkArmed] = useState(false);
 
   useEffect(() => {
@@ -73,8 +72,19 @@ export default function FreezeFramesReviewPage() {
     };
   }, []);
 
+  /**
+   * Changes the card at once and saves in the background, so reviewing is
+   * not paced by the network. A failed save puts the card back.
+   */
   const setEntryStatus = useCallback(async (id: string, next: string) => {
-    setBusyIds((prev) => new Set(prev).add(id));
+    let previous: string | undefined;
+    setEntries((prev) =>
+      prev.map((e) => {
+        if (e.id !== id) return e;
+        previous = e.status;
+        return { ...e, status: next };
+      }),
+    );
     try {
       const res = await fetch(`/api/admin/freezeframes/seed/${id}`, {
         method: "PATCH",
@@ -82,15 +92,9 @@ export default function FreezeFramesReviewPage() {
         body: JSON.stringify({ status: next }),
       });
       if (!res.ok) throw new Error("Failed to save");
-      setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, status: next } : e)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save");
-    } finally {
-      setBusyIds((prev) => {
-        const remaining = new Set(prev);
-        remaining.delete(id);
-        return remaining;
-      });
+      setEntries((prev) => prev.map((e) => (e.id === id && previous ? { ...e, status: previous } : e)));
+      setError(err instanceof Error ? `${err.message}; the change was undone.` : "Failed to save");
     }
   }, []);
 
@@ -127,7 +131,20 @@ export default function FreezeFramesReviewPage() {
       return;
     }
     setBulkArmed(false);
-    for (const e of bulkTargets) await setEntryStatus(e.id, "approved");
+    const ids = bulkTargets.map((e) => e.id);
+    const before = entries;
+    setEntries((prev) => prev.map((e) => (ids.includes(e.id) ? { ...e, status: "approved" } : e)));
+    try {
+      const res = await fetch("/api/admin/freezeframes/seed", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "set_status", ids, status: "approved" }),
+      });
+      if (!res.ok) throw new Error("Failed to approve");
+    } catch (err) {
+      setEntries(before);
+      setError(err instanceof Error ? `${err.message}; nothing was changed.` : "Failed to approve");
+    }
   }
 
   return (
@@ -195,7 +212,7 @@ export default function FreezeFramesReviewPage() {
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "14px" }}>
           {shown.map((entry) => (
-            <EntryCard key={entry.id} entry={entry} busy={busyIds.has(entry.id)} onStatus={setEntryStatus} />
+            <EntryCard key={entry.id} entry={entry} onStatus={setEntryStatus} />
           ))}
         </div>
       )}
@@ -219,11 +236,9 @@ export default function FreezeFramesReviewPage() {
 
 function EntryCard({
   entry,
-  busy,
   onStatus,
 }: {
   entry: ReviewEntry;
-  busy: boolean;
   onStatus: (id: string, status: string) => Promise<void>;
 }) {
   const warnings = reviewWarnings(entry);
@@ -236,7 +251,7 @@ function EntryCard({
   const otherNotes = (entry.resolve_notes ?? "").split("\n").filter((line) => line && !line.startsWith("CHECK:"));
 
   return (
-    <article style={{ background: "#1c1c1e", border: "1px solid #2c2c2e", borderRadius: "12px", overflow: "hidden", opacity: busy ? 0.6 : 1 }}>
+    <article style={{ background: "#1c1c1e", border: "1px solid #2c2c2e", borderRadius: "12px", overflow: "hidden" }}>
       <div style={{ height: "190px", background: "#121213", display: "flex", alignItems: "center", justifyContent: "center", padding: isSong ? "0 12px" : 0 }}>
         {isSong ? (
           entry.audio ? (
@@ -281,7 +296,7 @@ function EntryCard({
         <div style={{ display: "flex", gap: "6px", marginTop: "10px" }}>
           <button
             type="button"
-            disabled={busy || entry.status === "approved" || entry.status === "used"}
+            disabled={entry.status === "approved" || entry.status === "used"}
             onClick={() => void onStatus(entry.id, "approved")}
             style={{ ...button, flex: 1, borderColor: "#6aaa64", color: "#6aaa64" }}
           >
@@ -289,7 +304,7 @@ function EntryCard({
           </button>
           <button
             type="button"
-            disabled={busy || entry.status === "rejected" || entry.status === "used"}
+            disabled={entry.status === "rejected" || entry.status === "used"}
             onClick={() => void onStatus(entry.id, "rejected")}
             style={{ ...button, flex: 1, borderColor: "#5a2c2c", color: "#ff6b6b" }}
           >
