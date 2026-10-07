@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { validateDailyGuess } from "@/lib/anyguessr/puzzle-service";
-import { DAILY_ROUND_COUNT } from "@/lib/anyguessr/daily";
+import { MAX_DAILY_ROUNDS } from "@/lib/anyguessr/daily";
 import { guessEventProperties } from "@/lib/anyguessr/guess-event";
 import { getPostHogClient } from "@/lib/posthog-server";
 
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
       typeof roundIndex !== "number" ||
       !Number.isInteger(roundIndex) ||
       roundIndex < 0 ||
-      roundIndex >= DAILY_ROUND_COUNT
+      roundIndex >= MAX_DAILY_ROUNDS
     ) {
       return NextResponse.json({ error: "valid roundIndex is required" }, { status: 400 });
     }

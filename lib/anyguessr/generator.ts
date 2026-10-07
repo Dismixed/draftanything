@@ -180,7 +180,7 @@ async function buildClueForEntry(
 ): Promise<{ clue: Clue; gap?: GenerateCoverageReport["gaps"][number] }> {
   if (entry.clue_type === "written_language") {
     const text = entry.text_content?.trim() ?? "";
-    return { clue: buildTextClue("written_language", text, rank) };
+    return { clue: withLineupMetadata(buildTextClue("written_language", text, rank), entry) };
   }
 
   const label =
@@ -206,7 +206,24 @@ async function buildClueForEntry(
     };
   }
 
-  return { clue: buildImageClue(entry.clue_type, label, candidates, rank) };
+  return { clue: withLineupMetadata(buildImageClue(entry.clue_type, label, candidates, rank), entry) };
+}
+
+/**
+ * Adds what the lineup and the game read from a clue: its difficulty and,
+ * for a person, the name shown under the photo. Both travel in metadata,
+ * which reaches the player; the article title does not.
+ */
+export function withLineupMetadata(clue: Clue, entry: SeedEntryRow): Clue {
+  const caption = entry.clue_type === "person" ? entry.text_content?.trim() : undefined;
+  return {
+    ...clue,
+    metadata: {
+      ...clue.metadata,
+      ...(entry.difficulty ? { difficulty: entry.difficulty } : {}),
+      ...(caption ? { caption } : {}),
+    },
+  };
 }
 
 const CLUE_RANKS: Record<string, number> = {

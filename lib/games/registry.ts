@@ -114,7 +114,7 @@ const REGISTRY: Record<GameId, GameEntry> = {
     category: "Geography",
     blurb: "Name the country from the clues.",
     pitch:
-      "Ten rounds, ten clues: a flag, a currency, a landmark, a dish. Pin the country on the map. Close guesses still score.",
+      "Seven rounds, seven clues: a flag, a landmark, a dish, a famous face. Pin the country on the map. Close guesses still score.",
     theme: {
       page: "var(--ag-bg)",
       background: "var(--ag-surface)",

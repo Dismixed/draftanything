@@ -4,24 +4,24 @@ export const anyguessr: GameContent = {
   angle: "guess the country from clues",
   title: "AnyGuessr: Guess the Country From Clues",
   description:
-    "A free daily geography game. Guess the country from clues like a flag, a currency or a landmark, then pin it on the map. Close guesses still score.",
+    "A free daily geography game. Guess the country from clues like a flag, a landmark or a dish, then pin it on the map. Close guesses still score.",
   intro:
-    "AnyGuessr is a daily game where you guess the country from clues. Each of the ten rounds gives you one clue, and you answer by picking a country on the map.",
+    "AnyGuessr is a daily game where you guess the country from clues. Each of the seven rounds gives you one clue, and you answer by picking a country on the map.",
   sections: [
     {
       heading: "How to play",
       body: [
-        "A daily puzzle has ten rounds, and everyone gets the same ten. Each round shows a single clue about a country.",
+        "A daily puzzle has seven rounds, and everyone gets the same seven. Each round shows a single clue about a country.",
         "Tap the map and choose the country you think the clue belongs to. You get one guess per round, so there is no second try.",
-        "After each guess you see how close you were and how many points you earned, then the next round begins. When all ten are done you get a total for the day. You can play through once, and a new set of countries arrives the next day.",
+        "After each guess you see how close you were and how many points you earned, then the next round begins. When all seven are done you get a total for the day. You can play through once, and a new set of countries arrives the next day.",
       ],
     },
     {
       heading: "The kinds of clue",
       body: [
-        "Each round uses a different type of clue: a flag, a currency, a sports jersey, a brand, a landmark, a written language, a person, a food, an environment and wildlife.",
+        "The first round is always a flag. The other six are drawn from places, food, famous people, brands, wildlife and written languages, so the mix changes from day to day.",
         "Some are direct. If you have played a guess the country by flag quiz, that round is familiar ground. Others take more thought: a banknote, a sign in an unfamiliar script, or an animal that only lives in one part of the world.",
-        "That mix is what sets it apart from a country guessing game like Wordle, where you narrow down one answer over several tries. Here you get ten separate countries and one shot at each.",
+        "That mix is what sets it apart from a country guessing game like Wordle, where you narrow down one answer over several tries. Here you get seven separate countries and one shot at each.",
       ],
     },
     {
@@ -45,7 +45,7 @@ export const anyguessr: GameContent = {
     {
       question: "How many countries are in each daily puzzle?",
       answer:
-        "Ten, one per round, each with a different type of clue.",
+        "Seven, one per round. The first is a flag and the rest vary by day.",
     },
     {
       question: "Do I get points for a near miss?",
@@ -60,7 +60,7 @@ export const anyguessr: GameContent = {
     {
       question: "Can I play more than once a day?",
       answer:
-        "No. It is a country guessing game with one daily puzzle: ten rounds, played once.",
+        "No. It is a country guessing game with one daily puzzle: seven rounds, played once.",
     },
     {
       question: "Is AnyGuessr free?",
