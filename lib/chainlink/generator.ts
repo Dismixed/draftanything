@@ -12,6 +12,7 @@ import {
   type Difficulty,
 } from "./chain-rules";
 import { loadExistingChainIndex } from "./novelty";
+import { PLAY_TRACKING_SINCE, countedDailyIds, loadPlayedIds } from "./plays";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -263,17 +264,28 @@ export async function loadActivePhrases(db: SupabaseClient<Database>): Promise<P
   }
 }
 
-/** Links used in dailies over the last `RECENT_DAILY_DAYS` days. */
+/**
+ * Links that count as recently used: those in dailies from the last
+ * `RECENT_DAILY_DAYS` days that someone actually played, plus those in
+ * today's and upcoming dailies.
+ */
 async function loadRecentDailyLinks(db: SupabaseClient<Database>): Promise<Set<string>> {
+  const today = new Date().toISOString().slice(0, 10);
   const since = new Date(Date.now() - RECENT_DAILY_DAYS * 86_400_000).toISOString().slice(0, 10);
 
   const { data: scheduled, error: scheduleError } = await db
     .from("daily_chain_puzzles")
-    .select("puzzle_id")
+    .select("puzzle_id, publish_date")
     .gte("publish_date", since);
   if (scheduleError) throw new Error(`Failed to load recent dailies: ${scheduleError.message}`);
 
-  const ids = (scheduled ?? []).map((row) => row.puzzle_id);
+  const dailies = scheduled ?? [];
+  const mayBeUnplayed = dailies
+    .filter((daily) => daily.publish_date < today && daily.publish_date >= PLAY_TRACKING_SINCE)
+    .map((daily) => daily.puzzle_id);
+  const played = await loadPlayedIds(db, mayBeUnplayed);
+
+  const ids = countedDailyIds(dailies, played, { today });
   const links = new Set<string>();
   if (ids.length === 0) return links;
 
