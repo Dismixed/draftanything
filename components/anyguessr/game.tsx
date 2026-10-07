@@ -2,57 +2,43 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
-import { DAILY_CLUE_TYPE_LABEL } from "@/lib/anyguessr/daily";
+import Link from "next/link";
 import { LINEUP_ROUNDS } from "@/lib/anyguessr/lineup";
 import { useAnyGuessrStore } from "@/lib/anyguessr/store";
 import { useSound } from "@/lib/audio/sound-context";
 import { fireConfetti } from "@/lib/motion/confetti";
 import { burstFrom } from "@/lib/motion/burst";
 import { impactRing } from "@/lib/motion/impact-ring";
-import { GameBackLink } from "@/components/ui/game-back-link";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
 import { GameTitle } from "@/components/ui/game-title";
 import { DailyCompleteOverlay } from "@/components/daily/daily-complete-overlay";
 import { useGameHowItWorks } from "@/lib/game-how-it-works";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
-import ClueCard from "./clue-card";
-import CountryPicker from "./country-picker";
-import ProgressDots from "./progress-dots";
+import ClueCard, { type ClueView } from "./clue-card";
+import { GuessDock } from "./guess-dock";
 import Results from "./results";
 import RoundRecap from "./round-recap";
-
-function getDateString(d: Date = new Date()): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr + "T12:00:00");
-  return d.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+import { Stamps } from "./stamps";
+import WorldMap, { type MapSelection } from "./world-map";
 
 export default function AnyGuessrGame() {
   const store = useAnyGuessrStore();
   const { play } = useSound();
   const celebratedRef = useRef(false);
   const feedbackRef = useRef<HTMLDivElement>(null);
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerKey, setPickerKey] = useState(0);
+  const [view, setView] = useState<ClueView>("both");
+  const [selection, setSelection] = useState<MapSelection | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [confirmGiveUp, setConfirmGiveUp] = useState(false);
+  const playedThisVisitRef = useRef(false);
   const [showResultsOverlay, setShowResultsOverlay] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [storeReady, setStoreReady] = useState(
-    () => typeof window !== "undefined" && useAnyGuessrStore.persist.hasHydrated(),
-  );
+  // Starts false on the server and in the browser alike, so the first render matches the
+  // server's HTML. The effect below switches it on once saved progress has loaded.
+  const [storeReady, setStoreReady] = useState(false);
   const { showHowItWorks, dismissHowItWorks } = useGameHowItWorks("anyguessr");
 
   const loading = store.loading;
-  const date = store.date;
   const status = store.status;
   const feedback = store.feedback;
   const initPuzzle = store.initPuzzle;
@@ -60,7 +46,6 @@ export default function AnyGuessrGame() {
   const isOver = status === "won";
   const displayScore = store.totalScore;
   const dailyRound = store.dailyRounds[store.currentRound] ?? null;
-  const roundsComplete = store.roundResults.length;
   const showRoundRecap = !!store.roundRecap;
 
   useEffect(() => {
@@ -80,6 +65,7 @@ export default function AnyGuessrGame() {
     if (status !== "won" || celebratedRef.current) return;
     if (!isOver) return;
     celebratedRef.current = true;
+    if (!playedThisVisitRef.current) return;
     play("win");
     void fireConfetti("gold");
   }, [status, play, isOver]);
@@ -87,8 +73,10 @@ export default function AnyGuessrGame() {
   useEffect(() => {
     if (status === "playing") {
       celebratedRef.current = false;
+      // A finished puzzle is restored on every visit; only one finished now is celebrated.
+      if (storeReady && !loading && store.dailyRounds.length > 0) playedThisVisitRef.current = true;
     }
-  }, [status]);
+  }, [status, storeReady, loading, store.dailyRounds.length]);
 
   useEffect(() => {
     const start = () => {
@@ -135,14 +123,23 @@ export default function AnyGuessrGame() {
   }, [feedback, showRoundRecap]);
 
   const handlePick = (name: string) => {
-    setPickerOpen(false);
+    if (submitting) return;
     play("ui.tap");
-    void store.submitDailyGuess(name);
+    setSubmitting(true);
+    void store.submitDailyGuess(name).finally(() => {
+      setSubmitting(false);
+      setSelection(null);
+      setView("both");
+    });
   };
 
-  const isLoading =
-    storeReady &&
-    (loading || (store.dailyRounds.length === 0 && !feedback));
+  const handleMapSelect = (next: MapSelection | null) => {
+    if (isOver || showRoundRecap) return;
+    if (next) play("ui.tap");
+    setSelection(next);
+  };
+
+  const isLoading = !storeReady || loading || (store.dailyRounds.length === 0 && !feedback);
 
   const dailyUnavailable =
     !loading &&
@@ -170,301 +167,138 @@ export default function AnyGuessrGame() {
     />
   ) : null;
 
-  if (isLoading) {
+  const totalRounds = store.dailyRounds.length || LINEUP_ROUNDS;
+  const canGuess = !isOver && !showRoundRecap && Boolean(dailyRound);
+
+  const header = (
+    <header className="ag-top">
+      <div className="ag-head">
+        <Link href="/" className="ag-back">
+          &larr; Back
+        </Link>
+        <GameTitle game="anyguessr" as="h1" className="ag-title" />
+        <div className="ag-stats">
+          {dailyRound && (
+            <span>
+              Round
+              <b>{Math.min(store.currentRound + 1, totalRounds)}</b>/ {totalRounds}
+            </span>
+          )}
+          <span>
+            Score
+            <b>{displayScore}</b>
+          </span>
+        </div>
+      </div>
+      {store.dailyRounds.length > 0 && (
+        <Stamps total={totalRounds} results={store.roundResults} current={isOver ? -1 : store.currentRound} />
+      )}
+    </header>
+  );
+
+  if (isLoading || dailyUnavailable) {
     return (
-      <div style={{ width: "100%", maxWidth: "560px", margin: "0 auto" }}>
+      <div className="ag-stage">
         {howItWorksModal}
-        <header style={{ position: "relative", marginBottom: "24px" }}>
-          <GameBackLink color="var(--ag-muted)" />
-        </header>
-        <div
-          style={{
-            minHeight: "320px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "var(--ag-muted)",
-            fontSize: "13px",
-          }}
-        >
-          Loading puzzle…
+        {header}
+        <div className="ag-notice">
+          {isLoading ? (
+            "Loading puzzle…"
+          ) : (
+            <>
+              <b>No daily puzzle today</b>
+              <p>{feedback?.message ?? "The puzzle pool can't fill every daily round yet."}</p>
+              <button type="button" className="ag-quiet-btn" onClick={() => void initPuzzle()}>
+                Try again
+              </button>
+            </>
+          )}
         </div>
       </div>
     );
   }
-
-  if (dailyUnavailable) {
-    return (
-      <div style={{ width: "100%", maxWidth: "560px", margin: "0 auto" }}>
-        {howItWorksModal}
-        <header style={{ position: "relative", marginBottom: "24px" }}>
-          <GameBackLink color="var(--ag-muted)" />
-        </header>
-        <div
-          style={{
-            minHeight: "320px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "16px",
-            padding: "24px",
-            textAlign: "center",
-            background: "var(--ag-surface)",
-            border: "1px solid var(--ag-border)",
-            borderRadius: "14px",
-          }}
-        >
-          <div style={{ fontSize: "15px", fontWeight: 600, color: "var(--ag-text)" }}>
-            No daily puzzle today
-          </div>
-          <p style={{ margin: 0, fontSize: "13px", lineHeight: 1.5, color: "var(--ag-muted)", maxWidth: "360px" }}>
-            {feedback?.message ??
-              "The puzzle pool can't fill all ten daily rounds yet."}
-          </p>
-          <button
-            type="button"
-            onClick={() => void initPuzzle()}
-            style={{
-              marginTop: "4px",
-              padding: "10px 18px",
-              borderRadius: "8px",
-              border: "1px solid var(--ag-border)",
-              background: "var(--ag-surface-hi)",
-              color: "var(--ag-text)",
-              cursor: "pointer",
-              fontSize: "13px",
-            }}
-          >
-            Try again
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const dailyRoundLabel =
-    dailyRound &&
-    `Round ${dailyRound.roundIndex + 1} · ${
-      DAILY_CLUE_TYPE_LABEL[dailyRound.clueType as keyof typeof DAILY_CLUE_TYPE_LABEL] ??
-      dailyRound.clueType
-    }`;
 
   return (
-    <div style={{ width: "100%", maxWidth: "560px", margin: "0 auto" }}>
+    <div className="ag-stage" data-view={dailyRound && !isOver ? view : "map"}>
       {howItWorksModal}
-      <header style={{ textAlign: "center", marginBottom: "24px", position: "relative" }}>
-        <GameBackLink color="var(--ag-muted)" />
-        <GameTitle
-          game="anyguessr"
-          as="h1"
-          style={{
-            fontSize: "clamp(26px, 5.5vw, 34px)",
-            fontWeight: 800,
-            color: "var(--ag-text)",
-            margin: 0,
-            letterSpacing: "-0.02em",
-          }}
-        />
-        <p
-          style={{
-            fontSize: "11px",
-            color: "var(--ag-muted)",
-            margin: "6px 0 14px",
-            letterSpacing: "0.04em",
-          }}
-        >
-          Ten countries — one clue each. Score by how close you guess.
-        </p>
 
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "16px",
-          }}
-        >
-          <ScorePill value={displayScore} />
-          <span style={{ fontSize: "11px", color: "var(--ag-muted)" }}>
-            {formatDate(date || getDateString())}
-          </span>
-          <span
-            style={{
-              fontSize: "10px",
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "var(--ag-muted)",
-            }}
-          >
-            Daily
-          </span>
-        </div>
-      </header>
-
-      {feedback && !dailyRound && (
-        <div
-          style={{
-            textAlign: "center",
-            padding: "10px 12px",
-            marginBottom: "16px",
-            fontSize: "12px",
-            fontWeight: 500,
-            color: "var(--ag-muted)",
-            background: "var(--ag-surface-hi)",
-            border: "1px solid var(--ag-border)",
-            borderRadius: "8px",
-          }}
-        >
-          {feedback.message}
-        </div>
-      )}
-
-      <div style={{ marginBottom: "16px" }}>
-        {dailyRound ? (
-          <>
-            <ClueCard
-              clue={dailyRound.clue}
-              index={dailyRound.roundIndex}
-              revealed
-              headerLabel={dailyRoundLabel ?? undefined}
-            />
-            <div style={{ marginTop: "20px" }}>
-              <ProgressDots
-                current={Math.max(roundsComplete, store.currentRound + 1)}
-                total={store.dailyRounds.length}
-                active={store.currentRound}
-              />
-            </div>
-          </>
-        ) : null}
+      <div className="ag-map-layer">
+        <WorldMap selection={selection} onSelect={handleMapSelect} inset={MAP_INSET} />
       </div>
+
+      {header}
+
+      {dailyRound && !isOver && <ClueCard key={dailyRound.puzzleId} clue={dailyRound.clue} view={view} onView={setView} />}
 
       {feedback && !showRoundRecap && (
         <div
           ref={feedbackRef}
-          className={
-            feedback.type === "wrong"
-              ? "anim-shake"
-              : !isOver && feedback.type === "round"
-                ? undefined
-                : "anim-pop-in"
-          }
-          style={{
-            position: "relative",
-            textAlign: "center",
-            padding: !isOver ? "6px 10px" : "10px 14px",
-            marginBottom: !isOver ? "12px" : "16px",
-            fontSize: !isOver ? "11px" : "13px",
-            fontWeight: !isOver ? 500 : 600,
-            color:
-              feedback.type === "correct"
-                ? "var(--ag-accent)"
-                : feedback.type === "wrong"
-                  ? "#ff6b6b"
-                  : "var(--ag-muted)",
-            background:
-              feedback.type === "correct"
-                ? "rgba(224,168,88,0.08)"
-                : feedback.type === "wrong"
-                  ? "rgba(255,107,107,0.08)"
-                  : !isOver
-                    ? "transparent"
-                    : "var(--ag-surface-hi)",
-            border: `1px solid ${
-              feedback.type === "correct"
-                ? "rgba(224,168,88,0.2)"
-                : feedback.type === "wrong"
-                  ? "rgba(255,107,107,0.18)"
-                  : !isOver
-                    ? "var(--ag-border-faint)"
-                    : "var(--ag-border)"
-            }`,
-            borderRadius: !isOver ? "6px" : "8px",
-          }}
+          className={`ag-toast is-${feedback.type} ${feedback.type === "wrong" ? "anim-shake" : "anim-pop-in"}`}
         >
           {feedback.message}
         </div>
       )}
 
-      {!isOver && !showRoundRecap && (
-        <div
-          style={{
-            display: "flex",
-            gap: "10px",
-            flexDirection: "column",
-            marginBottom: "16px",
-          }}
-        >
-          <button
-            onClick={() => {
-              play("ui.tap");
-              setPickerKey((k) => k + 1);
-              setPickerOpen(true);
-            }}
-            style={primaryBtnStyle}
-          >
-            Guess Country
-          </button>
+      {canGuess && view === "clue" && (
+        <button type="button" className="ag-cta ag-to-map" onClick={() => setView("both")}>
+          Back to the map
+        </button>
+      )}
 
-          <button
-            onClick={() => {
-              play("ui.tap");
-              if (confirm("Give up this round? You'll score 0 points.")) {
-                void store.surrender();
-              }
-            }}
-            style={{
-              ...secondaryBtnStyle,
-              color: "#ff6b6b",
-              borderColor: "rgba(255,107,107,0.18)",
-            }}
-          >
-            Give Up
-          </button>
+      {canGuess && (
+        <div className="ag-controls">
+          <GuessDock key={store.currentRound} selection={selection} onSelect={setSelection} onConfirm={handlePick} busy={submitting} />
+          {confirmGiveUp ? (
+            <span className="ag-giveup">
+              Score 0 for this round?
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmGiveUp(false);
+                  void store.surrender();
+                }}
+              >
+                Yes, give up
+              </button>
+              <button type="button" onClick={() => setConfirmGiveUp(false)}>
+                Keep playing
+              </button>
+            </span>
+          ) : (
+            <span className="ag-giveup">
+              <button
+                type="button"
+                onClick={() => {
+                  play("ui.tap");
+                  setConfirmGiveUp(true);
+                }}
+              >
+                Give up this round
+              </button>
+            </span>
+          )}
         </div>
       )}
 
-      <CountryPicker
-        key={pickerKey}
-        open={pickerOpen}
-        roundKey={store.currentRound}
-        onClose={() => setPickerOpen(false)}
-        onPick={handlePick}
-      />
+      {isOver && !showResultsOverlay && !showRoundRecap && (
+        <button type="button" className="ag-cta ag-to-map" onClick={() => setShowResultsOverlay(true)}>
+          See your results
+        </button>
+      )}
 
       {mounted &&
         showRoundRecap &&
         store.roundRecap &&
         createPortal(
-          <div
-            className="anim-fade-slide-up"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Round results"
-            style={{
-              position: "fixed",
-              inset: 0,
-              zIndex: 1000,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "20px",
-              background: "var(--ag-overlay)",
-              overflowY: "auto",
-            }}
-          >
-            <div style={{ width: "100%", maxWidth: "440px" }}>
-              <RoundRecap
-                recap={store.roundRecap}
-                totalScore={store.totalScore}
-                onContinue={() => {
-                  play("ui.tap");
-                  store.continueDailyRound();
-                }}
-              />
-            </div>
+          <div className="ag-recap-scrim" role="dialog" aria-modal="true" aria-label="Round results">
+            <RoundRecap
+              recap={store.roundRecap}
+              totalScore={store.totalScore}
+              onContinue={() => {
+                play("ui.tap");
+                store.continueDailyRound();
+              }}
+            />
           </div>,
           document.body,
         )}
@@ -484,13 +318,14 @@ export default function AnyGuessrGame() {
         }
       >
         <Results scoreActive embedded />
-        {status === "won" && (
-          <WinStreakLine gameId="anyguessr" accentColor="var(--ag-accent)" />
-        )}
+        {status === "won" && <WinStreakLine gameId="anyguessr" accentColor="var(--ag-accent)" />}
       </DailyCompleteOverlay>
     </div>
   );
 }
+
+/** Space the map leaves clear for the header and the guess bar when it frames the world. */
+const MAP_INSET = { top: 170, bottom: 120 };
 
 const ANYGUESSR_HOW_IT_WORKS = [
   {
@@ -510,46 +345,3 @@ const ANYGUESSR_HOW_IT_WORKS = [
     body: "Play through all ten rounds once, then come back tomorrow for a fresh set of countries.",
   },
 ] as const;
-
-function ScorePill({ value }: { value: number }) {
-  return (
-    <div
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "6px",
-        padding: "4px 12px",
-        border: "1px solid var(--ag-border-hi)",
-        borderRadius: "999px",
-        fontSize: "12px",
-        fontWeight: 700,
-        color: "var(--ag-accent)",
-      }}
-    >
-      Score: {value}
-    </div>
-  );
-}
-
-const BASE_BTN: React.CSSProperties = {
-  padding: "12px 18px",
-  fontSize: "13px",
-  fontWeight: 600,
-  letterSpacing: "0.04em",
-  borderRadius: "10px",
-  cursor: "pointer",
-  border: "none",
-  transition: "transform 0.12s ease, opacity 0.2s ease",
-};
-const primaryBtnStyle: React.CSSProperties = {
-  ...BASE_BTN,
-  background: "var(--ag-accent)",
-  color: "#0b0e1c",
-  width: "100%",
-};
-const secondaryBtnStyle: React.CSSProperties = {
-  ...BASE_BTN,
-  background: "var(--ag-surface-hi)",
-  color: "var(--ag-text)",
-  border: "1px solid var(--ag-border)",
-};
