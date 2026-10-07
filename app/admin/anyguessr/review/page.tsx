@@ -59,7 +59,7 @@ export default function AnyGuessrReviewPage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/admin/anyguessr/seed")
+    fetch("/api/admin/anyguessr/seed?view=review")
       .then((res) => {
         if (res.status === 403) throw new Error("Not signed in as an admin.");
         if (!res.ok) throw new Error("Failed to load clues");
@@ -246,7 +246,7 @@ function ClueCard({
           <p style={{ fontSize: "24px", textAlign: "center", padding: "0 16px", margin: 0 }}>{entry.text_content}</p>
         ) : selected ? (
           // eslint-disable-next-line @next/next/no-img-element -- remote review thumbnails from arbitrary hosts
-          <img src={selected.thumb_url ?? selected.image_url} alt="" style={{ maxWidth: "100%", maxHeight: "190px", objectFit: "contain" }} />
+          <img src={selected.thumb_url ?? selected.image_url} alt="" loading="lazy" decoding="async" style={{ maxWidth: "100%", maxHeight: "190px", objectFit: "contain" }} />
         ) : (
           <span style={{ color: "#787c7e", fontSize: "13px" }}>No image</span>
         )}
@@ -263,7 +263,7 @@ function ClueCard({
               style={{ padding: 0, border: `2px solid ${index === entry.selected_candidate_index ? "#5bc0de" : "transparent"}`, borderRadius: "6px", background: "none", cursor: "pointer", flex: "0 0 auto" }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element -- remote review thumbnails from arbitrary hosts */}
-              <img src={candidate.thumb_url ?? candidate.image_url} alt="" style={{ width: "48px", height: "36px", objectFit: "cover", borderRadius: "4px", display: "block" }} />
+              <img src={candidate.thumb_url ?? candidate.image_url} alt="" loading="lazy" decoding="async" style={{ width: "48px", height: "36px", objectFit: "cover", borderRadius: "4px", display: "block" }} />
             </button>
           ))}
         </div>

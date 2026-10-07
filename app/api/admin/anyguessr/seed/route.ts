@@ -8,6 +8,7 @@ import {
   importSeedFileToDb,
   listSeedEntries,
 } from "@/lib/anyguessr/seed-db";
+import { REVIEW_COLUMNS, toReviewEntry } from "@/lib/anyguessr/review";
 import {
   computeDailyUsageIndex,
   dailyUsageForSeedEntry,
@@ -24,6 +25,22 @@ export async function GET(req: NextRequest) {
     const cca3 = searchParams.get("cca3") ?? undefined;
     const clueType = searchParams.get("clue_type") ?? undefined;
     const db = createAdminClient();
+
+    // The review page only reads clues: skip the housekeeping and the daily
+    // usage lookup the full admin view needs, and send just the card fields.
+    if (searchParams.get("view") === "review") {
+      const { data, error } = await db
+        .from("ag_seed_entries")
+        .select(REVIEW_COLUMNS)
+        .not("clue_type", "in", "(currency,jersey)")
+        .order("country_common", { ascending: true })
+        .limit(1000);
+      if (error) throw error;
+      return NextResponse.json({
+        entries: (data ?? []).map((row) => toReviewEntry(row as unknown as Record<string, unknown>)),
+      });
+    }
+
     await ensureMissingSeedEntries(db);
     const entries = await listSeedEntries(db, { status, cca3, clueType, limit: 5000 });
 
