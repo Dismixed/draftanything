@@ -9,6 +9,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { track } from "@/lib/analytics/track";
+import { getDateString } from "./date";
 import { getAllGameStreaks, recordDailyCompletion } from "./storage";
 import {
   GAME_META,
@@ -46,11 +48,39 @@ export function StreakProvider({ children }: { children: ReactNode }) {
     refreshStreaks();
   }, [refreshStreaks]);
 
+  // "Played today" goes stale in a tab left open: the UTC day rolls over, or another tab
+  // finishes a game. Re-read on a day change, when the tab is shown again, and on storage events.
+  useEffect(() => {
+    let lastDate = getDateString();
+    const refreshOnNewDay = () => {
+      const today = getDateString();
+      if (today === lastDate) return;
+      lastDate = today;
+      refreshStreaks();
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refreshStreaks();
+    };
+
+    const dayCheck = window.setInterval(refreshOnNewDay, 30_000);
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", refreshStreaks);
+    window.addEventListener("storage", refreshStreaks);
+
+    return () => {
+      window.clearInterval(dayCheck);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", refreshStreaks);
+      window.removeEventListener("storage", refreshStreaks);
+    };
+  }, [refreshStreaks]);
+
   useEffect(() => {
     const handler = (event: Event) => {
       const detail = (event as CustomEvent<StreakCompletionResult>).detail;
       refreshStreaks();
       if (!detail.isNew) return;
+      track("daily_completed", { game: detail.gameId, streak: detail.streak });
       setNotification({
         ...detail,
         label: GAME_META[detail.gameId].label,

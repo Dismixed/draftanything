@@ -1,6 +1,20 @@
 import type { DailyGameId } from "@/lib/streak/types";
 
-export function GameCardPreview({ gameId }: { gameId: DailyGameId }) {
+export function GameCardPreview({
+  gameId,
+  size = "sm",
+}: {
+  gameId: DailyGameId;
+  size?: "sm" | "lg";
+}) {
+  return (
+    <div className={`od-preview-frame od-preview-frame-${size}`} aria-hidden>
+      {renderPreview(gameId)}
+    </div>
+  );
+}
+
+function renderPreview(gameId: DailyGameId) {
   switch (gameId) {
     case "chainlink":
       return (

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Daily Brain Dead — Stim Labs",
+  // A parent layout sets a plain title, which stops the root "%s | Stim Games" template reaching this page.
+  title: { absolute: "Brain Dead Daily | Stim Games" },
   description: "Today's Brain Dead trivia challenge. One wrong answer and you're out.",
 };
 

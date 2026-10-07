@@ -10,6 +10,8 @@ import {
 import { GameBackLink } from "@/components/ui/game-back-link";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
 import { OtherDailies } from "@/components/daily/other-dailies";
+import { track } from "@/lib/analytics/track";
+import { ballKnowledgeShare } from "@/lib/share/results";
 import { DailyCompleteShell } from "@/components/daily/daily-complete-shell";
 import { useGameHowItWorks } from "@/lib/game-how-it-works";
 import { useTheme, setThemeColorOverride } from "@/lib/theme/theme-context";
@@ -353,11 +355,12 @@ export default function BallKnowledgeGame({
     };
   }, []);
 
-  const shareText = `I named ${score} ${score === 1 ? "thing" : "things"} in "${category}" on Ball Knowledge. Think you know more? Play on Stim Games.`;
+  const shareText = ballKnowledgeShare(category, score);
 
   const copyShareText = async (platform: string) => {
     try {
       await navigator.clipboard.writeText(shareText);
+      track("result_shared", { game: "ball-knowledge", method: "copy" });
       toast(`Copied! Paste it into ${platform}`);
     } catch {
       toast("Could not copy — select and copy manually");
@@ -633,6 +636,7 @@ export default function BallKnowledgeGame({
                 type="button"
                 className="bk-share-btn"
                 onClick={() => {
+                  track("result_shared", { game: "ball-knowledge", method: "share" });
                   window.open(
                     `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`,
                     "_blank",
@@ -671,6 +675,7 @@ export default function BallKnowledgeGame({
                 type="button"
                 className="bk-share-btn"
                 onClick={() => {
+                  track("result_shared", { game: "ball-knowledge", method: "share" });
                   window.location.href = `sms:?&body=${encodeURIComponent(shareText)}`;
                 }}
               >

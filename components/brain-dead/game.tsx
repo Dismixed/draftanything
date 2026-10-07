@@ -30,6 +30,9 @@ import { juiceLevel } from "@/lib/motion/juice-level";
 import { useCountUp } from "@/lib/motion/count-up";
 import { GameBackLink } from "@/components/ui/game-back-link";
 import { OtherDailies } from "@/components/daily/other-dailies";
+import { ShareResult } from "@/components/daily/share-result";
+import { brainDeadShare } from "@/lib/share/results";
+import { getDateString as shareDate } from "@/lib/streak/date";
 import { DailyCompleteShell } from "@/components/daily/daily-complete-shell";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
 import DailyIntroModal from "@/components/brain-dead/daily-intro-modal";
@@ -582,6 +585,10 @@ export default function BrainDeadGame({
         {isDaily && (
           <>
             <WinStreakLine gameId="brain-dead" accentColor="var(--bd-primary)" />
+            <ShareResult
+              gameId="brain-dead"
+              text={brainDeadShare(todayCorrect, todayScore, shareDate())}
+            />
             <OtherDailies currentGameId="brain-dead" />
           </>
         )}
@@ -849,7 +856,13 @@ export default function BrainDeadGame({
         )}
 
         {isDaily && (
-          <OtherDailies currentGameId="brain-dead" />
+          <>
+            <ShareResult
+              gameId="brain-dead"
+              text={brainDeadShare(correct, score, shareDate(), questions.length || 15)}
+            />
+            <OtherDailies currentGameId="brain-dead" />
+          </>
         )}
 
         <div

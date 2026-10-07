@@ -12,12 +12,15 @@ import Link from "next/link";
 import { GameTitle } from "@/components/ui/game-title";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
 import { OtherDailies } from "@/components/daily/other-dailies";
+import { ShareResult } from "@/components/daily/share-result";
+import { hotTakesShare } from "@/lib/share/results";
 import { DailyCompleteShell } from "@/components/daily/daily-complete-shell";
 import { useGameHowItWorks } from "@/lib/game-how-it-works";
 import { HotTakesImage } from "@/components/hot-takes/optimized-image";
 import type { HotTakesDailyCategory, HotTakesDailyItem } from "@/lib/hot-takes/types";
 import { burstFrom } from "@/lib/motion/burst";
 import { useCountUp } from "@/lib/motion/count-up";
+import { recordDailyCompletion } from "@/lib/streak/storage";
 
 const TIERS = ["S", "A", "B", "C", "D"] as const;
 type Tier = (typeof TIERS)[number];
@@ -281,9 +284,11 @@ export default function HotTakesGame({
     return () => clearTimeout(timer);
   }, [resultsAvg]);
 
-  const shareText = results
-    ? `Hot Takes — ${category.name}\nI'm ${results.avg}% aligned with the crowd today. Think you can do better?`
-    : "";
+  // Shares the player's own S tier. The crowd percentages shown in the game are simulated.
+  const shareText = hotTakesShare(
+    category.name,
+    category.items.filter((item) => placements[item.id] === "S").map((item) => item.label),
+  );
 
   useEffect(() => {
     if (!submitted) {
@@ -337,7 +342,10 @@ export default function HotTakesGame({
             type="button"
             className="hot-takes-btn hot-takes-btn-primary"
             disabled={remaining !== 0 || submitted}
-            onClick={() => setSubmitted(true)}
+            onClick={() => {
+              setSubmitted(true);
+              recordDailyCompletion("hot-takes");
+            }}
           >
             {remaining === 0
               ? "Lock in my ranking"
@@ -461,17 +469,7 @@ export default function HotTakesGame({
             ))}
 
             <div style={{ marginTop: 20 }}>
-              <button
-                type="button"
-                className="hot-takes-btn hot-takes-btn-ghost"
-                onClick={() => {
-                  if (shareText) {
-                    void navigator.clipboard?.writeText(shareText);
-                  }
-                }}
-              >
-                Copy share text
-              </button>
+              <ShareResult gameId="hot-takes" text={shareText} />
             </div>
 
             <OtherDailies currentGameId="hot-takes" />

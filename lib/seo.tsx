@@ -1,21 +1,13 @@
 import type { MetadataRoute } from "next";
+import { GAMES, type GameId } from "@/lib/games/registry";
+
+export type { GameId };
 
 export const SITE_URL = normalizeSiteUrl(
   process.env.NEXT_PUBLIC_SITE_URL ?? process.env.APP_URL ?? "https://stimgames.com",
 );
 
 type ChangeFrequency = NonNullable<MetadataRoute.Sitemap[number]["changeFrequency"]>;
-
-export type GameId =
-  | "chainlink"
-  | "brain-dead"
-  | "anyguessr"
-  | "hot-takes"
-  | "freezeframes"
-  | "ball-knowledge"
-  | "getting-warmer"
-  | "draft-anything"
-  | "slippery-slope";
 
 interface GameSeo {
   id: GameId;
@@ -38,89 +30,15 @@ export function absoluteUrl(path = "/"): string {
   return `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
-export const games: GameSeo[] = [
-  {
-    id: "chainlink",
-    name: "Chain Link",
-    path: "/chainlink",
-    description: "A daily word-chain puzzle where each word links naturally with the one before it.",
-    genre: ["Word game", "Daily puzzle"],
-    playMode: ["SinglePlayer"],
-    priority: 0.95,
-  },
-  {
-    id: "brain-dead",
-    name: "Brain Dead",
-    path: "/brain-dead",
-    description: "A fast trivia challenge where one wrong answer ends the run.",
-    genre: ["Trivia", "Daily puzzle"],
-    playMode: ["SinglePlayer"],
-    priority: 0.9,
-  },
-  {
-    id: "anyguessr",
-    name: "AnyGuessr",
-    path: "/anyguessr",
-    description: "A country guessing game built from cultural clues, maps, flags, and geography.",
-    genre: ["Geography game", "Daily puzzle"],
-    playMode: ["SinglePlayer"],
-    priority: 0.9,
-  },
-  {
-    id: "hot-takes",
-    name: "Hot Takes",
-    path: "/hot-takes",
-    description: "A daily tier-list game where players rank the same category and compare with the crowd.",
-    genre: ["Ranking game", "Daily puzzle"],
-    playMode: ["SinglePlayer"],
-    priority: 0.85,
-  },
-  {
-    id: "freezeframes",
-    name: "FreezeFrames",
-    path: "/freezeframes/daily",
-    description: "A daily pop-culture guessing game across movies, songs, TV, and albums.",
-    genre: ["Pop culture game", "Daily puzzle"],
-    playMode: ["SinglePlayer"],
-    priority: 0.8,
-  },
-  {
-    id: "ball-knowledge",
-    name: "Ball Knowledge",
-    path: "/ball-knowledge/daily",
-    description: "A 60-second category challenge for naming as many valid answers as possible.",
-    genre: ["Trivia", "Word game", "Daily puzzle"],
-    playMode: ["SinglePlayer"],
-    priority: 0.8,
-  },
-  {
-    id: "getting-warmer",
-    name: "Getting Warmer",
-    path: "/getting-warmer/daily",
-    description: "A daily word puzzle where clues keep getting warmer until the answer is found.",
-    genre: ["Word game", "Daily puzzle"],
-    playMode: ["SinglePlayer"],
-    priority: 0.8,
-  },
-  {
-    id: "draft-anything",
-    name: "Draft Anything",
-    path: "/draft-anything",
-    description: "A room-code party game where friends draft any topic, defend every pick, and vote on the best roster.",
-    genre: ["Party game", "Draft game"],
-    playMode: ["MultiPlayer", "CoOp"],
-    priority: 0.9,
-  },
-  {
-    id: "slippery-slope",
-    name: "Slippery Slope",
-    path: "/slippery-slope",
-    description: "A trivia board game where players answer questions and climb before opponents knock them back down.",
-    genre: ["Trivia", "Board game", "Party game"],
-    playMode: ["SinglePlayer", "MultiPlayer"],
-    priority: 0.75,
-  },
-];
+export const games: GameSeo[] = GAMES.map((game) => ({
+  id: game.id,
+  name: game.name,
+  path: game.canonicalPath,
+  description: game.seo.description,
+  genre: game.seo.genre,
+  playMode: game.seo.playMode,
+  priority: game.seo.priority,
+}));
 
 export const sitemapEntries: MetadataRoute.Sitemap = [
   {
