@@ -467,6 +467,12 @@ export default function AdminAnyGuessrPage() {
         </div>
       )}
 
+      <p style={{ margin: "0 0 14px", fontSize: "14px" }}>
+        <a href="/admin/anyguessr/review" style={{ color: "#5bc0de" }}>
+          Open the clue review queue →
+        </a>
+      </p>
+
       <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
         {(["seed", "gallery", "aliases", "ops"] as Tab[]).map((t) => (
           <button

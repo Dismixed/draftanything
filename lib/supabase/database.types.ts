@@ -35,6 +35,24 @@ export type Database = {
         }
         Relationships: []
       }
+      ag_daily_lineups: {
+        Row: {
+          created_at: string
+          play_date: string
+          puzzle: Json
+        }
+        Insert: {
+          created_at?: string
+          play_date: string
+          puzzle: Json
+        }
+        Update: {
+          created_at?: string
+          play_date?: string
+          puzzle?: Json
+        }
+        Relationships: []
+      }
       ag_puzzle_attempts: {
         Row: {
           clues_revealed: number

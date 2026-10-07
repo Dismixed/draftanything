@@ -109,23 +109,35 @@ export async function upsertPuzzleByAnswer(
 }
 
 /* ------------------------------------------------------------------ */
-/*  Identity-shaped query cache                                        */
+/*  Daily lineup                                                       */
 /* ------------------------------------------------------------------ */
 
-const fallbackDailyCache = new Map<string, ClientDailyPuzzle>();
+async function loadStoredLineup(
+  db: SupabaseClient<Database>,
+  date: string,
+): Promise<ClientDailyPuzzle | null> {
+  const { data, error } = await db
+    .from("ag_daily_lineups")
+    .select("puzzle")
+    .eq("play_date", date)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? (data.puzzle as unknown as ClientDailyPuzzle) : null;
+}
 
-/* ------------------------------------------------------------------ */
-/*  Fetch helpers                                                       */
-/* ------------------------------------------------------------------ */
-
+/**
+ * The daily for `date`. The first caller computes the lineup from the
+ * approved pool and stores it; every later caller gets the stored copy, so
+ * approving or changing clues never alters a day that already exists.
+ */
 export async function getDailyPuzzle(
   db: SupabaseClient<Database>,
   date?: string,
 ): Promise<ClientDailyPuzzle | null> {
   const targetDate = date ?? new Date().toISOString().slice(0, 10);
 
-  const cached = fallbackDailyCache.get(targetDate);
-  if (cached) return cached;
+  const stored = await loadStoredLineup(db, targetDate);
+  if (stored) return stored;
 
   const { data: approved, error: apprErr } = await db
     .from("ag_puzzles")
@@ -151,7 +163,17 @@ export async function getDailyPuzzle(
     rounds: buildDailyRoundsFromPuzzles(picked, targetDate),
     difficulty: "medium",
   };
-  fallbackDailyCache.set(targetDate, clientPuzzle);
+
+  const { error: insertError } = await db
+    .from("ag_daily_lineups")
+    .insert({ play_date: targetDate, puzzle: clientPuzzle as unknown as Json });
+  // Another request stored the date first; everyone gets theirs.
+  if (insertError?.code === "23505") {
+    const winner = await loadStoredLineup(db, targetDate);
+    if (winner) return winner;
+  }
+  if (insertError) throw insertError;
+
   return clientPuzzle;
 }
 
