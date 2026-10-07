@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DAILY_GAMES, type DailyGameId } from "@/lib/games/registry";
+import { DAILY_GAMES, FEATURED_GAMES, type DailyGameId } from "@/lib/games/registry";
 import {
   buildTodayView,
   featuredGameForDay,
@@ -24,14 +24,19 @@ describe("featuredGameForDay", () => {
     expect(featuredGameForDay(DAY)).toBe(featuredGameForDay(DAY));
   });
 
-  it("features every daily once in any seven consecutive days", () => {
-    const week = Array.from({ length: 7 }, (_, i) => featuredGameForDay(DAY + i));
-    expect([...week].sort()).toEqual([...DAILY_GAMES].sort());
+  it("only ever features Chain Link, Brain Dead or AnyGuessr", () => {
+    expect([...FEATURED_GAMES]).toEqual(["chainlink", "brain-dead", "anyguessr"]);
+    for (let i = 0; i < 30; i++) expect(FEATURED_GAMES).toContain(featuredGameForDay(DAY + i));
+  });
+
+  it("features each of the three once in any three consecutive days", () => {
+    const run = Array.from({ length: 3 }, (_, i) => featuredGameForDay(DAY + i));
+    expect([...run].sort()).toEqual([...FEATURED_GAMES].sort());
   });
 
   it("returns a valid game for negative day numbers", () => {
-    expect(DAILY_GAMES).toContain(featuredGameForDay(-1));
-    expect(DAILY_GAMES).toContain(featuredGameForDay(-15));
+    expect(FEATURED_GAMES).toContain(featuredGameForDay(-1));
+    expect(FEATURED_GAMES).toContain(featuredGameForDay(-15));
   });
 });
 
@@ -54,15 +59,28 @@ describe("buildTodayView", () => {
     expect(view.doneCount).toBe(1);
   });
 
-  it("wraps around the rotation when looking for the next unplayed game", () => {
-    const allButOne = new Set<DailyGameId>(DAILY_GAMES.filter((id) => id !== featuredGameForDay(DAY + 6)));
+  it("works through the three featured games before any other daily", () => {
+    const view = buildTodayView(DAY, new Set<DailyGameId>([featured, featuredGameForDay(DAY + 1)]));
+    expect(view.featured).toBe(featuredGameForDay(DAY + 2));
+    expect(view.isUpNext).toBe(true);
+  });
+
+  it("moves on to the other dailies once all three featured games are played", () => {
+    const view = buildTodayView(DAY, new Set<DailyGameId>(FEATURED_GAMES));
+    expect(view.featured).toBe("freezeframes");
+    expect(view.isUpNext).toBe(true);
+    expect(view.doneCount).toBe(3);
+  });
+
+  it("features the last unplayed daily, whichever it is", () => {
+    const allButOne = new Set<DailyGameId>(DAILY_GAMES.filter((id) => id !== "getting-warmer"));
     const view = buildTodayView(DAY, allButOne);
-    expect(view.featured).toBe(featuredGameForDay(DAY + 6));
+    expect(view.featured).toBe("getting-warmer");
     expect(view.doneCount).toBe(6);
   });
 
   it("puts unplayed games before played games in the lineup", () => {
-    const playedGame = featuredGameForDay(DAY + 2);
+    const playedGame: DailyGameId = "hot-takes";
     const view = buildTodayView(DAY, new Set<DailyGameId>([playedGame]));
     expect(view.featured).toBe(featured);
     expect(view.lineup[view.lineup.length - 1]).toBe(playedGame);

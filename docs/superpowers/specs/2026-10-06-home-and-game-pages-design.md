@@ -84,11 +84,11 @@ The "Coming Soon" section and the "Play together later" label are removed.
 
 ### Featured slot
 
-- The day's featured game is `DAILY_GAMES[dayNumber % 7]`, where `dayNumber` is the count of UTC days since a fixed epoch. Every visitor sees the same game on a given day and each game is featured once a week.
+- The day's featured game is always Chain Link, Brain Dead or AnyGuessr (`FEATURED_GAMES[dayNumber % 3]`, where `dayNumber` is the count of UTC days since a fixed epoch). Every visitor sees the same game on a given day. Changed on 2026-10-07 from a rotation through all seven dailies: the other four are rarely anyone's first pick.
 - The day boundary is midnight UTC, matching `getDateString()` in `lib/streak/date.ts`, which is what the puzzles and streaks already use.
 - Content: a "Today's featured game" label, game title, pitch, large preview, one primary button linking to `playHref`. The label carries no date, because the puzzle day is a UTC day and would read as tomorrow's date for US visitors in the evening.
-- The primary button uses the page's text colour on its background colour, not the game's accent, so it meets contrast requirements in both themes. Accent colours are used for borders and the two-tone game title only.
-- If the visitor has played the featured game today, the slot shows their next unplayed daily in rotation order, labelled "Up next".
+- The primary button and the lineup's "Play" labels use the game's brand colour (changed on 2026-10-07 from a neutral dark button). In the light theme the colour is darkened and the button text is large and bold so both still meet contrast requirements.
+- If the visitor has played the featured game today, the slot shows the next unplayed one of the three, then the remaining dailies in lineup order, labelled "Up next".
 - If all seven are played, the slot shows an all-done state: the seven streaks, a countdown to midnight UTC, and a button to Draft Anything.
 
 ### Today's lineup

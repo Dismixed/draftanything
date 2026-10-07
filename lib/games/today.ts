@@ -1,4 +1,4 @@
-import { DAILY_GAMES, type DailyGameId, type GameId } from "@/lib/games/registry";
+import { DAILY_GAMES, FEATURED_GAMES, type DailyGameId, type GameId } from "@/lib/games/registry";
 
 const MS_PER_DAY = 86_400_000;
 
@@ -7,14 +7,15 @@ export function utcDayNumber(date: Date = new Date()): number {
   return Math.floor(date.getTime() / MS_PER_DAY);
 }
 
-function rotationFrom(dayNumber: number): DailyGameId[] {
-  const count = DAILY_GAMES.length;
+/** The three featured games, starting from the one whose turn it is on this day. */
+function featuredRotation(dayNumber: number): DailyGameId[] {
+  const count = FEATURED_GAMES.length;
   const start = ((dayNumber % count) + count) % count;
-  return DAILY_GAMES.map((_, i) => DAILY_GAMES[(start + i) % count]);
+  return FEATURED_GAMES.map((_, i) => FEATURED_GAMES[(start + i) % count]);
 }
 
 export function featuredGameForDay(dayNumber: number): DailyGameId {
-  return rotationFrom(dayNumber)[0];
+  return featuredRotation(dayNumber)[0];
 }
 
 export interface TodayView {
@@ -28,15 +29,18 @@ export interface TodayView {
 }
 
 export function buildTodayView(dayNumber: number, played: ReadonlySet<DailyGameId>): TodayView {
-  const rotation = rotationFrom(dayNumber);
-  const featured = rotation.find((id) => !played.has(id)) ?? null;
-  const rest = rotation.filter((id) => id !== featured);
+  const rotation = featuredRotation(dayNumber);
+  // The slot works through the three featured games first, then the remaining dailies, so
+  // it always has something to offer until everything is played.
+  const candidates = [...rotation, ...DAILY_GAMES.filter((id) => !rotation.includes(id))];
+  const featured = candidates.find((id) => !played.has(id)) ?? null;
+  const rest = DAILY_GAMES.filter((id) => id !== featured);
 
   return {
     featured,
     isUpNext: featured !== null && featured !== rotation[0],
     lineup: [...rest.filter((id) => !played.has(id)), ...rest.filter((id) => played.has(id))],
-    doneCount: rotation.filter((id) => played.has(id)).length,
+    doneCount: DAILY_GAMES.filter((id) => played.has(id)).length,
   };
 }
 

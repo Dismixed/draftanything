@@ -63,7 +63,7 @@ describe("Today", () => {
   it("features the next unplayed game and counts what is done", () => {
     const first = featuredGameForDay(DAY);
     const second = featuredGameForDay(DAY + 1);
-    streaks = streaksWithPlayed([first, featuredGameForDay(DAY + 3)]);
+    streaks = streaksWithPlayed([first, "hot-takes"]);
 
     render(<Today dayNumber={DAY} />);
 

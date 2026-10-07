@@ -12,7 +12,7 @@ export const GAME_IDS = [
 
 export type GameId = (typeof GAME_IDS)[number];
 
-/** Order is the featured-slot rotation order on the home page. */
+/** Order is the lineup order on the home page. */
 export const DAILY_GAMES = [
   "chainlink",
   "brain-dead",
@@ -24,6 +24,9 @@ export const DAILY_GAMES = [
 ] as const;
 
 export type DailyGameId = (typeof DAILY_GAMES)[number];
+
+/** The only games shown in the home page's featured slot, in rotation order. */
+export const FEATURED_GAMES = ["chainlink", "brain-dead", "anyguessr"] as const satisfies readonly DailyGameId[];
 
 export interface GameTheme {
   page: string;

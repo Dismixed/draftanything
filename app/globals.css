@@ -1295,14 +1295,33 @@ html[data-theme="light"] .od-preview-tile {
   margin: 0 0 20px;
   max-width: 26em;
 }
+/* Buttons and "Play" labels take the game's brand colour. On light backgrounds the colour
+   is darkened so white button text and small labels stay readable; the button text is
+   large and bold for the same reason. */
+.home-featured,
+.home-card {
+  --brand-ink: var(--brand, var(--text));
+  --cta-bg: var(--brand, var(--text));
+  --cta-fg: #0b0e1c;
+}
+html[data-theme="light"] .home-featured,
+html[data-theme="light"] .home-card {
+  --brand-ink: color-mix(in srgb, var(--brand, var(--text)) 58%, #000);
+  --cta-bg: color-mix(in srgb, var(--brand, var(--text)) 72%, #000);
+  --cta-fg: #fff;
+}
+.home-featured.is-all-done {
+  --brand: var(--gold-hi);
+}
+
 .home-cta {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: var(--text);
-  color: var(--bg);
-  font-size: 16px;
-  font-weight: 600;
+  background: var(--cta-bg);
+  color: var(--cta-fg);
+  font-size: 19px;
+  font-weight: 700;
   padding: 14px 22px;
   border-radius: 10px;
   text-decoration: none;
@@ -1412,7 +1431,7 @@ html[data-theme="light"] .od-preview-tile {
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--text);
+  color: var(--brand-ink);
   margin-top: 4px;
 }
 .home-card-streak {
