@@ -262,6 +262,24 @@ export type Database = {
           },
         ]
       }
+      brain_dead_daily: {
+        Row: {
+          created_at: string
+          play_date: string
+          questions: Json
+        }
+        Insert: {
+          created_at?: string
+          play_date: string
+          questions: Json
+        }
+        Update: {
+          created_at?: string
+          play_date?: string
+          questions?: Json
+        }
+        Relationships: []
+      }
       brain_dead_leaderboard: {
         Row: {
           correct: number
