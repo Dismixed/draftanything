@@ -178,7 +178,9 @@ export type Database = {
           created_at: string
           difficulty: string | null
           fun_fact: string | null
+          fun_fact_evidence: string | null
           fun_fact_reviewed: boolean
+          fun_fact_source_url: string | null
           id: string
           image_candidates: Json
           notes: string | null
@@ -198,7 +200,9 @@ export type Database = {
           created_at?: string
           difficulty?: string | null
           fun_fact?: string | null
+          fun_fact_evidence?: string | null
           fun_fact_reviewed?: boolean
+          fun_fact_source_url?: string | null
           id?: string
           image_candidates?: Json
           notes?: string | null
@@ -218,7 +222,9 @@ export type Database = {
           created_at?: string
           difficulty?: string | null
           fun_fact?: string | null
+          fun_fact_evidence?: string | null
           fun_fact_reviewed?: boolean
+          fun_fact_source_url?: string | null
           id?: string
           image_candidates?: Json
           notes?: string | null

@@ -75,12 +75,13 @@ async function main() {
   const proposals = JSON.parse(readFileSync(proposalsPath, "utf8")) as ClueProposal[];
   const existing = await listSeedEntries(db, { limit: 5000 });
 
+  // A new subject never keeps the old subject's fact, source or review.
+  const FACT_RESET = { fun_fact: null, fun_fact_source_url: null, fun_fact_evidence: null, fun_fact_reviewed: false };
+
   const stagedFields = (p: ClueProposal) => ({
     wiki_title: p.wiki_title ?? null,
     text_content: p.clue_type === "person" && p.wiki_title ? personDisplayName(p.wiki_title, p.country) : (p.text ?? null),
     difficulty: p.difficulty,
-    // A new subject never keeps the old subject's fact; a person reviews the proposed one.
-    fun_fact: p.fun_fact?.trim() || null,
     notes: [p.note, p.language && `${p.language}: "${p.english}"`].filter(Boolean).join(" | ") || null,
     // A language clue has no image to wait for.
     status: p.clue_type === "written_language" ? ("needs_review" as const) : ("draft" as const),
@@ -133,6 +134,7 @@ async function main() {
       }
       await updateSeedEntry(db, change.id, {
         ...stagedFields(change.to),
+        ...FACT_RESET,
         image_candidates: [],
         selected_candidate_index: 0,
         vision_pass: null,
@@ -163,7 +165,7 @@ async function main() {
     await upsertSeedEntry(db, { cca3: p.cca3, country_common: p.country, clue_type: p.clue_type, proposed_by: RUN_TAG, ...stagedFields(p) });
   }
   for (const { id, proposal } of plan.replace) {
-    await updateSeedEntry(db, id, { ...stagedFields(proposal), image_candidates: [], selected_candidate_index: 0, vision_pass: null, vision_notes: null });
+    await updateSeedEntry(db, id, { ...stagedFields(proposal), ...FACT_RESET, image_candidates: [], selected_candidate_index: 0, vision_pass: null, vision_notes: null });
     // updateSeedEntry cannot set proposed_by; mark the row so `images` picks it up.
     const { error } = await db.from("ag_seed_entries").update({ proposed_by: RUN_TAG }).eq("id", id);
     if (error) throw new Error(error.message);

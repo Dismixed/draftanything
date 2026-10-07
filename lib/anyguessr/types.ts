@@ -146,6 +146,8 @@ export interface DailyGuessResult {
   roundScore: number;
   completed: boolean;
   funFact: string | null;
+  /** The article the fact comes from. */
+  funFactSource: string | null;
   flagUrl: string | null;
   answerLat: number;
   answerLng: number;
@@ -168,6 +170,7 @@ export interface DailyRoundRecap {
   flagUrl?: string;
   /** About what the clue showed, when a reviewed fact exists. */
   funFact?: string | null;
+  funFactSource?: string | null;
   answerLat: number;
   answerLng: number;
   guessLat: number | null;

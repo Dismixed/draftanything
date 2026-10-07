@@ -5,15 +5,26 @@ import { getSeedEntry, updateSeedEntry } from "@/lib/anyguessr/seed-db";
 import { CLUE_DIFFICULTIES, FUN_FACT_MAX_LENGTH, type SeedEntryStatus } from "@/lib/anyguessr/seed-types";
 
 /** A new fact text is unreviewed unless the caller says a person has just reviewed it. */
-function funFactChange(body: { fun_fact?: unknown; fun_fact_reviewed?: unknown }) {
+function funFactChange(body: {
+  fun_fact?: unknown;
+  fun_fact_reviewed?: unknown;
+  fun_fact_source_url?: unknown;
+  fun_fact_evidence?: unknown;
+}) {
   const reviewed = typeof body.fun_fact_reviewed === "boolean" ? body.fun_fact_reviewed : undefined;
   if (body.fun_fact === undefined) return reviewed === undefined ? {} : { fun_fact_reviewed: reviewed };
   if (body.fun_fact !== null && typeof body.fun_fact !== "string") return null;
 
   const text = body.fun_fact === null ? "" : body.fun_fact.trim();
   if (text.length > FUN_FACT_MAX_LENGTH) return null;
-  if (!text) return { fun_fact: null, fun_fact_reviewed: false };
-  return { fun_fact: text, fun_fact_reviewed: reviewed ?? false };
+  // Removing the fact removes its citation; new text arrives with its own, or none.
+  if (!text) return { fun_fact: null, fun_fact_source_url: null, fun_fact_evidence: null, fun_fact_reviewed: false };
+
+  const source = body.fun_fact_source_url ?? null;
+  const evidence = body.fun_fact_evidence ?? null;
+  if (source !== null && (typeof source !== "string" || !/^https:\/\/[a-z-]+\.wikipedia\.org\/wiki\/\S+$/.test(source))) return null;
+  if (evidence !== null && typeof evidence !== "string") return null;
+  return { fun_fact: text, fun_fact_source_url: source, fun_fact_evidence: evidence, fun_fact_reviewed: reviewed ?? false };
 }
 
 export async function GET(
@@ -47,7 +58,10 @@ export async function PATCH(
     const body = await req.json();
     const fact = funFactChange(body);
     if (!fact) {
-      return NextResponse.json({ error: `fun_fact must be text of at most ${FUN_FACT_MAX_LENGTH} characters` }, { status: 400 });
+      return NextResponse.json(
+        { error: `fun_fact must be text of at most ${FUN_FACT_MAX_LENGTH} characters, with a Wikipedia article as its source` },
+        { status: 400 },
+      );
     }
     const db = createAdminClient();
 

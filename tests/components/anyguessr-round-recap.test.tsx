@@ -35,6 +35,17 @@ describe("RoundRecap fun fact", () => {
     expect(render(recap({ clueType: "flag", funFact: "x" }))).toContain("About the flag");
   });
 
+  it("links the fact to its source", () => {
+    const html = render(recap({ funFact: "x", funFactSource: "https://en.wikipedia.org/wiki/Feijoada" }));
+    expect(html).toContain('href="https://en.wikipedia.org/wiki/Feijoada"');
+    expect(html).toContain('rel="noopener noreferrer"');
+    expect(html).toContain("Source: Wikipedia");
+  });
+
+  it("shows a fact without a link when it has no source", () => {
+    expect(render(recap({ funFact: "x", funFactSource: null }))).not.toContain("Source:");
+  });
+
   it("shows nothing when the round has no reviewed fact", () => {
     expect(render(recap({ funFact: null }))).not.toContain("ag-recap-fact");
     expect(render(recap())).not.toContain("ag-recap-fact");

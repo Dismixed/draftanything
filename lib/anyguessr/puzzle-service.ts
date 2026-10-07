@@ -20,7 +20,7 @@ import { LINEUP_ROUNDS, pickLineup, type LineupClue, type LineupDay, type Lineup
 import { expandAltAnswers, resolveAliasToCca3 } from "./country-aliases";
 import { getLatLngForCca3, haversineKm, resolveGuessToCca3 } from "./geo";
 import { looseEqual } from "./normalize";
-import { funFactForClue, type FunFactSource } from "./fun-fact";
+import { funFactForClue, type ClueFunFact, type FunFactSource } from "./fun-fact";
 
 /* ------------------------------------------------------------------ */
 /*  Row shape returned by Supabase                                     */
@@ -238,20 +238,24 @@ async function loadClueFunFact(
   cca3: string,
   clueType: string | undefined,
   clues: unknown,
-): Promise<string | null> {
+): Promise<ClueFunFact | null> {
   if (!clueType || !Array.isArray(clues)) return null;
   const clue = (clues as Clue[]).find((c) => c.type === clueType);
   if (!clue) return null;
 
   const { data } = await db
     .from("ag_seed_entries")
-    .select("clue_type, wiki_title, text_content, fun_fact, fun_fact_reviewed")
+    .select("clue_type, wiki_title, text_content, fun_fact, fun_fact_source_url, fun_fact_reviewed")
     .eq("cca3", cca3)
     .eq("clue_type", clueType)
     .eq("fun_fact_reviewed", true)
     .maybeSingle();
 
   return funFactForClue(data as FunFactSource | null, clue);
+}
+
+function factFields(fact: ClueFunFact | null): Pick<DailyGuessResult, "funFact" | "funFactSource"> {
+  return { funFact: fact?.text ?? null, funFactSource: fact?.sourceUrl ?? null };
 }
 
 export async function validateDailyGuess(
@@ -315,7 +319,7 @@ export async function validateDailyGuess(
     distanceKm,
     roundScore,
     completed,
-    funFact: await loadClueFunFact(db, answerCca3, clueType, row.clues),
+    ...factFields(await loadClueFunFact(db, answerCca3, clueType, row.clues)),
     flagUrl: row.flag_url,
     answerLat: answerCoords?.[0] ?? 0,
     answerLng: answerCoords?.[1] ?? 0,
@@ -366,7 +370,7 @@ export async function revealDailyRound(
     distanceKm: 20_000,
     roundScore: 0,
     completed,
-    funFact: await loadClueFunFact(db, answerCca3, clueType, row.clues),
+    ...factFields(await loadClueFunFact(db, answerCca3, clueType, row.clues)),
     flagUrl: row.flag_url,
     answerLat: answerCoords?.[0] ?? 0,
     answerLng: answerCoords?.[1] ?? 0,

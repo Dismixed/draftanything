@@ -7,6 +7,7 @@ const entry = (extra: Partial<FunFactSource> = {}): FunFactSource => ({
   wiki_title: "Feijoada",
   text_content: null,
   fun_fact: "Feijoada is a black bean stew traditionally served with rice and orange slices.",
+  fun_fact_source_url: "https://en.wikipedia.org/wiki/Feijoada",
   fun_fact_reviewed: true,
   ...extra,
 });
@@ -14,7 +15,19 @@ const clue = (extra: Partial<Clue> = {}): Clue => ({ type: "food", content: "Fei
 
 describe("funFactForClue", () => {
   it("returns the reviewed fact for the clue the player saw", () => {
-    expect(funFactForClue(entry(), clue())).toMatch(/black bean stew/);
+    expect(funFactForClue(entry(), clue())?.text).toMatch(/black bean stew/);
+  });
+
+  it("carries the article the fact comes from", () => {
+    expect(funFactForClue(entry(), clue())?.sourceUrl).toBe("https://en.wikipedia.org/wiki/Feijoada");
+  });
+
+  it("drops a source that is not a Wikipedia article", () => {
+    for (const fun_fact_source_url of ["javascript:alert(1)", "https://example.com/feijoada", "http://en.wikipedia.org/wiki/Feijoada", null]) {
+      const fact = funFactForClue(entry({ fun_fact_source_url }), clue());
+      expect(fact?.text).toMatch(/black bean stew/);
+      expect(fact?.sourceUrl).toBeNull();
+    }
   });
 
   it("holds back a fact no person has reviewed", () => {

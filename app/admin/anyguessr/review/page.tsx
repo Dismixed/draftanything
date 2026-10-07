@@ -15,6 +15,8 @@ interface ReviewEntry {
   status: string;
   difficulty: ClueDifficulty | null;
   fun_fact: string | null;
+  fun_fact_source_url: string | null;
+  fun_fact_evidence: string | null;
   fun_fact_reviewed: boolean;
   image_candidates: Array<{ image_url: string; thumb_url?: string }>;
   selected_candidate_index: number;
@@ -380,11 +382,32 @@ function FactEditor({
         placeholder="One sentence about what the clue shows, shown after the round."
         style={{ ...control, width: "100%", resize: "vertical", fontSize: "13px", lineHeight: 1.4 }}
       />
+      {saved && entry.fun_fact_evidence && (
+        <blockquote style={{ margin: "6px 0 0", padding: "0 0 0 10px", borderLeft: "2px solid #3a3a3c", fontSize: "12px", lineHeight: 1.4, color: "#9aa0a6" }}>
+          {entry.fun_fact_evidence}
+        </blockquote>
+      )}
+      {saved &&
+        (entry.fun_fact_source_url ? (
+          <a href={entry.fun_fact_source_url} target="_blank" rel="noreferrer" style={{ display: "inline-block", marginTop: "4px", fontSize: "12px", color: "#5bc0de" }}>
+            Check the source
+          </a>
+        ) : (
+          <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#c9b458" }}>⚠ No source. Players will see this fact without a link.</p>
+        ))}
       <div style={{ display: "flex", gap: "6px", marginTop: "4px" }}>
         <button
           type="button"
           disabled={!text || (unchanged && entry.fun_fact_reviewed)}
-          onClick={() => void onPatch(entry.id, { fun_fact: text, fun_fact_reviewed: true })}
+          onClick={() =>
+            // New wording is no longer what the cited sentence says, so it drops the citation.
+            void onPatch(
+              entry.id,
+              unchanged
+                ? { fun_fact_reviewed: true }
+                : { fun_fact: text, fun_fact_source_url: null, fun_fact_evidence: null, fun_fact_reviewed: true },
+            )
+          }
           style={{ ...button, flex: 1, padding: "5px 8px", fontSize: "13px", borderColor: "#6aaa64", color: "#6aaa64", opacity: !text || (unchanged && entry.fun_fact_reviewed) ? 0.5 : 1 }}
         >
           {unchanged ? "Approve fact" : "Save and approve"}
@@ -394,7 +417,7 @@ function FactEditor({
           disabled={!saved}
           onClick={() => {
             setDraft("");
-            void onPatch(entry.id, { fun_fact: null, fun_fact_reviewed: false });
+            void onPatch(entry.id, { fun_fact: null, fun_fact_source_url: null, fun_fact_evidence: null, fun_fact_reviewed: false });
           }}
           style={{ ...button, padding: "5px 8px", fontSize: "13px", borderColor: "#5a2c2c", color: "#ff6b6b", opacity: saved ? 1 : 0.5 }}
         >

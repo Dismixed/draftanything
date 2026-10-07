@@ -4,7 +4,6 @@ import { checkAdmin } from "@/lib/chainlink/admin-guard";
 import { POOL_COUNTRIES } from "@/lib/anyguessr/countries";
 import { upsertSeedEntry } from "@/lib/anyguessr/seed-db";
 import { proposeSeedEntriesWithLlm } from "@/lib/anyguessr/seed-propose";
-import { FUN_FACT_MAX_LENGTH } from "@/lib/anyguessr/seed-types";
 
 export async function POST(req: NextRequest) {
   const admin = await checkAdmin();
@@ -38,7 +37,6 @@ export async function POST(req: NextRequest) {
         clue_type: p.clue_type,
         wiki_title: p.wiki_title,
         text_content: p.text_content,
-        fun_fact: p.fun_fact?.trim().slice(0, FUN_FACT_MAX_LENGTH) || null,
         status: "draft",
         proposed_by: "llm",
         notes: p.notes ?? null,

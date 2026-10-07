@@ -71,6 +71,11 @@ export default function RoundRecap({ recap, totalScore, onContinue }: Props) {
         <p className="ag-recap-fact">
           <b>{DAILY_FACT_LABEL[recap.clueType] ?? "Did you know"}</b>
           {recap.funFact}
+          {recap.funFactSource && (
+            <a href={recap.funFactSource} target="_blank" rel="noopener noreferrer">
+              Source: Wikipedia
+            </a>
+          )}
         </p>
       )}
 

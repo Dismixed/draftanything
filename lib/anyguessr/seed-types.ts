@@ -57,6 +57,10 @@ export interface SeedEntryRow {
   difficulty: ClueDifficulty | null;
   /** A fact about what the clue shows, revealed after the round. */
   fun_fact: string | null;
+  /** The Wikipedia article the fact comes from. */
+  fun_fact_source_url: string | null;
+  /** The sentence from that article which supports the fact. */
+  fun_fact_evidence: string | null;
   /** Players see a fact only after a person has reviewed it. */
   fun_fact_reviewed: boolean;
   image_candidates: ImageCandidate[];
