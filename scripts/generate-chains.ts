@@ -13,7 +13,9 @@
  *                   (mainly guards LLM-generated output)
  *   4. Semantic   — LLM validation pass (NOT optional before writing): each
  *                   consecutive pair must read as a real compound/phrase
- *   5. Novelty    — reject chains that already exist in chain_puzzles
+ *   5. Novelty    — reject chains that already exist in chain_puzzles, or
+ *                   that break the shared chain rules (lexicon ambiguity,
+ *                   particle limit, links used in recent dailies)
  *   6. Insert     — write survivors as `draft` (unapproved) rows so a human
  *                   can review + approve them in the admin panel
  *
@@ -345,21 +347,25 @@ async function main() {
     const { loadExistingChainIndex, checkNoveltyAgainstIndex } = await import(
       "../lib/chainlink/novelty"
     );
-    const { saveDraftChains } = await import("../lib/chainlink/generator");
+    const { saveDraftChains, loadChainRules } = await import("../lib/chainlink/generator");
+    const { chainProblems } = await import("../lib/chainlink/chain-rules");
 
     const db = createClient(url!, key!, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
     const index = await loadExistingChainIndex(db);
+    const rules = await loadChainRules(db);
     const toInsert: DraftChain[] = [];
 
     for (const candidate of candidates) {
       if (candidate.status !== "ok" || !candidate.chain) continue;
 
       const novelty = checkNoveltyAgainstIndex(index, candidate.chain);
-      if (novelty.problems.length > 0) {
-        candidate.problems.push(...novelty.problems);
+      // Same lexicon-based rules the phrase-graph generator applies.
+      const problems = [...novelty.problems, ...chainProblems(candidate.chain, rules)];
+      if (problems.length > 0) {
+        candidate.problems.push(...problems);
         candidate.status = "rejected";
         continue;
       }

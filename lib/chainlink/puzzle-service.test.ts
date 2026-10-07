@@ -63,6 +63,9 @@ describe("getDailyPuzzle on-demand generation", () => {
     expect(result!.mode).toBe("daily");
     expect(result!.date).toBe("2026-08-26");
 
+    // An unreviewed daily must never contain a link players would hesitate over.
+    expect(mockGenerateChains).toHaveBeenCalledWith(db, { length: 5, count: 1, minLinkScore: 5 });
+
     expect(chainInsert).toHaveBeenCalledTimes(1);
     expect(dailyInsert).toHaveBeenCalledTimes(1);
     expect(dailyInsert.mock.calls[0][0]).toMatchObject({

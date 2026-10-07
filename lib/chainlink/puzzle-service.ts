@@ -91,13 +91,14 @@ async function loadScheduledPuzzle(
  *
  * Note: the LLM semantic pass is intentionally skipped here — this is the hot
  * path that runs on a user's page load, and the phrase graph is already
- * curated. The LLM pass belongs in the batch/admin pipeline instead.
+ * curated. The generator still applies the ambiguity, particle and repeat
+ * rules, and nobody reviews this chain, so it is held to medium or easier.
  */
 async function generateOnDemandPuzzle(
   db: SupabaseClient<Database>,
   targetDate: string,
 ): Promise<PlayablePuzzle | null> {
-  const chains = await generateChains(db, { length: 5, count: 1 });
+  const chains = await generateChains(db, { length: 5, count: 1, minLinkScore: 5 });
   if (chains.length === 0) return null;
 
   const chain = chains[0];
