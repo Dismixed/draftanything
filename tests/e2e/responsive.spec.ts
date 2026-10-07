@@ -132,7 +132,7 @@ test.describe("Mobile gameplay controls", () => {
     const page = await context.newPage();
     await prepareChainlink(page);
     await page.goto("/chainlink/daily");
-    await expect(page.getByText("Starting word")).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText("Start", { exact: true })).toBeVisible({ timeout: 15000 });
     await expect(page.locator('input[type="text"]').first()).toBeVisible();
     await assertNoHorizontalOverflow(page);
     await context.close();
