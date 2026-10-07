@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { validateDailyGuess } from "@/lib/anyguessr/puzzle-service";
 import { DAILY_ROUND_COUNT } from "@/lib/anyguessr/daily";
+import { guessEventProperties } from "@/lib/anyguessr/guess-event";
 import { getPostHogClient } from "@/lib/posthog-server";
 
 export async function POST(req: NextRequest) {
   try {
-    let body: { puzzleId?: string; guess?: string; roundIndex?: number };
+    let body: { puzzleId?: string; guess?: string; roundIndex?: number; clueType?: unknown };
     try {
       body = await req.json();
     } catch {
@@ -35,11 +36,7 @@ export async function POST(req: NextRequest) {
     posthog.capture({
       distinctId: puzzleId,
       event: "anyguessr_daily_guess_submitted",
-      properties: {
-        puzzle_id: puzzleId,
-        round_index: roundIndex,
-        correct: (result as { correct?: boolean }).correct ?? false,
-      },
+      properties: guessEventProperties(puzzleId, roundIndex, result, body.clueType),
     });
     await posthog.flush();
     return NextResponse.json(result);
