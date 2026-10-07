@@ -1460,3 +1460,72 @@ html[data-theme="light"] .od-preview-tile {
     grid-template-columns: 1fr;
   }
 }
+/* ── Game about (shared section below each game) ─────────────────── */
+
+.game-about {
+  background: var(--ga-page, var(--bg));
+  color: var(--ga-text, var(--text));
+  border-top: 1px solid var(--ga-border, var(--border));
+  padding: 32px 16px 72px;
+  font-family: "Outfit", system-ui, sans-serif;
+}
+.game-about-inner {
+  max-width: 640px;
+  margin: 0 auto;
+}
+.game-about h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+.game-about h3 {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ga-muted, var(--text-dim));
+  margin: 32px 0 12px;
+}
+.game-about-intro {
+  font-size: 16px;
+  line-height: 1.55;
+  margin: 0 0 14px;
+}
+.game-about details {
+  border-bottom: 1px solid var(--ga-border, var(--border));
+  padding: 12px 0;
+}
+.game-about summary {
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.game-about details p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ga-muted, var(--text-dim));
+  margin: 8px 0 0;
+}
+.game-about-more {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.game-about-more .home-card-preview {
+  display: none;
+}
+.game-about-more .home-card {
+  grid-template-columns: 1fr;
+}
+.game-about-home {
+  display: inline-block;
+  margin-top: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: inherit;
+}
+@media (max-width: 560px) {
+  .game-about-more {
+    grid-template-columns: 1fr;
+  }
+}
