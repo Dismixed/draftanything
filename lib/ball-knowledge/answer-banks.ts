@@ -249,6 +249,323 @@ const RAW_BANKS: Record<CategoryName, string[]> = {
       "Tempura Roll","Eel Roll|Unagi Roll","Salmon Roll","Tuna Roll","Shrimp Tempura Roll",
       "Volcano Roll","Caterpillar Roll","Spider Roll","Alaska Roll","Boston Roll","Crunch Roll",
       "Tiger Roll","Godzilla Roll"
+    ],
+    "NHL Teams": [
+      "Anaheim Ducks|Ducks","Boston Bruins|Bruins","Buffalo Sabres|Sabres","Calgary Flames|Flames",
+      "Carolina Hurricanes|Hurricanes|Canes","Chicago Blackhawks|Blackhawks|Hawks",
+      "Colorado Avalanche|Avalanche|Avs","Columbus Blue Jackets|Blue Jackets","Dallas Stars|Stars",
+      "Detroit Red Wings|Red Wings","Edmonton Oilers|Oilers","Florida Panthers|Panthers",
+      "Los Angeles Kings|Kings","Minnesota Wild|Wild","Montreal Canadiens|Canadiens|Habs",
+      "Nashville Predators|Predators|Preds","New Jersey Devils|Devils","New York Islanders|Islanders|Isles",
+      "New York Rangers|Rangers","Ottawa Senators|Senators|Sens","Philadelphia Flyers|Flyers",
+      "Pittsburgh Penguins|Penguins|Pens","San Jose Sharks|Sharks","Seattle Kraken|Kraken",
+      "St. Louis Blues|Blues","Tampa Bay Lightning|Lightning|Bolts",
+      "Toronto Maple Leafs|Maple Leafs|Leafs","Utah Hockey Club","Vancouver Canucks|Canucks",
+      "Vegas Golden Knights|Golden Knights|Knights","Washington Capitals|Capitals|Caps",
+      "Winnipeg Jets|Jets"
+    ],
+    "MLB Teams": [
+      "Arizona Diamondbacks|Diamondbacks|D-backs","Atlanta Braves|Braves","Baltimore Orioles|Orioles",
+      "Boston Red Sox|Red Sox","Chicago Cubs|Cubs","Chicago White Sox|White Sox",
+      "Cincinnati Reds|Reds","Cleveland Guardians|Guardians|Indians","Colorado Rockies|Rockies",
+      "Detroit Tigers|Tigers","Houston Astros|Astros","Kansas City Royals|Royals",
+      "Los Angeles Angels|Angels","Los Angeles Dodgers|Dodgers","Miami Marlins|Marlins",
+      "Milwaukee Brewers|Brewers","Minnesota Twins|Twins","New York Mets|Mets",
+      "New York Yankees|Yankees","Oakland Athletics|Athletics|A's","Philadelphia Phillies|Phillies",
+      "Pittsburgh Pirates|Pirates","San Diego Padres|Padres","San Francisco Giants|Giants",
+      "Seattle Mariners|Mariners","St. Louis Cardinals|Cardinals","Tampa Bay Rays|Rays",
+      "Texas Rangers|Rangers","Toronto Blue Jays|Blue Jays","Washington Nationals|Nationals|Nats"
+    ],
+    "Chess Openings": [
+      "Sicilian Defense","Ruy Lopez","Italian Game","French Defense",
+      "Caro-Kann Defense|Caro Kann Defense","King's Gambit|Kings Gambit",
+      "Queen's Gambit|Queens Gambit","English Opening","London System","Scandinavian Defense",
+      "Pirc Defense","Alekhine's Defense|Alekhines Defense","Grünfeld Defense|Grunfeld Defense",
+      "King's Indian Defense|Kings Indian Defense","Queen's Indian Defense|Queens Indian Defense",
+      "Nimzo-Indian Defense|Nimzo Indian Defense","Dutch Defense","Slav Defense",
+      "Semi-Slav Defense|Semi Slav Defense","Benoni Defense","Reti Opening",
+      "King's Indian Attack|Kings Indian Attack","Catalan Opening","Scotch Game","Vienna Game",
+      "Bird's Opening|Birds Opening","Evans Gambit","Budapest Gambit","Danish Gambit",
+      "Elephant Gambit","Fried Liver Attack","Scholar's Mate|Scholars Mate","Giuoco Piano",
+      "Petrov Defense","Philidor Defense","Modern Defense"
+    ],
+    "Poker Hands": [
+      "Royal Flush","Straight Flush","Four of a Kind|Quads","Full House|Full Boat|Boat",
+      "Flush","Straight","Three of a Kind|Trips|Set","Two Pair","One Pair|Pair","High Card"
+    ],
+    "Yoga Poses": [
+      "Downward Dog|Downward-Facing Dog","Warrior I|Warrior 1","Warrior II|Warrior 2",
+      "Warrior III|Warrior 3","Child's Pose|Childs Pose","Cobra Pose|Cobra","Mountain Pose",
+      "Tree Pose","Triangle Pose","Lotus Pose|Lotus","Corpse Pose|Savasana","Bridge Pose",
+      "Cat Pose","Cow Pose","Plank Pose|Plank","Upward Dog|Upward-Facing Dog","Crow Pose|Crow",
+      "Pigeon Pose|Pigeon","Eagle Pose|Eagle","Boat Pose|Boat","Chair Pose|Chair",
+      "Half Moon Pose","Happy Baby Pose","Dolphin Pose","Sphinx Pose","Locust Pose","Bow Pose",
+      "Camel Pose","Garland Pose|Malasana","Headstand","Shoulder Stand","Sun Salutation"
+    ],
+    "Martial Arts": [
+      "Karate","Judo","Taekwondo|Tae Kwon Do","Kung Fu","Boxing","Kickboxing","Muay Thai",
+      "Brazilian Jiu-Jitsu|BJJ","Jiu-Jitsu|Jujitsu","Aikido","Krav Maga","Wrestling","Sambo",
+      "Capoeira","Hapkido","Wing Chun","Jeet Kune Do","Kendo","Sumo","Mixed Martial Arts|MMA",
+      "Tang Soo Do","Savate","Eskrima|Arnis|Kali","Silat","Tai Chi|Taichi"
+    ],
+    "Track and Field Events": [
+      "100 Meters|100m","200 Meters|200m","400 Meters|400m","800 Meters|800m",
+      "1500 Meters|1500m","5000 Meters|5000m","10000 Meters|10000m","Marathon","Hurdles",
+      "110 Meter Hurdles","400 Meter Hurdles","Steeplechase","Long Jump","High Jump",
+      "Triple Jump","Pole Vault","Shot Put","Discus Throw|Discus","Javelin Throw|Javelin",
+      "Hammer Throw","Decathlon","Heptathlon","Race Walking|Racewalking","Relay",
+      "4x100 Relay|4x100"
+    ],
+    "Pokemon": [
+      "Pikachu","Charizard","Bulbasaur","Squirtle","Charmander","Venusaur","Blastoise",
+      "Mewtwo","Mew","Eevee","Vaporeon","Jolteon","Flareon","Snorlax","Gengar","Gyarados",
+      "Dragonite","Lucario","Greninja","Blaziken","Rayquaza","Articuno","Zapdos","Moltres",
+      "Jigglypuff","Psyduck","Machamp","Alakazam","Golem","Garchomp","Tyranitar","Sceptile",
+      "Swampert","Salamence","Metagross","Lugia","Ho-Oh|Ho Oh","Celebi","Darkrai","Arceus",
+      "Gardevoir","Scizor","Togepi","Mimikyu","Umbreon","Espeon","Leafeon","Glaceon","Sylveon"
+    ],
+    "Super Mario Characters": [
+      "Mario","Luigi","Princess Peach|Peach","Bowser","Yoshi","Toad","Donkey Kong","Wario",
+      "Waluigi","Princess Daisy|Daisy","Toadette","Bowser Jr.","Rosalina","Koopa Troopa",
+      "Goomba","Boo","Shy Guy","Birdo","Dry Bones","King Boo","Nabbit","Pauline","Lakitu",
+      "Bullet Bill","Kamek|Magikoopa","Baby Mario","Baby Luigi","Wart","Spike","Luma"
+    ],
+    "Olympic Host Cities": [
+      "Athens","Paris","London","Los Angeles","Tokyo","Beijing","Sydney","Atlanta","Barcelona",
+      "Seoul","Moscow","Montreal","Munich","Mexico City","Rome","Helsinki","Berlin","Amsterdam",
+      "Antwerp","Stockholm","Rio de Janeiro|Rio","Sochi","Vancouver","Turin|Torino",
+      "Salt Lake City","Nagano","Lillehammer","Albertville","Calgary","Sarajevo","Lake Placid",
+      "Sapporo","Innsbruck","Chamonix","St. Moritz|St Moritz","Oslo","Cortina","Grenoble",
+      "Squaw Valley","Garmisch-Partenkirchen|Garmisch Partenkirchen","St. Louis|St Louis",
+      "Pyeongchang"
+    ],
+    "Cocktails": [
+      "Margarita","Martini","Old Fashioned","Mojito","Manhattan","Negroni","Daiquiri",
+      "Cosmopolitan|Cosmo","Moscow Mule","Whiskey Sour","Pina Colada|Piña Colada","Mai Tai",
+      "Bloody Mary","Mimosa","Espresso Martini","Aperol Spritz|Spritz","Long Island Iced Tea",
+      "Tom Collins","White Russian","Black Russian","Sidecar","French 75","Sazerac",
+      "Boulevardier","Caipirinha","Paloma","Dark and Stormy","Gin and Tonic","Screwdriver",
+      "Tequila Sunrise","Sex on the Beach","Pisco Sour","Amaretto Sour","Mudslide",
+      "Irish Coffee","Zombie","Penicillin","Aviation"
+    ],
+    "Types of Wine": [
+      "Cabernet Sauvignon|Cabernet","Merlot","Pinot Noir","Chardonnay","Sauvignon Blanc",
+      "Riesling","Zinfandel","Syrah|Shiraz","Malbec","Pinot Grigio","Moscato","Prosecco",
+      "Champagne","Rosé|Rose","Tempranillo","Sangiovese","Chianti","Beaujolais","Bordeaux",
+      "Burgundy","Port","Sherry","Vermouth","Marsala","Chenin Blanc",
+      "Gewürztraminer|Gewurztraminer","Viognier","Grenache","Nebbiolo","Lambrusco",
+      "Sémillon|Semillon","Barolo","Brunello","Valpolicella"
+    ],
+    "Fruits": [
+      "Apple|Apples","Banana|Bananas","Orange|Oranges","Grape|Grapes",
+      "Strawberry|Strawberries","Blueberry|Blueberries","Raspberry|Raspberries",
+      "Blackberry|Blackberries","Watermelon","Cantaloupe","Honeydew|Honeydew Melon","Pineapple",
+      "Mango|Mangoes","Peach|Peaches","Plum|Plums","Cherry|Cherries","Pear|Pears","Kiwi",
+      "Lemon|Lemons","Lime|Limes","Grapefruit","Avocado","Papaya","Pomegranate","Fig|Figs",
+      "Apricot|Apricots","Nectarine","Tangerine","Clementine","Coconut","Cranberry|Cranberries",
+      "Guava","Passion Fruit","Dragon Fruit","Lychee","Star Fruit|Starfruit","Persimmon",
+      "Date|Dates","Currant","Gooseberry","Kumquat","Boysenberry"
+    ],
+    "Vegetables": [
+      "Broccoli","Carrot|Carrots","Spinach","Lettuce","Kale","Cabbage","Cauliflower",
+      "Brussels Sprouts|Brussel Sprouts","Asparagus","Celery","Cucumber","Zucchini","Eggplant",
+      "Bell Pepper","Potato|Potatoes","Sweet Potato","Onion|Onions","Garlic","Tomato|Tomatoes",
+      "Corn","Green Beans","Peas","Radish|Radishes","Beet|Beets","Turnip|Turnips","Pumpkin",
+      "Squash","Artichoke","Leek|Leeks","Mushroom|Mushrooms","Okra","Bok Choy","Arugula",
+      "Swiss Chard","Collard Greens","Mustard Greens","Watercress","Parsnip|Parsnips",
+      "Rutabaga","Jicama"
+    ],
+    "Herbs and Spices": [
+      "Basil","Oregano","Thyme","Rosemary","Sage","Parsley","Cilantro|Coriander","Dill","Mint",
+      "Chives","Tarragon","Bay Leaf","Cinnamon","Nutmeg","Clove|Cloves","Ginger","Turmeric",
+      "Cumin","Paprika","Chili Powder|Chilli Powder","Cayenne","Black Pepper","White Pepper",
+      "Saffron","Cardamom","Coriander Seed","Fennel","Star Anise","Allspice","Mustard Seed",
+      "Fenugreek","Garlic Powder","Onion Powder","Curry Powder","Garam Masala","Vanilla",
+      "Marjoram"
+    ],
+    "Types of Beer": [
+      "IPA","Lager","Stout","Porter","Pilsner","Wheat Beer|Hefeweizen","Pale Ale","Amber Ale",
+      "Brown Ale","Sour|Sour Beer","Belgian Ale","Dubbel","Tripel","Quadrupel|Quad","Saison",
+      "Bock","Doppelbock","Kölsch|Kolsch","Dunkel","Gose","Lambic","Märzen|Marzen|Oktoberfest",
+      "Cream Ale","Golden Ale","Blonde Ale","Red Ale","Barleywine","Scotch Ale","Weissbier",
+      "Witbier","Fruit Beer","Session IPA","Double IPA|DIPA",
+      "New England IPA|NEIPA|Hazy IPA"
+    ],
+    "Coffee Drinks": [
+      "Espresso","Latte","Cappuccino","Americano","Mocha","Macchiato","Flat White","Cortado",
+      "Affogato","Ristretto","Doppio","Lungo","Cold Brew","Iced Coffee","Frappuccino",
+      "Irish Coffee","Turkish Coffee","Vietnamese Coffee","Nitro Cold Brew",
+      "Café au Lait|Cafe au Lait","Red Eye","Breve","Dalgona Coffee","Caramel Macchiato"
+    ],
+    "Types of Bread": [
+      "Sourdough|Sourdough Bread","Baguette","Brioche","Ciabatta","Rye Bread|Rye","Pumpernickel",
+      "Focaccia","Naan","Pita","Challah","Soda Bread","Banana Bread","Cornbread","Multigrain",
+      "Whole Wheat","White Bread","Potato Bread","French Bread","Italian Bread","Croissant",
+      "Bagel","English Muffin","Tortilla","Lavash","Matzo|Matzah"
+    ],
+    "Types of Soup": [
+      "Chicken Noodle Soup|Chicken Noodle","Tomato Soup","Minestrone","Clam Chowder",
+      "French Onion Soup|French Onion","Butternut Squash Soup","Broccoli Cheddar Soup","Gazpacho",
+      "Miso Soup|Miso","Pho","Ramen","Wonton Soup","Egg Drop Soup",
+      "Hot and Sour Soup|Hot and Sour","Lentil Soup|Lentil","Split Pea Soup|Split Pea",
+      "Potato Leek Soup","Cream of Mushroom","Tortilla Soup","Chili","Gumbo","Bisque","Chowder",
+      "Mulligatawny","Borscht","Matzo Ball Soup","Wedding Soup","Posole|Pozole","Udon","Tom Yum",
+      "Bouillabaisse"
+    ],
+    "Types of Nuts": [
+      "Almond|Almonds","Walnut|Walnuts","Pecan|Pecans","Cashew|Cashews","Peanut|Peanuts",
+      "Pistachio|Pistachios","Hazelnut|Hazelnuts|Filbert","Macadamia|Macadamia Nut",
+      "Brazil Nut","Chestnut|Chestnuts","Pine Nut|Pine Nuts","Acorn|Acorns","Hickory Nut",
+      "Kola Nut|Cola Nut","Ginkgo Nut","Pili Nut","Marcona Almond","Beech Nut"
+    ],
+    "Condiments": [
+      "Ketchup","Mustard","Mayonnaise|Mayo","Relish","Hot Sauce","Barbecue Sauce|BBQ Sauce",
+      "Soy Sauce","Sriracha","Salsa","Guacamole","Hummus","Ranch Dressing|Ranch",
+      "Honey Mustard","Worcestershire Sauce","Aioli","Pesto","Horseradish","Tartar Sauce",
+      "Vinaigrette","Olive Oil","Vinegar","Buffalo Sauce","Teriyaki Sauce","Fish Sauce",
+      "Oyster Sauce","Chimichurri","Tahini","Sour Cream","Taco Sauce","Marinara",
+      "Sweet and Sour Sauce"
+    ],
+    "Countries in Africa": [
+      "Algeria","Angola","Benin","Botswana","Burkina Faso","Burundi","Cape Verde|Cabo Verde",
+      "Cameroon","Central African Republic","Chad","Comoros",
+      "Democratic Republic of the Congo|DR Congo","Republic of the Congo|Congo","Djibouti",
+      "Egypt","Equatorial Guinea","Eritrea","Eswatini|Swaziland","Ethiopia","Gabon",
+      "Gambia|The Gambia","Ghana","Guinea","Guinea-Bissau","Ivory Coast|Cote d'Ivoire","Kenya",
+      "Lesotho","Liberia","Libya","Madagascar","Malawi","Mali","Mauritania","Mauritius",
+      "Morocco","Mozambique","Namibia","Niger","Nigeria","Rwanda","Sao Tome and Principe",
+      "Senegal","Seychelles","Sierra Leone","Somalia","South Africa","South Sudan","Sudan",
+      "Tanzania","Togo","Tunisia","Uganda","Zambia","Zimbabwe"
+    ],
+    "Countries in Europe": [
+      "Albania","Andorra","Austria","Belarus","Belgium","Bosnia and Herzegovina","Bulgaria",
+      "Croatia","Cyprus","Czech Republic|Czechia","Denmark","Estonia","Finland","France",
+      "Germany","Greece","Hungary","Iceland","Ireland","Italy","Kosovo","Latvia",
+      "Liechtenstein","Lithuania","Luxembourg","Malta","Moldova","Monaco","Montenegro",
+      "Netherlands","North Macedonia","Norway","Poland","Portugal","Romania","Russia",
+      "San Marino","Serbia","Slovakia","Slovenia","Spain","Sweden","Switzerland","Ukraine",
+      "United Kingdom|UK|Great Britain","Vatican City|Vatican"
+    ],
+    "Countries in Asia": [
+      "Afghanistan","Armenia","Azerbaijan","Bahrain","Bangladesh","Bhutan","Brunei","Cambodia",
+      "China","Cyprus","Georgia","India","Indonesia","Iran","Iraq","Israel","Japan","Jordan",
+      "Kazakhstan","Kuwait","Kyrgyzstan","Laos","Lebanon","Malaysia","Maldives","Mongolia",
+      "Myanmar|Burma","Nepal","North Korea","Oman","Pakistan","Palestine","Philippines",
+      "Qatar","Russia","Saudi Arabia","Singapore","South Korea","Sri Lanka","Syria","Taiwan",
+      "Tajikistan","Thailand","Timor-Leste|East Timor","Turkey","Turkmenistan",
+      "United Arab Emirates|UAE","Uzbekistan","Vietnam","Yemen"
+    ],
+    "Oscar Best Picture Winners": [
+      "Gone with the Wind","Casablanca","The Godfather|Godfather",
+      "The Godfather Part II|Godfather Part II|Godfather Part 2",
+      "One Flew Over the Cuckoo's Nest|One Flew Over the Cuckoos Nest","Rocky","Annie Hall",
+      "The Deer Hunter|Deer Hunter","Kramer vs. Kramer|Kramer vs Kramer","Ordinary People",
+      "Chariots of Fire","Gandhi","Terms of Endearment","Amadeus","Out of Africa","Platoon",
+      "Rain Man","Driving Miss Daisy","Dances with Wolves",
+      "The Silence of the Lambs|Silence of the Lambs","Unforgiven",
+      "Schindler's List|Schindlers List","Forrest Gump","Braveheart","Titanic",
+      "American Beauty","Gladiator","A Beautiful Mind","Chicago",
+      "The Lord of the Rings: The Return of the King|Return of the King","Million Dollar Baby",
+      "Crash","The Departed|Departed","No Country for Old Men","Slumdog Millionaire",
+      "The Hurt Locker|Hurt Locker","The King's Speech|Kings Speech","The Artist|Artist",
+      "Argo","12 Years a Slave|Twelve Years a Slave","Birdman","Spotlight","Moonlight",
+      "The Shape of Water|Shape of Water","Green Book","Parasite","Nomadland","CODA",
+      "Everything Everywhere All at Once|EEAAO","Oppenheimer","Anora"
+    ],
+    "Greek Gods": [
+      "Zeus","Hera","Poseidon","Demeter","Athena","Apollo","Artemis","Ares","Aphrodite",
+      "Hephaestus|Hephaistos","Hermes","Dionysus","Hades","Persephone","Hestia","Eros","Nike",
+      "Helios","Selene","Eos","Cronus|Kronos","Rhea","Gaia|Gaea","Uranus","Atlas","Prometheus",
+      "Epimetheus","Pan","Nemesis","Tyche","Hecate","Hypnos","Thanatos","Iris","Aeolus",
+      "Themis"
+    ],
+    "Shakespeare Plays": [
+      "Hamlet","Macbeth","Romeo and Juliet","Othello","King Lear","Julius Caesar",
+      "A Midsummer Night's Dream|Midsummer Nights Dream","The Tempest|Tempest","Twelfth Night",
+      "Much Ado About Nothing","As You Like It","The Merchant of Venice|Merchant of Venice",
+      "Richard III|Richard 3","Henry V|Henry 5","Henry IV|Henry 4","Richard II|Richard 2",
+      "The Taming of the Shrew|Taming of the Shrew","The Comedy of Errors|Comedy of Errors",
+      "The Two Gentlemen of Verona|Two Gentlemen of Verona",
+      "Love's Labour's Lost|Loves Labours Lost","All's Well That Ends Well|Alls Well That Ends Well",
+      "Measure for Measure","Cymbeline","The Winter's Tale|Winters Tale","Pericles",
+      "Antony and Cleopatra","Coriolanus","Timon of Athens","Titus Andronicus",
+      "The Merry Wives of Windsor|Merry Wives of Windsor","Henry VIII|Henry 8","King John",
+      "Troilus and Cressida","Henry VI|Henry 6"
+    ],
+    "US Presidents": [
+      "George Washington|Washington","John Adams|Adams","Thomas Jefferson|Jefferson",
+      "James Madison|Madison","James Monroe|Monroe","John Quincy Adams|Quincy Adams",
+      "Andrew Jackson|Jackson","Martin Van Buren|Van Buren","William Henry Harrison",
+      "John Tyler|Tyler","James K. Polk|James K Polk|Polk","Zachary Taylor|Taylor",
+      "Millard Fillmore|Fillmore","Franklin Pierce|Pierce","James Buchanan|Buchanan",
+      "Abraham Lincoln|Lincoln","Andrew Johnson","Ulysses S. Grant|Ulysses Grant|Grant",
+      "Rutherford B. Hayes|Rutherford Hayes|Hayes","James A. Garfield|James Garfield|Garfield",
+      "Chester A. Arthur|Chester Arthur|Arthur","Grover Cleveland|Cleveland",
+      "Benjamin Harrison|Harrison","William McKinley|McKinley",
+      "Theodore Roosevelt|Teddy Roosevelt|Teddy","William Howard Taft|Taft",
+      "Woodrow Wilson|Wilson","Warren G. Harding|Warren Harding|Harding",
+      "Calvin Coolidge|Coolidge","Herbert Hoover|Hoover",
+      "Franklin D. Roosevelt|Franklin Roosevelt|FDR|Roosevelt",
+      "Harry S. Truman|Harry Truman|Truman","Dwight D. Eisenhower|Dwight Eisenhower|Eisenhower",
+      "John F. Kennedy|John Kennedy|Kennedy|JFK","Lyndon B. Johnson|Lyndon Johnson|Johnson|LBJ",
+      "Richard Nixon|Nixon","Gerald Ford|Ford","Jimmy Carter|Carter","Ronald Reagan|Reagan",
+      "George H. W. Bush|George HW Bush|Bush Sr","Bill Clinton|Clinton",
+      "George W. Bush|George Bush|Bush|Dubya","Barack Obama|Obama","Donald Trump|Trump",
+      "Joe Biden|Biden"
+    ],
+    "Zodiac Signs": [
+      "Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius",
+      "Capricorn","Aquarius","Pisces"
+    ],
+    "Chemical Elements": [
+      "Hydrogen","Helium","Lithium","Beryllium","Boron","Carbon","Nitrogen","Oxygen",
+      "Fluorine","Neon","Sodium","Magnesium","Aluminum|Aluminium","Silicon","Phosphorus",
+      "Sulfur|Sulphur","Chlorine","Argon","Potassium","Calcium","Scandium","Titanium",
+      "Vanadium","Chromium","Manganese","Iron","Cobalt","Nickel","Copper","Zinc","Gallium",
+      "Germanium","Arsenic","Selenium","Bromine","Krypton","Rubidium","Strontium","Yttrium",
+      "Zirconium","Niobium","Molybdenum","Technetium","Ruthenium","Rhodium","Palladium",
+      "Silver","Cadmium","Indium","Tin","Antimony","Tellurium","Iodine","Xenon",
+      "Cesium|Caesium","Barium","Lanthanum","Cerium","Praseodymium","Neodymium","Promethium",
+      "Samarium","Europium","Gadolinium","Terbium","Dysprosium","Holmium","Erbium","Thulium",
+      "Ytterbium","Lutetium","Hafnium","Tantalum","Tungsten","Rhenium","Osmium","Iridium",
+      "Platinum","Gold","Mercury","Thallium","Lead","Bismuth","Polonium","Astatine","Radon",
+      "Francium","Radium","Actinium","Thorium","Protactinium","Uranium","Neptunium",
+      "Plutonium","Americium","Curium","Berkelium","Californium","Einsteinium","Fermium",
+      "Mendelevium","Nobelium","Lawrencium","Rutherfordium","Dubnium","Seaborgium","Bohrium",
+      "Hassium","Meitnerium","Darmstadtium","Roentgenium","Copernicium","Nihonium",
+      "Flerovium","Moscovium","Livermorium","Tennessine","Oganesson"
+    ],
+    "Musical Instruments": [
+      "Piano","Guitar","Violin","Drums","Flute","Trumpet","Saxophone","Clarinet","Cello",
+      "Viola","Bass Guitar|Bass","Double Bass","Harp","Organ","Accordion","Banjo","Ukulele",
+      "Mandolin","Trombone","Tuba","French Horn","Oboe","Bassoon","Piccolo","Recorder",
+      "Harmonica","Bagpipes","Xylophone","Tambourine","Cymbals","Timpani|Kettledrum",
+      "Synthesizer|Synth","Keyboard","Electric Guitar","Acoustic Guitar","Dulcimer","Sitar"
+    ],
+    "Pixar Movies": [
+      "Toy Story","A Bug's Life|A Bugs Life","Toy Story 2","Monsters Inc|Monsters, Inc.",
+      "Finding Nemo","The Incredibles|Incredibles","Cars","Ratatouille","WALL-E|WALL E|Wall-E",
+      "Up","Toy Story 3","Cars 2","Brave","Monsters University","Inside Out",
+      "The Good Dinosaur|Good Dinosaur","Finding Dory","Cars 3","Coco","Incredibles 2",
+      "Toy Story 4","Onward","Soul","Luca","Turning Red","Lightyear","Elemental",
+      "Inside Out 2"
+    ],
+    "Harry Potter Spells": [
+      "Expelliarmus","Expecto Patronum","Avada Kedavra","Wingardium Leviosa","Lumos","Nox",
+      "Alohomora","Accio","Stupefy","Crucio","Imperio","Obliviate","Petrificus Totalus",
+      "Sectumsempra","Protego","Incendio","Aguamenti","Riddikulus","Diffindo","Confringo",
+      "Reducto","Bombarda","Muffliato","Silencio","Finite Incantatem","Episkey","Reparo",
+      "Legilimens","Occlumency","Apparate"
+    ],
+    "Star Wars Characters": [
+      "Luke Skywalker","Darth Vader","Han Solo","Princess Leia|Leia|Leia Organa",
+      "Obi-Wan Kenobi|Obi Wan Kenobi","Yoda","Chewbacca|Chewie","C-3PO|C3PO","R2-D2|R2D2",
+      "Anakin Skywalker","Emperor Palpatine|Palpatine","Boba Fett","Lando Calrissian|Lando",
+      "Mace Windu","Qui-Gon Jinn|Qui Gon Jinn","Padmé Amidala|Padme Amidala|Padme","Rey",
+      "Kylo Ren","Finn","Poe Dameron|Poe","BB-8|BB8","Ahsoka Tano|Ahsoka",
+      "Din Djarin|Mando|The Mandalorian","Grogu|Baby Yoda","Jabba the Hutt","Darth Maul",
+      "Count Dooku","General Grievous","Jango Fett","Grand Moff Tarkin","Admiral Ackbar",
+      "Wedge Antilles","Bo-Katan|Bo Katan","Captain Rex","Moff Gideon"
     ]
   };
 
