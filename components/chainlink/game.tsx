@@ -476,9 +476,9 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
   const [hintAnim, setHintAnim] = useState(false);
   const [showCompleteOverlay, setShowCompleteOverlay] = useState(false);
   const [showFailOverlay, setShowFailOverlay] = useState(false);
-  const [storeReady, setStoreReady] = useState(
-    () => typeof window !== "undefined" && useChainlinkStore.persist.hasHydrated(),
-  );
+  // Starts false on the server and in the browser alike, so the first render matches the
+  // server's HTML. The effect below switches it on once saved progress has loaded.
+  const [storeReady, setStoreReady] = useState(false);
   const failCelebratedRef = useRef(false);
   const savedFailRef = useRef(false);
 
@@ -620,7 +620,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
   }, [storeUseHint, play]);
 
   const isPuzzleLoading =
-    storeReady && !loadError && (loading || puzzleWords.length === 0);
+    !loadError && (!storeReady || loading || puzzleWords.length === 0);
 
   return (
     <>
