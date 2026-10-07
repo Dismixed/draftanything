@@ -6,11 +6,9 @@ import { getGame, type GameId } from "@/lib/games/registry";
 import { otherDailies } from "@/lib/games/today";
 import { JsonLdScript } from "@/lib/seo";
 
-/** Descriptive content shown beneath a game. Renders nothing until the game has content. */
+/** Descriptive content shown beneath a game. */
 export function GameAbout({ gameId }: { gameId: GameId }) {
   const content = getGameContent(gameId);
-  if (!content) return null;
-
   const game = getGame(gameId);
   const faqJsonLd = buildFaqJsonLd(gameId);
   const headingId = `about-${gameId}`;
@@ -64,7 +62,7 @@ export function GameAbout({ gameId }: { gameId: GameId }) {
           </details>
         ))}
       </div>
-      {faqJsonLd ? <JsonLdScript data={faqJsonLd} /> : null}
+      <JsonLdScript data={faqJsonLd} />
     </section>
   );
 }

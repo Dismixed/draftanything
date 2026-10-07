@@ -16,7 +16,7 @@ describe("GameAbout", () => {
   afterEach(cleanup);
 
   it("renders the intro, sections and questions as details", () => {
-    const content = GAME_CONTENT["hot-takes"]!;
+    const content = GAME_CONTENT["hot-takes"];
     const { container } = render(<GameAbout gameId="hot-takes" />);
 
     expect(screen.getByRole("heading", { level: 2, name: "About Hot Takes" })).toBeInTheDocument();

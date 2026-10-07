@@ -1,16 +1,32 @@
 import type { Metadata } from "next";
 import { getGame, type GameId } from "@/lib/games/registry";
 import { absoluteUrl } from "@/lib/seo";
+import { anyguessr } from "./anyguessr";
+import { ballKnowledge } from "./ball-knowledge";
+import { brainDead } from "./brain-dead";
+import { chainlink } from "./chainlink";
+import { draftAnything } from "./draft-anything";
+import { freezeframes } from "./freezeframes";
+import { gettingWarmer } from "./getting-warmer";
 import { hotTakes } from "./hot-takes";
+import { slipperySlope } from "./slippery-slope";
 import type { GameContent } from "./types";
 
 export type { GameContent };
 
-export const GAME_CONTENT: Partial<Record<GameId, GameContent>> = {
+export const GAME_CONTENT: Record<GameId, GameContent> = {
+  chainlink,
+  "brain-dead": brainDead,
+  anyguessr,
   "hot-takes": hotTakes,
+  freezeframes,
+  "ball-knowledge": ballKnowledge,
+  "getting-warmer": gettingWarmer,
+  "draft-anything": draftAnything,
+  "slippery-slope": slipperySlope,
 };
 
-export function getGameContent(id: GameId): GameContent | undefined {
+export function getGameContent(id: GameId): GameContent {
   return GAME_CONTENT[id];
 }
 
@@ -26,8 +42,7 @@ export function wordCount(content: GameContent): number {
 export function gameMetadata(id: GameId): Metadata {
   const game = getGame(id);
   const content = getGameContent(id);
-  const title = content?.title ?? game.name;
-  const description = content?.description ?? game.seo.description;
+  const { title, description } = content;
 
   return {
     title,
@@ -37,9 +52,8 @@ export function gameMetadata(id: GameId): Metadata {
   };
 }
 
-export function buildFaqJsonLd(id: GameId): Record<string, unknown> | null {
+export function buildFaqJsonLd(id: GameId): Record<string, unknown> {
   const content = getGameContent(id);
-  if (!content) return null;
 
   return {
     "@context": "https://schema.org",

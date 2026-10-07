@@ -1,22 +1,22 @@
 import { describe, expect, it } from "vitest";
 import { GAME_CONTENT, buildFaqJsonLd, gameMetadata, wordCount } from "@/lib/games/content";
-import { getGame, type GameId } from "@/lib/games/registry";
+import { GAME_IDS, getGame, type GameId } from "@/lib/games/registry";
 
 const written = Object.keys(GAME_CONTENT) as GameId[];
 
 describe("game content", () => {
-  it("exists for Hot Takes", () => {
-    expect(written).toContain("hot-takes");
+  it("exists for every game", () => {
+    expect([...written].sort()).toEqual([...GAME_IDS].sort());
   });
 
   it.each(written)("%s is between 400 and 800 words", (id) => {
-    const count = wordCount(GAME_CONTENT[id]!);
+    const count = wordCount(GAME_CONTENT[id]);
     expect(count).toBeGreaterThanOrEqual(400);
     expect(count).toBeLessThanOrEqual(800);
   });
 
   it.each(written)("%s has the required structure", (id) => {
-    const content = GAME_CONTENT[id]!;
+    const content = GAME_CONTENT[id];
     expect(content.angle).not.toBe("");
     expect(content.sections.length).toBeGreaterThanOrEqual(3);
     expect(content.sections.length).toBeLessThanOrEqual(5);
@@ -27,7 +27,7 @@ describe("game content", () => {
   });
 
   it.each(written)("%s has a title and description sized for search results", (id) => {
-    const content = GAME_CONTENT[id]!;
+    const content = GAME_CONTENT[id];
     expect(content.title).toContain(getGame(id).name.split(" ")[0]);
     expect(content.title.length).toBeLessThanOrEqual(60);
     expect(content.description.length).toBeGreaterThanOrEqual(70);
@@ -45,7 +45,7 @@ describe("game content", () => {
 describe("gameMetadata", () => {
   it("uses the content title and the canonical path", () => {
     const meta = gameMetadata("hot-takes");
-    expect(meta.title).toBe(GAME_CONTENT["hot-takes"]!.title);
+    expect(meta.title).toBe(GAME_CONTENT["hot-takes"].title);
     expect(meta.alternates?.canonical).toBe("/hot-takes");
   });
 });
@@ -53,7 +53,7 @@ describe("gameMetadata", () => {
 describe("buildFaqJsonLd", () => {
   it("builds a FAQPage with one entry per question", () => {
     const jsonLd = buildFaqJsonLd("hot-takes");
-    expect(jsonLd?.["@type"]).toBe("FAQPage");
-    expect(jsonLd?.mainEntity).toHaveLength(GAME_CONTENT["hot-takes"]!.faq.length);
+    expect(jsonLd["@type"]).toBe("FAQPage");
+    expect(jsonLd.mainEntity).toHaveLength(GAME_CONTENT["hot-takes"].faq.length);
   });
 });
