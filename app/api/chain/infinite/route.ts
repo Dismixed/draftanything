@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getRandomApprovedPuzzle } from "@/lib/chainlink/puzzle-service";
+import { getInfinitePuzzle } from "@/lib/chainlink/puzzle-service";
 
 export async function GET(req: NextRequest) {
   try {
@@ -8,11 +8,11 @@ export async function GET(req: NextRequest) {
     const difficulty = searchParams.get("difficulty") ?? undefined;
 
     const db = createAdminClient();
-    const puzzle = await getRandomApprovedPuzzle(db, { difficulty });
+    const puzzle = await getInfinitePuzzle(db, { difficulty });
 
     if (!puzzle) {
       return NextResponse.json(
-        { error: "No approved puzzles available" },
+        { error: "No puzzles available" },
         { status: 404 },
       );
     }

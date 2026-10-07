@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { dailyChainTag } from "@/lib/chainlink/daily-cache";
 import { getDailyPuzzle } from "@/lib/chainlink/puzzle-service";
 
 const ONE_DAY_SECONDS = 60 * 60 * 24;
@@ -14,7 +15,7 @@ function getCachedDailyPuzzle(today: string) {
     ["chainlink-daily", today],
     {
       revalidate: ONE_DAY_SECONDS,
-      tags: [`chainlink-daily-${today}`],
+      tags: [dailyChainTag(today)],
     },
   )();
 }

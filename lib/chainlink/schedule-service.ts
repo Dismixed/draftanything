@@ -231,3 +231,90 @@ export async function autoScheduleApprovedPuzzles(
     entries,
   };
 }
+
+/* ------------------------------------------------------------------ */
+/*  Lazy scheduler                                                     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Puts the best-fitting approved puzzle on the calendar for `date`, so a day
+ * nobody scheduled still gets reviewed content before anything is generated.
+ *
+ * Returns true when `date` now has a puzzle (ours, or a concurrent
+ * request's), false when no approved puzzle was available.
+ */
+export async function scheduleNextApprovedPuzzle(
+  db: SupabaseClient<Database>,
+  date: string,
+): Promise<boolean> {
+  const { data: approved, error: approvedError } = await db
+    .from("chain_puzzles")
+    .select("id, words, difficulty, score")
+    .eq("status", "approved")
+    .order("score", { ascending: false });
+  if (approvedError) {
+    throw new Error(`Failed to load approved puzzles: ${approvedError.message}`);
+  }
+
+  const { data: schedule, error: scheduleError } = await db
+    .from("daily_chain_puzzles")
+    .select("puzzle_id, publish_date");
+  if (scheduleError) {
+    throw new Error(`Failed to load schedule: ${scheduleError.message}`);
+  }
+
+  const scheduledIds = new Set((schedule ?? []).map((row) => row.puzzle_id));
+  const candidates: ScheduleCandidate[] = (approved ?? [])
+    .filter((puzzle) => !scheduledIds.has(puzzle.id))
+    .map((puzzle) => ({
+      id: puzzle.id,
+      startLetter: startLetterOf(puzzle.words),
+      difficulty: puzzle.difficulty,
+      score: puzzle.score,
+    }));
+  if (candidates.length === 0) return false;
+
+  // The dailies just before `date`, oldest first, for letter and difficulty spacing.
+  const recentIds = (schedule ?? [])
+    .filter((row) => row.publish_date < date)
+    .sort((a, b) => (a.publish_date < b.publish_date ? 1 : -1))
+    .slice(0, RECENT_LETTER_WINDOW)
+    .map((row) => row.puzzle_id)
+    .reverse();
+
+  let recentStartLetters: string[] = [];
+  let previousDifficulty: string | null = null;
+  if (recentIds.length > 0) {
+    const { data: recent, error: recentError } = await db
+      .from("chain_puzzles")
+      .select("id, words, difficulty")
+      .in("id", recentIds);
+    if (recentError) {
+      throw new Error(`Failed to load recent puzzles: ${recentError.message}`);
+    }
+    const byId = new Map((recent ?? []).map((puzzle) => [puzzle.id, puzzle]));
+    recentStartLetters = recentIds.map((id) => startLetterOf(byId.get(id)?.words));
+    previousDifficulty = byId.get(recentIds[recentIds.length - 1])?.difficulty ?? null;
+  }
+
+  const pick = pickNextCandidate(candidates, recentStartLetters, previousDifficulty);
+
+  const { error: insertError } = await db
+    .from("daily_chain_puzzles")
+    .insert({ publish_date: date, puzzle_id: pick.id });
+  // Lost a race: another request already claimed the date. Theirs stands.
+  if (insertError?.code === "23505") return true;
+  if (insertError) {
+    throw new Error(`Failed to schedule puzzle: ${insertError.message}`);
+  }
+
+  const { error: updateError } = await db
+    .from("chain_puzzles")
+    .update({ status: "scheduled", updated_at: new Date().toISOString() })
+    .eq("id", pick.id);
+  if (updateError) {
+    throw new Error(`Failed to update puzzle status: ${updateError.message}`);
+  }
+
+  return true;
+}
