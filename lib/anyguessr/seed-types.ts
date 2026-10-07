@@ -32,6 +32,9 @@ export const CLUE_DIFFICULTIES = ["easy", "medium", "hard"] as const;
 /** How hard a clue is to place, judged for a general audience. */
 export type ClueDifficulty = (typeof CLUE_DIFFICULTIES)[number];
 
+/** Longest fun fact the database accepts; the recap shows it in a few lines. */
+export const FUN_FACT_MAX_LENGTH = 280;
+
 export interface ImageCandidate {
   image_url: string;
   thumb_url?: string;
@@ -52,6 +55,10 @@ export interface SeedEntryRow {
   text_content: string | null;
   status: SeedEntryStatus;
   difficulty: ClueDifficulty | null;
+  /** A fact about what the clue shows, revealed after the round. */
+  fun_fact: string | null;
+  /** Players see a fact only after a person has reviewed it. */
+  fun_fact_reviewed: boolean;
   image_candidates: ImageCandidate[];
   selected_candidate_index: number;
   vision_pass: boolean | null;

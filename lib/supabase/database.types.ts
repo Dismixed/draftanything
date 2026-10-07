@@ -177,6 +177,8 @@ export type Database = {
           country_common: string
           created_at: string
           difficulty: string | null
+          fun_fact: string | null
+          fun_fact_reviewed: boolean
           id: string
           image_candidates: Json
           notes: string | null
@@ -195,6 +197,8 @@ export type Database = {
           country_common: string
           created_at?: string
           difficulty?: string | null
+          fun_fact?: string | null
+          fun_fact_reviewed?: boolean
           id?: string
           image_candidates?: Json
           notes?: string | null
@@ -213,6 +217,8 @@ export type Database = {
           country_common?: string
           created_at?: string
           difficulty?: string | null
+          fun_fact?: string | null
+          fun_fact_reviewed?: boolean
           id?: string
           image_candidates?: Json
           notes?: string | null

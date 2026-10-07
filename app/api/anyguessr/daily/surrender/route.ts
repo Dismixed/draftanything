@@ -5,7 +5,7 @@ import { MAX_DAILY_ROUNDS } from "@/lib/anyguessr/daily";
 
 export async function POST(req: NextRequest) {
   try {
-    let body: { puzzleId?: string; roundIndex?: number };
+    let body: { puzzleId?: string; roundIndex?: number; clueType?: unknown };
     try {
       body = await req.json();
     } catch {
@@ -26,7 +26,8 @@ export async function POST(req: NextRequest) {
     }
 
     const db = createAdminClient();
-    const result = await revealDailyRound(db, puzzleId, roundIndex);
+    const clueType = typeof body.clueType === "string" ? body.clueType : undefined;
+    const result = await revealDailyRound(db, puzzleId, roundIndex, clueType);
     return NextResponse.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";

@@ -1,6 +1,6 @@
 "use client";
 
-import { DAILY_CLUE_TYPE_LABEL, formatDistanceKm } from "@/lib/anyguessr/daily";
+import { DAILY_CLUE_TYPE_LABEL, DAILY_FACT_LABEL, formatDistanceKm } from "@/lib/anyguessr/daily";
 import type { DailyRoundRecap } from "@/lib/anyguessr/types";
 import { stampTone } from "./stamps";
 import WorldMap from "./world-map";
@@ -66,6 +66,13 @@ export default function RoundRecap({ recap, totalScore, onContinue }: Props) {
           <span>Total</span>
         </div>
       </div>
+
+      {recap.funFact && (
+        <p className="ag-recap-fact">
+          <b>{DAILY_FACT_LABEL[recap.clueType] ?? "Did you know"}</b>
+          {recap.funFact}
+        </p>
+      )}
 
       <button type="button" className="ag-cta" onClick={onContinue} autoFocus>
         {recap.isFinalRound ? "See results" : "Next round"}

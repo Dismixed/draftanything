@@ -79,6 +79,8 @@ async function main() {
     wiki_title: p.wiki_title ?? null,
     text_content: p.clue_type === "person" && p.wiki_title ? personDisplayName(p.wiki_title, p.country) : (p.text ?? null),
     difficulty: p.difficulty,
+    // A new subject never keeps the old subject's fact; a person reviews the proposed one.
+    fun_fact: p.fun_fact?.trim() || null,
     notes: [p.note, p.language && `${p.language}: "${p.english}"`].filter(Boolean).join(" | ") || null,
     // A language clue has no image to wait for.
     status: p.clue_type === "written_language" ? ("needs_review" as const) : ("draft" as const),

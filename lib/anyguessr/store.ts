@@ -237,6 +237,7 @@ export const useAnyGuessrStore = create<AnyGuessrStore>()(
             roundScore: res.roundScore,
             exact: res.exact,
             flagUrl: res.flagUrl ?? undefined,
+            funFact: res.funFact,
             answerLat: res.answerLat,
             answerLng: res.answerLng,
             guessLat: res.guessLat,
@@ -300,6 +301,7 @@ export const useAnyGuessrStore = create<AnyGuessrStore>()(
             body: JSON.stringify({
               puzzleId: activeRound.puzzleId,
               roundIndex: get().currentRound,
+              clueType: activeRound.clueType,
             }),
           });
           if (!r.ok) {
@@ -342,6 +344,7 @@ export const useAnyGuessrStore = create<AnyGuessrStore>()(
             exact: false,
             surrendered: true,
             flagUrl: res.flagUrl ?? undefined,
+            funFact: res.funFact,
             answerLat: res.answerLat,
             answerLng: res.answerLng,
             guessLat: null,

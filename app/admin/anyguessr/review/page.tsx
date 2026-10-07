@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { reviewWarnings } from "@/lib/anyguessr/review";
-import { CLUE_DIFFICULTIES, type ClueDifficulty } from "@/lib/anyguessr/seed-types";
+import { CLUE_DIFFICULTIES, FUN_FACT_MAX_LENGTH, type ClueDifficulty } from "@/lib/anyguessr/seed-types";
 
 interface ReviewEntry {
   id: string;
@@ -14,6 +14,8 @@ interface ReviewEntry {
   text_content: string | null;
   status: string;
   difficulty: ClueDifficulty | null;
+  fun_fact: string | null;
+  fun_fact_reviewed: boolean;
   image_candidates: Array<{ image_url: string; thumb_url?: string }>;
   selected_candidate_index: number;
   notes: string | null;
@@ -53,6 +55,7 @@ export default function AnyGuessrReviewPage() {
   const [clueType, setClueType] = useState("");
   const [search, setSearch] = useState("");
   const [warningsOnly, setWarningsOnly] = useState(false);
+  const [factsOnly, setFactsOnly] = useState(false);
   const [page, setPage] = useState(0);
   const [bulkArmed, setBulkArmed] = useState(false);
 
@@ -115,7 +118,7 @@ export default function AnyGuessrReviewPage() {
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
     return inScope
-      .filter((e) => !status || e.status === status)
+      .filter((e) => (factsOnly ? !!e.fun_fact && !e.fun_fact_reviewed : !status || e.status === status))
       .filter((e) => !clueType || e.clue_type === clueType)
       .filter((e) => !needle || `${e.country_common} ${e.wiki_title ?? ""} ${e.text_content ?? ""}`.toLowerCase().includes(needle))
       .filter((e) => !warningsOnly || reviewWarnings(e).length > 0)
@@ -124,7 +127,7 @@ export default function AnyGuessrReviewPage() {
           REVIEW_TYPES.indexOf(a.clue_type) - REVIEW_TYPES.indexOf(b.clue_type) ||
           a.country_common.localeCompare(b.country_common),
       );
-  }, [inScope, status, clueType, search, warningsOnly]);
+  }, [inScope, status, clueType, search, warningsOnly, factsOnly]);
 
   /** Any filter change returns to the first page and disarms bulk approve. */
   function filterBy(apply: () => void) {
@@ -204,6 +207,14 @@ export default function AnyGuessrReviewPage() {
         <label style={{ display: "flex", gap: "6px", alignItems: "center", fontSize: "13px", color: "#c7c7cc" }}>
           <input type="checkbox" checked={warningsOnly} onChange={(e) => filterBy(() => setWarningsOnly(e.target.checked))} />
           Only clues with warnings
+        </label>
+        <label style={{ display: "flex", gap: "6px", alignItems: "center", fontSize: "13px", color: "#c7c7cc" }}>
+          <input
+            type="checkbox"
+            checked={factsOnly}
+            onChange={(e) => filterBy(() => setFactsOnly(e.target.checked))}
+          />
+          Only facts awaiting review ({inScope.filter((e) => !!e.fun_fact && !e.fun_fact_reviewed).length})
         </label>
         <span style={{ marginLeft: "auto", fontSize: "13px", color: "#9aa0a6" }}>
           {filtered.length} clue{filtered.length === 1 ? "" : "s"}
@@ -312,6 +323,8 @@ function ClueCard({
           </p>
         ))}
 
+        <FactEditor entry={entry} onPatch={onPatch} />
+
         <div style={{ display: "flex", gap: "4px", marginTop: "10px" }}>
           {CLUE_DIFFICULTIES.map((difficulty) => (
             <button
@@ -335,6 +348,60 @@ function ClueCard({
         </div>
       </div>
     </article>
+  );
+}
+
+/** The fact shown to players after this clue's round. It is about the clue's subject, so check it against the title above. */
+function FactEditor({
+  entry,
+  onPatch,
+}: {
+  entry: ReviewEntry;
+  onPatch: (id: string, change: Partial<ReviewEntry>) => Promise<void>;
+}) {
+  const saved = entry.fun_fact ?? "";
+  const [draft, setDraft] = useState(saved);
+  const text = draft.trim();
+  const unchanged = text === saved;
+  const state = !saved ? "No fact yet" : entry.fun_fact_reviewed ? "Reviewed, shown to players" : "Awaiting review, not shown";
+
+  return (
+    <div style={{ marginTop: "10px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#9aa0a6", marginBottom: "4px" }}>
+        <span>Fun fact</span>
+        <span style={{ color: saved && entry.fun_fact_reviewed ? "#6aaa64" : "#c9b458" }}>{state}</span>
+      </div>
+      <textarea
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        maxLength={FUN_FACT_MAX_LENGTH}
+        rows={3}
+        aria-label={`Fun fact for ${entry.country_common} ${TYPE_LABELS[entry.clue_type] ?? entry.clue_type}`}
+        placeholder="One sentence about what the clue shows, shown after the round."
+        style={{ ...control, width: "100%", resize: "vertical", fontSize: "13px", lineHeight: 1.4 }}
+      />
+      <div style={{ display: "flex", gap: "6px", marginTop: "4px" }}>
+        <button
+          type="button"
+          disabled={!text || (unchanged && entry.fun_fact_reviewed)}
+          onClick={() => void onPatch(entry.id, { fun_fact: text, fun_fact_reviewed: true })}
+          style={{ ...button, flex: 1, padding: "5px 8px", fontSize: "13px", borderColor: "#6aaa64", color: "#6aaa64", opacity: !text || (unchanged && entry.fun_fact_reviewed) ? 0.5 : 1 }}
+        >
+          {unchanged ? "Approve fact" : "Save and approve"}
+        </button>
+        <button
+          type="button"
+          disabled={!saved}
+          onClick={() => {
+            setDraft("");
+            void onPatch(entry.id, { fun_fact: null, fun_fact_reviewed: false });
+          }}
+          style={{ ...button, padding: "5px 8px", fontSize: "13px", borderColor: "#5a2c2c", color: "#ff6b6b", opacity: saved ? 1 : 0.5 }}
+        >
+          Remove
+        </button>
+      </div>
+    </div>
   );
 }
 

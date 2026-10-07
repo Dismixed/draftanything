@@ -166,6 +166,8 @@ export interface DailyRoundRecap {
   exact: boolean;
   surrendered?: boolean;
   flagUrl?: string;
+  /** About what the clue showed, when a reviewed fact exists. */
+  funFact?: string | null;
   answerLat: number;
   answerLng: number;
   guessLat: number | null;

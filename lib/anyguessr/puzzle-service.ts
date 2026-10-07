@@ -20,6 +20,7 @@ import { LINEUP_ROUNDS, pickLineup, type LineupClue, type LineupDay, type Lineup
 import { expandAltAnswers, resolveAliasToCca3 } from "./country-aliases";
 import { getLatLngForCca3, haversineKm, resolveGuessToCca3 } from "./geo";
 import { looseEqual } from "./normalize";
+import { funFactForClue, type FunFactSource } from "./fun-fact";
 
 /* ------------------------------------------------------------------ */
 /*  Row shape returned by Supabase                                     */
@@ -228,11 +229,37 @@ export async function getDailyPuzzle(
 /*  Guess validation                                                   */
 /* ------------------------------------------------------------------ */
 
+/**
+ * The reviewed fact about the clue the player just saw, or null. A fact is garnish, so a failed
+ * lookup must never fail the guess.
+ */
+async function loadClueFunFact(
+  db: SupabaseClient<Database>,
+  cca3: string,
+  clueType: string | undefined,
+  clues: unknown,
+): Promise<string | null> {
+  if (!clueType || !Array.isArray(clues)) return null;
+  const clue = (clues as Clue[]).find((c) => c.type === clueType);
+  if (!clue) return null;
+
+  const { data } = await db
+    .from("ag_seed_entries")
+    .select("clue_type, wiki_title, text_content, fun_fact, fun_fact_reviewed")
+    .eq("cca3", cca3)
+    .eq("clue_type", clueType)
+    .eq("fun_fact_reviewed", true)
+    .maybeSingle();
+
+  return funFactForClue(data as FunFactSource | null, clue);
+}
+
 export async function validateDailyGuess(
   db: SupabaseClient<Database>,
   puzzleId: string,
   guess: string,
   roundIndex: number,
+  clueType?: string,
 ): Promise<DailyGuessResult> {
   if (roundIndex < 0 || roundIndex >= MAX_DAILY_ROUNDS) {
     throw new Error("Invalid round index");
@@ -240,7 +267,7 @@ export async function validateDailyGuess(
 
   const { data: puzzle, error } = await db
     .from("ag_puzzles")
-    .select("id, answer, answer_id, alt_answers, metadata, flag_url")
+    .select("id, answer, answer_id, alt_answers, metadata, flag_url, clues")
     .eq("id", puzzleId)
     .single();
 
@@ -252,6 +279,7 @@ export async function validateDailyGuess(
     alt_answers: string[] | null;
     metadata: Record<string, unknown> | null;
     flag_url: string | null;
+    clues: unknown;
   };
 
   const answerCca3 = row.answer_id;
@@ -287,7 +315,7 @@ export async function validateDailyGuess(
     distanceKm,
     roundScore,
     completed,
-    funFact: null,
+    funFact: await loadClueFunFact(db, answerCca3, clueType, row.clues),
     flagUrl: row.flag_url,
     answerLat: answerCoords?.[0] ?? 0,
     answerLng: answerCoords?.[1] ?? 0,
@@ -302,6 +330,7 @@ export async function revealDailyRound(
   db: SupabaseClient<Database>,
   puzzleId: string,
   roundIndex: number,
+  clueType?: string,
 ): Promise<DailyGuessResult> {
   if (roundIndex < 0 || roundIndex >= MAX_DAILY_ROUNDS) {
     throw new Error("Invalid round index");
@@ -309,7 +338,7 @@ export async function revealDailyRound(
 
   const { data: puzzle, error } = await db
     .from("ag_puzzles")
-    .select("id, answer, answer_id, alt_answers, metadata, flag_url")
+    .select("id, answer, answer_id, alt_answers, metadata, flag_url, clues")
     .eq("id", puzzleId)
     .single();
 
@@ -321,6 +350,7 @@ export async function revealDailyRound(
     alt_answers: string[] | null;
     metadata: Record<string, unknown> | null;
     flag_url: string | null;
+    clues: unknown;
   };
 
   const answerCca3 = row.answer_id;
@@ -336,8 +366,7 @@ export async function revealDailyRound(
     distanceKm: 20_000,
     roundScore: 0,
     completed,
-    funFact:
-      (row.metadata?.fun_fact as string | undefined) ?? null,
+    funFact: await loadClueFunFact(db, answerCca3, clueType, row.clues),
     flagUrl: row.flag_url,
     answerLat: answerCoords?.[0] ?? 0,
     answerLng: answerCoords?.[1] ?? 0,

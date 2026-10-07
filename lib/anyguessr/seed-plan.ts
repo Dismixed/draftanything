@@ -7,6 +7,8 @@ export interface ClueProposal {
   clue_type: string;
   difficulty: ClueDifficulty;
   note: string;
+  /** One sentence about what the clue shows (the dish, the animal), for a reviewer to approve. */
+  fun_fact?: string;
   /** Image clues: the English Wikipedia article. */
   wiki_title?: string;
   /** Language clues: the phrase, its language and a translation. */

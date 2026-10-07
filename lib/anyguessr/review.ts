@@ -28,7 +28,7 @@ export function reviewWarnings(entry: {
 
 /** Columns the review page needs; `vision_notes` alone is a sixth of the full payload. */
 export const REVIEW_COLUMNS =
-  "id, cca3, country_common, clue_type, wiki_title, text_content, status, difficulty, image_candidates, selected_candidate_index, notes";
+  "id, cca3, country_common, clue_type, wiki_title, text_content, status, difficulty, fun_fact, fun_fact_reviewed, image_candidates, selected_candidate_index, notes";
 
 /** A seed entry cut down to what a review card shows. */
 export function toReviewEntry(row: Record<string, unknown>) {
@@ -42,6 +42,8 @@ export function toReviewEntry(row: Record<string, unknown>) {
     text_content: (row.text_content as string | null) ?? null,
     status: row.status as string,
     difficulty: (row.difficulty as string | null) ?? null,
+    fun_fact: (row.fun_fact as string | null) ?? null,
+    fun_fact_reviewed: (row.fun_fact_reviewed as boolean | null) ?? false,
     selected_candidate_index: (row.selected_candidate_index as number | null) ?? 0,
     notes: (row.notes as string | null) ?? null,
     image_candidates: candidates.map((c: { image_url: string; thumb_url?: string }) => ({

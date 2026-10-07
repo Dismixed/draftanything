@@ -2,7 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkAdmin } from "@/lib/chainlink/admin-guard";
 import { getSeedEntry, updateSeedEntry } from "@/lib/anyguessr/seed-db";
-import { CLUE_DIFFICULTIES, type SeedEntryStatus } from "@/lib/anyguessr/seed-types";
+import { CLUE_DIFFICULTIES, FUN_FACT_MAX_LENGTH, type SeedEntryStatus } from "@/lib/anyguessr/seed-types";
+
+/** A new fact text is unreviewed unless the caller says a person has just reviewed it. */
+function funFactChange(body: { fun_fact?: unknown; fun_fact_reviewed?: unknown }) {
+  const reviewed = typeof body.fun_fact_reviewed === "boolean" ? body.fun_fact_reviewed : undefined;
+  if (body.fun_fact === undefined) return reviewed === undefined ? {} : { fun_fact_reviewed: reviewed };
+  if (body.fun_fact !== null && typeof body.fun_fact !== "string") return null;
+
+  const text = body.fun_fact === null ? "" : body.fun_fact.trim();
+  if (text.length > FUN_FACT_MAX_LENGTH) return null;
+  if (!text) return { fun_fact: null, fun_fact_reviewed: false };
+  return { fun_fact: text, fun_fact_reviewed: reviewed ?? false };
+}
 
 export async function GET(
   _req: NextRequest,
@@ -33,6 +45,10 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await req.json();
+    const fact = funFactChange(body);
+    if (!fact) {
+      return NextResponse.json({ error: `fun_fact must be text of at most ${FUN_FACT_MAX_LENGTH} characters` }, { status: 400 });
+    }
     const db = createAdminClient();
 
     const entry = await updateSeedEntry(db, id, {
@@ -40,6 +56,7 @@ export async function PATCH(
       text_content: body.text_content,
       status: body.status as SeedEntryStatus | undefined,
       difficulty: CLUE_DIFFICULTIES.includes(body.difficulty) ? body.difficulty : undefined,
+      ...fact,
       image_candidates: body.image_candidates,
       selected_candidate_index: body.selected_candidate_index,
       vision_pass: body.vision_pass,

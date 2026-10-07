@@ -36,6 +36,8 @@ function rowToSeedEntry(row: Record<string, unknown>): SeedEntryRow {
     text_content: (row.text_content as string | null) ?? null,
     status: row.status as SeedEntryStatus,
     difficulty: (row.difficulty as ClueDifficulty | null | undefined) ?? null,
+    fun_fact: (row.fun_fact as string | null | undefined) ?? null,
+    fun_fact_reviewed: (row.fun_fact_reviewed as boolean | undefined) ?? false,
     image_candidates: parseCandidates(row.image_candidates),
     selected_candidate_index: (row.selected_candidate_index as number) ?? 0,
     vision_pass: (row.vision_pass as boolean | null) ?? null,
@@ -89,6 +91,8 @@ export async function updateSeedEntry(
     text_content: string | null;
     status: SeedEntryStatus;
     difficulty: ClueDifficulty | null;
+    fun_fact: string | null;
+    fun_fact_reviewed: boolean;
     image_candidates: ImageCandidate[];
     selected_candidate_index: number;
     vision_pass: boolean | null;
@@ -96,10 +100,13 @@ export async function updateSeedEntry(
     notes: string | null;
   }>,
 ): Promise<SeedEntryRow> {
+  // New fact text has not been reviewed, whatever the old text was.
+  const unreviewed = patch.fun_fact !== undefined && patch.fun_fact_reviewed === undefined;
   const { data, error } = await db
     .from("ag_seed_entries")
     .update({
       ...patch,
+      ...(unreviewed ? { fun_fact_reviewed: false } : {}),
       image_candidates: patch.image_candidates as unknown as Json | undefined,
       updated_at: new Date().toISOString(),
     })
@@ -121,6 +128,8 @@ export async function upsertSeedEntry(
     text_content?: string | null;
     status?: SeedEntryStatus;
     difficulty?: ClueDifficulty | null;
+    /** Leave undefined to keep the stored fact; a new fact starts unreviewed. */
+    fun_fact?: string | null;
     image_candidates?: ImageCandidate[];
     selected_candidate_index?: number;
     vision_pass?: boolean | null;
@@ -140,6 +149,7 @@ export async function upsertSeedEntry(
         text_content: entry.text_content ?? null,
         status: entry.status ?? "draft",
         difficulty: entry.difficulty ?? null,
+        ...(entry.fun_fact !== undefined ? { fun_fact: entry.fun_fact, fun_fact_reviewed: false } : {}),
         image_candidates: (entry.image_candidates ?? []) as unknown as Json,
         selected_candidate_index: entry.selected_candidate_index ?? 0,
         vision_pass: entry.vision_pass ?? null,

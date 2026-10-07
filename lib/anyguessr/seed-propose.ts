@@ -20,6 +20,7 @@ const ProposalSchema = z.object({
       clue_type: ClueTypeEnum,
       wiki_title: z.string().nullable(),
       text_content: z.string().nullable(),
+      fun_fact: z.string().nullable(),
       notes: z.string().nullable().optional(),
     }),
   ),
@@ -29,6 +30,7 @@ export interface ProposedSeedEntry {
   clue_type: SeedClueType;
   wiki_title: string | null;
   text_content: string | null;
+  fun_fact: string | null;
   notes?: string | null;
 }
 
@@ -48,6 +50,8 @@ export async function proposeSeedEntriesWithLlm(options: {
       "For written_language return a short native script sample or greeting in text_content (not wiki_title).",
       "For brand pick a company strongly associated with the country, not a global multinational.",
       "For wildlife pick the national animal, an endemic species, or the most iconic wild animal with a strong Wikipedia lead photo.",
+      "For every entry also return fun_fact: one sentence of at most 200 characters about the specific thing the clue shows (the landmark, dish, person, brand, animal or language), not the country in general.",
+      "Only state a fun_fact you are certain is true; return null when unsure.",
       "Return exactly one entry per clue type.",
     ].join(" "),
     userPrompt: JSON.stringify(options, null, 2),
