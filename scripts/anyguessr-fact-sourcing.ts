@@ -19,7 +19,7 @@
  * Usage:
  *   npx tsx scripts/anyguessr-fact-sourcing.ts draft  [--out=data/anyguessr/facts-2026-10.json] [--limit=N] [--type=food] [--retry]
  *   npx tsx scripts/anyguessr-fact-sourcing.ts report [--out=...]
- *   npx tsx scripts/anyguessr-fact-sourcing.ts import [--out=...] [--overwrite]
+ *   npx tsx scripts/anyguessr-fact-sourcing.ts import [--out=...] [--overwrite] [--dry-run]
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -145,8 +145,9 @@ async function importVerified() {
   const db = await connect();
   const { getSeedEntry, updateSeedEntry } = await import("../lib/anyguessr/seed-db");
 
+  const dryRun = has("dry-run");
   const probe = await db.from("ag_seed_entries").select("fun_fact").limit(1);
-  if (probe.error) throw new Error(`ag_seed_entries has no fun_fact column yet; apply the migration first (${probe.error.message})`);
+  if (probe.error && !dryRun) throw new Error(`ag_seed_entries has no fun_fact column yet; apply the migration first (${probe.error.message})`);
 
   const verified = readRecords().filter((r) => r.verdict === "verified" && r.fun_fact && r.source_url && r.evidence);
   let imported = 0;
@@ -160,6 +161,10 @@ async function importVerified() {
       skipped++;
       continue;
     }
+    if (dryRun) {
+      imported++;
+      continue;
+    }
     await updateSeedEntry(db, entry.id, {
       fun_fact: record.fun_fact,
       fun_fact_source_url: record.source_url,
@@ -168,6 +173,10 @@ async function importVerified() {
     imported++;
   }
 
+  if (dryRun) {
+    console.log(`Dry run: would import ${imported} verified facts; would skip ${skipped} (clue changed since sourcing, or already has a fact).${probe.error ? " The fun_fact column does not exist yet." : ""}`);
+    return;
+  }
   console.log(`Imported ${imported} facts as unreviewed; skipped ${skipped}. Approve them on /admin/anyguessr/review (Only facts awaiting review).`);
 }
 
