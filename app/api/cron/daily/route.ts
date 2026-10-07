@@ -10,7 +10,10 @@ import {
   countUnscheduledApproved as freezeFramesQueue,
   scheduleDailyPuzzle as scheduleFreezeFrames,
 } from "@/lib/freezeframes/schedule-service";
-import { scheduleDailyPuzzle as scheduleGettingWarmer } from "@/lib/getting-warmer/schedule-service";
+import {
+  countUnusedApproved as gettingWarmerQueue,
+  scheduleDailyPuzzle as scheduleGettingWarmer,
+} from "@/lib/getting-warmer/schedule-service";
 import { scheduleDailyCategory as scheduleHotTakes } from "@/lib/hot-takes/schedule-service";
 
 export const maxDuration = 300;
@@ -28,8 +31,9 @@ const LOW_QUEUE_DAYS = 7;
  * Games that pick their daily from a stored pool have today's and tomorrow's
  * rows created here, so no visitor triggers the pick. Chain Link is topped up
  * a week ahead because its chains are generated and LLM-checked. Brain Dead's
- * question sets are fetched and stored a day ahead. FreezeFrames reports how
- * many unused days of content remain and is flagged when that runs low.
+ * question sets are fetched and stored a day ahead. FreezeFrames and Getting
+ * Warmer report how many unused days of content remain and are flagged when
+ * that runs low; both recycle old puzzles, so a low queue is a warning only.
  *
  * Security: requires `Authorization: Bearer $CRON_SECRET`.
  */
@@ -73,7 +77,10 @@ export async function GET(request: Request) {
       const scheduled = await todayAndTomorrow((date) => scheduleFreezeFrames(db, date))();
       return { bundled, ...scheduled, ...queueDepth("freezeframes", await freezeFramesQueue(db)) };
     },
-    "getting-warmer": todayAndTomorrow((date) => scheduleGettingWarmer(db, date)),
+    "getting-warmer": async () => {
+      const scheduled = await todayAndTomorrow((date) => scheduleGettingWarmer(db, date))();
+      return { ...scheduled, ...queueDepth("getting-warmer", await gettingWarmerQueue(db, tomorrow)) };
+    },
     "ball-knowledge": todayAndTomorrow((date) => scheduleBallKnowledge(db, date)),
     "hot-takes": todayAndTomorrow((date) => scheduleHotTakes(db, date)),
     "brain-dead": todayAndTomorrow(async (date) => (await buildBrainDead(db, date)).length),
