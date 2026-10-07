@@ -19,17 +19,8 @@ export default function FreeplayGame({
     CATEGORIES.find((c) => c.id === categoryId)?.name ?? "Random Mix";
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "var(--bd-bg)",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        padding: "32px 20px 64px",
-      }}
-    >
-      <div style={{ width: "100%", maxWidth: "480px", position: "relative", zIndex: 1 }}>
+    <main className="bd-page">
+      <div className="bd-col">
         <BrainDeadGame
           mode="freeplay"
           category={categoryId}

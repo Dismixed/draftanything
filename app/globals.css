@@ -619,14 +619,6 @@ body {
     padding-bottom: max(48px, env(safe-area-inset-bottom)) !important;
   }
 
-  .bd-answers {
-    grid-template-columns: 1fr !important;
-  }
-
-  .bd-question-card {
-    padding: 24px 18px 20px !important;
-  }
-
   .bd-leaderboard-title {
     font-size: clamp(1.75rem, 8vw, 2.5rem) !important;
   }
