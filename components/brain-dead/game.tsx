@@ -838,7 +838,7 @@ export default function BrainDeadGame({
           <>
             <ShareResult
               gameId="brain-dead"
-              text={brainDeadShare(correct, score, shareDate())}
+              text={brainDeadShare(correct, score, shareDate(), questions.length || 15)}
             />
             <OtherDailies currentGameId="brain-dead" />
           </>

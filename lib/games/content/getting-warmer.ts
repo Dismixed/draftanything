@@ -12,7 +12,7 @@ export const gettingWarmer: GameContent = {
       heading: "How to play",
       body: [
         "Each day there is one secret answer. It might be a single word or a short phrase. You begin with two clues that point towards it.",
-        "Type a guess. If you are right, you are done. If you are wrong, a new clue appears and you try again. There is no limit on guesses, so you cannot be knocked out.",
+        "Type a guess. If you are right, you are done. If you are wrong, a new clue appears and you try again. There is no limit on guesses. You can give up if you want to see the answer, but the game will not end your run for you.",
         "The aim is to solve it in as few guesses as you can. Your result is your guess count, and the daily leaderboard ranks players by fewest guesses.",
       ],
     },

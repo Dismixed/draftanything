@@ -841,7 +841,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                   <WinStreakLine gameId="chainlink" accentColor="var(--cl-green)" />
                   <ShareResult
                     gameId="chainlink"
-                    text={chainLinkShare(wordStatuses, wordAttempts, shareDate())}
+                    text={chainLinkShare(wordStatuses, wordAttempts, revealedLetters, shareDate())}
                   />
                   <OtherDailies currentGameId="chainlink" />
                 </div>
@@ -970,7 +970,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
                   <WinStreakLine gameId="chainlink" accentColor="var(--cl-green)" />
                   <ShareResult
                     gameId="chainlink"
-                    text={chainLinkShare(wordStatuses, wordAttempts, shareDate())}
+                    text={chainLinkShare(wordStatuses, wordAttempts, revealedLetters, shareDate())}
                   />
                   <OtherDailies currentGameId="chainlink" />
                 </div>

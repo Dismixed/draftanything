@@ -6,14 +6,14 @@ export const brainDead: GameContent = {
   description:
     "A free daily trivia game with fifteen questions that get harder as you go. One wrong answer ends your run. Play in your browser, no account needed.",
   intro:
-    "Brain Dead is a daily trivia game with one rule that changes everything: one wrong answer ends your run. There are fifteen questions a day, and most people do not see all of them.",
+    "Brain Dead is a daily trivia game with one rule that changes everything: one wrong answer ends your run. There are fifteen questions a day, and getting through all of them takes a clean run.",
   sections: [
     {
       heading: "How to play",
       body: [
         "Every day there is a set of fifteen questions, and it is the same set for every player. Questions come one at a time, each with a timer.",
         "Choose your answer before the time runs out. Get it right and you move to the next question. Get it wrong, or let the clock run down, and the run is over on the spot.",
-        "You get one daily run. When it ends, your score is posted and you can see how far you got. A fresh set of fifteen arrives the next day.",
+        "You get one daily run. When it ends, you see your score and how far you got, and you can add it to the leaderboard. A fresh set of fifteen arrives the next day.",
       ],
     },
     {

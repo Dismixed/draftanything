@@ -17,6 +17,7 @@ describe("per-game share text", () => {
     const text = chainLinkShare(
       ["solved", "solved", "solved", "active", "locked"],
       [[], ["ball"], ["pork", "park"], ["x"], []],
+      [[], [], [false, true], [], []],
       DATE,
     );
     expect(lines(text)).toEqual([
@@ -25,6 +26,22 @@ describe("per-game share text", () => {
       "https://stimgames.com/chainlink?ref=share",
     ]);
     expect(text.toLowerCase()).not.toContain("ball");
+  });
+
+  it("Chain Link never shows green for a word the player was given", () => {
+    // Word 1: every letter revealed by hints, no guess typed. Word 2: one wrong guess revealed
+    // the last letter, which solves the word automatically.
+    const text = chainLinkShare(
+      ["solved", "solved", "solved"],
+      [[], [], ["pork"]],
+      [[], [false, true, true, true], [false, true, true, true]],
+      DATE,
+    );
+    expect(lines(text)[1]).toBe("🟨🟨");
+  });
+
+  it("Brain Dead uses the real question count when it is known", () => {
+    expect(lines(brainDeadShare(12, 5000, DATE, 12)).slice(1, 3)).toEqual(["12 of 12 · 5,000 pts", "✅".repeat(12)]);
   });
 
   it("Brain Dead shows the count, the score and where the run ended", () => {

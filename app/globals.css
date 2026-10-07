@@ -1463,6 +1463,9 @@ html[data-theme="light"] .od-preview-tile {
 /* ── Game about (shared section below each game) ─────────────────── */
 
 .game-about {
+  /* Secondary text is mixed from the game's own text and page colours. The games' "muted"
+     tokens are too faint for body-size copy in several themes. */
+  --ga-soft: color-mix(in srgb, var(--ga-text, var(--text)) 78%, var(--ga-page, var(--bg)));
   background: var(--ga-page, var(--bg));
   color: var(--ga-text, var(--text));
   border-top: 1px solid var(--ga-border, var(--border));
@@ -1483,7 +1486,7 @@ html[data-theme="light"] .od-preview-tile {
   font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--ga-muted, var(--text-dim));
+  color: var(--ga-soft);
   margin: 32px 0 12px;
 }
 .game-about-intro {
@@ -1503,7 +1506,7 @@ html[data-theme="light"] .od-preview-tile {
 .game-about details p {
   font-size: 15px;
   line-height: 1.6;
-  color: var(--ga-muted, var(--text-dim));
+  color: var(--ga-soft);
   margin: 8px 0 0;
 }
 .game-about-more {
@@ -1548,4 +1551,22 @@ html[data-theme="light"] .od-preview-tile {
 }
 .share-result:hover {
   opacity: 0.8;
+}
+.share-result-manual {
+  display: grid;
+  gap: 6px;
+  max-width: 340px;
+  margin: 0 0 12px;
+  font: 400 13px "Outfit", system-ui, sans-serif;
+  color: inherit;
+}
+.share-result-manual textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  font: 400 13px ui-monospace, monospace;
+  resize: none;
 }

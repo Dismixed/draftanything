@@ -28,7 +28,7 @@ export const anyguessr: GameContent = {
       heading: "How scoring works",
       body: [
         "Each round is worth up to 100 points, for a possible 1,000 across the day. Pick the right country and you get the full 100.",
-        "A wrong pick is not a zero. Points depend on how far your guess is from the answer, so a nearby country still earns partial credit, and the further away you are the less you get.",
+        "A wrong pick is not automatically a zero. Points depend on how far your guess is from the answer, so a nearby country still earns partial credit, and the further away you are the less you get. A guess on the far side of the world earns almost nothing.",
       ],
     },
     {

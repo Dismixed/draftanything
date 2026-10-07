@@ -2,15 +2,22 @@ import { buildShareText, formatShareDate, squares } from "@/lib/share/share-text
 
 const points = (n: number) => `${n.toLocaleString("en-US")} pts`;
 
-/** One square per link after the given first word. Words themselves are never shared. */
+/**
+ * One square per link after the given first word. Words themselves are never shared.
+ * Green means the player typed the word first time with no letters revealed for it.
+ */
 export function chainLinkShare(
   wordStatuses: readonly string[],
   wordAttempts: readonly (readonly string[] | undefined)[],
+  revealedLetters: readonly (readonly boolean[] | undefined)[],
   date: string,
 ): string {
   const marks = wordStatuses.slice(1).map((status, i) => {
+    const index = i + 1;
     if (status !== "solved") return "bad" as const;
-    return (wordAttempts[i + 1]?.length ?? 1) <= 1 ? ("good" as const) : ("ok" as const);
+    const guessedFirstTime = wordAttempts[index]?.length === 1;
+    const hadHelp = revealedLetters[index]?.some(Boolean) ?? false;
+    return guessedFirstTime && !hadHelp ? ("good" as const) : ("ok" as const);
   });
   return buildShareText({ gameId: "chainlink", label: formatShareDate(date), lines: [squares(marks)] });
 }

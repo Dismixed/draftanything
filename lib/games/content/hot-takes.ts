@@ -13,7 +13,7 @@ export const hotTakes: GameContent = {
       body: [
         "Each day's puzzle is a single category, such as a type of food, a set of films or a list of everyday objects, with fifteen items in it. All fifteen start in a tray at the bottom of the screen.",
         "Move every item into one of five tiers: S, A, B, C or D. S is the top tier, for the items you would defend to anyone. D is the bottom. You can drag an item into a tier, or tap the item and then tap the tier you want.",
-        "Nothing is final while you are sorting. Move items between tiers, or back to the tray, as often as you like. When the tray is empty, the Lock in my ranking button becomes active. Once you lock in, the ranking cannot be changed.",
+        "Nothing is final while you are sorting. Move items between tiers, or back to the tray, as often as you like. When the tray is empty, the Lock in my ranking button becomes active. Locking in ends the sorting and shows your finished list.",
       ],
     },
     {
@@ -58,7 +58,7 @@ export const hotTakes: GameContent = {
     {
       question: "Can I change my ranking after I lock it in?",
       answer:
-        "No. Locking in is final for that day's category. Until then you can move any item as many times as you like.",
+        "Not within the same session. Locking in ends the sorting and shows your finished list. Until then you can move any item as many times as you like.",
     },
     {
       question: "How many items go in each tier?",

@@ -57,4 +57,43 @@ describe("ShareResult", () => {
 
     expect(track).not.toHaveBeenCalled();
   });
+
+  it("copies instead when the share sheet is refused", async () => {
+    const user = userEvent.setup();
+    setPointer(true);
+    const share = vi.fn().mockRejectedValue(new DOMException("not allowed", "NotAllowedError"));
+    Object.defineProperty(navigator, "share", { value: share, configurable: true });
+    const writeText = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
+    render(<ShareResult gameId="chainlink" text="Chain Link · Oct 6" />);
+
+    await user.click(screen.getByRole("button", { name: "Share result" }));
+
+    expect(writeText).toHaveBeenCalledWith("Chain Link · Oct 6");
+    expect(await screen.findByText("Copied")).toBeInTheDocument();
+    expect(track).toHaveBeenCalledWith("result_shared", { game: "chainlink", method: "copy" });
+  });
+
+  it("shows the text to copy by hand when the clipboard is unavailable", async () => {
+    const user = userEvent.setup();
+    setPointer(false);
+    vi.spyOn(navigator.clipboard, "writeText").mockRejectedValue(new Error("denied"));
+    render(<ShareResult gameId="chainlink" text="Chain Link · Oct 6" />);
+
+    await user.click(screen.getByRole("button", { name: "Share result" }));
+
+    expect(await screen.findByText(/select and copy/i)).toBeInTheDocument();
+    expect(screen.getByRole("textbox")).toHaveValue("Chain Link · Oct 6");
+    expect(track).not.toHaveBeenCalled();
+  });
+
+  it("announces the copy to screen readers", async () => {
+    const user = userEvent.setup();
+    setPointer(false);
+    vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
+    render(<ShareResult gameId="chainlink" text="x" />);
+
+    await user.click(screen.getByRole("button", { name: "Share result" }));
+
+    expect(await screen.findByRole("button", { name: "Copied" })).toBeInTheDocument();
+  });
 });
