@@ -205,15 +205,18 @@ function apiHeaders(): HeadersInit {
   return key ? { "X-API-Key": key } : {};
 }
 
+export type ApiDifficulty = "easy" | "medium" | "hard";
+
 async function fetchRawQuestions(options: {
   limit: number;
   category?: string | null;
+  difficulty?: ApiDifficulty;
 }): Promise<{ results: unknown[]; error?: string }> {
   const limit = Math.min(Math.max(options.limit, 1), 50);
   const params = new URLSearchParams({
     limit: String(limit),
     types: "text_choice",
-    difficulties: "easy,medium,hard",
+    difficulties: options.difficulty ?? "easy,medium,hard",
   });
 
   const category = options.category;
@@ -309,13 +312,11 @@ export async function fetchQuestions(options: {
   };
 }
 
-export async function fetchDailyQuestions(
-  count = 15,
-): Promise<{ questions: TransformedQuestion[]; error?: string }> {
-  const { results, error } = await fetchRawQuestions({ limit: count });
-  if (error) return { questions: [], error };
-
-  const questions = orderQuestionsByDifficulty(parseQuestions(results).questions);
-
-  return { questions };
+/** A random batch of questions at one difficulty. Throws if the API fails. */
+export async function fetchQuestionsByDifficulty(
+  difficulty: ApiDifficulty,
+): Promise<TransformedQuestion[]> {
+  const { results, error } = await fetchRawQuestions({ limit: 50, difficulty });
+  if (error) throw new Error(error);
+  return parseQuestions(results).questions.filter((q) => q.d === mapDifficulty(difficulty));
 }

@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateAll, scheduleDailyPuzzle as scheduleAnyGuessr } from "@/lib/anyguessr/generator";
 import { scheduleDailyCategory as scheduleBallKnowledge } from "@/lib/ball-knowledge/schedule-service";
+import { getDailyQuestions as buildBrainDead } from "@/lib/brain-dead/daily-service";
 import { topUpDailyChains } from "@/lib/chainlink/top-up";
 import { runJobs } from "@/lib/cron/run-jobs";
 import { scheduleDailyPuzzle as scheduleFreezeFrames } from "@/lib/freezeframes/schedule-service";
@@ -18,8 +19,8 @@ export const maxDuration = 300;
  *
  * Games that pick their daily from a stored pool have today's and tomorrow's
  * rows created here, so no visitor triggers the pick. Chain Link is topped up
- * a week ahead because its chains are generated and LLM-checked. Brain Dead
- * has no schedule to prepare.
+ * a week ahead because its chains are generated and LLM-checked. Brain Dead's
+ * question sets are fetched and stored a day ahead.
  *
  * Security: requires `Authorization: Bearer $CRON_SECRET`.
  */
@@ -45,6 +46,7 @@ export async function GET(request: Request) {
     "getting-warmer": todayAndTomorrow((date) => scheduleGettingWarmer(db, date)),
     "ball-knowledge": todayAndTomorrow((date) => scheduleBallKnowledge(db, date)),
     "hot-takes": todayAndTomorrow((date) => scheduleHotTakes(db, date)),
+    "brain-dead": todayAndTomorrow(async (date) => (await buildBrainDead(db, date)).length),
   });
 
   const failed = Object.entries(report).filter(([, outcome]) => !outcome.ok);

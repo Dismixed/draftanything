@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+import { getDailyQuestions, maxDailyScore } from "@/lib/brain-dead/daily-service";
 import { getDateString } from "@/lib/brain-dead/game-logic";
 import { ensureGuestSession } from "@/features/guest/session";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -6,7 +7,8 @@ import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 const DAILY_QUESTION_COUNT = 15;
-const MAX_SCORE = 6000;
+/** Schema-level ceiling; the real limit is the day's own maximum, checked below. */
+const MAX_SCORE = 6750;
 
 const submitSchema = z.object({
   name: z.string().trim().min(1).max(20),
@@ -70,6 +72,18 @@ export async function POST(request: Request) {
   }
 
   const db = createAdminClient();
+
+  // No score can beat a perfect, instant run of today's questions.
+  let dailyMax = MAX_SCORE;
+  try {
+    dailyMax = maxDailyScore(await getDailyQuestions(db, playDate));
+  } catch (err) {
+    console.error("Could not load the daily to check a score:", err);
+  }
+  if (score > dailyMax) {
+    return Response.json({ error: "INVALID_INPUT" }, { status: 400 });
+  }
+
   const existingQuery = db
     .from("brain_dead_leaderboard")
     .select("id, score")
