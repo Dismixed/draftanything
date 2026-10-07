@@ -9,9 +9,40 @@ const VisionResultSchema = z.object({
   pass: z.boolean(),
   score: z.number().min(0).max(1),
   reason: z.string(),
+  /** True when writing in the image gives the answer away. */
+  shows_country_name: z.boolean().default(false),
 });
 
 export type VisionResult = z.infer<typeof VisionResultSchema>;
+
+export function buildVisionPrompt(options: {
+  clueType: string;
+  country: string;
+  wikiTitle?: string | null;
+}): string {
+  return [
+    `You are reviewing candidate images for a geography guessing game.`,
+    `Country: ${options.country}`,
+    `Clue type: ${options.clueType}`,
+    options.wikiTitle ? `Wikipedia article: ${options.wikiTitle}` : "",
+    "",
+    `Does this image plausibly depict the clue type for this country?`,
+    `Reject maps, flags (unless clue type is flag), collages, logos unrelated to the country,`,
+    `diagrams, charts, and generic stock photos.`,
+    "",
+    options.clueType === "flag"
+      ? `This is a flag clue, so set shows_country_name to false.`
+      : `Players must work out the country from the image, so also check for giveaways. Set shows_country_name to true if any legible text shows the name of the country in any language or script, its adjective or demonym ("Egyptian", "Norge", "ΕΛΛΑΣ"), a company or team name that contains it ("EgyptAir", "Bank of Japan"), or if the national flag is clearly displayed.`,
+    `Return JSON: { "pass": boolean, "score": 0-1, "reason": string, "shows_country_name": boolean }`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+/** An image is usable when it fits the clue and does not spell out the answer. */
+export function visionAccepts(vision: VisionResult, minScore: number): boolean {
+  return vision.pass && vision.score >= minScore && !vision.shows_country_name;
+}
 
 async function fetchImageBase64(url: string): Promise<{ mimeType: string; data: string } | null> {
   try {
@@ -34,23 +65,11 @@ export async function scoreImageForClue(options: {
 }): Promise<VisionResult> {
   const image = await fetchImageBase64(options.imageUrl);
   if (!image) {
-    return { pass: false, score: 0, reason: "Could not fetch image bytes" };
+    return { pass: false, score: 0, reason: "Could not fetch image bytes", shows_country_name: false };
   }
 
   const client = getGeminiClient();
-  const prompt = [
-    `You are reviewing candidate images for a geography guessing game.`,
-    `Country: ${options.country}`,
-    `Clue type: ${options.clueType}`,
-    options.wikiTitle ? `Wikipedia article: ${options.wikiTitle}` : "",
-    "",
-    `Does this image plausibly depict the clue type for this country?`,
-    `Reject maps, flags (unless clue type is flag), collages, logos unrelated to the country,`,
-    `diagrams, charts, and generic stock photos.`,
-    `Return JSON: { "pass": boolean, "score": 0-1, "reason": string }`,
-  ]
-    .filter(Boolean)
-    .join("\n");
+  const prompt = buildVisionPrompt(options);
 
   try {
     const response = await client.models.generateContent({
@@ -79,6 +98,7 @@ export async function scoreImageForClue(options: {
       pass: true,
       score: 0.5,
       reason: `Vision check skipped: ${err instanceof Error ? err.message : String(err)}`,
+      shows_country_name: false,
     };
   }
 }
@@ -100,7 +120,7 @@ export async function filterCandidatesWithVision(options: {
       country: options.country,
       wikiTitle: options.wikiTitle ?? candidate.wiki_title,
     });
-    if (vision.pass && vision.score >= minScore) {
+    if (visionAccepts(vision, minScore)) {
       results.push({ ...candidate, vision });
     }
   }

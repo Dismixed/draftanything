@@ -195,6 +195,7 @@ export const useAnyGuessrStore = create<AnyGuessrStore>()(
               puzzleId: activeRound.puzzleId,
               guess: trimmed,
               roundIndex: get().currentRound,
+              clueType: activeRound.clueType,
             }),
           });
           if (!r.ok) {
