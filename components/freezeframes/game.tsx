@@ -21,6 +21,7 @@ import {
   getCountdownText,
   getDisplayDate,
 } from "@/lib/freezeframes/game-logic";
+import { frostLevel } from "@/lib/freezeframes/frost";
 import { ROUNDS } from "@/lib/freezeframes/rounds";
 import {
   getDailyPlayed,
@@ -60,6 +61,56 @@ const WAVE_HEIGHTS = Array.from(
   { length: 52 },
   () => Math.random() * 0.65 + 0.2,
 );
+
+/**
+ * Crack lines across the frame, one added per wrong guess. Drawn in a 100 x 100 box that is
+ * stretched over the frame.
+ */
+const CRACKS = [
+  "M0 34 L22 40 L31 28 L46 47 L58 39 L71 58 L100 52",
+  "M46 47 L41 70 L52 100 M58 39 L66 14 L60 0",
+  "M22 40 L14 66 L0 80 M71 58 L80 82 L74 100",
+  "M31 28 L24 8 L30 0 M100 22 L84 30 L71 58",
+  "M0 60 L14 66 M41 70 L26 84 L28 100 M80 82 L100 76",
+];
+
+/** The day's four rounds as a strip of film: solved frames fill in with a thumbnail and points. */
+function FilmStrip({
+  round,
+  results,
+  thumbs,
+}: {
+  /** The round in play. -1 before the game starts, and the round count once it is over. */
+  round: number;
+  results: readonly RoundResult[];
+  thumbs: readonly (string | undefined)[];
+}) {
+  return (
+    <ol className="ff-strip" aria-label="Rounds">
+      {ROUNDS.map((r, i) => {
+        const result = results[i];
+        const label = r.title.replace("Name the ", "");
+        if (result && i < round) {
+          return (
+            <li key={r.key} className={`ff-cell is-done ${result.correct ? "is-ok" : "is-miss"}`}>
+              {thumbs[i] && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={thumbs[i]} alt="" />
+              )}
+              <b>{result.correct ? `+${result.score}` : "0"}</b>
+            </li>
+          );
+        }
+        return (
+          <li key={r.key} className={`ff-cell${i === round ? " is-now" : ""}`} aria-current={i === round ? "step" : undefined}>
+            <span aria-hidden="true">{r.icon}</span>
+            <em>{label}</em>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
 
 function MediaPlaceholder({ icon, label }: { icon: string; label: string }) {
   return (
@@ -556,6 +607,10 @@ export default function FreezeFramesGame() {
   };
 
   const currentResult = roundResults[round];
+  // The finish screens are drawn in a full-screen overlay that has its own Home and close.
+  const overlayOpen = (screen === "played" || screen === "results") && completeOpen;
+  // What each round showed, for the film strip. Song rounds have no picture.
+  const thumbs = ROUNDS.map((r) => (puzzle?.rounds[r.key] as { img?: string } | undefined)?.img);
   const wrongCount = guesses.filter((g) => !g.correct && !g.skip).length;
   const elapsedSec = ((Date.now() - startTimeRef.current) / 1000).toFixed(1);
 
@@ -575,308 +630,236 @@ export default function FreezeFramesGame() {
       onClose={() => setCompleteOpen(false)}
       ariaLabel="Daily complete"
     >
-    <div className="freezeframes-app">
-      <nav className="freezeframes-nav">
-        <Link href="/freezeframes" className="freezeframes-logo">
+    <div className={`freezeframes-app${overlayOpen ? " is-overlay" : ""}`}>
+      <header className="ff-head">
+        <Link href="/" className="ff-back">
+          &larr; Back
+        </Link>
+        <Link href="/freezeframes" className="ff-title">
           Freeze<span className="hl">Frames</span>
         </Link>
-        <div className="freezeframes-nav-right">
-          <span className="freezeframes-date-chip">{displayDate}</span>
-          <button
-            type="button"
-            className={`freezeframes-nav-btn${screen === "game" ? " active" : ""}`}
-            onClick={() => void tryPlay()}
-          >
-            Play
-          </button>
-          <Link href="/freezeframes/leaderboard" className="freezeframes-nav-btn">
-            Leaderboard
-          </Link>
+        <div className="ff-head-right">
+          {screen === "game" ? (
+            <>
+              <span className="ff-stat">
+                Round<b>{round + 1}</b>/ {ROUNDS.length}
+              </span>
+              <span className="ff-stat">
+                Score<b>{totalScore}</b>
+              </span>
+            </>
+          ) : (
+            <Link href="/freezeframes/leaderboard" className="ff-link">
+              Leaderboard
+            </Link>
+          )}
         </div>
-      </nav>
+      </header>
 
-      {fetchError && (
-        <p style={{ textAlign: "center", color: "var(--ff-red)", padding: "1rem" }}>
-          {fetchError}
-        </p>
-      )}
+      {fetchError && <p className="ff-error">{fetchError}</p>}
 
-      <div className={`freezeframes-screen${screen === "home" ? " active" : ""}`}>
-        <WinStreakLine gameId="freezeframes" />
-        <p className="freezeframes-home-eyebrow">◆ Stim Games — Daily Challenge</p>
+      <div className={`freezeframes-screen ff-home${screen === "home" ? " active" : ""}`}>
+        <WinStreakLine gameId="freezeframes" accentColor="var(--ff-purple-light)" />
+        <p className="ff-eyebrow">Daily challenge · {displayDate}</p>
         <h1 className="freezeframes-home-logo">
           Freeze<span className="hl">Frames</span>
         </h1>
-        <p className="freezeframes-home-sub">
+        <p className="ff-home-sub">
           Four rounds. Four frames. One shot a day.
           <br />
-          Name the movie, song, show, and album artist.
+          Answer before the frame freezes over.
         </p>
-        <div className="freezeframes-round-pills">
-          <div className="freezeframes-rpill">🎬 Movie frame</div>
-          <div className="freezeframes-rpill">🎵 Song snippet</div>
-          <div className="freezeframes-rpill">📺 TV show frame</div>
-          <div className="freezeframes-rpill">💿 Album → name the artist</div>
-        </div>
-        <button
-          type="button"
-          className="freezeframes-btn freezeframes-btn-purple"
-          onClick={() => void tryPlay()}
-        >
-          Play Today&apos;s FreezeFrames →
+        <FilmStrip round={-1} results={[]} thumbs={[]} />
+        <button type="button" className="ff-cta ff-cta-wide" onClick={() => void tryPlay()}>
+          Play today&apos;s FreezeFrames
         </button>
       </div>
 
-      <div className={`freezeframes-screen${screen === "played" ? " active" : ""}`}>
-        <div className="freezeframes-played-card">
-          <div style={{ fontSize: "2.2rem", marginBottom: "0.75rem" }}>🔒</div>
-          <div
-            style={{
-              fontFamily: "Space Mono, monospace",
-              fontSize: "1.4rem",
-              fontWeight: 700,
-              marginBottom: "1rem",
-            }}
-          >
-            Come back tomorrow
-          </div>
-          <div className="freezeframes-played-lbl">Today&apos;s score</div>
-          <div className="freezeframes-played-score-big">{playedScore}</div>
-          <div className="freezeframes-played-lbl">out of {playedMax}</div>
-          <div className="freezeframes-cdown-wrap">
-            <div className="freezeframes-cdown-lbl">Next FreezeFrames in</div>
-            <div className="freezeframes-cdown-time">{countdown}</div>
-          </div>
-          <Link
-            href="/freezeframes/leaderboard"
-            className="freezeframes-btn freezeframes-btn-ghost"
-            style={{ width: "100%", marginTop: "1.5rem", display: "inline-flex" }}
-          >
-            View Leaderboard
-          </Link>
-
-          <WinStreakLine gameId="freezeframes" accentColor="#a855f7" />
-
-          <ShareResult
-            gameId="freezeframes"
-            text={freezeFramesShare(null, playedScore ?? 0, shareDate())}
-          />
-
-          <OtherDailies currentGameId="freezeframes" />
+      <div className={`freezeframes-screen ff-final${screen === "played" ? " active" : ""}`}>
+        <p className="ff-eyebrow">Today&apos;s score</p>
+        <div className="ff-total">
+          {playedScore}
+          <span>/ {playedMax}</span>
         </div>
+        <div className="ff-tiles">
+          <div>
+            <b>{countdown}</b>
+            <span>Next FreezeFrames</span>
+          </div>
+        </div>
+        <div className="ff-actions">
+          <WinStreakLine gameId="freezeframes" accentColor="var(--ff-purple-light)" />
+          <ShareResult gameId="freezeframes" text={freezeFramesShare(null, playedScore ?? 0, shareDate())} />
+        </div>
+        <div className="ff-links">
+          <Link href="/freezeframes/leaderboard" className="ff-btn">
+            Leaderboard
+          </Link>
+        </div>
+        <OtherDailies currentGameId="freezeframes" />
       </div>
 
-      <div
-        className={`freezeframes-screen freezeframes-game-screen${screen === "game" ? " active" : ""}`}
-      >
-        <div ref={gameWrapRef} className="freezeframes-game-wrap">
-          <div className="freezeframes-progress-row">
-            <div className="freezeframes-progress-steps">
-              {ROUNDS.map((_, i) => (
-                <div
-                  key={i}
-                  className={`freezeframes-pstep${
-                    i < round ? " done" : i === round ? " active" : ""
-                  }`}
-                />
+      <div className={`freezeframes-screen freezeframes-game-screen${screen === "game" ? " active" : ""}`}>
+        <FilmStrip round={round} results={roundResults} thumbs={thumbs} />
+
+        <div ref={gameWrapRef} className="ff-play">
+          <div className="ff-round-row">
+            <span className="ff-chip">
+              <b>Round {round + 1}</b>
+              {cfg?.title}
+            </span>
+            {!roundComplete && (
+              <span className="ff-pts" aria-label={`${availablePts} points left`}>
+                <span aria-hidden="true">❄</span>
+                {availablePts}
+              </span>
+            )}
+          </div>
+
+          {/* The frame freezes over as the points drain. Each wrong guess leaves a crack. */}
+          <div
+            className={[
+              "ff-stage",
+              `is-${cfg?.mediaType ?? "image"}`,
+              roundComplete ? (currentResult?.correct ? "is-shattered" : "is-melted") : "",
+            ].filter(Boolean).join(" ")}
+            style={{ "--f": frostLevel(availablePts) } as React.CSSProperties}
+          >
+            {renderMedia()}
+            <div className="ff-frost" aria-hidden="true" />
+            <svg className="ff-cracks" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              {CRACKS.slice(0, wrongCount).map((d, i) => (
+                <path key={i} d={d} />
               ))}
-            </div>
-            <div className="freezeframes-progress-score">{totalScore} pts</div>
+            </svg>
           </div>
 
-          <div className="freezeframes-round-header">
-            <div className="freezeframes-round-badge">Round {round + 1} of 4</div>
-            <div className="freezeframes-round-title">{cfg?.title}</div>
-            <div className="freezeframes-round-pts">
-              Up to <span>{availablePts} pts</span>
+          {!roundComplete && (
+            <div className="ff-drain" aria-hidden="true">
+              <i style={{ width: `${(availablePts / MAX_PTS) * 100}%` }} />
             </div>
-          </div>
-
-          <div>{renderMedia()}</div>
+          )}
 
           {!roundComplete ? (
-            <div className="freezeframes-guess-section">
-              <div className="freezeframes-guess-label-row">
-                <span className="freezeframes-guess-label">{cfg?.guessLabel}</span>
-                <span className="freezeframes-guess-penalty">
-                  −{WRONG_PEN} pts per wrong guess
-                </span>
-              </div>
-              <div className="freezeframes-guess-row">
+            <>
+              <div className="ff-guess">
                 <input
-                  className={`freezeframes-guess-inp${shakeInput ? " shake" : ""}${flashInput ? " correct-flash" : ""}`}
+                  className={`ff-input${shakeInput ? " shake" : ""}${flashInput ? " correct-flash" : ""}`}
                   value={guessInput}
                   onChange={(e) => setGuessInput(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") void submitGuess();
                   }}
-                  placeholder={cfg?.placeholder}
+                  placeholder={cfg?.guessLabel}
+                  aria-label={cfg?.guessLabel}
                   autoComplete="off"
                   autoCorrect="off"
                   spellCheck={false}
                   disabled={submitting}
                 />
-                <button
-                  type="button"
-                  className="freezeframes-skip-btn"
-                  onClick={() => void skipRound()}
-                  disabled={submitting}
-                >
-                  Skip
-                </button>
-                <button
-                  type="button"
-                  className="freezeframes-btn freezeframes-btn-purple freezeframes-btn-sm"
-                  onClick={() => void submitGuess()}
-                  disabled={submitting}
-                >
-                  →
+                <button type="button" className="ff-cta" onClick={() => void submitGuess()} disabled={submitting}>
+                  Guess
                 </button>
               </div>
-              <div className="freezeframes-history">
-                {guesses.map((g, i) => (
-                  <div
-                    key={i}
-                    className={`freezeframes-hist-row ${
-                      g.correct ? "correct" : g.skip ? "skipped" : "wrong"
-                    }`}
-                  >
-                    <span className="freezeframes-hist-icon">
-                      {g.correct ? "✓" : g.skip ? "—" : "✗"}
-                    </span>
-                    <span className="freezeframes-hist-text">
-                      {g.text || "Skipped"}
-                    </span>
-                    {!g.correct && !g.skip && (
-                      <span className="freezeframes-hist-pts">−{WRONG_PEN}</span>
-                    )}
-                  </div>
-                ))}
+              <div className="ff-under">
+                <div className="ff-misses">
+                  {guesses
+                    .filter((g) => !g.correct && !g.skip)
+                    .map((g, i) => (
+                      <span key={i} className="ff-miss anim-pop-in">
+                        {g.text}
+                      </span>
+                    ))}
+                  {wrongCount === 0 && <span className="ff-penalty">−{WRONG_PEN} points per wrong guess</span>}
+                </div>
+                <button type="button" className="ff-skip" onClick={() => void skipRound()} disabled={submitting}>
+                  Skip this round
+                </button>
               </div>
-            </div>
+            </>
           ) : null}
 
           {roundComplete && currentResult ? (
             <div
               ref={resultCardRef}
-              className={`freezeframes-round-result show ${
-                currentResult.correct ? "freezeframes-rr-ok anim-pop-in" : "freezeframes-rr-skip"
-              }`}
-              style={{ position: "relative" }}
+              className={`ff-result ${currentResult.correct ? "is-ok anim-pop-in" : "is-miss"}`}
             >
-              <div className="freezeframes-rr-title">
-                {currentResult.correct
-                  ? `✓ Correct — ${currentResult.answer}`
-                  : `The answer was ${currentResult.answer}`}
+              <div>
+                <p className="ff-result-kind">{currentResult.correct ? "Correct" : "The answer was"}</p>
+                <h2 className="ff-result-answer">{currentResult.answer}</h2>
+                <p className="ff-result-sub">
+                  {currentResult.correct
+                    ? `${wrongCount === 0 ? "First guess" : `${wrongCount} wrong guess${wrongCount !== 1 ? "es" : ""}`} · ${elapsedSec}s`
+                    : "Better luck next round."}
+                </p>
               </div>
-              <div className="freezeframes-rr-sub">
-                {currentResult.correct
-                  ? `${wrongCount === 0 ? "First guess" : `${wrongCount} wrong guess${wrongCount !== 1 ? "es" : ""}`} · ${elapsedSec}s`
-                  : "Better luck next time."}
-              </div>
-              <div className="freezeframes-rr-pts">
-                {currentResult.correct
-                  ? `+${currentResult.score} pts`
-                  : "+0 pts"}
-              </div>
+              <div className="ff-result-pts">{currentResult.correct ? `+${currentResult.score}` : "+0"}</div>
             </div>
           ) : null}
 
           {roundComplete ? (
-            <button
-              type="button"
-              className="freezeframes-btn freezeframes-btn-purple"
-              style={{ width: "100%" }}
-              onClick={nextRound}
-            >
-              {round >= 3 ? "See Results →" : "Next Round →"}
+            <button type="button" className="ff-cta ff-cta-wide" onClick={nextRound} autoFocus>
+              {round >= ROUNDS.length - 1 ? "See results" : "Next round"}
             </button>
           ) : null}
         </div>
       </div>
 
-      <div className={`freezeframes-screen${screen === "results" ? " active" : ""}`}>
-        <div className="freezeframes-results-logo">
-          Freeze<span className="hl">Frames</span>
+      <div className={`freezeframes-screen ff-final${screen === "results" ? " active" : ""}`}>
+        <p className="ff-eyebrow">Daily complete · {displayDate}</p>
+        <div className="ff-total">
+          {displayTotal}
+          <span>/ {MAX_DAILY_SCORE}</span>
         </div>
-        <div style={{ fontSize: "0.78rem", color: "var(--ff-muted)" }}>
-          {displayDate}
-        </div>
-        <div className="freezeframes-total-score">{displayTotal}</div>
-        <div className="freezeframes-score-max">out of {MAX_DAILY_SCORE}</div>
 
-        <div className="freezeframes-breakdown">
+        <FilmStrip round={ROUNDS.length} results={roundResults} thumbs={thumbs} />
+
+        <ol className="ff-breakdown">
           {ROUNDS.map((r, i) => {
             const result = roundResults[i];
             return (
-              <div key={r.key} className="freezeframes-bd-row">
-                <div className="freezeframes-bd-icon">{r.icon}</div>
-                <div className="freezeframes-bd-label">
-                  {r.title.replace("Name the ", "")}
-                </div>
-                <div className="freezeframes-bd-answer">{result?.answer ?? "—"}</div>
-                <div
-                  className={`freezeframes-bd-pts ${result?.correct ? "got" : "miss"}`}
-                >
-                  {result?.correct ? `+${result.score}` : "−"}
-                </div>
-              </div>
+              <li key={r.key} className={result?.correct ? "is-ok" : "is-miss"}>
+                <span className="ff-bd-icon" aria-hidden="true">
+                  {r.icon}
+                </span>
+                <span className="ff-bd-kind">{r.title.replace("Name the ", "")}</span>
+                <span className="ff-bd-answer">{result?.answer ?? "—"}</span>
+                <b>{result?.correct ? `+${result.score}` : "0"}</b>
+              </li>
             );
           })}
-        </div>
+        </ol>
 
         {!lbSubmitted ? (
-          <div className="freezeframes-name-section">
-            <p style={{ fontSize: "0.82rem", color: "var(--ff-muted)" }}>
-              Save your score to the leaderboard
-            </p>
+          <div className="ff-save">
             <input
-              className="freezeframes-name-inp"
+              className="ff-input"
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
               placeholder="Your name"
+              aria-label="Your name for the leaderboard"
               maxLength={20}
             />
-            <button
-              type="button"
-              className="freezeframes-btn freezeframes-btn-purple"
-              onClick={() => void submitToLeaderboard()}
-              disabled={lbSubmitting}
-            >
-              Save Score →
+            <button type="button" className="ff-btn is-accent" onClick={() => void submitToLeaderboard()} disabled={lbSubmitting}>
+              {lbSubmitting ? "Saving…" : "Save score"}
             </button>
           </div>
         ) : null}
 
-        <WinStreakLine gameId="freezeframes" accentColor="#a855f7" />
-
-        <ShareResult
-          gameId="freezeframes"
-          text={freezeFramesShare(roundResults, totalScore, shareDate())}
-        />
-
-        <OtherDailies currentGameId="freezeframes" />
-
-        <div
-          style={{
-            display: "flex",
-            gap: "0.75rem",
-            flexWrap: "wrap",
-            justifyContent: "center",
-            marginTop: "1rem",
-          }}
-        >
-          <Link href="/freezeframes/leaderboard" className="freezeframes-btn freezeframes-btn-ghost freezeframes-btn-sm">
+        <div className="ff-actions">
+          <WinStreakLine gameId="freezeframes" accentColor="var(--ff-purple-light)" />
+          <ShareResult gameId="freezeframes" text={freezeFramesShare(roundResults, totalScore, shareDate())} />
+        </div>
+        <div className="ff-links">
+          <Link href="/freezeframes/leaderboard" className="ff-btn">
             Leaderboard
           </Link>
-          <button
-            type="button"
-            className="freezeframes-btn freezeframes-btn-ghost freezeframes-btn-sm"
-            onClick={() => setScreen("home")}
-          >
+          <button type="button" className="ff-btn" onClick={() => setScreen("home")}>
             Home
           </button>
         </div>
+
+        <OtherDailies currentGameId="freezeframes" />
       </div>
 
       {showHowItWorks && (
