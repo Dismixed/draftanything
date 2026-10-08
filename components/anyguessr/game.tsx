@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { LINEUP_ROUNDS } from "@/lib/anyguessr/lineup";
+import { roundStreak } from "@/lib/anyguessr/reveal";
 import { useAnyGuessrStore } from "@/lib/anyguessr/store";
 import { useSound } from "@/lib/audio/sound-context";
 import { fireConfetti } from "@/lib/motion/confetti";
@@ -47,6 +48,8 @@ export default function AnyGuessrGame() {
   const displayScore = store.totalScore;
   const dailyRound = store.dailyRounds[store.currentRound] ?? null;
   const showRoundRecap = !!store.roundRecap;
+  // The round just played stamps the passport when its recap closes, not while it is still playing out.
+  const stampedResults = showRoundRecap ? store.roundResults.slice(0, -1) : store.roundResults;
 
   useEffect(() => {
     setMounted(true);
@@ -191,7 +194,7 @@ export default function AnyGuessrGame() {
         </div>
       </div>
       {store.dailyRounds.length > 0 && (
-        <Stamps total={totalRounds} results={store.roundResults} current={isOver ? -1 : store.currentRound} />
+        <Stamps total={totalRounds} results={stampedResults} current={isOver ? -1 : store.currentRound} />
       )}
     </header>
   );
@@ -294,6 +297,7 @@ export default function AnyGuessrGame() {
             <RoundRecap
               recap={store.roundRecap}
               totalScore={store.totalScore}
+              streak={roundStreak(store.roundResults)}
               onContinue={() => {
                 play("ui.tap");
                 store.continueDailyRound();
