@@ -1,13 +1,20 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import posthog from "posthog-js";
 import { CreateRoomForm } from "@/components/lobby/create-room-form";
 import { JoinRoomForm } from "@/components/lobby/join-room-form";
 
 type ActiveTab = "create" | "join";
 
-export function DraftLobbyPage() {
-  const [activeTab, setActiveTab] = useState<ActiveTab>("create");
+interface DraftLobbyPageProps {
+  initialTab?: ActiveTab;
+  initialTopic?: string;
+  initialRoomCode?: string;
+}
+
+export function DraftLobbyPage({ initialTab = "create", initialTopic = "", initialRoomCode = "" }: DraftLobbyPageProps) {
+  const [activeTab, setActiveTab] = useState<ActiveTab>(initialTab);
 
   return (
     <main className="game-page" style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', position: 'relative', overflow: 'hidden' }}>
@@ -15,6 +22,10 @@ export function DraftLobbyPage() {
       <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 100% 55% at 50% -5%, rgba(201,168,76,0.07) 0%, transparent 55%), radial-gradient(ellipse 60% 45% at 10% 90%, rgba(124,58,255,0.06) 0%, transparent 55%)', pointerEvents: 'none' }} />
 
       <div style={{ width: '100%', maxWidth: activeTab === "create" ? '680px' : '440px', position: 'relative', zIndex: 1, transition: 'max-width 0.25s ease' }}>
+        <Link href="/draft-anything" className="dal-back">
+          ← Draft Anything
+        </Link>
+
         {/* Crest */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '28px' }}>
           <div style={{ width: '44px', height: '44px', borderRadius: '50%', border: '1px solid rgba(201,168,76,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px', position: 'relative' }}>
@@ -102,10 +113,10 @@ export function DraftLobbyPage() {
 
           <div style={{ padding: activeTab === "create" ? '20px 24px' : '20px' }}>
             <div id="panel-create" role="tabpanel" aria-labelledby="tab-create" hidden={activeTab !== "create"}>
-              <CreateRoomForm />
+              <CreateRoomForm initialTopic={initialTopic} />
             </div>
             <div id="panel-join" role="tabpanel" aria-labelledby="tab-join" hidden={activeTab !== "join"}>
-              <JoinRoomForm />
+              <JoinRoomForm initialRoomCode={initialRoomCode} />
             </div>
           </div>
         </div>
