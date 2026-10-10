@@ -38,7 +38,7 @@ async function createRoom(page: Page, options: {
   rounds?: number;
 }) {
   const createPanel = page.locator("#panel-create");
-  await page.goto("/draft-anything");
+  await page.goto("/draft-anything/play");
   await page.getByRole("tab", { name: "Create room" }).click();
   await createPanel.locator("#create-display-name").fill(options.displayName);
   await createPanel.locator("#create-topic").fill(options.topic);
@@ -60,7 +60,7 @@ async function extractRoomCode(page: Page): Promise<string> {
 
 async function joinRoom(page: Page, roomCode: string, displayName: string) {
   const joinPanel = page.locator("#panel-join");
-  await page.goto("/draft-anything");
+  await page.goto("/draft-anything/play");
   await page.getByRole("tab", { name: "Join room" }).click();
   await joinPanel.locator("#join-room-code").fill(roomCode);
   await joinPanel.locator("#join-display-name").fill(displayName);
@@ -97,7 +97,7 @@ const MOBILE = VIEWPORTS.mobile;
 
 const STATIC_PAGES = [
   { label: "Stim Games hub", path: "/" },
-  { label: "Draft Anything lobby", path: "/draft-anything" },
+  { label: "Draft Anything lobby", path: "/draft-anything/play" },
   { label: "Chainlink hub", path: "/chainlink" },
   { label: "Chainlink daily", path: "/chainlink/daily", prepare: prepareChainlink },
   { label: "Chainlink unlimited", path: "/chainlink/unlimited", prepare: prepareChainlink },
@@ -154,7 +154,7 @@ test.describe("Mobile gameplay controls", () => {
     const page = await context.newPage();
     await bootstrapGuest(page);
     const createPanel = page.locator("#panel-create");
-    await page.goto("/draft-anything");
+    await page.goto("/draft-anything/play");
     await expect(createPanel.locator("#create-display-name")).toBeVisible();
     await expect(createPanel.locator("#create-topic")).toBeVisible();
     await expect(page.getByRole("button", { name: "Create room" })).toBeVisible();
@@ -185,7 +185,7 @@ test.describe("Responsive layout", () => {
       });
 
       test("draft-anything lobby fits without horizontal overflow", async () => {
-        await hostPage.goto("/draft-anything");
+        await hostPage.goto("/draft-anything/play");
         await assertNoHorizontalOverflow(hostPage);
       });
 
