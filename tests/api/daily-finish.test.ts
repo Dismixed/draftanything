@@ -31,7 +31,16 @@ const post = (body: unknown) =>
       body: typeof body === "string" ? body : JSON.stringify(body),
     }),
   );
-const get = (query: string) => GET(new Request(`https://example.test/api/daily-finish${query}`));
+const get = (query: string, headers?: HeadersInit) =>
+  GET(new Request(`https://example.test/api/daily-finish${query}`, { headers }));
+const postFrom = (ip: string) =>
+  POST(
+    new Request("https://example.test/api/daily-finish", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-forwarded-for": ip },
+      body: JSON.stringify({ game: "freezeframes", score: 2200 }),
+    }),
+  );
 
 describe("/api/daily-finish", () => {
   beforeEach(() => {
@@ -143,5 +152,31 @@ describe("/api/daily-finish", () => {
         expect((await get(query)).status).toBe(400);
       },
     );
+  });
+
+  describe("per-client rate limit", () => {
+    it("answers 429 with Retry-After once one client posts more than 20 times a minute, and spares others", async () => {
+      for (let i = 0; i < 20; i++) expect((await postFrom("203.0.113.7, 10.0.0.1")).status).toBe(200);
+
+      const limited = await postFrom("203.0.113.7");
+      expect(limited.status).toBe(429);
+      expect(Number(limited.headers.get("Retry-After"))).toBeGreaterThan(0);
+
+      expect((await postFrom("198.51.100.9")).status).toBe(200);
+    });
+
+    it("limits reads per client at 60 a minute and falls back to x-real-ip", async () => {
+      for (let i = 0; i < 60; i++) expect((await get("?game=freezeframes&score=2200", { "x-real-ip": "203.0.113.7" })).status).toBe(200);
+
+      const limited = await get("?game=freezeframes&score=2200", { "x-real-ip": "203.0.113.7" });
+      expect(limited.status).toBe(429);
+      expect(limited.headers.get("Retry-After")).not.toBeNull();
+      expect((await get("?game=freezeframes&score=2200", { "x-real-ip": "198.51.100.9" })).status).toBe(200);
+    });
+
+    it("still enforces the global 300 a minute across many clients", async () => {
+      for (let i = 0; i < 300; i++) expect((await postFrom(`10.1.${Math.floor(i / 250)}.${i % 250}`)).status).toBe(200);
+      expect((await postFrom("192.0.2.1")).status).toBe(429);
+    });
   });
 });

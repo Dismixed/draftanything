@@ -9,6 +9,9 @@ const H = 66;
 /** One standard deviation, in plot pixels. */
 const SIGMA = 48;
 
+/** Past this x the "YOU" label would run off the right edge of the plot, so it moves to the left of the marker. */
+const FLIP_LABEL_PAST = 220;
+
 const bellY = (x: number) => H - 2 - 56 * Math.exp(-(((x - W / 2) / SIGMA) ** 2) / 2);
 const POINTS = Array.from({ length: 53 }, (_, i) => `${i * 5},${bellY(i * 5).toFixed(1)}`);
 const LINE = `M${POINTS.join(" L")}`;
@@ -37,7 +40,7 @@ export function FinishBellCurve({ percentile, lowLabel, highLabel }: FinishBellC
         <svg className="fin-bell-line" viewBox={`0 0 ${W} ${H}`} width={W} height={H}>
           <path d={LINE} />
         </svg>
-        <div className="fin-bell-me" />
+        <div className={`fin-bell-me${x > FLIP_LABEL_PAST ? " is-flipped" : ""}`} />
       </div>
       <div className="fin-bell-axis" aria-hidden="true">
         <span>{lowLabel}</span>

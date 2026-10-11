@@ -797,6 +797,8 @@ html[data-theme="light"] {
 /* ── Daily complete overlay ───────────────── */
 
 .daily-complete-overlay {
+  /* Fallback only: FinishScreen sets the game's accent inline on this element, which wins. */
+  --fin-acc: var(--gold);
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -885,7 +887,6 @@ html[data-theme="light"] {
 }
 
 .fin {
-  --fin-acc: var(--gold);
   --fin-surf: color-mix(in srgb, var(--text) 6%, var(--bg));
   --fin-line: color-mix(in srgb, var(--text) 16%, var(--bg));
   font-family: "Outfit", system-ui, sans-serif;
@@ -998,6 +999,7 @@ html[data-theme="light"] {
   letter-spacing: 0.1em;
   color: var(--fin-acc);
 }
+.fin-bell-me.is-flipped::before { left: auto; right: 6px; }
 .fin-bell-me::after {
   content: "";
   position: absolute;
@@ -1091,9 +1093,11 @@ html[data-theme="light"] {
   font: 800 15.5px "Outfit", system-ui, sans-serif;
   text-decoration: none;
 }
-.fin-play[data-game="chainlink"],
-.fin-play[data-game="freezeframes"],
-html[data-theme="light"] .fin-play { color: #fff; }
+/* Ink is picked per game: white only where it beats #14110a on the game's colour (light theme). */
+html[data-theme="light"] .fin-sweep .fin-play,
+html[data-theme="light"] .fin-play[data-game="brain-dead"],
+html[data-theme="light"] .fin-play[data-game="ball-knowledge"],
+html[data-theme="light"] .fin-play[data-game="freezeframes"] { color: #fff; }
 .fin-play:hover { filter: brightness(1.06); }
 
 .fin-others { margin-top: 14px; text-align: left; }

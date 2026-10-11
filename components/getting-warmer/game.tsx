@@ -592,6 +592,12 @@ export default function GettingWarmerGame() {
           </div>
         )}
 
+        {isFinished && !showResultsModal && (
+          <button type="button" className="gw-summary-btn" onClick={() => setShowResultsModal(true)}>
+            Back to today&apos;s summary
+          </button>
+        )}
+
       </div>
 
       <FinishScreen

@@ -26,6 +26,8 @@ export async function fireConfetti(preset: ConfettiPreset = "gold"): Promise<voi
     gravity: 1.05,
     scalar: 1.15,
     disableForReducedMotion: true,
+    // Above the daily finish screen (z-index 1000), which opens just after the win.
+    zIndex: 1100,
   });
 
   window.setTimeout(() => {
@@ -36,6 +38,7 @@ export async function fireConfetti(preset: ConfettiPreset = "gold"): Promise<voi
       origin: { x: 0, y: 0.55 },
       colors: [...colors],
       disableForReducedMotion: true,
+      zIndex: 1100,
     });
     confetti({
       particleCount: 45,
@@ -44,6 +47,7 @@ export async function fireConfetti(preset: ConfettiPreset = "gold"): Promise<voi
       origin: { x: 1, y: 0.55 },
       colors: [...colors],
       disableForReducedMotion: true,
+      zIndex: 1100,
     });
   }, 280);
 }

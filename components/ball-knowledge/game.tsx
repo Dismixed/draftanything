@@ -249,10 +249,11 @@ export default function BallKnowledgeGame({
   }, []);
 
   const finishRound = useCallback(() => {
-    saveDailyPlayed(score, category);
+    // The clock's interval keeps the callback from the render that started the round, so read the live count.
+    saveDailyPlayed(acceptedRef.current.length, category);
     setScreen("end");
     void loadLeaderboard();
-  }, [category, loadLeaderboard, score]);
+  }, [category, loadLeaderboard]);
 
   const endRoundWhenReady = useCallback(() => {
     setRoundOver(true);

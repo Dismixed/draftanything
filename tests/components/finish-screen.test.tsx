@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FinishScreen, type FinishScreenProps } from "@/components/daily/finish-screen";
@@ -157,6 +158,35 @@ describe("FinishScreen", () => {
     expect(dialog.style.getPropertyValue("--bg")).toBe("var(--ht-bg)");
     expect(dialog.style.getPropertyValue("--text")).toBe("var(--ht-text)");
     expect(dialog.style.getPropertyValue("--fin-acc")).toBe("var(--ht-accent)");
+  });
+
+  it("moves the YOU label to the left of the marker when it would overhang the plot", () => {
+    const marker = (percentile: number) => {
+      const { unmount } = renderScreen({ curve: { percentile, lowLabel: "0", highLabel: "4,000" } });
+      const me = screen.getByTestId("finish-bell").querySelector(".fin-bell-me");
+      const flipped = me?.classList.contains("is-flipped");
+      unmount();
+      return flipped;
+    };
+
+    expect(marker(99)).toBe(true);
+    expect(marker(98)).toBe(true);
+    expect(marker(90)).toBe(false);
+    expect(marker(50)).toBe(false);
+    expect(marker(5)).toBe(false);
+  });
+
+  it("lets the inline accent win: only the overlay declares the gold fallback, never .fin", () => {
+    // jsdom does not load the stylesheet, so check the rule that used to shadow the inline value.
+    const css = readFileSync("app/globals.css", "utf8");
+    const block = (selector: string) => css.match(new RegExp(`(?:^|\\n)${selector.replace(".", "\\.")} \\{([^}]*)\\}`))?.[1] ?? "";
+    expect(block(".fin")).not.toMatch(/--fin-acc\s*:/);
+    expect(block(".daily-complete-overlay")).toMatch(/--fin-acc:\s*var\(--gold\)/);
+
+    renderScreen({ gameId: "freezeframes" });
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveClass("daily-complete-overlay");
+    expect(dialog.style.getPropertyValue("--fin-acc")).toBe("var(--ff-purple-light)");
   });
 
   it("renders nothing while closed", () => {

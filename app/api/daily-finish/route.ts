@@ -40,6 +40,12 @@ function rateLimited(key: string, max: number): Response | null {
   );
 }
 
+/** First hop of `x-forwarded-for`, else `x-real-ip`, else "unknown". */
+function clientKey(request: Request): string {
+  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  return forwarded || request.headers.get("x-real-ip")?.trim() || "unknown";
+}
+
 async function signedInUserId(): Promise<string | null> {
   const supa = await createClient();
   const { data } = await supa.auth.getUser();
@@ -73,7 +79,8 @@ async function answer(game: CompetitiveGameId, score: number, player: FinishPlay
 }
 
 export async function POST(request: Request) {
-  const limited = rateLimited("daily-finish-post", 300);
+  const limited =
+    rateLimited(`daily-finish-post:${clientKey(request)}`, 20) ?? rateLimited("daily-finish-post", 300);
   if (limited) return limited;
 
   let body: unknown;
@@ -100,7 +107,8 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
-  const limited = rateLimited("daily-finish-get", 600);
+  const limited =
+    rateLimited(`daily-finish-get:${clientKey(request)}`, 60) ?? rateLimited("daily-finish-get", 600);
   if (limited) return limited;
 
   const parsed = getSchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));

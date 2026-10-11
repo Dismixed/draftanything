@@ -363,6 +363,25 @@ html[data-theme="light"] .gw-page {
   cursor: not-allowed;
 }
 
+.gw-summary-btn {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  background: none;
+  border: 1px solid color-mix(in srgb, var(--gw-ink) 22%, transparent);
+  color: var(--gw-ink-dim);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12.5px;
+  padding: 12px 14px;
+  border-radius: var(--gw-radius);
+  cursor: pointer;
+}
+
+.gw-summary-btn:hover {
+  color: var(--gw-orange);
+  border-color: color-mix(in srgb, var(--gw-orange) 55%, transparent);
+}
+
 .gw-feedback {
   min-height: 20px;
   font-family: "IBM Plex Mono", monospace;

@@ -11,18 +11,6 @@ export function getDayNumber(date = new Date()): number {
   return Math.floor((date.getTime() - EPOCH) / 86_400_000) + 1;
 }
 
-export function getCountdownText(): string {
-  const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
-  const diff = tomorrow.getTime() - now.getTime();
-  const h = Math.floor(diff / 3_600_000);
-  const m = Math.floor((diff % 3_600_000) / 60_000);
-  const s = Math.floor((diff % 60_000) / 1000);
-  return `${h}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`;
-}
-
 export function normalizeGuess(str: string): string {
   return str.toUpperCase().replace(/[^A-Z0-9]/g, "");
 }

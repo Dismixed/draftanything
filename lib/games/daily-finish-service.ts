@@ -109,5 +109,7 @@ export async function dayCounts(
 
   if (all.error) throw new Error(all.error.message);
   if (worse.error) throw new Error(worse.error.message);
-  return { total: all.count ?? 0, worse: worse.count ?? 0 };
+  // A successful exact count always carries a total; null means the request did not really succeed.
+  if (all.count === null || worse.count === null) throw new Error("daily_finishes count unavailable");
+  return { total: all.count, worse: worse.count };
 }

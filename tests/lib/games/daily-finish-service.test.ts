@@ -131,6 +131,19 @@ describe("dayCounts", () => {
   it("is zero on a day nobody has played", async () => {
     expect(await dayCounts(fakeDb([]), "freezeframes", DAY, 200, "higher")).toEqual({ total: 0, worse: 0 });
   });
+
+  it("throws when a count comes back null (a missing table answers HEAD with no error and no count)", async () => {
+    // postgrest-js turns an empty-bodied 404 into status 204 with error null and count null.
+    const nullCount = () => {
+      const q: Record<string, unknown> = {};
+      for (const method of ["eq", "lt", "gt"]) q[method] = () => q;
+      q.then = (resolve: (value: unknown) => unknown) => Promise.resolve({ data: null, count: null, error: null }).then(resolve);
+      return q;
+    };
+    const db = { from: () => ({ select: nullCount }) } as unknown as SupabaseClient<Database>;
+
+    await expect(dayCounts(db, "freezeframes", DAY, 200, "higher")).rejects.toThrow("daily_finishes count unavailable");
+  });
 });
 
 describe("scoreBounds", () => {
