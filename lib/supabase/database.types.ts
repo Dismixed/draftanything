@@ -1085,6 +1085,36 @@ export type Database = {
           },
         ]
       }
+      daily_finishes: {
+        Row: {
+          created_at: string
+          game: string
+          guest_id: string | null
+          id: string
+          play_date: string
+          score: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          game: string
+          guest_id?: string | null
+          id?: string
+          play_date: string
+          score: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          game?: string
+          guest_id?: string | null
+          id?: string
+          play_date?: string
+          score?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       draft_items: {
         Row: {
           created_at: string
