@@ -130,6 +130,8 @@ export default function BallKnowledgeGame({
         reason: "",
       });
       setAcceptedCanonicals((prev) => new Set(prev).add(canonical));
+      // The round can end before the effect below syncs the ref, so keep it current here too.
+      acceptedRef.current = [...acceptedRef.current, canonical];
       setAccepted((prev) => [...prev, canonical]);
     },
     [updateEntry],
@@ -280,6 +282,7 @@ export default function BallKnowledgeGame({
 
     setTimeLeft(TOTAL_TIME);
     setEntries([]);
+    acceptedRef.current = [];
     setAccepted([]);
     setAcceptedCanonicals(new Set());
     setRoundOver(false);
