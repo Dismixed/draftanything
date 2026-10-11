@@ -7,23 +7,21 @@ import {
   useState,
   type CSSProperties,
 } from "react";
+import Link from "next/link";
 import { GameBackLink } from "@/components/ui/game-back-link";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
 import { OtherDailies } from "@/components/daily/other-dailies";
-import { track } from "@/lib/analytics/track";
 import { ballKnowledgeShare } from "@/lib/share/results";
 import { DailyCompleteShell } from "@/components/daily/daily-complete-shell";
+import { ShareResult } from "@/components/daily/share-result";
 import { useGameHowItWorks } from "@/lib/game-how-it-works";
 import { useTheme, setThemeColorOverride } from "@/lib/theme/theme-context";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
 import { burstFrom } from "@/lib/motion/burst";
 import { juiceLevel } from "@/lib/motion/juice-level";
 import { triggerAnimation } from "@/lib/motion/trigger-class";
-import {
-  CLOCK_CIRCUMFERENCE,
-  TOTAL_TIME,
-  getCountdownText,
-} from "@/lib/ball-knowledge/game-logic";
+import { hitCall, missCall, type BroadcastCall } from "@/lib/ball-knowledge/broadcast";
+import { TOTAL_TIME, getCountdownText } from "@/lib/ball-knowledge/game-logic";
 import { findMatch } from "@/lib/ball-knowledge/normalize";
 import {
   fetchTodayLeaderboard,
@@ -45,10 +43,10 @@ const SAMPLE_CATEGORIES = [
   "Breakfast Cereals",
 ] as const;
 
-function AnswerRow({ entry }: { entry: AnswerEntry }) {
+function AnswerChip({ entry }: { entry: AnswerEntry }) {
   const icon =
     entry.status === "pending" ? (
-      <div className="bk-spin" />
+      <span className="bk-spin" />
     ) : entry.status === "ok" ? (
       "✓"
     ) : (
@@ -56,13 +54,15 @@ function AnswerRow({ entry }: { entry: AnswerEntry }) {
     );
 
   return (
-    <div className={`bk-answer-row ${entry.status}`} data-id={entry.id}>
-      <div className="bk-icon">{icon}</div>
-      <div>{entry.displayText}</div>
-      {entry.status !== "pending" && entry.reason ? (
-        <div className="bk-reason">{entry.reason}</div>
+    <li className={`bk-chip ${entry.status}`} data-id={entry.id}>
+      <span className="bk-chip-icon" aria-hidden="true">
+        {icon}
+      </span>
+      <span className="bk-chip-text">{entry.displayText}</span>
+      {entry.status === "bad" && entry.reason ? (
+        <span className="bk-chip-reason">{entry.reason}</span>
       ) : null}
-    </div>
+    </li>
   );
 }
 
@@ -91,6 +91,8 @@ export default function BallKnowledgeGame({
   const { showHowItWorks, dismissHowItWorks } = useGameHowItWorks("ball-knowledge");
   const [completeOpen, setCompleteOpen] = useState(false);
   const { theme } = useTheme();
+  // The commentator's line for the answer graded most recently. `id` restarts its animation.
+  const [call, setCall] = useState<(BroadcastCall & { id: number }) | null>(null);
 
   const answerInputRef = useRef<HTMLInputElement>(null);
   const scoreNumRef = useRef<HTMLDivElement>(null);
@@ -102,6 +104,10 @@ export default function BallKnowledgeGame({
   const finishCheckRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const submittedEntryIdRef = useRef<string | null>(null);
   const acceptedRef = useRef<string[]>([]);
+  const callIdRef = useRef(0);
+  const scoredRef = useRef(0);
+  const streakRef = useRef(0);
+  const missesRef = useRef(0);
 
   const score = accepted.length;
 
@@ -148,8 +154,15 @@ export default function BallKnowledgeGame({
     );
   }, []);
 
+  const announce = useCallback((next: BroadcastCall) => {
+    setCall({ ...next, id: ++callIdRef.current });
+  }, []);
+
   const acceptEntry = useCallback(
     (id: string, canonical: string) => {
+      scoredRef.current += 1;
+      streakRef.current += 1;
+      announce(hitCall(canonical, scoredRef.current, streakRef.current));
       updateEntry(id, {
         status: "ok",
         displayText: canonical,
@@ -158,14 +171,17 @@ export default function BallKnowledgeGame({
       setAcceptedCanonicals((prev) => new Set(prev).add(canonical));
       setAccepted((prev) => [...prev, canonical]);
     },
-    [updateEntry],
+    [announce, updateEntry],
   );
 
   const rejectEntry = useCallback(
-    (id: string, reason: string) => {
+    (id: string, text: string, reason: string) => {
+      streakRef.current = 0;
+      missesRef.current += 1;
+      announce(missCall(text, reason, missesRef.current));
       updateEntry(id, { status: "bad", reason });
     },
-    [updateEntry],
+    [announce, updateEntry],
   );
 
   const isDuplicate = useCallback(
@@ -194,7 +210,7 @@ export default function BallKnowledgeGame({
         });
 
         if (!res.ok) {
-          rejectEntry(entry.id, "couldn't verify");
+          rejectEntry(entry.id, entry.text, "couldn't verify");
           return;
         }
 
@@ -207,15 +223,15 @@ export default function BallKnowledgeGame({
         if (parsed.valid) {
           const canonical = parsed.canonical || entry.text;
           if (isDuplicate(canonical)) {
-            rejectEntry(entry.id, "already got it");
+            rejectEntry(entry.id, entry.text, "already got it");
           } else {
             acceptEntry(entry.id, canonical);
           }
         } else {
-          rejectEntry(entry.id, parsed.reason || "not valid");
+          rejectEntry(entry.id, entry.text, parsed.reason || "not valid");
         }
       } catch {
-        rejectEntry(entry.id, "couldn't verify");
+        rejectEntry(entry.id, entry.text, "couldn't verify");
       } finally {
         pendingCountRef.current -= 1;
       }
@@ -242,7 +258,7 @@ export default function BallKnowledgeGame({
       const match = findMatch(category, trimmed);
       if (match) {
         if (acceptedCanonicals.has(match.canonical)) {
-          rejectEntry(id, "already got it");
+          rejectEntry(id, trimmed, "already got it");
         } else {
           acceptEntry(id, match.canonical);
         }
@@ -253,7 +269,7 @@ export default function BallKnowledgeGame({
       judgeQueueRef.current = judgeQueueRef.current
         .then(() => aiJudge(entry))
         .catch(() => {
-          rejectEntry(id, "couldn't verify");
+          rejectEntry(id, trimmed, "couldn't verify");
           pendingCountRef.current -= 1;
         });
     },
@@ -275,13 +291,16 @@ export default function BallKnowledgeGame({
   }, []);
 
   const finishRound = useCallback(() => {
-    saveDailyPlayed(score, category);
+    // The round timer holds the version of this callback from when START was pressed, so read
+    // the score from the ref. Reading the state here saved every round as 0.
+    saveDailyPlayed(scoredRef.current, category);
     setScreen("end");
     void loadLeaderboard();
-  }, [category, loadLeaderboard, score]);
+  }, [category, loadLeaderboard]);
 
   const endRoundWhenReady = useCallback(() => {
     setRoundOver(true);
+    announce({ kind: "big", headline: "BUZZER!", detail: "Grading the last answers" });
     if (answerInputRef.current) {
       answerInputRef.current.disabled = true;
       answerInputRef.current.placeholder = "Time's up — grading last answers…";
@@ -293,7 +312,7 @@ export default function BallKnowledgeGame({
         finishRound();
       }
     }, 150);
-  }, [finishRound]);
+  }, [announce, finishRound]);
 
   const startGame = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -302,6 +321,10 @@ export default function BallKnowledgeGame({
     entryCounterRef.current = 0;
     pendingCountRef.current = 0;
     judgeQueueRef.current = Promise.resolve();
+    scoredRef.current = 0;
+    streakRef.current = 0;
+    missesRef.current = 0;
+    setCall(null);
 
     setTimeLeft(TOTAL_TIME);
     setEntries([]);
@@ -309,6 +332,8 @@ export default function BallKnowledgeGame({
     setAcceptedCanonicals(new Set());
     setRoundOver(false);
     setScreen("game");
+    // START sits below the fold on a phone, and the score bug must not begin off screen.
+    window.scrollTo({ top: 0 });
 
     setTimeout(() => {
       if (answerInputRef.current) {
@@ -357,16 +382,6 @@ export default function BallKnowledgeGame({
 
   const shareText = ballKnowledgeShare(category, score);
 
-  const copyShareText = async (platform: string) => {
-    try {
-      await navigator.clipboard.writeText(shareText);
-      track("result_shared", { game: "ball-knowledge", method: "copy" });
-      toast(`Copied! Paste it into ${platform}`);
-    } catch {
-      toast("Could not copy — select and copy manually");
-    }
-  };
-
   const handleJoin = async () => {
     const name = nameInput.trim();
     if (!name) {
@@ -385,7 +400,6 @@ export default function BallKnowledgeGame({
     setJoining(false);
   };
 
-  const clockOffset = CLOCK_CIRCUMFERENCE * (1 - timeLeft / TOTAL_TIME);
   const urgent = timeLeft <= 10 && screen === "game";
 
   const endItems = entries.filter((e) => e.status === endTab);
@@ -407,8 +421,8 @@ export default function BallKnowledgeGame({
       }
     >
     <main className={`bk-page${completeOpen ? " bk-page--complete" : ""}`}>
-      <div className="bk-app">
-        {!completeOpen && (
+      <div className={`bk-app${screen === "game" ? " bk-app--wide" : ""}`}>
+        {!completeOpen && screen !== "game" && (
           <div className="bk-brand">
             <div className="bk-brand-dot" />
             <span>Stim Games</span>
@@ -466,6 +480,9 @@ export default function BallKnowledgeGame({
             <div className="bk-streak-line">
               <WinStreakLine gameId="ball-knowledge" accentColor="var(--bk-net-blue)" />
             </div>
+            <div className="bk-share">
+              <ShareResult gameId="ball-knowledge" text={ballKnowledgeShare(category, playedScore)} />
+            </div>
             <OtherDailies currentGameId="ball-knowledge" />
           </div>
         )}
@@ -502,41 +519,52 @@ export default function BallKnowledgeGame({
         )}
 
         {screen === "game" && (
-          <div className="bk-play">
-            <div className="bk-game-top">
-              <div className="bk-game-category">
-                <small>Category</small>
+          <div className={`bk-play${urgent ? " is-urgent" : ""}`}>
+            <header className="bk-bar">
+              <Link href="/" className="bk-bar-back">
+                &larr; Back
+              </Link>
+              <div className="bk-wordmark">
+                BALL <span>KNOWLEDGE</span>
+              </div>
+            </header>
+
+            {/* The score bug: a TV-style strip with the score, the category and the shot clock. */}
+            <div className="bk-bug">
+              <div className="bk-bug-live">
+                <span>Live</span>
+              </div>
+              <div className="bk-bug-you">
+                <span>You</span>
+                <b ref={scoreNumRef} aria-label={`Score ${score}`}>
+                  {score}
+                </b>
+              </div>
+              <div className="bk-bug-cat">
                 <span>{category}</span>
               </div>
-              <div className={`bk-clock${urgent ? " urgent" : ""}`}>
-                <svg width="68" height="68" viewBox="0 0 68 68">
-                  <circle
-                    className="bg"
-                    cx="34"
-                    cy="34"
-                    r="28"
-                    fill="none"
-                    strokeWidth="5"
-                  />
-                  <circle
-                    className="fg"
-                    cx="34"
-                    cy="34"
-                    r="28"
-                    fill="none"
-                    strokeWidth="5"
-                    strokeDasharray={CLOCK_CIRCUMFERENCE}
-                    strokeDashoffset={clockOffset}
-                  />
-                </svg>
-                <div className="bk-clock-num">{timeLeft}</div>
+              <div className="bk-bug-clock" aria-label={`${timeLeft} seconds left`}>
+                <span>:{String(timeLeft).padStart(2, "0")}</span>
               </div>
             </div>
+
+            <div className={`bk-booth${call ? ` is-${call.kind}` : ""}`} aria-live="polite">
+              {call ? (
+                <div key={call.id} className="bk-call">
+                  <b>{call.headline}</b>
+                  <span>{call.detail}</span>
+                </div>
+              ) : (
+                <span className="bk-booth-idle">Tip-off · type an answer</span>
+              )}
+            </div>
+
             <input
               ref={answerInputRef}
               type="text"
               className="bk-answer-input"
               placeholder="Type an answer and hit enter…"
+              aria-label="Your answer"
               autoComplete="off"
               autoCorrect="off"
               autoCapitalize="off"
@@ -548,23 +576,23 @@ export default function BallKnowledgeGame({
                 }
               }}
             />
-            <div className="bk-score-row">
-              <div className="bk-label">Score</div>
-              <div ref={scoreNumRef} className="bk-num">{score}</div>
-            </div>
-            <div className="bk-answer-list">
+            <ul className="bk-wall">
               {entries.map((entry) => (
-                <AnswerRow key={entry.id} entry={entry} />
+                <AnswerChip key={entry.id} entry={entry} />
               ))}
-            </div>
+            </ul>
           </div>
         )}
 
         {screen === "end" && (
           <div className="bk-results">
             <div className="bk-end-score">
-              <div className="bk-end-num">{score}</div>
-              <div className="bk-end-lbl">Ball Knowledge Score</div>
+              <div className="bk-end-call">Final buzzer</div>
+              <div className="bk-end-num anim-score-slam">{score}</div>
+              <div className="bk-end-lbl">{category} · named in 60 seconds</div>
+            </div>
+            <div className="bk-share">
+              <ShareResult gameId="ball-knowledge" text={shareText} />
             </div>
             <div className="bk-tabs">
               <button
@@ -572,29 +600,27 @@ export default function BallKnowledgeGame({
                 className={`bk-tab${endTab === "ok" ? " active" : ""}`}
                 onClick={() => setEndTab("ok")}
               >
-                Accepted
+                Accepted · {score}
               </button>
               <button
                 type="button"
                 className={`bk-tab${endTab === "bad" ? " active" : ""}`}
                 onClick={() => setEndTab("bad")}
               >
-                Missed
+                Missed · {entries.filter((e) => e.status === "bad").length}
               </button>
             </div>
-            <div className="bk-answer-list bk-end-list">
-              {endItems.length === 0 ? (
-                <div className="bk-empty-note">
-                  {endTab === "ok"
-                    ? "Nothing accepted this round."
-                    : "Nothing missed — clean round."}
-                </div>
-              ) : (
-                [...endItems].reverse().map((entry) => (
-                  <AnswerRow key={entry.id} entry={entry} />
-                ))
-              )}
-            </div>
+            {endItems.length === 0 ? (
+              <div className="bk-empty-note">
+                {endTab === "ok" ? "Nothing accepted this round." : "Nothing missed — clean round."}
+              </div>
+            ) : (
+              <ul className="bk-wall bk-wall--end">
+                {[...endItems].reverse().map((entry) => (
+                  <AnswerChip key={entry.id} entry={entry} />
+                ))}
+              </ul>
+            )}
 
             <div className="bk-divider" />
             <div className="bk-section-label">Join Today&apos;s Leaderboard</div>
@@ -629,59 +655,6 @@ export default function BallKnowledgeGame({
               ))
             )}
 
-            <div className="bk-divider" />
-            <div className="bk-section-label">Share Your Score</div>
-            <div className="bk-share-grid">
-              <button
-                type="button"
-                className="bk-share-btn"
-                onClick={() => {
-                  track("result_shared", { game: "ball-knowledge", method: "share" });
-                  window.open(
-                    `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`,
-                    "_blank",
-                  );
-                }}
-              >
-                <svg viewBox="0 0 24 24" width="18" height="18">
-                  <path
-                    fill="currentColor"
-                    d="M18.9 2h3.3l-7.2 8.2L23.5 22h-6.6l-5.2-6.8L5.7 22H2.4l7.7-8.8L1.5 2h6.8l4.7 6.2L18.9 2zm-1.2 18h1.8L7.4 3.9H5.5L17.7 20z"
-                  />
-                </svg>
-                <span>X</span>
-              </button>
-              <button
-                type="button"
-                className="bk-share-btn"
-                onClick={() => {
-                  void copyShareText("Instagram");
-                  window.open("https://www.instagram.com/", "_blank");
-                }}
-              >
-                <span>Instagram</span>
-              </button>
-              <button
-                type="button"
-                className="bk-share-btn"
-                onClick={() => {
-                  void copyShareText("TikTok");
-                  window.open("https://www.tiktok.com/upload", "_blank");
-                }}
-              >
-                <span>TikTok</span>
-              </button>
-              <button
-                type="button"
-                className="bk-share-btn"
-                onClick={() => {
-                  track("result_shared", { game: "ball-knowledge", method: "share" });
-                  window.location.href = `sms:?&body=${encodeURIComponent(shareText)}`;
-                }}
-              >
-                <span>Messages</span>
-              </button>
-            </div>
             {!completeOpen && (
               <button
                 type="button"
