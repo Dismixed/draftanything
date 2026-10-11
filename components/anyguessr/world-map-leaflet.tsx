@@ -5,6 +5,7 @@ import { getNameForCca3 } from "@/lib/anyguessr/country-geo";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { prefersReducedMotion } from "@/lib/motion/prefers-reduced-motion";
 import { GeoJSON, MapContainer, Marker, Polyline, useMap, useMapEvents } from "react-leaflet";
 
 export interface MapSelection {
@@ -13,6 +14,16 @@ export interface MapSelection {
   name: string;
   lat: number;
   lng: number;
+}
+
+/** How far the staged reveal after a guess has got. Each step builds on the one before. */
+export interface MapReveal {
+  /** The camera has pushed in from the whole world to frame the guess and the answer. */
+  framed: boolean;
+  /** The line from the guess to the answer is drawn. */
+  line: boolean;
+  /** The answer country is lit up. */
+  answer: boolean;
 }
 
 export interface WorldMapProps {
@@ -25,6 +36,10 @@ export interface WorldMapProps {
   guess?: { cca3: string | null; lat: number | null; lng: number | null };
   /** Room to leave clear of the play screen's header and guess bar when framing the world. */
   inset?: { top: number; bottom: number };
+  /** After a guess: reveal in steps. Leave out to show the guess and the answer at once. */
+  reveal?: MapReveal;
+  /** After a guess: called once the map and the country outlines are loaded and ready to be shown. */
+  onReady?: () => void;
 }
 
 /** The game's own country outlines (Natural Earth, public domain). No outside map tiles. */
@@ -58,6 +73,18 @@ function useWorld(): GeoJSON.FeatureCollection | null {
 function featuresFor(world: GeoJSON.FeatureCollection, cca3: string): GeoJSON.FeatureCollection {
   return { type: "FeatureCollection", features: world.features.filter((f) => cca3FromFeature(f) === cca3) };
 }
+
+/** What the play screen frames: every country that can be an answer. */
+const WORLD_FRAME: L.LatLngBoundsExpression = [
+  [-56, -168],
+  [78, 180],
+];
+
+const pulseIcon = L.divIcon({
+  className: "ag-map-marker",
+  html: '<span class="ag-map-pulse"></span>',
+  iconSize: [0, 0],
+});
 
 function tagIcon(label: string, kind: "pick" | "guess") {
   return L.divIcon({
@@ -123,20 +150,52 @@ function PlayView({ selection, inset }: { selection: MapSelection | null; inset:
   return null;
 }
 
-/** After a guess: frame the right country together with where the player guessed. */
-function RecapView({ bounds }: { bounds: L.LatLngBounds | null }) {
+/**
+ * After a guess: frame the right country together with where the player guessed. In a staged reveal
+ * it starts on the whole world and, once `framed`, the camera flies in to the pair.
+ */
+function RecapView({ bounds, staged, framed }: { bounds: L.LatLngBounds | null; staged: boolean; framed: boolean }) {
   const map = useMap();
 
   useEffect(() => {
-    if (bounds) map.fitBounds(bounds, { padding: [34, 34], maxZoom: 6, animate: false });
-  }, [map, bounds]);
+    if (!bounds) return;
+    const fit = { padding: [34, 34] as L.PointTuple, maxZoom: 6 };
+    if (!staged) {
+      map.fitBounds(bounds, { ...fit, animate: false });
+    } else if (!framed) {
+      map.fitBounds(WORLD_FRAME, { padding: [12, 12], animate: false });
+    } else if (prefersReducedMotion()) {
+      map.fitBounds(bounds, { ...fit, animate: false });
+    } else {
+      map.flyToBounds(bounds, { ...fit, duration: 1.1 });
+    }
+  }, [map, bounds, staged, framed]);
 
   return null;
 }
 
-export default function WorldMapLeaflet({ selection = null, onSelect, answer, guess, inset }: WorldMapProps) {
+/** The line from the guess to the answer, which draws itself in when the reveal reaches it. */
+function GuessLine({ from, to, draw }: { from: L.LatLng; to: L.LatLngExpression; draw: boolean }) {
+  const line = useRef<L.Polyline>(null);
+
+  useEffect(() => {
+    const path = line.current?.getElement();
+    if (!path || !draw) return;
+    // Normalised length, so the dash animation does not depend on the zoom the camera is at.
+    path.setAttribute("pathLength", "1");
+    path.classList.add("is-draw");
+  }, [draw]);
+
+  return <Polyline ref={line} positions={[from, to]} interactive={false} pathOptions={{ className: "ag-map-line" }} />;
+}
+
+export default function WorldMapLeaflet({ selection = null, onSelect, answer, guess, inset, reveal, onReady }: WorldMapProps) {
   const world = useWorld();
   const playing = Boolean(onSelect);
+
+  useEffect(() => {
+    if (world && !playing) onReady?.();
+  }, [world, playing, onReady]);
 
   const answerShape = useMemo(() => (world && answer ? featuresFor(world, answer.cca3) : null), [world, answer]);
   const pickCca3 = selection?.cca3 ?? null;
@@ -144,6 +203,8 @@ export default function WorldMapLeaflet({ selection = null, onSelect, answer, gu
 
   const guessAt = guess && guess.lat !== null && guess.lng !== null ? L.latLng(guess.lat, guess.lng) : null;
   const missed = Boolean(answer && guessAt && guess?.cca3 !== answer.cca3);
+  const showLine = reveal ? reveal.line : true;
+  const showAnswer = reveal ? reveal.answer : true;
 
   const recapBounds = useMemo(() => {
     if (!answer) return null;
@@ -189,7 +250,7 @@ export default function WorldMapLeaflet({ selection = null, onSelect, answer, gu
 
       {playing && world && onSelect && <ClickToPick world={world} onSelect={onSelect} />}
       {playing && <PlayView selection={selection} inset={inset ?? { top: 12, bottom: 12 }} />}
-      {!playing && <RecapView bounds={recapBounds} />}
+      {!playing && <RecapView bounds={recapBounds} staged={Boolean(reveal)} framed={reveal ? reveal.framed : true} />}
 
       {pickShape && selection && (
         <GeoJSON key={`pick-${pickCca3}`} data={pickShape} interactive={false} style={{ className: "ag-land-pick" }} />
@@ -198,16 +259,13 @@ export default function WorldMapLeaflet({ selection = null, onSelect, answer, gu
         <Marker position={[selection.lat, selection.lng]} icon={tagIcon(selection.name, "pick")} interactive={false} />
       )}
 
-      {answerShape && answer && (
+      {showAnswer && answerShape && answer && (
         <GeoJSON key={`answer-${answer.cca3}`} data={answerShape} interactive={false} style={{ className: "ag-land-answer" }} />
       )}
+      {reveal && showAnswer && answer && <Marker position={[answer.lat, answer.lng]} icon={pulseIcon} interactive={false} />}
       {missed && guessAt && answer && (
         <>
-          <Polyline
-            positions={[guessAt, [answer.lat, answer.lng]]}
-            interactive={false}
-            pathOptions={{ className: "ag-map-line" }}
-          />
+          {showLine && <GuessLine from={guessAt} to={[answer.lat, answer.lng]} draw={Boolean(reveal)} />}
           <Marker position={guessAt} icon={tagIcon("Your guess", "guess")} interactive={false} />
         </>
       )}

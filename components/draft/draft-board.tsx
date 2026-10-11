@@ -14,6 +14,8 @@ import { AvailablePool } from "./available-pool";
 import { PickHistory } from "./pick-history";
 import { PlayerRosters } from "./player-rosters";
 import { TurnTimer } from "./turn-timer";
+import { AiTag } from "./ai-tag";
+import { useBotTurns } from "@/features/draft/use-bot-turns";
 import { AiDesk } from "./ai-desk";
 import { OffTheDomeInput } from "./off-the-dome-input";
 import { VetoPanel } from "./veto-panel";
@@ -224,6 +226,16 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
     ? players.find((p) => p.seat === currentSlot.seat)
     : undefined;
   const isMyTurn = isDrafting && currentPlayer?.id === myPlayerId;
+  const isBotTurn = isDrafting && !!currentPlayer?.isBot;
+
+  // AI drafters have no browser: the people in the room ask the server to pick for them.
+  useBotTurns({
+    draftId: draft.id,
+    active: isBotTurn,
+    pickIndex: draft.currentPickIndex,
+    isHost: draft.hostPlayerId === myPlayerId,
+    onPicked: refetchProjection,
+  });
 
   useEffect(() => {
     if (isMyTurn && !prevIsMyTurnRef.current && isDrafting) {
@@ -330,12 +342,13 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
             <span style={{ color: isMyTurn ? 'var(--gold)' : 'var(--text)' }}>
               {isMyTurn ? "Your turn" : currentPlayer.displayName}
             </span>
-            {" · Pick "}{currentSlot.overallPick}
+            {isBotTurn && <AiTag />}
+            {isBotTurn ? " is thinking… · Pick " : " · Pick "}{currentSlot.overallPick}
           </div>
         )}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-          {isDrafting && (
+          {isDrafting && !isBotTurn && (
             <TurnTimer
               deadline={draft.turnDeadline}
               timerSeconds={draft.timerSeconds}
@@ -375,8 +388,14 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
           }}
         >
           <span style={{ color: isMyTurn ? 'var(--gold)' : 'var(--text)' }}>
-            {isMyTurn ? "Your turn" : `${currentPlayer.displayName} on the clock`}
+            {isMyTurn
+              ? "Your turn"
+              : isBotTurn
+                ? currentPlayer.displayName
+                : `${currentPlayer.displayName} on the clock`}
           </span>
+          {isBotTurn && <AiTag />}
+          {isBotTurn && <span style={{ color: 'var(--text)' }}> is thinking…</span>}
           {" · Pick "}{currentSlot.overallPick}
           {isMyTurn && draft.pickingMode === "off_the_dome"
             ? " — type your pick below"
@@ -557,16 +576,19 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
         />
       )}
 
-      <RoomChat
-        draftId={draft.id}
-        roomCode={draft.roomCode}
-        myPlayerId={myPlayerId}
-        bottomInset={
-          isDrafting && draft.pickingMode === "off_the_dome"
-            ? "max(140px, calc(112px + env(safe-area-inset-bottom)))"
-            : undefined
-        }
-      />
+      {/* One person against AI drafters has nobody to chat with. */}
+      {players.filter((p) => !p.isBot).length > 1 && (
+        <RoomChat
+          draftId={draft.id}
+          roomCode={draft.roomCode}
+          myPlayerId={myPlayerId}
+          bottomInset={
+            isDrafting && draft.pickingMode === "off_the_dome"
+              ? "max(140px, calc(112px + env(safe-area-inset-bottom)))"
+              : undefined
+          }
+        />
+      )}
     </div>
   );
 }

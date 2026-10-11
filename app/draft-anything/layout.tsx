@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { gameMetadata } from "@/lib/games/content";
 import { buildGameJsonLd, JsonLdScript } from "@/lib/seo";
+import "../draft-anything.css";
 
 export const metadata: Metadata = gameMetadata("draft-anything");
 

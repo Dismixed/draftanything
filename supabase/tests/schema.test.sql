@@ -50,7 +50,7 @@ select columns_are(
   'draft_players',
   array[
     'id', 'draft_id', 'guest_id', 'display_name', 'seat', 'is_ready',
-    'removed_at', 'joined_at'
+    'removed_at', 'joined_at', 'is_bot', 'bot_style'
   ],
   'draft_players has approved columns'
 );

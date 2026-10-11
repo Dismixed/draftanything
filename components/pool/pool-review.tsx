@@ -371,11 +371,14 @@ export function PoolReview({ draftId, myPlayerId, hostPlayerId, room }: PoolRevi
         )}
       </div>
 
-      <RoomChat
-        draftId={draftId}
-        roomCode={room.roomCode}
-        myPlayerId={myPlayerId}
-      />
+      {/* One person against AI drafters has nobody to chat with. */}
+      {room.players.filter((p) => !p.isBot).length > 1 && (
+        <RoomChat
+          draftId={draftId}
+          roomCode={room.roomCode}
+          myPlayerId={myPlayerId}
+        />
+      )}
     </div>
   );
 }

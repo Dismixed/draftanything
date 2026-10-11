@@ -16,6 +16,7 @@
   --ht-accent-2: #ff2e63;
   --ht-radius: 14px;
   --ht-overlay: rgba(11, 11, 14, 0.72);
+  --ht-paper: #f4efe4;
 }
 
 html[data-theme="light"] {
@@ -33,6 +34,7 @@ html[data-theme="light"] {
   --ht-accent: #e03e1a;
   --ht-accent-2: #db2777;
   --ht-overlay: rgba(26, 24, 22, 0.38);
+  --ht-paper: #fffdf8;
 }
 
 .hot-takes-page {
@@ -54,28 +56,9 @@ html[data-theme="light"] .hot-takes-page {
 }
 
 .hot-takes-wrap {
-  max-width: 980px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 22px 20px 0;
-}
-
-.hot-takes-header {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 18px;
-}
-
-.hot-takes-eyebrow {
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ht-text-dim);
-  font-weight: 600;
-}
-
-.hot-takes-eyebrow span {
-  color: var(--ht-accent);
 }
 
 .hot-takes-title {
@@ -87,136 +70,179 @@ html[data-theme="light"] .hot-takes-page {
   font-style: italic;
 }
 
-.hot-takes-word-hot {
-  color: #fff;
-}
-
-.hot-takes-word-takes {
-  color: #ff3b3b;
-}
-
 .hot-takes-sub {
   color: var(--ht-text-dim);
   font-size: 15px;
   margin-top: 4px;
 }
 
-.hot-takes-meta-row {
+/* ── Header ──────────────────────────────────────────────────────── */
+
+.hot-takes-top {
   display: flex;
-  gap: 10px;
   align-items: center;
-  margin-top: 12px;
-  flex-wrap: wrap;
+  gap: 22px;
+  margin-bottom: 18px;
 }
 
-.hot-takes-pill {
-  background: var(--ht-surface);
-  border: 1px solid var(--ht-line);
-  border-radius: 999px;
-  padding: 6px 14px;
-  font-size: 13px;
+.hot-takes-back {
+  font-size: 14px;
+  font-weight: 500;
   color: var(--ht-text-dim);
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
-.hot-takes-pill b {
+.hot-takes-back:hover {
   color: var(--ht-text);
-  font-weight: 600;
 }
 
-.hot-takes-action-bar {
-  background: var(--ht-surface);
-  border: 1px solid var(--ht-line);
-  border-radius: var(--ht-radius);
-  padding: 14px 16px;
-  margin-bottom: 16px;
-  display: flex;
-  gap: 10px;
-  align-items: center;
+.hot-takes-category {
+  margin: 0 0 0 auto;
+  text-align: right;
 }
+
+.hot-takes-category small {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ht-accent);
+}
+
+.hot-takes-category b {
+  font-size: 24px;
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+/* ── Board: five loose zones, each with its own ink ──────────────── */
 
 .hot-takes-game-area {
   display: grid;
-  grid-template-columns: 1fr 250px;
-  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  gap: 20px;
   align-items: start;
 }
 
 .hot-takes-board {
-  background: var(--ht-surface);
-  border: 1px solid var(--ht-line);
-  border-radius: var(--ht-radius);
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
+
+.hot-takes-tier-S { --ht-ink: var(--ht-heat-s); }
+.hot-takes-tier-A { --ht-ink: var(--ht-heat-a); }
+.hot-takes-tier-B { --ht-ink: var(--ht-heat-b); }
+.hot-takes-tier-C { --ht-ink: var(--ht-heat-c); }
+.hot-takes-tier-D { --ht-ink: var(--ht-heat-d); }
 
 .hot-takes-tier-row {
   display: flex;
-  border-bottom: 1px solid var(--ht-line);
-  min-height: 92px;
+  min-height: 124px;
+  border: 2px dashed color-mix(in srgb, var(--ht-ink) 45%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--ht-ink) 5%, var(--ht-surface));
+  transition: background 0.2s;
 }
 
-.hot-takes-tier-row:last-child {
-  border-bottom: none;
+.hot-takes-tier-row:has(.drag-over) {
+  background: color-mix(in srgb, var(--ht-ink) 16%, var(--ht-surface));
+  border-style: solid;
 }
 
 .hot-takes-tier-label {
-  width: 70px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  font-weight: 900;
-  font-style: italic;
-  color: #1a1a1a;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 84px;
 }
 
-.hot-takes-tier-S .hot-takes-tier-label { background: var(--ht-heat-s); }
-.hot-takes-tier-A .hot-takes-tier-label { background: var(--ht-heat-a); }
-.hot-takes-tier-B .hot-takes-tier-label { background: var(--ht-heat-b); }
-.hot-takes-tier-C .hot-takes-tier-label { background: var(--ht-heat-c); }
-.hot-takes-tier-D .hot-takes-tier-label { background: var(--ht-heat-d); }
+/* The tier letter is a rubber stamp, the same one that lands on each snapshot. */
+.hot-takes-tier-label span,
+.hot-takes-ink {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 4px solid var(--ht-ink);
+  color: var(--ht-ink);
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1;
+}
+
+.hot-takes-tier-label span {
+  width: 54px;
+  height: 54px;
+  font-size: 30px;
+  transform: rotate(-12deg);
+}
 
 .hot-takes-tier-list {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
-  align-content: flex-start;
-  align-items: flex-start;
-  gap: 12px 8px;
-  padding: 14px 12px;
-  min-height: 92px;
-}
-
-.hot-takes-tier-list.drag-over,
-.hot-takes-tray-list.drag-over {
-  background: rgba(255, 90, 54, 0.06);
+  align-content: center;
+  align-items: center;
+  gap: 14px 12px;
+  padding: 14px 14px 14px 0;
 }
 
 .hot-takes-tier-list.placeable,
 .hot-takes-tray-list.placeable {
-  outline: 1px dashed color-mix(in srgb, var(--ht-accent) 55%, transparent);
-  outline-offset: -2px;
   cursor: pointer;
 }
 
+.hot-takes-tier-row:has(.placeable) {
+  border-color: var(--ht-ink);
+}
+
+/* ── A snapshot ──────────────────────────────────────────────────── */
+
 .hot-takes-item {
-  width: 56px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
+  --ht-tilt: 0deg;
+  position: relative;
+  flex: none;
+  width: 84px;
+  padding: 5px 5px 4px;
+  border-radius: 3px;
+  background: var(--ht-paper);
+  color: #1a1816;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+  transform: rotate(var(--ht-tilt));
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
-  transition: transform 0.12s ease;
+  transition:
+    transform 0.14s ease,
+    box-shadow 0.14s ease;
+}
+
+html[data-theme="light"] .hot-takes-item {
+  box-shadow:
+    0 4px 12px rgba(60, 40, 20, 0.2),
+    0 0 0 1px rgba(60, 40, 20, 0.08);
+}
+
+.hot-takes-item:hover {
+  transform: rotate(var(--ht-tilt)) translateY(-3px);
 }
 
 .hot-takes-item:active {
   cursor: grabbing;
+}
+
+.hot-takes-item[aria-disabled="true"] {
+  cursor: default;
+}
+
+.hot-takes-item[aria-disabled="true"]:hover {
+  transform: rotate(var(--ht-tilt));
 }
 
 .hot-takes-item.dragging {
@@ -224,69 +250,155 @@ html[data-theme="light"] .hot-takes-page {
   pointer-events: none;
 }
 
-.hot-takes-item.selected .hot-takes-icon-box {
-  border-color: var(--ht-accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ht-accent) 45%, transparent);
-  transform: scale(1.06);
+.hot-takes-item.selected {
+  transform: rotate(0deg) scale(1.1);
+  box-shadow:
+    0 0 0 3px var(--ht-accent),
+    0 12px 26px rgba(0, 0, 0, 0.45);
+  z-index: 2;
 }
 
 .hot-takes-icon-box {
-  width: 52px;
-  height: 52px;
-  border-radius: 10px;
-  background: var(--ht-surface-2);
-  border: 1px solid var(--ht-line);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  height: 64px;
+  border-radius: 2px;
+  background: #e3ddd0;
   overflow: hidden;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .hot-takes-icon-box img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
 .hot-takes-item-label {
-  font-size: 9px;
-  color: var(--ht-text-dim);
-  white-space: nowrap;
-  font-weight: 500;
-  text-align: center;
-  max-width: 56px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  height: 23px;
+  margin-top: 4px;
   overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.hot-takes-ink {
+  position: absolute;
+  right: -9px;
+  top: -11px;
+  width: 34px;
+  height: 34px;
+  border-width: 3px;
+  background: color-mix(in srgb, var(--ht-paper) 88%, transparent);
+  font-size: 18px;
+  transform: rotate(-14deg);
+}
+
+/* The ink needs more bite on pale paper than the bright tier colours give in dark mode. */
+html:not([data-theme="light"]) .hot-takes-ink {
+  border-color: color-mix(in srgb, var(--ht-ink) 62%, #3a1206);
+  color: color-mix(in srgb, var(--ht-ink) 62%, #3a1206);
+}
+
+.hot-takes-item.is-fresh {
+  animation: ht-slap 0.4s cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+
+.hot-takes-item.is-fresh .hot-takes-ink {
+  animation: ht-stamp 0.35s 0.25s cubic-bezier(0.2, 1.7, 0.4, 1) both;
+}
+
+@keyframes ht-slap {
+  0% {
+    transform: rotate(var(--ht-tilt)) scale(1.7) translateY(-20px);
+    opacity: 0;
+  }
+}
+
+@keyframes ht-stamp {
+  0% {
+    transform: rotate(-14deg) scale(3);
+    opacity: 0;
+  }
+}
+
+/* ── The pile and the lock button ────────────────────────────────── */
+
+.hot-takes-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: sticky;
+  top: 16px;
 }
 
 .hot-takes-tray-panel {
   background: var(--ht-surface);
   border: 1px solid var(--ht-line);
   border-radius: var(--ht-radius);
-  padding: 16px;
+  padding: 14px;
+}
+
+.hot-takes-tray-head {
   display: flex;
-  flex-direction: column;
-  gap: 14px;
-  position: sticky;
-  top: 16px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 24px;
+  margin-bottom: 12px;
 }
 
 .hot-takes-tray-title {
-  font-size: 12px;
-  color: var(--ht-text-dim);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 600;
+  color: var(--ht-text-dim);
+}
+
+.hot-takes-shuffle {
+  flex: none;
+  padding: 4px 10px;
+  border: 1px solid var(--ht-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ht-text-dim);
+  font: 600 11px/1.2 inherit;
+  cursor: pointer;
+}
+
+.hot-takes-shuffle:hover {
+  color: var(--ht-text);
 }
 
 .hot-takes-tray-list {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px 4px;
-  justify-items: center;
+  display: flex;
+  flex-wrap: wrap;
   align-content: flex-start;
-  min-height: 400px;
+  gap: 14px 10px;
+  min-height: 110px;
+  border-radius: 10px;
+}
+
+.hot-takes-tray-list:has(.hot-takes-tray-empty) {
+  min-height: 0;
+}
+
+.hot-takes-tray-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ht-text-dim);
+}
+
+.hot-takes-game-area.is-locked {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.hot-takes-tray-list.drag-over {
+  background: color-mix(in srgb, var(--ht-accent) 8%, transparent);
 }
 
 .hot-takes-btn {
@@ -305,25 +417,29 @@ html[data-theme="light"] .hot-takes-page {
 }
 
 .hot-takes-btn-primary {
+  width: 100%;
+  height: 54px;
+  border-radius: 12px;
   background: linear-gradient(90deg, var(--ht-accent), var(--ht-accent-2));
   color: #fff;
-  flex: 2;
+  font-size: 16px;
+  font-weight: 800;
 }
 
 .hot-takes-btn-primary:disabled {
-  opacity: 0.35;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
-.hot-takes-btn-ghost {
-  background: var(--ht-surface-2);
-  border: 1px solid var(--ht-line);
-  color: var(--ht-text);
-  flex: 1;
+.hot-takes-btn-primary.is-ready {
+  box-shadow: 0 0 30px color-mix(in srgb, var(--ht-accent) 60%, transparent);
+  animation: ht-ready 1s ease-in-out infinite alternate;
 }
 
-.hot-takes-btn-ghost:hover {
-  background: #26262f;
+@keyframes ht-ready {
+  to {
+    transform: scale(1.03);
+  }
 }
 
 .hot-takes-results {
@@ -441,44 +557,163 @@ html[data-theme="light"] .hot-takes-page {
   color: var(--ht-text-dim);
 }
 
+.hot-takes-score-banner {
+  flex-wrap: wrap;
+}
+
+.hot-takes-hot-stamp {
+  flex: none;
+  padding: 9px 16px;
+  border: 3px solid var(--ht-accent-2);
+  border-radius: 10px;
+  color: var(--ht-accent-2);
+  font-size: 15px;
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  transform: rotate(-2deg);
+  animation: ht-hot-stamp 0.45s 0.6s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+@keyframes ht-hot-stamp {
+  0% {
+    transform: rotate(-2deg) scale(2.6);
+    opacity: 0;
+  }
+}
+
+/* On a phone the board is compact enough that the pile and the lock button fit under it without scrolling. */
 @media (max-width: 760px) {
-  .hot-takes-action-bar {
-    flex-direction: column;
+  .hot-takes-wrap {
+    padding: 16px 14px 0;
   }
 
-  .hot-takes-action-bar .hot-takes-btn {
-    width: 100%;
-  }
-
-  .hot-takes-game-area {
-    grid-template-columns: 1fr;
-  }
-
-  .hot-takes-tray-panel {
-    position: static;
-  }
-
-  .hot-takes-tray-list {
-    grid-template-columns: repeat(5, 1fr);
-    min-height: 240px;
+  .hot-takes-top {
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    margin-bottom: 10px;
+    /* keeps the title clear of the site's sound and theme buttons */
+    padding-right: 96px;
   }
 
   .hot-takes-title {
-    font-size: 32px;
+    font-size: 26px;
+  }
+
+  .hot-takes-back {
+    font-size: 12px;
+  }
+
+  .hot-takes-category {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    width: calc(100% + 96px);
+    margin: 0 -96px 0 0;
+    text-align: left;
+  }
+
+  .hot-takes-category small {
+    font-size: 8px;
+  }
+
+  .hot-takes-category b {
+    font-size: 17px;
+  }
+
+  .hot-takes-game-area {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .hot-takes-board {
+    gap: 5px;
+  }
+
+  .hot-takes-tier-row {
+    min-height: 76px;
   }
 
   .hot-takes-tier-label {
-    width: 54px;
+    width: 46px;
+  }
+
+  .hot-takes-tier-label span {
+    width: 34px;
+    height: 34px;
+    border-width: 3px;
     font-size: 19px;
   }
 
+  .hot-takes-tier-list {
+    gap: 9px 8px;
+    padding: 8px 8px 8px 0;
+  }
+
   .hot-takes-item {
-    width: 48px;
+    width: 56px;
+    padding: 3px 3px 2px;
   }
 
   .hot-takes-icon-box {
-    width: 44px;
-    height: 44px;
+    height: 40px;
+  }
+
+  .hot-takes-item-label {
+    height: 17px;
+    margin-top: 2px;
+    font-size: 7.5px;
+    line-height: 1.12;
+  }
+
+  .hot-takes-ink {
+    right: -6px;
+    top: -7px;
+    width: 22px;
+    height: 22px;
+    border-width: 2px;
+    font-size: 12px;
+  }
+
+  .hot-takes-side {
+    position: static;
+    gap: 8px;
+  }
+
+  .hot-takes-tray-panel {
+    padding: 10px;
+  }
+
+  .hot-takes-tray-head {
+    margin-bottom: 8px;
+  }
+
+  .hot-takes-tray-title {
+    font-size: 9px;
+  }
+
+  .hot-takes-tray-list {
+    gap: 10px 7px;
+    min-height: 62px;
+  }
+
+  .hot-takes-btn-primary {
+    height: 48px;
+    font-size: 14px;
+  }
+
+  .hot-takes-hot-stamp {
+    font-size: 12px;
+    padding: 7px 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hot-takes-item.is-fresh,
+  .hot-takes-item.is-fresh .hot-takes-ink,
+  .hot-takes-btn-primary.is-ready,
+  .hot-takes-hot-stamp {
+    animation: none;
   }
 }
 

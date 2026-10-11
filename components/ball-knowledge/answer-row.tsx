@@ -1,9 +1,10 @@
 import type { AnswerEntry } from "@/lib/ball-knowledge/types";
 
-export function AnswerRow({ entry }: { entry: AnswerEntry }) {
+/** One answer as a chip on the wall, during the round and on the result. */
+export function AnswerChip({ entry }: { entry: AnswerEntry }) {
   const icon =
     entry.status === "pending" ? (
-      <div className="bk-spin" />
+      <span className="bk-spin" />
     ) : entry.status === "ok" ? (
       "✓"
     ) : (
@@ -11,12 +12,14 @@ export function AnswerRow({ entry }: { entry: AnswerEntry }) {
     );
 
   return (
-    <div className={`bk-answer-row ${entry.status}`} data-id={entry.id}>
-      <div className="bk-icon">{icon}</div>
-      <div>{entry.displayText}</div>
-      {entry.status !== "pending" && entry.reason ? (
-        <div className="bk-reason">{entry.reason}</div>
+    <li className={`bk-chip ${entry.status}`} data-id={entry.id}>
+      <span className="bk-chip-icon" aria-hidden="true">
+        {icon}
+      </span>
+      <span className="bk-chip-text">{entry.displayText}</span>
+      {entry.status === "bad" && entry.reason ? (
+        <span className="bk-chip-reason">{entry.reason}</span>
       ) : null}
-    </div>
+    </li>
   );
 }

@@ -26,8 +26,8 @@ function makeProjection(overrides?: Partial<DraftRoomProjection>): DraftRoomProj
       pendingPickId: null,
     },
     players: [
-      { id: "player-1", displayName: "Alice", seat: 1, isReady: true, isHost: true },
-      { id: "player-2", displayName: "Bob", seat: 2, isReady: true, isHost: false },
+      { id: "player-1", displayName: "Alice", seat: 1, isReady: true, isHost: true, isBot: false },
+      { id: "player-2", displayName: "Bob", seat: 2, isReady: true, isHost: false, isBot: false },
     ],
     availableItems: [
       { id: "item-1", name: "Breaking Bad", source: "ai", isAvailable: false },

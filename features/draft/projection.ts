@@ -74,7 +74,8 @@ export function buildProjection(
     displayName: p.display_name as string,
     seat: p.seat as number,
     isReady: p.is_ready as boolean,
-    isHost: (p.guest_id as string) === draft.host_guest_id,
+    isHost: (p.guest_id as string | null) === draft.host_guest_id,
+    isBot: Boolean(p.is_bot),
   }));
 
   const isOffTheDome = (draft.picking_mode as string) === "off_the_dome";

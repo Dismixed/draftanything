@@ -6,6 +6,7 @@ export async function burstFrom(
   el: HTMLElement | null,
   level: JuiceLevel = 0,
   preset: ConfettiPreset = "gold",
+  options: { zIndex?: number; particles?: number } = {},
 ): Promise<void> {
   if (typeof window === "undefined" || !el || prefersReducedMotion()) return;
 
@@ -13,7 +14,7 @@ export async function burstFrom(
   const { default: confetti } = await import("canvas-confetti");
 
   confetti({
-    particleCount: 14 + 12 * level,
+    particleCount: options.particles ?? 14 + 12 * level,
     spread: 60 + 12 * level,
     startVelocity: 20 + 4 * level,
     ticks: 70,
@@ -24,8 +25,8 @@ export async function burstFrom(
       y: (rect.top + rect.height / 2) / window.innerHeight,
     },
     colors: [...PRESETS[preset]],
-    disableForReducedMotion: true,
     // Above the daily finish screen (z-index 1000), which opens just before end-of-game bursts.
-    zIndex: 1100,
+    zIndex: options.zIndex ?? 1100,
+    disableForReducedMotion: true,
   });
 }

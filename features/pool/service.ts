@@ -66,6 +66,7 @@ export async function startPoolReview(draftId: string, guestId: string): Promise
     if (msg.includes("ROOM_NOT_FOUND")) throw new AppError("ROOM_NOT_FOUND", "Draft not found");
     if (msg.includes("NOT_HOST")) throw new AppError("NOT_HOST", "Only the host can start pool review");
     if (msg.includes("INVALID_PHASE")) throw new AppError("INVALID_PHASE", "Room is not in lobby phase");
+    if (msg.includes("NOT_ENOUGH_PLAYERS")) throw new AppError("INVALID_INPUT", "A draft needs at least 2 players");
     throw new AppError("INVALID_INPUT", error.message);
   }
 }

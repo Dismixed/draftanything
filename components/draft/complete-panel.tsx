@@ -155,11 +155,11 @@ export function CompletePanel({ projection, myPlayerId }: CompletePanelProps) {
             </p>
           )}
           <Link
-            href="/"
+            href="/draft-anything"
             className="btn-ghost"
             style={{ textDecoration: "none", width: "auto", padding: "10px 16px" }}
           >
-            ← Back to Home
+            ← Draft Anything
           </Link>
         </div>
       </div>

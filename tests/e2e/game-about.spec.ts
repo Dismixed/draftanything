@@ -33,7 +33,6 @@ const ABOUT_PAGES = [
   "/freezeframes/daily",
   "/ball-knowledge/daily",
   "/getting-warmer/daily",
-  "/draft-anything",
   "/slippery-slope",
 ];
 

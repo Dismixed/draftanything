@@ -1,0 +1,213 @@
+/* Draft Anything landing page (/draft-anything) and the back link on its room screen. */
+
+.dal {
+  --dal-on-gold: #1a1400;
+  --dal-glow: rgba(201, 168, 76, 0.09);
+  /* --text-dim is about 4:1 on the dark page; small text here needs more. */
+  --dal-muted: #8b93b0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Outfit", system-ui, sans-serif;
+}
+html[data-theme="light"] .dal {
+  --dal-on-gold: #fffdfa;
+  --dal-glow: rgba(168, 132, 46, 0.1);
+  --dal-muted: #5c6478;
+}
+.dal a { color: inherit; text-decoration: none; }
+.dal-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.dal-top {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 16px 40px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.dal-top-back { color: var(--dal-muted); justify-self: start; white-space: nowrap; }
+.dal-top-back:hover { color: var(--text); }
+.dal-wordmark { font-family: "Playfair Display", serif; font-weight: 900; font-size: 20px; }
+.dal-wordmark em { color: var(--gold-hi); }
+
+.dal-hero {
+  padding: 72px 40px 64px;
+  text-align: center;
+  background: radial-gradient(ellipse 90% 60% at 50% -10%, var(--dal-glow), transparent 60%);
+}
+.dal-eyebrow {
+  margin: 0 0 18px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--gold-hi);
+}
+.dal-h1 {
+  margin: 0;
+  font-family: "Playfair Display", serif;
+  font-weight: 900;
+  font-size: clamp(38px, 6vw, 64px);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+.dal-rot {
+  display: block;
+  min-height: 1.1em;
+  font-style: italic;
+  color: var(--gold-hi);
+}
+.dal-rot::after {
+  content: "";
+  display: inline-block;
+  width: 3px;
+  height: 0.8em;
+  margin-left: 4px;
+  background: var(--gold-hi);
+  animation: dal-blink 1s steps(2) infinite;
+}
+@keyframes dal-blink { 50% { opacity: 0; } }
+.dal-lede {
+  max-width: 30em;
+  margin: 22px auto 0;
+  font-size: 19px;
+  font-weight: 300;
+  line-height: 1.55;
+  color: var(--dal-muted);
+}
+.dal-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-top: 30px; }
+.dal .dal-btn {
+  padding: 15px 30px;
+  border: 1px solid var(--gold-hi);
+  border-radius: 4px;
+  background: var(--gold-hi);
+  color: var(--dal-on-gold);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.dal .dal-btn-outline { background: transparent; color: var(--gold-hi); }
+.dal .dal-btn-ghost { background: transparent; border-color: var(--border-hi); color: var(--text); }
+.dal-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 22px var(--dal-glow); }
+.dal a:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 3px; }
+.dal-fine { margin: 16px 0 0; font-size: 13px; color: var(--dal-muted); }
+.dal-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  max-width: 720px;
+  margin: 34px auto 0;
+}
+.dal-chip {
+  padding: 8px 15px;
+  border: 1px solid var(--border-hi);
+  border-radius: 999px;
+  background: var(--panel);
+  font-size: 14px;
+  transition: border-color 0.15s ease;
+}
+.dal-chip:hover, .dal-idea:hover { border-color: var(--gold); }
+
+.dal-sec { max-width: 1125px; margin: 0 auto; padding: 56px 40px; border-top: 1px solid var(--border); }
+.dal-sec h2 { margin: 0 0 26px; font-family: "Playfair Display", serif; font-weight: 700; font-size: 32px; }
+
+.dal-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; margin: 0; padding: 0; list-style: none; }
+.dal-step-num { font-family: "Playfair Display", serif; font-weight: 900; font-size: 40px; line-height: 1; color: var(--gold-hi); }
+.dal-steps h3 { margin: 10px 0 6px; font-size: 18px; font-weight: 600; }
+.dal-steps p { margin: 0; font-size: 15px; line-height: 1.55; color: var(--dal-muted); }
+
+.dal-ideas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.dal-idea {
+  display: block;
+  padding: 16px;
+  border: 1px solid var(--border-hi);
+  border-radius: 4px;
+  background: var(--panel);
+  font-size: 16px;
+  line-height: 1.35;
+  transition: border-color 0.15s ease;
+}
+.dal-idea small {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold-hi);
+}
+
+.dal-judges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.dal-judge { margin: 0; padding: 4px 0 4px 18px; border-left: 2px solid var(--gold); }
+.dal-judge figcaption { font-size: 17px; font-weight: 600; }
+.dal-judge blockquote {
+  margin: 8px 0 0;
+  font-family: "Playfair Display", serif;
+  font-style: italic;
+  font-size: 17px;
+  line-height: 1.45;
+  color: var(--dal-muted);
+}
+
+.dal-faq details { border-bottom: 1px solid var(--border); }
+.dal-faq summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 15px 0;
+  font-size: 16px;
+  cursor: pointer;
+  list-style: none;
+}
+.dal-faq summary::-webkit-details-marker { display: none; }
+.dal-faq summary::after { content: "+"; color: var(--gold-hi); }
+.dal-faq details[open] summary::after { content: "−"; }
+.dal-faq details p { max-width: 46em; margin: 0 0 14px; font-size: 15px; line-height: 1.6; color: var(--dal-muted); }
+
+.dal-close { text-align: center; }
+.dal-close h2 { margin-bottom: 0; font-weight: 900; font-size: 44px; line-height: 1; }
+
+.dal-foot { padding: 28px 40px 44px; border-top: 1px solid var(--border); text-align: center; font-size: 14px; }
+.dal-foot a { color: var(--dal-muted); }
+.dal-foot a:hover { color: var(--text); }
+
+/* Room screen: the way back to the landing page. */
+.dal-back {
+  display: inline-block;
+  margin-bottom: 18px;
+  font-size: 13px;
+  color: var(--text-dim);
+  text-decoration: none;
+}
+.dal-back:hover { color: var(--text); }
+
+@media (max-width: 700px) {
+  /* The site's sound and theme buttons sit over the right of the bar at this width. */
+  .dal-top { padding: 18px 18px; font-size: 13px; }
+  .dal-wordmark { display: none; }
+  .dal-hero { padding: 44px 18px 44px; }
+  .dal-lede { font-size: 16px; }
+  .dal-actions { flex-direction: column; }
+  .dal .dal-btn { text-align: center; }
+  .dal-sec { padding: 40px 18px; }
+  .dal-sec h2 { font-size: 26px; }
+  .dal-steps, .dal-judges { grid-template-columns: 1fr; gap: 22px; }
+  .dal-ideas { grid-template-columns: 1fr 1fr; }
+  .dal-close h2 { font-size: 34px; }
+  .dal-foot { padding: 24px 18px 36px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dal-rot::after { animation: none; }
+  .dal-btn:hover { transform: none; }
+}

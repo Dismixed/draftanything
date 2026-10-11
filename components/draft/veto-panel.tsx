@@ -22,8 +22,9 @@ export function VetoPanel({ projection, myPlayerId, onVoteSubmitted }: VetoPanel
 
   const eligibleVoters = useMemo(
     () =>
+      // AI drafters never vote on a challenge.
       players.filter(
-        (p) => p.id !== pendingPick?.playerId,
+        (p) => !p.isBot && p.id !== pendingPick?.playerId,
       ),
     [players, pendingPick?.playerId],
   );

@@ -206,49 +206,6 @@ html[data-theme="light"] .bk-page {
   z-index: 2;
 }
 
-@keyframes bkSwishFlash {
-  0% {
-    box-shadow: inset 0 0 0 0 rgba(91, 158, 232, 0);
-  }
-  30% {
-    box-shadow: inset 0 0 30px 3px rgba(91, 158, 232, 0.7);
-  }
-  100% {
-    box-shadow: inset 0 0 0 0 rgba(91, 158, 232, 0);
-  }
-}
-
-.bk-answer-row.ok {
-  animation:
-    bkSlideIn 0.2s ease,
-    bkSwishFlash 0.5s ease;
-}
-
-@keyframes bkMissShake {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  20% {
-    transform: translateX(-9px);
-  }
-  40% {
-    transform: translateX(8px);
-  }
-  60% {
-    transform: translateX(-5px);
-  }
-  80% {
-    transform: translateX(3px);
-  }
-}
-
-.bk-answer-row.bad {
-  animation:
-    bkSlideIn 0.2s ease,
-    bkMissShake 0.4s ease 0.1s;
-}
-
 .bk-title {
   font-family: "Teko", sans-serif;
   font-weight: 700;
@@ -380,89 +337,6 @@ html[data-theme="light"] .bk-page {
   background: rgba(255, 255, 255, 0.04);
 }
 
-.bk-game-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-.bk-game-category {
-  font-family: "Teko", sans-serif;
-  font-size: 26px;
-  font-weight: 600;
-  line-height: 1;
-}
-
-.bk-game-category small {
-  display: block;
-  font-family: "Inter", sans-serif;
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--bk-net-blue);
-  font-weight: 700;
-  margin-bottom: 3px;
-}
-
-.bk-clock {
-  position: relative;
-  width: 68px;
-  height: 68px;
-  flex-shrink: 0;
-}
-
-.bk-clock svg {
-  display: block;
-  width: 68px;
-  height: 68px;
-  flex-shrink: 0;
-  transform: rotate(-90deg);
-}
-
-.bk-clock circle.bg {
-  stroke: rgba(140, 170, 220, 0.15);
-}
-
-.bk-clock circle.fg {
-  stroke: var(--bk-net-blue);
-  stroke-linecap: round;
-  transition:
-    stroke-dashoffset 1s linear,
-    stroke 0.3s ease;
-}
-
-.bk-clock.urgent circle.fg {
-  stroke: var(--bk-buzzer);
-}
-
-.bk-clock .bk-clock-num {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.bk-clock.urgent .bk-clock-num {
-  color: var(--bk-buzzer);
-  animation: bkPulse 1s ease-in-out infinite;
-}
-
-@keyframes bkPulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.4;
-  }
-}
-
 .bk-answer-input {
   width: 100%;
   padding: 15px 16px;
@@ -492,110 +366,6 @@ html[data-theme="light"] .bk-page {
 
 .bk-answer-input:disabled {
   opacity: 0.6;
-}
-
-.bk-score-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  padding: 0 2px;
-}
-
-.bk-score-row .bk-label {
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--bk-chalk-dim);
-  font-weight: 700;
-}
-
-.bk-score-row .bk-num {
-  font-family: "JetBrains Mono", monospace;
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--bk-chalk);
-}
-
-.bk-answer-list {
-  max-height: 260px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding-right: 2px;
-}
-
-.bk-answer-list::-webkit-scrollbar {
-  width: 5px;
-}
-
-.bk-answer-list::-webkit-scrollbar-thumb {
-  background: var(--bk-line);
-  border-radius: 4px;
-}
-
-.bk-answer-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 12px;
-  border-radius: 8px;
-  background: var(--bk-row-bg);
-  font-size: 14px;
-  font-weight: 500;
-  animation: bkSlideIn 0.2s ease;
-}
-
-@keyframes bkSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.bk-answer-row .bk-icon {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.bk-answer-row.ok {
-  color: var(--bk-chalk);
-}
-
-.bk-answer-row.ok .bk-icon {
-  color: var(--bk-net-blue);
-}
-
-.bk-answer-row.bad {
-  color: var(--bk-chalk-dim);
-  text-decoration: line-through;
-  text-decoration-color: var(--bk-miss);
-}
-
-.bk-answer-row.bad .bk-icon {
-  color: var(--bk-miss);
-}
-
-.bk-answer-row.pending .bk-icon {
-  color: var(--bk-chalk-dim);
-}
-
-.bk-answer-row .bk-reason {
-  margin-left: auto;
-  font-size: 11px;
-  color: var(--bk-chalk-dim);
-  text-decoration: none;
-  font-weight: 400;
-  white-space: nowrap;
 }
 
 .bk-spin {
@@ -813,3 +583,516 @@ html[data-theme="light"] .bk-page {
 }
 .bk-finish-category strong { color: var(--bk-chalk); }
 .bk-finish-board { list-style: none; margin: 0; padding: 0; }
+
+/* The absolute wrappers have no width of their own, which was breaking "← Back" onto two lines. */
+.bk-back-link a {
+  white-space: nowrap;
+}
+
+/* ── Play screen: a live broadcast ───────────────────────────────── */
+
+.bk-app--wide {
+  max-width: 780px;
+}
+
+.bk-play {
+  padding-top: 0;
+}
+
+.bk-bar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.bk-bar-back {
+  justify-self: start;
+  padding: 6px 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--bk-chalk-dim);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.bk-bar-back:hover {
+  color: var(--bk-chalk);
+}
+
+.bk-wordmark {
+  font-family: "Teko", sans-serif;
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.bk-wordmark span {
+  color: var(--bk-net-blue);
+}
+
+/* The bug keeps its TV colours in both themes, like a graphic laid over the picture. */
+.bk-bug {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  height: 46px;
+  margin: 0 5px;
+  border-radius: 8px;
+  overflow: hidden;
+  transform: skewX(-6deg);
+  font-family: "Teko", sans-serif;
+  font-weight: 600;
+  box-shadow: 0 14px 34px -12px rgba(0, 0, 0, 0.55);
+}
+
+.bk-bug > div {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 3px 10px 0;
+  font-size: 21px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.bk-bug > div > * {
+  display: block;
+  transform: skewX(6deg);
+}
+
+.bk-bug-live {
+  gap: 5px;
+  background: #e8364f;
+  color: #fff;
+  letter-spacing: 0.1em;
+}
+
+.bk-bug > .bk-bug-live {
+  font-size: 12px;
+}
+
+.bk-bug-live::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  margin-bottom: 3px;
+  border-radius: 50%;
+  background: #fff;
+  animation: bkBlink 1s steps(1) infinite;
+}
+
+@keyframes bkBlink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.bk-bug-you {
+  gap: 8px;
+  background: var(--bk-hardwood);
+  color: #fff;
+}
+
+.bk-bug-you b {
+  font-size: 34px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.bk-bug-cat {
+  background: #060d1c;
+  color: #eef4ff;
+  letter-spacing: 0.03em;
+}
+
+.bk-bug-cat span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bk-bug > .bk-bug-clock {
+  justify-content: center;
+  min-width: 58px;
+  background: #ffb020;
+  color: #1a1200;
+  font-size: 30px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.bk-play.is-urgent .bk-bug-clock {
+  background: #ff3b52;
+  color: #fff;
+  animation: bkBeat 0.5s ease-in-out infinite;
+}
+
+@keyframes bkBeat {
+  50% {
+    filter: brightness(1.4);
+  }
+}
+
+/* The booth: one commentator call per graded answer. Fixed height so the input never jumps. */
+.bk-booth {
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.bk-booth-idle {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--bk-chalk-dim);
+}
+
+.bk-call {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 100%;
+}
+
+.bk-call b {
+  font-family: "Teko", sans-serif;
+  font-weight: 700;
+  font-style: italic;
+  font-size: clamp(40px, 13vw, 104px);
+  line-height: 0.82;
+  white-space: nowrap;
+  color: var(--bk-chalk);
+  text-shadow: 3px 3px 0 var(--bk-hardwood);
+  animation: bkCallIn 0.5s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+
+@keyframes bkCallIn {
+  0% {
+    transform: scale(2.4) rotate(-7deg);
+    opacity: 0;
+  }
+  100% {
+    transform: rotate(-3deg);
+    opacity: 1;
+  }
+}
+
+.bk-call span {
+  max-width: 100%;
+  margin-top: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "Teko", sans-serif;
+  font-weight: 600;
+  font-size: clamp(17px, 4.6vw, 32px);
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bk-net-blue);
+  animation: bkCallDetail 0.3s 0.15s both;
+}
+
+@keyframes bkCallDetail {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.bk-booth.is-big .bk-call b {
+  color: var(--bk-buzzer);
+  text-shadow:
+    3px 3px 0 #7a3d00,
+    0 0 34px var(--bk-buzzer);
+}
+
+html[data-theme="light"] .bk-booth.is-big .bk-call b {
+  text-shadow: 3px 3px 0 #fde3b0;
+}
+
+.bk-booth.is-miss .bk-call b {
+  font-size: clamp(34px, 10.5vw, 80px);
+  color: var(--bk-miss);
+  text-shadow: none;
+  animation: bkCallMiss 0.4s both;
+}
+
+@keyframes bkCallMiss {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-10px);
+  }
+  40% {
+    transform: translateX(9px);
+  }
+  60% {
+    transform: translateX(-5px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+}
+
+.bk-booth.is-miss .bk-call span {
+  color: var(--bk-chalk-dim);
+}
+
+.bk-play .bk-answer-input {
+  padding: 16px 18px;
+  border: 2px solid var(--bk-net-blue);
+  border-radius: 12px;
+  font-size: 17px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--bk-net-blue) 16%, transparent);
+}
+
+/* Every answer is a chip, so the whole round stays on screen with no scrolling box. */
+.bk-wall {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 7px 12px 7px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--bk-line);
+  background: var(--bk-row-bg);
+  font-size: 13.5px;
+  font-weight: 600;
+  animation: bkChipIn 0.28s cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+
+@keyframes bkChipIn {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+.bk-chip-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--bk-chalk-dim);
+}
+
+.bk-chip-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bk-chip.ok .bk-chip-icon {
+  color: var(--bk-net-blue);
+}
+
+.bk-chip.bad {
+  color: var(--bk-chalk-dim);
+}
+
+.bk-chip.bad .bk-chip-icon {
+  color: var(--bk-miss);
+}
+
+.bk-chip.bad .bk-chip-text {
+  text-decoration: line-through;
+  text-decoration-color: var(--bk-miss);
+}
+
+.bk-chip-reason {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+/* ── Results ─────────────────────────────────────────────────────── */
+
+.bk-end-call {
+  margin-bottom: 6px;
+  font-family: "Teko", sans-serif;
+  font-weight: 700;
+  font-style: italic;
+  font-size: 26px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--bk-buzzer);
+}
+
+.bk-share {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.bk-share .share-result-wrap {
+  width: 100%;
+}
+
+.bk-share .share-result {
+  width: 100%;
+  margin: 0;
+  padding: 14px 18px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #2f7bdc, var(--bk-hardwood));
+  color: #fff;
+  font: 600 22px/1 "Teko", sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.bk-share .share-result-manual {
+  margin: 12px auto 0;
+  text-align: left;
+}
+
+/* On a phone the site's sound and theme buttons sit top right, so the wordmark keeps left of them,
+   and the bug drops the word LIVE to give the category two lines. */
+@media (max-width: 719px) {
+  .bk-bar {
+    display: flex;
+    gap: 10px;
+  }
+
+  .bk-wordmark {
+    font-size: 22px;
+  }
+
+  .bk-bug > .bk-bug-live {
+    padding: 0 9px;
+  }
+
+  .bk-bug-live span {
+    display: none;
+  }
+
+  .bk-bug-live::before {
+    margin-bottom: 0;
+  }
+
+  .bk-bug > .bk-bug-cat {
+    padding-top: 2px;
+    font-size: 18px;
+    line-height: 0.92;
+  }
+
+  .bk-bug-cat span {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
+  }
+}
+
+@media (min-width: 720px) {
+  .bk-bar {
+    margin-bottom: 22px;
+  }
+
+  .bk-wordmark {
+    font-size: 36px;
+  }
+
+  .bk-bug {
+    height: 70px;
+    margin: 0 8px;
+    border-radius: 10px;
+  }
+
+  .bk-bug > div {
+    padding: 6px 24px 0;
+    font-size: 36px;
+  }
+
+  .bk-bug > .bk-bug-live {
+    gap: 8px;
+    font-size: 20px;
+  }
+
+  .bk-bug-live::before {
+    width: 10px;
+    height: 10px;
+    margin-bottom: 5px;
+  }
+
+  .bk-bug-you {
+    gap: 16px;
+  }
+
+  .bk-bug-you b {
+    font-size: 56px;
+  }
+
+  .bk-bug > .bk-bug-clock {
+    min-width: 124px;
+    font-size: 50px;
+  }
+
+  .bk-booth {
+    height: 210px;
+  }
+
+  .bk-booth-idle {
+    font-size: 13px;
+  }
+
+  .bk-call b {
+    text-shadow: 6px 6px 0 var(--bk-hardwood);
+  }
+
+  .bk-booth.is-big .bk-call b {
+    text-shadow:
+      6px 6px 0 #7a3d00,
+      0 0 50px var(--bk-buzzer);
+  }
+
+  html[data-theme="light"] .bk-booth.is-big .bk-call b {
+    text-shadow: 6px 6px 0 #fde3b0;
+  }
+
+  .bk-play .bk-answer-input {
+    padding: 19px 22px;
+    font-size: 19px;
+  }
+
+  .bk-chip {
+    padding: 8px 14px 8px 10px;
+    font-size: 14.5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bk-call b,
+  .bk-call span,
+  .bk-chip,
+  .bk-bug-live::before,
+  .bk-play.is-urgent .bk-bug-clock {
+    animation: none;
+  }
+
+  .bk-call b {
+    transform: rotate(-3deg);
+  }
+}

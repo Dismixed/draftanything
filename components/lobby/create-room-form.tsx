@@ -7,6 +7,8 @@ import { TopicSuggestions } from "./topic-suggestions";
 import { ButtonLoadingLabel } from "@/components/ui/button-spinner";
 
 interface CreateRoomFormProps {
+  /** Pre-fill the topic (e.g. when arriving from a suggestion on the landing page). */
+  initialTopic?: string;
   onSuccess?: (draftId: string, roomCode: string) => void;
 }
 
@@ -23,9 +25,9 @@ const DEFAULT_VALUES = {
   customJudgePrompt: "",
 };
 
-export function CreateRoomForm({ onSuccess }: CreateRoomFormProps) {
+export function CreateRoomForm({ initialTopic = "", onSuccess }: CreateRoomFormProps) {
   const router = useRouter();
-  const [form, setForm] = useState(DEFAULT_VALUES);
+  const [form, setForm] = useState({ ...DEFAULT_VALUES, topic: initialTopic });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [inspireInterests, setInspireInterests] = useState<string | undefined>();

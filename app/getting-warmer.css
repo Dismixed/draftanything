@@ -13,6 +13,7 @@
   --gw-success: #39ff8f;
   --gw-radius: 14px;
   --gw-overlay: rgba(10, 7, 5, 0.72);
+  --gw-line: rgba(255, 170, 110, 0.2);
 }
 
 html[data-theme="light"] {
@@ -29,6 +30,7 @@ html[data-theme="light"] {
   --gw-danger: #dc2626;
   --gw-success: #059669;
   --gw-overlay: rgba(28, 16, 8, 0.38);
+  --gw-line: rgba(160, 90, 40, 0.25);
 }
 
 .gw-page {
@@ -72,77 +74,11 @@ html[data-theme="light"] .gw-page {
   max-width: 520px;
 }
 
-.gw-header {
-  text-align: center;
-  margin-bottom: 22px;
-}
-
-.gw-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--gw-ink-dim);
-  background: var(--gw-surface);
-  border: 1px solid rgba(255, 107, 26, 0.25);
-  padding: 5px 12px;
-  border-radius: 999px;
-  margin-bottom: 14px;
-  white-space: nowrap;
-}
-
-.gw-badge-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--gw-orange);
-  box-shadow: 0 0 8px var(--gw-orange);
-}
-
-.gw-title {
-  font-family: "Bebas Neue", sans-serif;
-  font-size: 56px;
-  letter-spacing: 0.03em;
-  margin: 0;
-  line-height: 0.95;
-  color: var(--gw-white-hot);
-  white-space: nowrap;
-}
-
-.gw-title-accent {
-  text-shadow:
-    0 0 6px rgba(255, 179, 71, 0.55),
-    0 0 26px rgba(255, 107, 26, 0.55),
-    0 0 60px rgba(255, 107, 26, 0.25);
-}
-
 .gw-sub {
   font-family: "IBM Plex Mono", monospace;
   font-size: 12.5px;
   color: var(--gw-ink-dim);
   margin-top: 8px;
-}
-
-.gw-stats {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: var(--gw-surface);
-  border: 1px solid rgba(255, 107, 26, 0.15);
-  border-radius: var(--gw-radius);
-  padding: 12px 16px;
-  margin-bottom: 18px;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 12px;
-  color: var(--gw-ink-dim);
-}
-
-.gw-stats b {
-  color: var(--gw-orange-bright);
-  font-size: 14px;
 }
 
 .gw-card {
@@ -153,68 +89,6 @@ html[data-theme="light"] .gw-page {
   box-shadow:
     0 20px 60px rgba(0, 0, 0, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.03);
-}
-
-.gw-clues {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  margin-bottom: 18px;
-}
-
-.gw-clue {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: 11px;
-  background: var(--gw-cold-slate);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  color: var(--gw-cold-slate-text);
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 14px;
-  opacity: 0.55;
-}
-
-.gw-clue-num {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.06);
-  font-size: 11px;
-  flex-shrink: 0;
-}
-
-.gw-clue.active {
-  opacity: 1;
-  color: var(--gw-ink);
-  background: linear-gradient(
-    135deg,
-    rgba(255, 107, 26, 0.12),
-    rgba(255, 107, 26, 0.04)
-  );
-  border-color: rgba(255, 150, 60, 0.4);
-  box-shadow:
-    0 0 0 1px rgba(255, 150, 60, 0.15) inset,
-    0 0 22px rgba(255, 107, 26, 0.18);
-}
-
-.gw-clue.active .gw-clue-num {
-  background: var(--gw-orange);
-  color: #1a0a02;
-  font-weight: 700;
-  box-shadow: 0 0 12px rgba(255, 107, 26, 0.7);
-}
-
-.gw-clue.ignite {
-  animation: gw-ignite 0.55s ease-out;
-}
-
-.gw-clue.loading {
-  opacity: 0.7;
 }
 
 .gw-clue-loading {
@@ -239,19 +113,6 @@ html[data-theme="light"] .gw-page {
   animation-delay: 0.3s;
 }
 
-@keyframes gw-ignite {
-  0% {
-    transform: scale(0.85);
-    box-shadow: none;
-  }
-  45% {
-    transform: scale(1.08);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
 @keyframes gw-pulse {
   0%,
   100% {
@@ -262,105 +123,6 @@ html[data-theme="light"] .gw-page {
     opacity: 1;
     transform: scale(1);
   }
-}
-
-.gw-input-row {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 6px;
-}
-
-.gw-guess-input {
-  flex: 1;
-  background: var(--gw-surface-2);
-  border: 1.5px solid rgba(255, 107, 26, 0.25);
-  border-radius: 11px;
-  padding: 14px 16px;
-  color: var(--gw-ink);
-  font-family: "Inter", sans-serif;
-  font-size: 16px;
-  font-weight: 600;
-  outline: none;
-  transition:
-    border-color 0.2s,
-    box-shadow 0.2s;
-}
-
-.gw-guess-input:focus {
-  border-color: var(--gw-orange);
-  box-shadow: 0 0 0 3px rgba(255, 107, 26, 0.18);
-}
-
-.gw-guess-input.shake {
-  animation: anim-shake-kf 0.38s ease-out;
-  border-color: var(--gw-danger);
-}
-
-@keyframes gw-shake {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  25% {
-    transform: translateX(-6px);
-  }
-  75% {
-    transform: translateX(6px);
-  }
-}
-
-.gw-guess-btn {
-  background: linear-gradient(135deg, var(--gw-orange), #e0530a);
-  color: #190a02;
-  border: none;
-  border-radius: 11px;
-  padding: 0 22px;
-  font-family: "Inter", sans-serif;
-  font-weight: 800;
-  font-size: 14px;
-  letter-spacing: 0.02em;
-  cursor: pointer;
-  box-shadow: 0 4px 18px rgba(255, 107, 26, 0.35);
-  transition:
-    transform 0.15s,
-    box-shadow 0.15s;
-}
-
-.gw-guess-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 22px rgba(255, 107, 26, 0.5);
-}
-
-.gw-guess-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.gw-secondary-row {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 8px;
-}
-
-.gw-give-up-btn {
-  background: none;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: var(--gw-cold-slate-text);
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 11.5px;
-  padding: 7px 13px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.gw-give-up-btn:hover:not(:disabled) {
-  color: var(--gw-danger);
-  border-color: rgba(255, 77, 77, 0.4);
-}
-
-.gw-give-up-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
 }
 
 .gw-summary-btn {
@@ -380,45 +142,6 @@ html[data-theme="light"] .gw-page {
 .gw-summary-btn:hover {
   color: var(--gw-orange);
   border-color: color-mix(in srgb, var(--gw-orange) 55%, transparent);
-}
-
-.gw-feedback {
-  min-height: 20px;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 12.5px;
-  color: var(--gw-ink-dim);
-  margin-top: 10px;
-  text-align: center;
-}
-
-.gw-feedback.warm {
-  color: var(--gw-orange-bright);
-}
-
-.gw-feedback.win {
-  color: var(--gw-success);
-}
-
-.gw-feedback.lose {
-  color: var(--gw-danger);
-}
-
-.gw-past-guesses {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 10px;
-}
-
-.gw-past-guess {
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
-  padding: 4px 9px;
-  border-radius: 999px;
-  background: rgba(255, 77, 77, 0.1);
-  border: 1px solid rgba(255, 77, 77, 0.3);
-  color: #ff8a8a;
-  text-transform: uppercase;
 }
 
 .gw-result {
@@ -592,10 +315,6 @@ html[data-theme="light"] .gw-page {
   box-shadow: 0 4px 18px rgba(255, 107, 26, 0.35);
 }
 
-.gw-back-link {
-  margin-bottom: 12px;
-}
-
 .gw-loading-page {
   text-align: center;
   padding: 60px 20px;
@@ -685,4 +404,603 @@ html[data-theme="light"] .gw-page {
   color: var(--gw-ink-dim);
   font-size: 10px;
   flex-shrink: 0;
+}
+
+/* ── Header bar ──────────────────────────────────────────────────── */
+
+.gw-bar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  margin-bottom: 22px;
+}
+
+.gw-bar-back {
+  justify-self: start;
+  padding: 6px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gw-ink-dim);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.gw-bar-back:hover {
+  color: var(--gw-ink);
+}
+
+.gw-wordmark {
+  margin: 0;
+  font-family: "Bebas Neue", sans-serif;
+  font-weight: 400;
+  font-size: 40px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: var(--gw-ink);
+}
+
+.gw-guess-no {
+  justify-self: end;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gw-ink-dim);
+}
+
+.gw-wordmark span {
+  color: var(--gw-orange);
+  text-shadow: 0 0 calc(var(--gw-h) * 26px) var(--gw-orange);
+}
+
+/* ── Play screen: the thermometer ────────────────────────────────── */
+
+/* --gw-h is how full the thermometer is (0 to 1). --gw-heat is the colour that goes with it,
+   so the whole page drifts from slate to orange as clues are revealed. */
+.gw-page {
+  --gw-h: 0.6;
+  --gw-heat: color-mix(in oklab, var(--gw-cold-slate-text) calc((1 - var(--gw-h)) * 100%), var(--gw-orange));
+}
+
+.gw-page.is-live,
+html[data-theme="light"] .gw-page.is-live {
+  background:
+    radial-gradient(
+      ellipse 1200px 620px at 50% -10%,
+      color-mix(in srgb, var(--gw-heat) calc(10% + var(--gw-h) * 22%), transparent),
+      transparent 62%
+    ),
+    var(--gw-bg);
+  transition: background 0.6s;
+}
+
+.gw-app--play {
+  max-width: 1000px;
+}
+
+.gw-play {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 44px;
+}
+
+.gw-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.gw-thermo {
+  flex: none;
+  display: flex;
+  gap: 14px;
+  width: 150px;
+}
+
+.gw-tube {
+  position: relative;
+  width: 46px;
+  height: 420px;
+  border: 3px solid var(--gw-line);
+  border-bottom: 0;
+  border-radius: 23px 23px 0 0;
+  background: var(--gw-surface);
+  overflow: hidden;
+}
+
+.gw-merc {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 0;
+  height: calc(8% + var(--gw-h) * 92%);
+  border-radius: 14px 14px 0 0;
+  background: linear-gradient(to top, var(--gw-orange), var(--gw-orange-bright));
+  box-shadow: 0 0 22px var(--gw-orange);
+  transition: height 0.8s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+
+.gw-bulb {
+  width: 78px;
+  height: 78px;
+  margin: -6px 0 0 -16px;
+  border: 3px solid var(--gw-line);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--gw-orange-bright), var(--gw-orange) 60%);
+  box-shadow: 0 0 calc(10px + var(--gw-h) * 50px) var(--gw-orange);
+  transition: box-shadow 0.6s;
+}
+
+.gw-ticks {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: space-between;
+  height: 420px;
+  margin: 0;
+  padding: 6px 0;
+  list-style: none;
+}
+
+.gw-ticks li {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--gw-ink-dim);
+  opacity: 0.45;
+  transition:
+    color 0.4s,
+    opacity 0.4s;
+}
+
+.gw-ticks li.on {
+  color: var(--gw-heat);
+  opacity: 1;
+}
+
+/* There is no temperature readout; the lit mark on the scale is the reading. */
+.gw-ticks li.cur {
+  font-size: 13px;
+}
+
+/* The flat thermometer is the phone's version of the tube. */
+.gw-flat {
+  display: none;
+  margin: 0 0 10px;
+}
+
+.gw-flat div {
+  height: 20px;
+  border: 2px solid var(--gw-line);
+  border-radius: 10px;
+  background: var(--gw-surface);
+  overflow: hidden;
+}
+
+.gw-flat i {
+  display: block;
+  width: calc(8% + var(--gw-h) * 92%);
+  height: 100%;
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--gw-orange), var(--gw-orange-bright));
+  box-shadow: 0 0 14px var(--gw-orange);
+  transition: width 0.8s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+
+.gw-flat p {
+  display: flex;
+  justify-content: space-between;
+  margin: 4px 0 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gw-ink-dim);
+}
+
+/* Clues. --gw-t is each clue's own temperature, so the stack reads cold to hot. The newest clue
+   is large; the ones before it are rows, and fold into tags once there are too many for rows. */
+.gw-clues {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gw-clue {
+  --gw-c: color-mix(in oklab, var(--gw-cold-slate-text) calc((1 - var(--gw-t, 0)) * 100%), var(--gw-orange));
+  flex: 1 0 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 15px 18px;
+  border: 1px solid color-mix(in srgb, var(--gw-c) 45%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--gw-c) 9%, var(--gw-surface));
+  color: var(--gw-ink);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.gw-clue-num {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--gw-c);
+  color: var(--gw-bg);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.gw-clue-text {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.gw-clue.is-bonus {
+  border-style: dashed;
+}
+
+.gw-clue-hot {
+  padding: 20px;
+  box-shadow: 0 0 calc(10px + var(--gw-t, 0) * 34px) color-mix(in srgb, var(--gw-c) 45%, transparent);
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 54px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.04em;
+}
+
+.gw-clue-hot.ignite {
+  animation: gw-ignite 0.6s ease-out;
+}
+
+@keyframes gw-ignite {
+  0% {
+    transform: translateY(14px) scale(0.96);
+    opacity: 0;
+    filter: brightness(2.4);
+  }
+  60% {
+    filter: brightness(1.5);
+  }
+}
+
+/* Tags: the earlier clues once they no longer fit as rows. */
+.gw-clues.is-folded {
+  gap: 6px;
+}
+
+.gw-clues.is-folded .gw-clue:not(.gw-clue-hot) {
+  flex: none;
+  gap: 7px;
+  padding: 6px 12px 6px 7px;
+  border-radius: 999px;
+  font-size: 14px;
+}
+
+.gw-clues.is-folded .gw-clue:not(.gw-clue-hot) .gw-clue-num {
+  width: 17px;
+  height: 17px;
+  font-size: 9px;
+}
+
+.gw-clues.is-folded .gw-clue-hot {
+  margin-top: 2px;
+}
+
+.gw-more {
+  display: flex;
+}
+
+.gw-clues:not(.is-folded) .gw-more {
+  flex: 1 0 100%;
+}
+
+.gw-clues .gw-clue.gw-clue-more {
+  --gw-c: var(--gw-cold-slate-text);
+  padding-left: 12px;
+  border-style: dashed;
+  color: var(--gw-ink-dim);
+  cursor: pointer;
+}
+
+.gw-clue-more:hover {
+  color: var(--gw-ink);
+}
+
+.gw-more-narrow,
+.gw-hide-wide {
+  display: none;
+}
+
+.gw-input-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.gw-guess-input {
+  flex: 1;
+  min-width: 0;
+  height: 62px;
+  padding: 0 20px;
+  border: 2px solid var(--gw-heat);
+  border-radius: 14px;
+  background: var(--gw-surface);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--gw-heat) 16%, transparent);
+  color: var(--gw-ink);
+  font-family: "Inter", sans-serif;
+  font-size: 19px;
+  font-weight: 600;
+  outline: none;
+  transition:
+    border-color 0.4s,
+    box-shadow 0.4s;
+}
+
+.gw-guess-input::placeholder {
+  color: var(--gw-ink-dim);
+}
+
+.gw-guess-input:focus-visible {
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--gw-heat) 34%, transparent);
+}
+
+.gw-guess-input.shake {
+  animation: anim-shake-kf 0.38s ease-out;
+  border-color: var(--gw-danger);
+}
+
+.gw-guess-btn {
+  height: 62px;
+  padding: 0 28px;
+  border: none;
+  border-radius: 14px;
+  background: var(--gw-orange);
+  color: #1a0d04;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 24px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.gw-guess-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.gw-guess-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.gw-under {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.gw-past-guesses {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.gw-past-guess {
+  padding: 5px 10px;
+  border: 1px solid color-mix(in srgb, var(--gw-danger) 40%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--gw-danger);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: line-through;
+}
+
+.gw-past-guess.is-more {
+  border-color: var(--gw-line);
+  color: var(--gw-ink-dim);
+  text-decoration: none;
+}
+
+.gw-give-up-btn {
+  flex: none;
+  padding: 5px 0;
+  border: none;
+  background: none;
+  color: var(--gw-ink-dim);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.gw-give-up-btn:hover:not(:disabled) {
+  color: var(--gw-danger);
+}
+
+.gw-give-up-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.gw-outcome {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 14px;
+  padding: 14px 20px;
+  border-radius: 14px;
+  background: linear-gradient(90deg, var(--gw-orange), var(--gw-orange-bright));
+  box-shadow: 0 0 50px color-mix(in srgb, var(--gw-orange) 60%, transparent);
+  color: #1a0d04;
+}
+
+.gw-outcome b {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 40px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  overflow-wrap: anywhere;
+}
+
+.gw-outcome span {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: right;
+}
+
+.gw-outcome.is-lose {
+  background: var(--gw-cold-slate);
+  box-shadow: none;
+  color: var(--gw-ink);
+}
+
+@media (max-width: 859px) {
+  /* The site's sound and theme buttons sit top right on a phone, so the title keeps left of them. */
+  .gw-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .gw-wordmark {
+    font-size: 27px;
+  }
+
+  .gw-bar-back {
+    font-size: 12px;
+  }
+
+  .gw-play {
+    display: block;
+  }
+
+  .gw-thermo {
+    display: none;
+  }
+
+  .gw-flat {
+    display: block;
+  }
+
+  /* The site's own buttons occupy the top right corner here. */
+  .gw-guess-no {
+    display: none;
+  }
+
+  /* A phone has no room for rows, so earlier clues are always tags. */
+  .gw-clues,
+  .gw-clues.is-folded {
+    gap: 6px;
+  }
+
+  .gw-clues .gw-clue:not(.gw-clue-hot) {
+    flex: none;
+    gap: 6px;
+    padding: 5px 10px 5px 6px;
+    border-radius: 999px;
+    font-size: 12px;
+  }
+
+  .gw-clues .gw-clue:not(.gw-clue-hot) .gw-clue-num {
+    width: 16px;
+    height: 16px;
+    font-size: 9px;
+  }
+
+  .gw-clues .gw-clue-hot {
+    margin-top: 2px;
+    padding: 12px 14px;
+    font-size: 30px;
+  }
+
+  .gw-clues:not(.is-folded) .gw-more {
+    flex: none;
+  }
+
+  .gw-more.gw-hide-wide {
+    display: flex;
+  }
+
+  .gw-clue.gw-hide-wide {
+    display: flex;
+  }
+
+  .gw-more-wide,
+  .gw-clues .gw-clue.gw-hide-narrow {
+    display: none;
+  }
+
+  .gw-more-narrow {
+    display: inline;
+  }
+
+  .gw-input-row {
+    margin-top: 10px;
+  }
+
+  .gw-guess-input {
+    height: 52px;
+    padding: 0 14px;
+    font-size: 16px;
+  }
+
+  .gw-guess-btn {
+    height: 52px;
+    padding: 0 16px;
+    font-size: 20px;
+  }
+
+  .gw-outcome {
+    padding: 10px 14px;
+  }
+
+  .gw-outcome b {
+    font-size: 28px;
+  }
+
+  .gw-outcome span {
+    font-size: 9px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gw-clue-hot.ignite {
+    animation: none;
+  }
+
+  .gw-merc,
+  .gw-flat i {
+    transition: none;
+  }
 }

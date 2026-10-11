@@ -62,7 +62,7 @@ export function FreezeFramesFinishResult({
       {entry && !entry.saved ? (
         <div className="ff-fin-save">
           <input
-            className="freezeframes-name-inp"
+            className="ff-input"
             value={entry.name}
             onChange={(e) => entry.onNameChange(e.target.value)}
             placeholder="Your name"
@@ -71,7 +71,7 @@ export function FreezeFramesFinishResult({
           />
           <button
             type="button"
-            className="freezeframes-btn freezeframes-btn-purple freezeframes-btn-sm"
+            className="ff-btn is-accent"
             onClick={entry.onSave}
             disabled={entry.saving}
           >

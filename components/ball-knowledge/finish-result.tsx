@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { AnswerEntry, LeaderboardEntry } from "@/lib/ball-knowledge/types";
-import { AnswerRow } from "./answer-row";
+import { AnswerChip } from "./answer-row";
 
 export interface BallKnowledgeJoin {
   name: string;
@@ -39,10 +39,11 @@ export function BallKnowledgeFinishResult({
   return (
     <div className="bk-finish">
       <div className="bk-end-score">
+        <div className="bk-end-call">Final buzzer</div>
         <div className="bk-end-num" data-testid="bk-fin-score">
           {score}
         </div>
-        <div className="bk-end-lbl">Ball Knowledge Score</div>
+        <div className="bk-end-lbl">Named in 60 seconds</div>
       </div>
       <p className="bk-finish-category">
         Category: <strong>{category}</strong>
@@ -58,15 +59,17 @@ export function BallKnowledgeFinishResult({
               Missed
             </button>
           </div>
-          <div className="bk-answer-list bk-end-list">
-            {shown.length === 0 ? (
-              <div className="bk-empty-note">
-                {tab === "ok" ? "Nothing accepted this round." : "Nothing missed. Clean round."}
-              </div>
-            ) : (
-              [...shown].reverse().map((entry) => <AnswerRow key={entry.id} entry={entry} />)
-            )}
-          </div>
+          {shown.length === 0 ? (
+            <div className="bk-empty-note">
+              {tab === "ok" ? "Nothing accepted this round." : "Nothing missed. Clean round."}
+            </div>
+          ) : (
+            <ul className="bk-wall bk-wall--end">
+              {[...shown].reverse().map((entry) => (
+                <AnswerChip key={entry.id} entry={entry} />
+              ))}
+            </ul>
+          )}
         </>
       ) : null}
 

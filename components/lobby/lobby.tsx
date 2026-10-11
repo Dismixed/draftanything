@@ -29,6 +29,8 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
   const [connectionStatus, setConnectionStatus] =
     useState<ConnectionStatus>("connecting");
   const [starting, setStarting] = useState(false);
+  const [botBusy, setBotBusy] = useState(false);
+  const [botError, setBotError] = useState<string | null>(null);
   const channelRef = useRef<ReturnType<
     import("@supabase/supabase-js").SupabaseClient["channel"]
   > | null>(null);
@@ -36,6 +38,9 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
   const isHost = room.hostPlayerId === myPlayerId;
   const playerCount = room.players.length;
   const canStart = isHost && playerCount >= 2;
+  const humanCount = room.players.filter((p) => !p.isBot).length;
+  // One person and a full table of AI drafters: nobody to invite or chat with.
+  const isSoloRoom = humanCount === 1 && playerCount === room.maxPlayers;
 
   useLeaveLobbyOnExit(room.draftId, room.phase);
 
@@ -160,6 +165,33 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
     }
   }
 
+  async function changeBots(init: RequestInit) {
+    if (botBusy) return;
+    setBotBusy(true);
+    setBotError(null);
+    try {
+      const res = await fetch(`/api/drafts/${room.draftId}/bots`, {
+        headers: { "Content-Type": "application/json" },
+        ...init,
+      });
+      if (res.ok) {
+        const updated: RoomProjection = await res.json();
+        setRoom(updated);
+      } else {
+        const err = await res.json().catch(() => null);
+        setBotError(err?.message ?? "That didn't work. Try again.");
+      }
+    } catch {
+      setBotError("That didn't work. Check your connection and try again.");
+    } finally {
+      setBotBusy(false);
+    }
+  }
+
+  const handleAddBot = () => void changeBots({ method: "POST" });
+  const handleRemoveBot = (playerId: string) =>
+    void changeBots({ method: "DELETE", body: JSON.stringify({ playerId }) });
+
   async function handleStart() {
     if (!canStart || starting) return;
     setStarting(true);
@@ -238,7 +270,7 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
         </header>
 
         {/* Room code */}
-        <section aria-labelledby="room-code-label" className="panel-card" style={{ padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+        {!isSoloRoom && <section aria-labelledby="room-code-label" className="panel-card" style={{ padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
           <div>
             <span id="room-code-label" style={sectionLabelStyle}>
               Room code
@@ -276,7 +308,7 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
           >
             Copy
           </button>
-        </section>
+        </section>}
 
         {/* Configuration */}
         <section aria-labelledby="config-label" className="panel-card" style={{ padding: '16px' }}>
@@ -296,7 +328,19 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
           <span id="players-label" style={sectionLabelStyle}>
             Players
           </span>
-          <SeatList players={room.players} maxPlayers={room.maxPlayers} />
+          <SeatList
+            players={room.players}
+            maxPlayers={room.maxPlayers}
+            canManageBots={isHost}
+            onAddBot={handleAddBot}
+            onRemoveBot={handleRemoveBot}
+            busy={botBusy}
+          />
+          {botError && (
+            <p role="alert" style={{ fontSize: '12px', color: '#ff6b6b', margin: '10px 0 0' }}>
+              {botError}
+            </p>
+          )}
         </section>
 
         {/* Host controls */}
@@ -304,7 +348,7 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
           <section aria-label="Host controls">
             {!canStart && (
               <p style={{ fontSize: '12px', color: 'var(--text-dim)', marginBottom: '10px', textAlign: 'center' }}>
-                Waiting for at least 2 players to join before you can start.
+                Waiting for at least 2 players. Share the code, or add an AI drafter.
               </p>
             )}
             <button
@@ -336,11 +380,13 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
 
       </div>
 
-      <RoomChat
-        draftId={room.draftId}
-        roomCode={room.roomCode}
-        myPlayerId={myPlayerId}
-      />
+      {!isSoloRoom && (
+        <RoomChat
+          draftId={room.draftId}
+          roomCode={room.roomCode}
+          myPlayerId={myPlayerId}
+        />
+      )}
     </div>
   );
 }
