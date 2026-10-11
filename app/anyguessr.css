@@ -922,26 +922,6 @@ html[data-theme="light"] {
 .ag-round-nav button:disabled { opacity: 0.35; cursor: default; }
 .ag-round-nav button:focus-visible { outline: 2px solid var(--ag-accent); outline-offset: 2px; }
 
-.ag-results-actions { max-width: 400px; margin: 22px auto 0; }
-.ag-results-actions .share-result-wrap { width: 100%; }
-.ag-results-actions .share-result {
-  width: 100%;
-  min-height: 54px;
-  margin: 0;
-  border: none;
-  border-radius: 14px;
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--ag-cta-text);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--ag-accent) 82%, #fff), var(--ag-accent) 60%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.4),
-    0 3px 0 var(--ag-accent-lo),
-    0 10px 22px color-mix(in srgb, var(--ag-accent) 25%, transparent);
-}
-.ag-results-actions .share-result-manual { margin: 12px auto 0; text-align: left; }
-.ag-results-foot { margin: 22px 0 0; font-size: 13px; color: var(--ag-sec); }
-
 @media (max-width: 700px) {
   .ag-results-score { font-size: 60px; }
   .ag-results-score span { font-size: 18px; }
