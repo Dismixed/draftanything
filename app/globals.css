@@ -794,7 +794,7 @@ html[data-theme="light"] {
   display: none;
 }
 
-/* ── Daily complete overlay + other-dailies cards ───────────────── */
+/* ── Daily complete overlay ───────────────── */
 
 .daily-complete-overlay {
   position: fixed;
@@ -1155,78 +1155,6 @@ html[data-theme="light"] .fin-play { color: #fff; }
   70% { transform: scale(0.96) rotate(-2deg); }
 }
 
-.od-section {
-  margin-top: 28px;
-  width: 100%;
-}
-
-.od-label {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-dim, #787c7e);
-  margin-bottom: 12px;
-}
-
-.od-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-}
-
-@media (min-width: 540px) {
-  .od-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-.od-card {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 14px;
-  border-radius: 12px;
-  border: 1px solid;
-  text-decoration: none;
-  color: inherit;
-  min-height: 148px;
-  transition: border-color 0.15s ease, transform 0.15s ease;
-}
-
-.od-card:hover {
-  transform: translateY(-1px);
-}
-
-.od-card-visual {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 56px;
-  border-radius: 8px;
-}
-
-.od-card-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.od-card-blurb {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.35;
-  opacity: 0.72;
-}
-
-.od-card-cta {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  margin-top: auto;
-}
-
 .od-preview {
   display: flex;
   align-items: center;
@@ -1384,74 +1312,6 @@ html[data-theme="light"] .fin-play { color: #fff; }
   .od-preview-gw-clue {
     padding: 3px 5px;
     font-size: 8px;
-  }
-}
-
-@media (max-width: 560px) {
-  .od-section {
-    margin-top: 20px;
-  }
-
-  .od-label {
-    margin-bottom: 8px;
-  }
-
-  .od-grid {
-    gap: 8px;
-  }
-
-  .od-card {
-    flex-direction: row;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
-    min-height: 0;
-  }
-
-  .od-card-visual {
-    flex: 0 0 72px;
-    width: 72px;
-    min-height: 48px;
-    height: 48px;
-    overflow: hidden;
-  }
-
-  .od-card-visual .od-preview-chainlink {
-    gap: 2px;
-    flex-wrap: nowrap;
-    transform: scale(0.52);
-    transform-origin: center;
-  }
-
-  .od-card-visual .od-preview-tile {
-    padding: 4px 6px;
-    font-size: 9px;
-  }
-
-  .od-card-visual .od-preview-brain {
-    gap: 3px;
-  }
-
-  .od-card-visual .od-preview-dot {
-    width: 13px;
-    height: 13px;
-    font-size: 7px;
-  }
-
-  .od-card-copy {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .od-card-blurb {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .od-card-cta {
-    margin-top: 2px;
   }
 }
 
