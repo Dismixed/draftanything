@@ -134,26 +134,6 @@ html[data-theme="light"] .bk-page {
   padding: 28px 8px 8px;
 }
 
-.bk-page--complete,
-html[data-theme="light"] .bk-page.bk-page--complete {
-  min-height: 0;
-  padding: 0;
-  background: transparent;
-}
-
-.bk-page--complete .bk-app {
-  max-width: 480px;
-  margin: 0 auto;
-}
-
-.bk-page--complete .bk-results {
-  padding: 8px 4px 28px;
-}
-
-.bk-page--complete .bk-end-score {
-  margin-bottom: 16px;
-}
-
 .bk-court-card > *:not(.bk-court-bg) {
   position: relative;
   z-index: 1;
@@ -788,46 +768,6 @@ html[data-theme="light"] .bk-page.bk-page--complete {
   padding: 14px 0;
 }
 
-.bk-share-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.bk-share-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px;
-  border-radius: 9px;
-  border: 1px solid var(--bk-line);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--bk-chalk);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease;
-}
-
-.bk-share-btn svg {
-  flex-shrink: 0;
-  color: var(--bk-chalk-dim);
-  transition: color 0.15s ease;
-}
-
-.bk-share-btn:hover {
-  background: rgba(91, 158, 232, 0.1);
-  border-color: var(--bk-net-blue);
-}
-
-.bk-share-btn:hover svg {
-  color: var(--bk-net-blue);
-}
-
 .bk-toast {
   position: fixed;
   bottom: 24px;
@@ -843,7 +783,8 @@ html[data-theme="light"] .bk-page.bk-page--complete {
   opacity: 0;
   transition: opacity 0.25s ease;
   pointer-events: none;
-  z-index: 50;
+  /* Above the finish screen (1000) so the join confirmation is seen. */
+  z-index: 1100;
 }
 
 .bk-toast.show {
@@ -861,7 +802,14 @@ html[data-theme="light"] .bk-page.bk-page--complete {
   max-height: 180px;
 }
 
-.bk-streak-line {
+/* ── Finish result ── */
+.bk-finish { color: var(--bk-chalk); font-family: "Inter", sans-serif; text-align: left; }
+.bk-finish .bk-end-score { text-align: center; }
+.bk-finish-category {
+  margin: 0 0 20px;
   text-align: center;
-  margin-top: 16px;
+  font-size: 13px;
+  color: var(--bk-chalk-dim);
 }
+.bk-finish-category strong { color: var(--bk-chalk); }
+.bk-finish-board { list-style: none; margin: 0; padding: 0; }
