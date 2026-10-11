@@ -577,19 +577,6 @@ html[data-theme="light"] .gw-page {
   margin-bottom: 12px;
 }
 
-.gw-streak-line {
-  margin-top: 16px;
-  text-align: center;
-}
-
-.gw-countdown {
-  text-align: center;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
-  color: var(--gw-ink-dim);
-  margin-top: 16px;
-}
-
 .gw-loading-page {
   text-align: center;
   padding: 60px 20px;

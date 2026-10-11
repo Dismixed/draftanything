@@ -57,9 +57,8 @@ export function saveDailyPlayed(
         : {}),
     }),
   );
-  if (won) {
-    recordDailyCompletion("getting-warmer", playDate);
-  }
+  // Giving up uses today's puzzle as much as solving it does, so both count as played.
+  recordDailyCompletion("getting-warmer", playDate);
 }
 
 export async function fetchTodayLeaderboard(): Promise<LeaderboardEntry[]> {

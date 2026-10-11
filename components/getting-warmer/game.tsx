@@ -8,10 +8,12 @@ import {
 } from "react";
 import { GameBackLink } from "@/components/ui/game-back-link";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
-import { DailyCompleteOverlay } from "@/components/daily/daily-complete-overlay";
 import { useGameHowItWorks } from "@/lib/game-how-it-works";
 import { readDailyPuzzleCache, writeDailyPuzzleCache } from "@/lib/daily-puzzle-cache";
-import { getCountdownText, getDateString } from "@/lib/getting-warmer/game-logic";
+import { getDateString } from "@/lib/getting-warmer/game-logic";
+import { FinishScreen } from "@/components/daily/finish-screen";
+import { finishCurve, useDailyPercentile } from "@/lib/games/use-daily-percentile";
+import { gettingWarmerShare } from "@/lib/share/results";
 import {
   fetchTodayLeaderboard,
   getDailyPlayed,
@@ -101,7 +103,6 @@ export default function GettingWarmerGame() {
   const [loadingClue, setLoadingClue] = useState(false);
   const [prefetchedClue, setPrefetchedClue] = useState<string | null>(null);
 
-  const [countdown, setCountdown] = useState("");
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [lbLoading, setLbLoading] = useState(false);
   const [nameInput, setNameInput] = useState("");
@@ -140,6 +141,13 @@ export default function GettingWarmerGame() {
     const timer = setTimeout(() => setShowResultsModal(true), 400);
     return () => clearTimeout(timer);
   }, [screen]);
+
+  const isFinished = screen === "results" || screen === "played";
+  // Only a solved puzzle has a guess count to compare. Giving up gets no curve.
+  const standing = useDailyPercentile("getting-warmer", attempts, {
+    enabled: isFinished && won && attempts >= 1,
+    record: screen === "results",
+  });
 
   const loadLeaderboard = useCallback(async () => {
     setLbLoading(true);
@@ -216,13 +224,6 @@ export default function GettingWarmerGame() {
 
     void load();
   }, [initial.screen, loadLeaderboard]);
-
-  useEffect(() => {
-    const tick = () => setCountdown(getCountdownText());
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
 
   useEffect(() => {
     if (screen === "game" && !finished) {
@@ -593,32 +594,33 @@ export default function GettingWarmerGame() {
 
       </div>
 
-      <DailyCompleteOverlay
-        open={
-          showResultsModal && (screen === "results" || screen === "played")
-        }
+      <FinishScreen
+        gameId="getting-warmer"
+        open={showResultsModal && isFinished}
         onClose={() => setShowResultsModal(false)}
         ariaLabel="Puzzle results"
-      >
-        <GettingWarmerResultsModal
-          won={won}
-          gaveUp={gaveUp}
-          answer={answer}
-          attempts={attempts}
-          guesses={guessHistory}
-          shareEmojis={shareEmojis}
-          countdown={countdown}
-          alreadyPlayed={screen === "played"}
-          leaderboard={leaderboard}
-          lbLoading={lbLoading}
-          submittedEntryId={submittedEntryIdRef.current}
-          nameInput={nameInput}
-          onNameInputChange={setNameInput}
-          onJoinLeaderboard={handleJoinLeaderboard}
-          lbSubmitting={lbSubmitting}
-          lbSubmitted={lbSubmitted}
-        />
-      </DailyCompleteOverlay>
+        result={
+          <GettingWarmerResultsModal
+            won={won}
+            gaveUp={gaveUp}
+            answer={answer}
+            attempts={attempts}
+            guesses={guessHistory}
+            shareEmojis={shareEmojis}
+            alreadyPlayed={screen === "played"}
+            leaderboard={leaderboard}
+            lbLoading={lbLoading}
+            submittedEntryId={submittedEntryIdRef.current}
+            nameInput={nameInput}
+            onNameInputChange={setNameInput}
+            onJoinLeaderboard={handleJoinLeaderboard}
+            lbSubmitting={lbSubmitting}
+            lbSubmitted={lbSubmitted}
+          />
+        }
+        shareText={gettingWarmerShare(won, attempts, shareEmojis, getDateString())}
+        curve={finishCurve("getting-warmer", standing)}
+      />
     </div>
   );
 }
