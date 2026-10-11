@@ -46,6 +46,12 @@ describe("game registry", () => {
     expect(getGame("slippery-slope").playHref).toBe("/slippery-slope");
   });
 
+  it("gives every daily a time estimate", () => {
+    for (const id of DAILY_GAMES) {
+      expect(getGame(id).duration, id).toMatch(/^(~\d+ min|\d+ sec)$/);
+    }
+  });
+
   it("does not claim Hot Takes compares players", () => {
     const game = getGame("hot-takes");
     const text = `${game.blurb} ${game.pitch} ${game.seo.description}`.toLowerCase();

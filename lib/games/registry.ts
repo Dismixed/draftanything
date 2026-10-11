@@ -47,6 +47,8 @@ export interface GameEntry {
   category: string;
   blurb: string;
   pitch: string;
+  /** How long one daily takes, shown where the game is offered as the next thing to play. */
+  duration?: string;
   theme: GameTheme;
   seo: { description: string; genre: string[]; playMode: string[]; priority: number };
 }
@@ -63,6 +65,7 @@ const REGISTRY: Record<GameId, GameEntry> = {
     blurb: "Link each word to the one before it.",
     pitch:
       "Each word pairs with the one before it to make a common phrase: snow, ball, park. Finish the chain with as few misses as you can.",
+    duration: "~2 min",
     theme: {
       page: "var(--cl-bg)",
       background: "var(--cl-card)",
@@ -89,6 +92,7 @@ const REGISTRY: Record<GameId, GameEntry> = {
     blurb: "Fifteen questions. One wrong answer ends the run.",
     pitch:
       "Fifteen trivia questions that get harder as you go. One wrong answer, or one timeout, and your run is over.",
+    duration: "~2 min",
     theme: {
       page: "var(--bd-bg)",
       background: "var(--bd-surface)",
@@ -115,6 +119,7 @@ const REGISTRY: Record<GameId, GameEntry> = {
     blurb: "Name the country from the clues.",
     pitch:
       "Seven rounds, seven clues: a flag, a landmark, a dish, a famous face. Pin the country on the map. Close guesses still score.",
+    duration: "~3 min",
     theme: {
       page: "var(--ag-bg)",
       background: "var(--ag-surface)",
@@ -141,6 +146,7 @@ const REGISTRY: Record<GameId, GameEntry> = {
     blurb: "Rank today's 15 items from S tier to D.",
     pitch:
       "Fifteen items in one category. Sort every one into S, A, B, C or D, then lock in your ranking.",
+    duration: "~2 min",
     theme: {
       page: "var(--ht-bg)",
       background: "var(--ht-surface)",
@@ -167,6 +173,7 @@ const REGISTRY: Record<GameId, GameEntry> = {
     blurb: "Guess the movie, song, show and album.",
     pitch:
       "Name the movie from a frame, the song from a 20-second clip, the TV show from a frame and the artist from an album cover.",
+    duration: "~2 min",
     theme: {
       page: "var(--ff-bg)",
       background: "var(--ff-surface)",
@@ -193,6 +200,7 @@ const REGISTRY: Record<GameId, GameEntry> = {
     blurb: "60 seconds. Name everything in the category.",
     pitch:
       "One category, 60 seconds. Type as many valid answers as you can before the clock runs out.",
+    duration: "60 sec",
     theme: {
       page: "var(--bk-court-navy)",
       background: "var(--bk-backboard)",
@@ -219,6 +227,7 @@ const REGISTRY: Record<GameId, GameEntry> = {
     blurb: "Guess the word. Every miss adds a clue.",
     pitch:
       "Start with two clues to a secret word or phrase. Every wrong guess reveals another. Solve it in as few guesses as you can.",
+    duration: "~3 min",
     theme: {
       page: "var(--gw-bg)",
       background: "var(--gw-surface)",
