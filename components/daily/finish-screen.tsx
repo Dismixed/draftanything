@@ -88,8 +88,6 @@ export function FinishScreen({
     "--text": game.theme.text,
     "--text-dim": game.theme.muted,
     "--fin-acc": game.theme.accent,
-    "--fin-surf": game.theme.background,
-    "--fin-line": game.theme.border,
     ...theme,
   } as CSSProperties;
 

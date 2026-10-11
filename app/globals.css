@@ -809,6 +809,17 @@ html[data-theme="light"] {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+.daily-complete-overlay::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(52px + env(safe-area-inset-top, 0px));
+  background: var(--bg);
+  z-index: 1;
+}
+
 .daily-complete-home {
   position: absolute;
   top: 14px;
@@ -875,8 +886,8 @@ html[data-theme="light"] {
 
 .fin {
   --fin-acc: var(--gold);
-  --fin-surf: var(--panel);
-  --fin-line: var(--border);
+  --fin-surf: color-mix(in srgb, var(--text) 6%, var(--bg));
+  --fin-line: color-mix(in srgb, var(--text) 16%, var(--bg));
   font-family: "Outfit", system-ui, sans-serif;
   color: var(--text);
   text-align: center;
