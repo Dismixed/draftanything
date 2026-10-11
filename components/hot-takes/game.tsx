@@ -6,6 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import Link from "next/link";
@@ -17,6 +18,7 @@ import { hotTakesShare } from "@/lib/share/results";
 import { DailyCompleteShell } from "@/components/daily/daily-complete-shell";
 import { useGameHowItWorks } from "@/lib/game-how-it-works";
 import { HotTakesImage } from "@/components/hot-takes/optimized-image";
+import { tiltFor } from "@/lib/hot-takes/tilt";
 import type { HotTakesDailyCategory, HotTakesDailyItem } from "@/lib/hot-takes/types";
 import { burstFrom } from "@/lib/motion/burst";
 import { useCountUp } from "@/lib/motion/count-up";
@@ -67,8 +69,10 @@ function generateConsensus(items: HotTakesDailyItem[]) {
     const weights = TIERS.map(() => Math.pow(rnd(), 2.2));
     const sum = weights.reduce((a, b) => a + b, 0);
     const pct = weights.map((w) => Math.round((w / sum) * 100));
+    // Rounding leaves a point or two over. It goes to the largest share, which can absorb it;
+    // adding it to the first one used to produce "-1% agree".
     const diff = 100 - pct.reduce((a, b) => a + b, 0);
-    pct[0] += diff;
+    pct[pct.indexOf(Math.max(...pct))] += diff;
     out[it.id] = {
       S: pct[0]!,
       A: pct[1]!,
@@ -80,22 +84,27 @@ function generateConsensus(items: HotTakesDailyItem[]) {
   return out;
 }
 
+/** One item, drawn as a snapshot. Once it is in a tier it carries that tier's letter as an ink stamp. */
 function TierItem({
   item,
+  tilt,
+  tier,
   dragging,
   selected,
   disabled,
-  popped = false,
+  fresh = false,
   onPointerDown,
   onPointerMove,
   onPointerUp,
   onPointerCancel,
 }: {
   item: HotTakesDailyItem;
+  tilt: number;
+  tier?: Tier;
   dragging: boolean;
   selected: boolean;
   disabled: boolean;
-  popped?: boolean;
+  fresh?: boolean;
   onPointerDown: (e: ReactPointerEvent<HTMLDivElement>, id: string) => void;
   onPointerMove: (e: ReactPointerEvent<HTMLDivElement>) => void;
   onPointerUp: (e: ReactPointerEvent<HTMLDivElement>) => void;
@@ -103,7 +112,8 @@ function TierItem({
 }) {
   return (
     <div
-      className={`hot-takes-item${dragging ? " dragging" : ""}${selected ? " selected" : ""}${popped ? " anim-pop-in" : ""}`}
+      className={`hot-takes-item${dragging ? " dragging" : ""}${selected ? " selected" : ""}${fresh ? " is-fresh" : ""}`}
+      style={{ "--ht-tilt": `${tilt}deg` } as CSSProperties}
       role="button"
       tabIndex={disabled ? -1 : 0}
       aria-pressed={selected}
@@ -118,9 +128,14 @@ function TierItem({
       onPointerCancel={onPointerCancel}
     >
       <div className="hot-takes-icon-box">
-        <HotTakesImage src={item.imageUrl} alt={item.label} width={52} draggable={false} />
+        <HotTakesImage src={item.imageUrl} alt={item.label} width={96} draggable={false} />
       </div>
       <span className="hot-takes-item-label">{item.label}</span>
+      {tier ? (
+        <b className="hot-takes-ink" aria-hidden="true">
+          {tier}
+        </b>
+      ) : null}
     </div>
   );
 }
@@ -146,6 +161,10 @@ export default function HotTakesGame({
   const [lastPlacedId, setLastPlacedId] = useState<string | null>(null);
   const scoreNumRef = useRef<HTMLDivElement>(null);
   const consensus = useMemo(() => generateConsensus(category.items), [category.items]);
+  const tilts = useMemo(
+    () => new Map(category.items.map((item, index) => [item.id, tiltFor(index)])),
+    [category.items],
+  );
   const pointerDragRef = useRef<{
     id: string;
     pointerId: number;
@@ -303,12 +322,6 @@ export default function HotTakesGame({
     return () => clearTimeout(timer);
   }, [submitted]);
 
-  const dateLabel = new Date().toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-
   return (
     <DailyCompleteShell
       enabled={submitted}
@@ -318,56 +331,28 @@ export default function HotTakesGame({
     >
     <div className="hot-takes-page">
       <div className="hot-takes-wrap">
-        <header className="hot-takes-header">
-          <div className="hot-takes-eyebrow">
-            Tier Game · <span>Solo · Daily</span>
-          </div>
+        <header className="hot-takes-top">
+          <Link href="/" className="hot-takes-back">
+            &larr; Back
+          </Link>
           <h1 className="hot-takes-title">
             <GameTitle game="hot-takes" />
           </h1>
-          <p className="hot-takes-sub">
-            Fifteen items, one ranking. Drag or tap them S to D, then see if you&apos;re right — or
-            just controversial.
+          <p className="hot-takes-category">
+            <small>Today&apos;s category</small>
+            <b>{category.name}</b>
           </p>
-          <div className="hot-takes-meta-row">
-            <div className="hot-takes-pill">
-              Today&apos;s category: <b>{category.name}</b>
-            </div>
-            <div className="hot-takes-pill">{dateLabel}</div>
-          </div>
         </header>
 
-        <div className="hot-takes-action-bar">
-          <button
-            type="button"
-            className="hot-takes-btn hot-takes-btn-primary"
-            disabled={remaining !== 0 || submitted}
-            onClick={() => {
-              setSubmitted(true);
-              recordDailyCompletion("hot-takes");
-            }}
-          >
-            {remaining === 0
-              ? "Lock in my ranking"
-              : `Lock in my ranking (${remaining} left)`}
-          </button>
-          <button
-            type="button"
-            className="hot-takes-btn hot-takes-btn-ghost"
-            onClick={shuffleTray}
-            disabled={submitted}
-          >
-            Shuffle tray
-          </button>
-        </div>
-
-        <div className="hot-takes-game-area">
+        <div className={`hot-takes-game-area${submitted ? " is-locked" : ""}`}>
           <div className="hot-takes-board">
             {TIERS.map((tier) => {
               const tierItems = category.items.filter((item) => placements[item.id] === tier);
               return (
                 <div key={tier} className={`hot-takes-tier-row hot-takes-tier-${tier}`}>
-                  <div className="hot-takes-tier-label">{tier}</div>
+                  <div className="hot-takes-tier-label">
+                    <span>{tier}</span>
+                  </div>
                   <div
                     data-drop-zone={tier}
                     className={`hot-takes-tier-list${dragOverZone === tier ? " drag-over" : ""}${selectedId ? " placeable" : ""}`}
@@ -377,7 +362,9 @@ export default function HotTakesGame({
                       <TierItem
                         key={item.id}
                         item={item}
-                        popped={lastPlacedId === item.id}
+                        tilt={tilts.get(item.id) ?? 0}
+                        tier={tier}
+                        fresh={lastPlacedId === item.id}
                         dragging={draggingId === item.id}
                         selected={selectedId === item.id}
                         disabled={submitted}
@@ -393,30 +380,60 @@ export default function HotTakesGame({
             })}
           </div>
 
-          <div className="hot-takes-tray-panel">
-            <div className="hot-takes-tray-title">
-              {selectedId ? "Tap a tier to place" : "Drag or tap into your tiers"}
+          {!submitted && (
+          <div className="hot-takes-side">
+            <div className="hot-takes-tray-panel">
+              <div className="hot-takes-tray-head">
+                <span className="hot-takes-tray-title">
+                  {remaining === 0
+                    ? "All fifteen ranked"
+                    : selectedId
+                      ? "Now tap a tier"
+                      : `${remaining} left · drag or tap`}
+                </span>
+                {remaining > 1 && (
+                  <button type="button" className="hot-takes-shuffle" onClick={shuffleTray}>
+                    Shuffle
+                  </button>
+                )}
+              </div>
+              <div
+                data-drop-zone="tray"
+                className={`hot-takes-tray-list${dragOverZone === "tray" ? " drag-over" : ""}${selectedId ? " placeable" : ""}`}
+                onClick={() => handleZoneActivate("tray")}
+              >
+                {remaining === 0 && (
+                  <p className="hot-takes-tray-empty">Changed your mind? Drag one back here.</p>
+                )}
+                {trayItems.map((item) => (
+                  <TierItem
+                    key={item.id}
+                    item={item}
+                    tilt={tilts.get(item.id) ?? 0}
+                    dragging={draggingId === item.id}
+                    selected={selectedId === item.id}
+                    disabled={submitted}
+                    onPointerDown={handleItemPointerDown}
+                    onPointerMove={handleItemPointerMove}
+                    onPointerUp={handleItemPointerUp}
+                    onPointerCancel={clearPointerDrag}
+                  />
+                ))}
+              </div>
             </div>
-            <div
-              data-drop-zone="tray"
-              className={`hot-takes-tray-list${dragOverZone === "tray" ? " drag-over" : ""}${selectedId ? " placeable" : ""}`}
-              onClick={() => handleZoneActivate("tray")}
+            <button
+              type="button"
+              className={`hot-takes-btn hot-takes-btn-primary${remaining === 0 ? " is-ready" : ""}`}
+              disabled={remaining !== 0}
+              onClick={() => {
+                setSubmitted(true);
+                recordDailyCompletion("hot-takes");
+              }}
             >
-              {trayItems.map((item) => (
-                <TierItem
-                  key={item.id}
-                  item={item}
-                  dragging={draggingId === item.id}
-                  selected={selectedId === item.id}
-                  disabled={submitted}
-                  onPointerDown={handleItemPointerDown}
-                  onPointerMove={handleItemPointerMove}
-                  onPointerUp={handleItemPointerUp}
-                  onPointerCancel={clearPointerDrag}
-                />
-              ))}
-            </div>
+              {remaining === 0 ? "Lock in my ranking" : `Lock in my ranking (${remaining} left)`}
+            </button>
           </div>
+          )}
         </div>
 
         {results && (
@@ -428,14 +445,13 @@ export default function HotTakesGame({
               <div ref={scoreNumRef} className="hot-takes-score-num">{displayAvg}%</div>
               <div className="hot-takes-score-text">
                 average agreement with the crowd across your 15 picks.
-                {results.hottest && (
-                  <>
-                    {" "}
-                    Your hottest take: {results.hottest.label} in {results.hottest.tier} tier
-                    (only {results.hottest.pct}% agree).
-                  </>
-                )}
               </div>
+              {results.hottest && (
+                <div className="hot-takes-hot-stamp">
+                  Hottest take · {results.hottest.label} in {results.hottest.tier} · only{" "}
+                  {results.hottest.pct}% agree
+                </div>
+              )}
             </div>
 
             {results.rows.map(({ item, yourTier, dist }) => (
