@@ -892,6 +892,8 @@ html[data-theme="light"] {
   font-family: "Outfit", system-ui, sans-serif;
   color: var(--text);
   text-align: center;
+  /* A game's result can layer its own pieces; keep them under the top controls when scrolled. */
+  isolation: isolate;
 }
 
 .fin-top-streak { color: var(--fin-acc); font-variant-numeric: tabular-nums; }
