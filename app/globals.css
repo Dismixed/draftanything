@@ -862,6 +862,288 @@ html[data-theme="light"] {
   box-sizing: border-box;
 }
 
+/* ── Daily finish screen ─────────────────────────────────────────── */
+
+.daily-complete-extra {
+  position: absolute;
+  top: 17px;
+  right: 56px;
+  z-index: 2;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.fin {
+  --fin-acc: var(--gold);
+  --fin-surf: var(--panel);
+  --fin-line: var(--border);
+  font-family: "Outfit", system-ui, sans-serif;
+  color: var(--text);
+  text-align: center;
+}
+
+.fin-top-streak { color: var(--fin-acc); font-variant-numeric: tabular-nums; }
+
+.fin-flame {
+  display: inline-block;
+  transform-origin: 50% 90%;
+  animation: fin-flick 1.3s ease-in-out infinite;
+}
+
+/* Run of seven */
+.fin-run {
+  margin: 0 -16px 22px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--fin-line);
+}
+.fin-rail {
+  display: flex;
+  gap: 6px;
+  padding: 3px 16px 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.fin-rail::-webkit-scrollbar { display: none; }
+.fin-chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 99px;
+  border: 1.5px solid color-mix(in srgb, var(--c) 55%, transparent);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.fin-chip.is-done { background: color-mix(in srgb, var(--c) 22%, transparent); }
+.fin-chip.is-done::before { content: "✓"; color: var(--c); font-weight: 800; }
+.fin-chip.is-current { box-shadow: 0 0 0 2px color-mix(in srgb, var(--c) 45%, transparent); }
+.fin-chip.is-next { border-style: dashed; animation: fin-pulse 1.4s ease-in-out infinite; }
+.fin-chip-tag {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c);
+}
+.fin-sweep-line {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+@media (min-width: 720px) {
+  .fin-rail { flex-wrap: wrap; justify-content: center; overflow: visible; }
+}
+
+/* The game's own result, and the shared blocks under it */
+.fin-result { max-width: var(--fin-result-w, 440px); margin: 0 auto; }
+.fin-bell,
+.fin-actions,
+.fin-up,
+.fin-others,
+.fin-sweep,
+.fin-streak { max-width: 440px; margin-left: auto; margin-right: auto; }
+
+/* Bell curve */
+.fin-bell { width: 260px; margin-top: 16px; }
+.fin-bell-plot { position: relative; height: 66px; }
+.fin-bell-plot svg { position: absolute; left: 0; top: 0; display: block; }
+.fin-bell-line path {
+  fill: none;
+  stroke: color-mix(in srgb, var(--text) 42%, transparent);
+  stroke-width: 1.5;
+}
+.fin-bell-shade {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 66px;
+  width: var(--x);
+  overflow: hidden;
+  animation: fin-grow 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) both 0.15s;
+}
+.fin-bell-shade path { fill: color-mix(in srgb, var(--fin-acc) 42%, transparent); }
+.fin-bell-me {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--x);
+  width: 2px;
+  margin-left: -1px;
+  background: var(--fin-acc);
+  animation: fin-slide 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) both 0.15s;
+}
+.fin-bell-me::before {
+  content: "YOU";
+  position: absolute;
+  top: -3px;
+  left: 6px;
+  font: 800 9.5px "Outfit", system-ui, sans-serif;
+  letter-spacing: 0.1em;
+  color: var(--fin-acc);
+}
+.fin-bell-me::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--fin-acc);
+}
+.fin-bell-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  padding-top: 3px;
+  border-top: 1px solid color-mix(in srgb, var(--text) 18%, transparent);
+  font-size: 10.5px;
+  color: var(--text-dim);
+}
+.fin-bell-n { margin: 6px 0 0; font-size: 14.5px; font-weight: 600; }
+.fin-bell-n b {
+  color: var(--fin-acc);
+  font-size: 19px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Share + secondary */
+.fin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 16px;
+}
+.fin-actions .share-result-wrap { display: contents; }
+.fin-actions .share-result,
+.fin-ghost {
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  max-width: 200px;
+  min-height: 40px;
+  margin: 0;
+  padding: 0 15px;
+  border-radius: 10px;
+  border: 1.5px solid color-mix(in srgb, var(--text) 30%, transparent);
+  background: none;
+  color: var(--text);
+  font: 700 13px "Outfit", system-ui, sans-serif;
+  text-decoration: none;
+  cursor: pointer;
+}
+.fin-actions .share-result:hover,
+.fin-ghost:hover { border-color: var(--text); opacity: 1; }
+.fin-actions .share-result-manual { flex: 1 0 100%; max-width: none; margin: 4px 0 0; text-align: left; }
+
+/* Up next */
+.fin-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.fin-time { font-size: 11px; font-weight: 700; color: var(--text-dim); white-space: nowrap; }
+.fin-up {
+  margin-top: 20px;
+  padding: 13px 15px 15px;
+  border-radius: 15px;
+  border: 1px solid color-mix(in srgb, var(--nx) 50%, transparent);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--nx) 26%, var(--fin-surf)), var(--fin-surf) 72%);
+  text-align: left;
+}
+.fin-up-top { display: flex; justify-content: space-between; align-items: baseline; }
+.fin-up .fin-label { color: var(--nx); }
+.fin-up-name { margin-top: 3px; font-size: 21px; font-weight: 800; }
+.fin-up-blurb { margin: 1px 0 11px; font-size: 13px; color: var(--text-dim); }
+.fin-play {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  border-radius: 13px;
+  background: var(--nx);
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--nx) 60%, #000);
+  color: #14110a;
+  font: 800 15.5px "Outfit", system-ui, sans-serif;
+  text-decoration: none;
+}
+.fin-play[data-game="chainlink"],
+.fin-play[data-game="freezeframes"],
+html[data-theme="light"] .fin-play { color: #fff; }
+.fin-play:hover { filter: brightness(1.06); }
+
+.fin-others { margin-top: 14px; text-align: left; }
+.fin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 7px; }
+.fin-other {
+  display: block;
+  padding: 9px 11px;
+  border-radius: 11px;
+  border: 1px solid var(--fin-line);
+  border-left: 3px solid var(--c);
+  background: var(--fin-surf);
+  color: var(--text);
+  text-decoration: none;
+}
+.fin-other:hover { border-color: var(--c); }
+.fin-other-name { display: block; font-size: 13.5px; font-weight: 700; }
+.fin-other-blurb { display: block; margin-top: 1px; font-size: 11.5px; line-height: 1.3; color: var(--text-dim); }
+
+/* All seven done */
+.fin-sweep {
+  --nx: var(--gold-hi);
+  margin-top: 20px;
+  padding: 16px 15px;
+  border-radius: 15px;
+  border: 1px solid color-mix(in srgb, var(--nx) 50%, transparent);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--nx) 22%, var(--fin-surf)), var(--fin-surf) 72%);
+}
+.fin-sweep h3 { margin: 0; font-size: 19px; font-weight: 800; }
+.fin-sweep p { margin: 4px 0 12px; font-size: 13px; color: var(--text-dim); }
+
+/* Streak milestone + countdown */
+.fin-streak {
+  margin-top: 18px;
+  padding: 10px 12px;
+  border-radius: 11px;
+  border: 1px solid color-mix(in srgb, var(--text) 16%, transparent);
+  text-align: left;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+.fin-streak p { margin: 0; }
+.fin-streak b { color: var(--text); }
+.fin-pips { display: flex; gap: 4px; margin-top: 6px; }
+.fin-pips i { flex: 1; height: 6px; border-radius: 3px; background: color-mix(in srgb, var(--text) 16%, transparent); }
+.fin-pips i.is-on { background: var(--fin-acc); }
+.fin-countdown {
+  margin: 14px 0 0;
+  font-size: 12px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes fin-grow { from { width: 0; } }
+@keyframes fin-slide { from { left: 0; } }
+@keyframes fin-pulse { 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--c) 30%, transparent); } }
+@keyframes fin-flick {
+  0%, 100% { transform: scale(1) rotate(-3deg); }
+  45% { transform: scale(1.18) rotate(4deg); }
+  70% { transform: scale(0.96) rotate(-2deg); }
+}
+
 .od-section {
   margin-top: 28px;
   width: 100%;
