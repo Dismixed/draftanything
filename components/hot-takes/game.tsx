@@ -11,10 +11,8 @@ import {
 import Link from "next/link";
 import { GameTitle } from "@/components/ui/game-title";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
-import { OtherDailies } from "@/components/daily/other-dailies";
-import { ShareResult } from "@/components/daily/share-result";
 import { hotTakesShare } from "@/lib/share/results";
-import { DailyCompleteShell } from "@/components/daily/daily-complete-shell";
+import { FinishScreen } from "@/components/daily/finish-screen";
 import { useGameHowItWorks } from "@/lib/game-how-it-works";
 import { HotTakesImage } from "@/components/hot-takes/optimized-image";
 import type { HotTakesDailyCategory, HotTakesDailyItem } from "@/lib/hot-takes/types";
@@ -309,13 +307,54 @@ export default function HotTakesGame({
     year: "numeric",
   });
 
+  const resultsBody = results ? (
+    <div className="hot-takes-finish">
+      <div className="hot-takes-score-banner anim-pop-in">
+        <div ref={scoreNumRef} className="hot-takes-score-num">{displayAvg}%</div>
+        <div className="hot-takes-score-text">
+          average agreement with the crowd across your 15 picks.
+          {results.hottest && (
+            <>
+              {" "}
+              Your hottest take: {results.hottest.label} in {results.hottest.tier} tier
+              (only {results.hottest.pct}% agree).
+            </>
+          )}
+        </div>
+      </div>
+
+      {results.rows.map(({ item, yourTier, dist }) => (
+        <div key={item.id} className="hot-takes-consensus-item">
+          <div className="hot-takes-consensus-top">
+            <HotTakesImage src={item.imageUrl} alt="" width={28} />
+            <div className="hot-takes-consensus-name">{item.label}</div>
+            <div className="hot-takes-consensus-pick">
+              you said <b>{yourTier}</b> · {dist[yourTier]}% agree
+            </div>
+          </div>
+          <div className="hot-takes-bars">
+            {TIERS.map((t) => {
+              const w = dist[t];
+              return (
+                <div
+                  key={t}
+                  className={`hot-takes-bar${t === yourTier ? " you" : ""}`}
+                  style={{ width: `${w}%`, background: TIER_COLORS[t] }}
+                >
+                  {w >= 10 ? (
+                    <span className="hot-takes-bar-pct">{w}%</span>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  ) : null;
+
   return (
-    <DailyCompleteShell
-      enabled={submitted}
-      open={completeOpen}
-      onClose={() => setCompleteOpen(false)}
-      ariaLabel="Daily complete"
-    >
+    <>
     <div className="hot-takes-page">
       <div className="hot-takes-wrap">
         <header className="hot-takes-header">
@@ -423,56 +462,19 @@ export default function HotTakesGame({
           <div className="hot-takes-results" id="hot-takes-results">
             <h2>How you stack up</h2>
             <p className="hot-takes-sub">Here&apos;s how everyone else ranked today&apos;s category.</p>
-
-            <div className="hot-takes-score-banner anim-pop-in">
-              <div ref={scoreNumRef} className="hot-takes-score-num">{displayAvg}%</div>
-              <div className="hot-takes-score-text">
-                average agreement with the crowd across your 15 picks.
-                {results.hottest && (
-                  <>
-                    {" "}
-                    Your hottest take: {results.hottest.label} in {results.hottest.tier} tier
-                    (only {results.hottest.pct}% agree).
-                  </>
-                )}
-              </div>
-            </div>
-
-            {results.rows.map(({ item, yourTier, dist }) => (
-              <div key={item.id} className="hot-takes-consensus-item">
-                <div className="hot-takes-consensus-top">
-                  <HotTakesImage src={item.imageUrl} alt="" width={28} />
-                  <div className="hot-takes-consensus-name">{item.label}</div>
-                  <div className="hot-takes-consensus-pick">
-                    you said <b>{yourTier}</b> · {dist[yourTier]}% agree
-                  </div>
-                </div>
-                <div className="hot-takes-bars">
-                  {TIERS.map((t) => {
-                    const w = dist[t];
-                    return (
-                      <div
-                        key={t}
-                        className={`hot-takes-bar${t === yourTier ? " you" : ""}`}
-                        style={{ width: `${w}%`, background: TIER_COLORS[t] }}
-                      >
-                        {w >= 10 ? (
-                          <span style={{ fontSize: 9, fontWeight: 700, color: "#1a1a1a" }}>
-                            {w}%
-                          </span>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-
-            <div style={{ marginTop: 20 }}>
-              <ShareResult gameId="hot-takes" text={shareText} />
-            </div>
-
-            <OtherDailies currentGameId="hot-takes" />
+            {/* The finish screen shows the same breakdown while it is open. */}
+            {!completeOpen && (
+              <>
+                {resultsBody}
+                <button
+                  type="button"
+                  className="hot-takes-btn hot-takes-btn-ghost hot-takes-reopen"
+                  onClick={() => setCompleteOpen(true)}
+                >
+                  Back to today&apos;s summary
+                </button>
+              </>
+            )}
           </div>
         )}
 
@@ -497,7 +499,15 @@ export default function HotTakesGame({
         />
       )}
     </div>
-    </DailyCompleteShell>
+
+      <FinishScreen
+        gameId="hot-takes"
+        open={completeOpen}
+        onClose={() => setCompleteOpen(false)}
+        result={resultsBody}
+        shareText={shareText}
+      />
+    </>
   );
 }
 

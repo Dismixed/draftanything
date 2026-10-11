@@ -481,3 +481,12 @@ html[data-theme="light"] .hot-takes-page {
     height: 44px;
   }
 }
+
+/* The crowd breakdown, on the page and on the finish screen. */
+.hot-takes-finish {
+  color: var(--ht-text);
+  text-align: left;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.hot-takes-bar-pct { font-size: 9px; font-weight: 700; color: #1a1a1a; }
+.hot-takes-reopen { margin-top: 20px; }
