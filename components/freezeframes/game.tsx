@@ -9,7 +9,6 @@ import {
 } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   MAX_DAILY_SCORE,
   MAX_PTS,
@@ -18,7 +17,6 @@ import {
   WRONG_PEN,
   calcAvailablePoints,
   calcRoundScore,
-  getCountdownText,
   getDisplayDate,
 } from "@/lib/freezeframes/game-logic";
 import { ROUNDS } from "@/lib/freezeframes/rounds";
@@ -37,16 +35,15 @@ import { fireConfetti } from "@/lib/motion/confetti";
 import { burstFrom } from "@/lib/motion/burst";
 import { impactRing } from "@/lib/motion/impact-ring";
 import { triggerAnimation } from "@/lib/motion/trigger-class";
-import { useCountUp } from "@/lib/motion/count-up";
 import { useSound } from "@/lib/audio/sound-context";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
-import { OtherDailies } from "@/components/daily/other-dailies";
-import { ShareResult } from "@/components/daily/share-result";
 import { freezeFramesShare } from "@/lib/share/results";
 import { getDateString as shareDate } from "@/lib/streak/date";
-import { DailyCompleteShell } from "@/components/daily/daily-complete-shell";
 import { useGameHowItWorks } from "@/lib/game-how-it-works";
 import { WinStreakLine } from "@/components/streak/streak-notifier";
+import { FinishScreen } from "@/components/daily/finish-screen";
+import { FreezeFramesFinishResult } from "@/components/freezeframes/finish-result";
+import { finishCurve, useDailyPercentile } from "@/lib/games/use-daily-percentile";
 
 type Screen = "home" | "played" | "game" | "results";
 
@@ -146,7 +143,6 @@ function SongPlayer({
 }
 
 export default function FreezeFramesGame() {
-  const router = useRouter();
   const { play: playSound } = useSound();
   const [screen, setScreen] = useState<Screen>("home");
   const [puzzle, setPuzzle] = useState<DailyPuzzleClient | null>(null);
@@ -161,7 +157,6 @@ export default function FreezeFramesGame() {
   const [flashInput, setFlashInput] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [availablePts, setAvailablePts] = useState(MAX_PTS);
-  const [countdown, setCountdown] = useState("");
   const [playedScore, setPlayedScore] = useState(0);
   const [playedMax, setPlayedMax] = useState(MAX_DAILY_SCORE);
   const [nameInput, setNameInput] = useState("");
@@ -267,7 +262,6 @@ export default function FreezeFramesGame() {
     if (played) {
       setPlayedScore(played.score);
       setPlayedMax(played.max);
-      setCountdown(getCountdownText());
       setScreen("played");
       return;
     }
@@ -290,13 +284,6 @@ export default function FreezeFramesGame() {
     }
     if (getSubmittedEntryId()) setLbSubmitted(true);
   }, [loadPuzzle]);
-
-  useEffect(() => {
-    if (screen !== "played") return;
-    setCountdown(getCountdownText());
-    const iv = setInterval(() => setCountdown(getCountdownText()), 1000);
-    return () => clearInterval(iv);
-  }, [screen]);
 
   useEffect(() => {
     if (screen !== "game" || !puzzle) return;
@@ -479,8 +466,6 @@ export default function FreezeFramesGame() {
     }
   }, [screen, roundResults.length, finishResultsTotal]);
 
-  const displayTotal = useCountUp(finishResultsTotal, screen === "results", 900);
-
   const submitToLeaderboard = useCallback(async () => {
     if (lbSubmitting || lbSubmitted) return;
     setLbSubmitting(true);
@@ -489,11 +474,8 @@ export default function FreezeFramesGame() {
       finishResultsTotal,
     );
     setLbSubmitting(false);
-    if (result.ok) {
-      setLbSubmitted(true);
-      router.push("/freezeframes/leaderboard");
-    }
-  }, [lbSubmitting, lbSubmitted, nameInput, finishResultsTotal, router]);
+    if (result.ok) setLbSubmitted(true);
+  }, [lbSubmitting, lbSubmitted, nameInput, finishResultsTotal]);
 
   const renderMedia = () => {
     if (!puzzle || !cfg) return null;
@@ -568,13 +550,35 @@ export default function FreezeFramesGame() {
     return () => clearTimeout(timer);
   }, [screen]);
 
+  const finishedScreen = screen === "played" || screen === "results";
+  const justFinished = screen === "results" && roundResults.length === 4;
+  const finalScore = screen === "played" ? playedScore : finishResultsTotal;
+  const standing = useDailyPercentile("freezeframes", finalScore, {
+    enabled: screen === "played" || justFinished,
+    record: justFinished,
+  });
+
+  const finishResult = (
+    <FreezeFramesFinishResult
+      score={finalScore}
+      max={screen === "played" ? playedMax : MAX_DAILY_SCORE}
+      rounds={justFinished ? roundResults : null}
+      entry={
+        justFinished
+          ? {
+              name: nameInput,
+              onNameChange: setNameInput,
+              onSave: () => void submitToLeaderboard(),
+              saving: lbSubmitting,
+              saved: lbSubmitted,
+            }
+          : null
+      }
+    />
+  );
+
   return (
-    <DailyCompleteShell
-      enabled={screen === "played" || screen === "results"}
-      open={completeOpen}
-      onClose={() => setCompleteOpen(false)}
-      ariaLabel="Daily complete"
-    >
+    <>
     <div className="freezeframes-app">
       <nav className="freezeframes-nav">
         <Link href="/freezeframes" className="freezeframes-logo">
@@ -595,11 +599,7 @@ export default function FreezeFramesGame() {
         </div>
       </nav>
 
-      {fetchError && (
-        <p style={{ textAlign: "center", color: "var(--ff-red)", padding: "1rem" }}>
-          {fetchError}
-        </p>
-      )}
+      {fetchError && <p className="freezeframes-error">{fetchError}</p>}
 
       <div className={`freezeframes-screen${screen === "home" ? " active" : ""}`}>
         <WinStreakLine gameId="freezeframes" />
@@ -627,43 +627,20 @@ export default function FreezeFramesGame() {
         </button>
       </div>
 
-      <div className={`freezeframes-screen${screen === "played" ? " active" : ""}`}>
-        <div className="freezeframes-played-card">
-          <div style={{ fontSize: "2.2rem", marginBottom: "0.75rem" }}>🔒</div>
-          <div
-            style={{
-              fontFamily: "Space Mono, monospace",
-              fontSize: "1.4rem",
-              fontWeight: 700,
-              marginBottom: "1rem",
-            }}
-          >
-            Come back tomorrow
-          </div>
-          <div className="freezeframes-played-lbl">Today&apos;s score</div>
-          <div className="freezeframes-played-score-big">{playedScore}</div>
-          <div className="freezeframes-played-lbl">out of {playedMax}</div>
-          <div className="freezeframes-cdown-wrap">
-            <div className="freezeframes-cdown-lbl">Next FreezeFrames in</div>
-            <div className="freezeframes-cdown-time">{countdown}</div>
-          </div>
-          <Link
-            href="/freezeframes/leaderboard"
-            className="freezeframes-btn freezeframes-btn-ghost"
-            style={{ width: "100%", marginTop: "1.5rem", display: "inline-flex" }}
-          >
-            View Leaderboard
-          </Link>
-
-          <WinStreakLine gameId="freezeframes" accentColor="#a855f7" />
-
-          <ShareResult
-            gameId="freezeframes"
-            text={freezeFramesShare(null, playedScore ?? 0, shareDate())}
-          />
-
-          <OtherDailies currentGameId="freezeframes" />
-        </div>
+      {/* Under the finish screen the page shows the same result, with a way back to the summary. */}
+      <div className={`freezeframes-screen${finishedScreen ? " active" : ""}`}>
+        {finishedScreen && !completeOpen && (
+          <>
+            {finishResult}
+            <button
+              type="button"
+              className="freezeframes-btn freezeframes-btn-ghost freezeframes-btn-sm ff-fin-reopen"
+              onClick={() => setCompleteOpen(true)}
+            >
+              Back to today&apos;s summary
+            </button>
+          </>
+        )}
       </div>
 
       <div
@@ -795,90 +772,6 @@ export default function FreezeFramesGame() {
         </div>
       </div>
 
-      <div className={`freezeframes-screen${screen === "results" ? " active" : ""}`}>
-        <div className="freezeframes-results-logo">
-          Freeze<span className="hl">Frames</span>
-        </div>
-        <div style={{ fontSize: "0.78rem", color: "var(--ff-muted)" }}>
-          {displayDate}
-        </div>
-        <div className="freezeframes-total-score">{displayTotal}</div>
-        <div className="freezeframes-score-max">out of {MAX_DAILY_SCORE}</div>
-
-        <div className="freezeframes-breakdown">
-          {ROUNDS.map((r, i) => {
-            const result = roundResults[i];
-            return (
-              <div key={r.key} className="freezeframes-bd-row">
-                <div className="freezeframes-bd-icon">{r.icon}</div>
-                <div className="freezeframes-bd-label">
-                  {r.title.replace("Name the ", "")}
-                </div>
-                <div className="freezeframes-bd-answer">{result?.answer ?? "—"}</div>
-                <div
-                  className={`freezeframes-bd-pts ${result?.correct ? "got" : "miss"}`}
-                >
-                  {result?.correct ? `+${result.score}` : "−"}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {!lbSubmitted ? (
-          <div className="freezeframes-name-section">
-            <p style={{ fontSize: "0.82rem", color: "var(--ff-muted)" }}>
-              Save your score to the leaderboard
-            </p>
-            <input
-              className="freezeframes-name-inp"
-              value={nameInput}
-              onChange={(e) => setNameInput(e.target.value)}
-              placeholder="Your name"
-              maxLength={20}
-            />
-            <button
-              type="button"
-              className="freezeframes-btn freezeframes-btn-purple"
-              onClick={() => void submitToLeaderboard()}
-              disabled={lbSubmitting}
-            >
-              Save Score →
-            </button>
-          </div>
-        ) : null}
-
-        <WinStreakLine gameId="freezeframes" accentColor="#a855f7" />
-
-        <ShareResult
-          gameId="freezeframes"
-          text={freezeFramesShare(roundResults, totalScore, shareDate())}
-        />
-
-        <OtherDailies currentGameId="freezeframes" />
-
-        <div
-          style={{
-            display: "flex",
-            gap: "0.75rem",
-            flexWrap: "wrap",
-            justifyContent: "center",
-            marginTop: "1rem",
-          }}
-        >
-          <Link href="/freezeframes/leaderboard" className="freezeframes-btn freezeframes-btn-ghost freezeframes-btn-sm">
-            Leaderboard
-          </Link>
-          <button
-            type="button"
-            className="freezeframes-btn freezeframes-btn-ghost freezeframes-btn-sm"
-            onClick={() => setScreen("home")}
-          >
-            Home
-          </button>
-        </div>
-      </div>
-
       {showHowItWorks && (
         <GameHowItWorksModal
           subtitle="Four rounds · One shot a day"
@@ -895,7 +788,16 @@ export default function FreezeFramesGame() {
         />
       )}
     </div>
-    </DailyCompleteShell>
+      <FinishScreen
+        gameId="freezeframes"
+        open={completeOpen}
+        onClose={() => setCompleteOpen(false)}
+        result={finishResult}
+        shareText={freezeFramesShare(justFinished ? roundResults : null, finalScore, shareDate())}
+        secondary={{ label: "Leaderboard", href: "/freezeframes/leaderboard" }}
+        curve={finishCurve("freezeframes", standing)}
+      />
+    </>
   );
 }
 
