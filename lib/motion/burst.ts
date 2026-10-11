@@ -25,5 +25,7 @@ export async function burstFrom(
     },
     colors: [...PRESETS[preset]],
     disableForReducedMotion: true,
+    // Above the daily finish screen (z-index 1000), which opens just before end-of-game bursts.
+    zIndex: 1100,
   });
 }
