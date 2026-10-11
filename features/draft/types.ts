@@ -50,6 +50,8 @@ export interface SafePlayer {
   seat: number;
   isReady: boolean;
   isHost: boolean;
+  /** True for an AI drafter: a seat with no person behind it. */
+  isBot: boolean;
 }
 
 export interface SafeItem {

@@ -219,7 +219,11 @@ export function DefensePanel({ projection, myPlayerId }: DefensePanelProps) {
                   />
                   {defense && (
                     <p style={{ fontSize: "10px", color: "var(--cyan)", margin: 0, paddingLeft: "4px" }}>
-                      {defense.skipped ? "Skipped defense" : "Defense submitted"}
+                      {player.isBot
+                        ? "AI drafter, no defense"
+                        : defense.skipped
+                          ? "Skipped defense"
+                          : "Defense submitted"}
                     </p>
                   )}
                 </div>

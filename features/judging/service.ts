@@ -224,7 +224,7 @@ export async function getJudgingData(draftId: string): Promise<JudgingData> {
 
   const { data: players } = await db
     .from("draft_players")
-    .select("id, guest_id, display_name, seat")
+    .select("id, guest_id, display_name, seat, is_bot")
     .eq("draft_id", draftId)
     .is("removed_at", null);
 
@@ -253,7 +253,8 @@ export async function getJudgingData(draftId: string): Promise<JudgingData> {
     displayName: p.display_name as string,
     seat: p.seat as number,
     isReady: false,
-    isHost: (p.guest_id as string) === (draft.host_guest_id as string),
+    isHost: (p.guest_id as string | null) === (draft.host_guest_id as string),
+    isBot: Boolean(p.is_bot),
   }));
 
   const safePicks: SafePick[] = (picks ?? []).map((p) => ({

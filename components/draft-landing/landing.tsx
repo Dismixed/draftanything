@@ -38,11 +38,14 @@ function Actions({ position }: { position: "hero" | "closing" }) {
       <LandingLink href={playHref({ tab: "join" })} cta="join" position={position} className="dal-btn dal-btn-outline">
         Join a room
       </LandingLink>
+      <LandingLink href={playHref({ tab: "solo" })} cta="solo" position={position} className="dal-btn dal-btn-ghost">
+        Play solo
+      </LandingLink>
     </div>
   );
 }
 
-/** The Draft Anything front door: what the game is, then two ways into the room screen. */
+/** The Draft Anything front door: what the game is, then three ways into the room screen. */
 export function DraftLanding() {
   const content = getGameContent("draft-anything");
   const chips = HOT_CATEGORIES.filter((category) => HERO_CHIPS.includes(category.id));
@@ -60,7 +63,7 @@ export function DraftLanding() {
       </header>
 
       <section className="dal-hero">
-        <p className="dal-eyebrow">Draft Anything · a party game for 2 to 6</p>
+        <p className="dal-eyebrow">Draft Anything · a party game for 1 to 6</p>
         <h1 className="dal-h1">
           Tonight we are drafting
           <RotatingTopic topics={TOPICS} />

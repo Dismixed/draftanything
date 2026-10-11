@@ -43,6 +43,25 @@ describe("DraftLanding", () => {
     expect(track).toHaveBeenCalledWith("draft_landing_cta_clicked", { cta: "join", position: "closing" });
   });
 
+  it("offers solo play in the hero and the closing section", () => {
+    render(<DraftLanding />);
+    const solos = screen.getAllByRole("link", { name: "Play solo" });
+    expect(solos).toHaveLength(2);
+    solos.forEach((link) => expect(link).toHaveAttribute("href", "/draft-anything/play?tab=solo"));
+
+    fireEvent.click(solos[0]);
+    expect(track).toHaveBeenCalledWith("draft_landing_cta_clicked", { cta: "solo", position: "hero" });
+  });
+
+  it("says one person can play, in the eyebrow and the questions", () => {
+    render(<DraftLanding />);
+    expect(screen.getByText("Draft Anything · a party game for 1 to 6")).toBeInTheDocument();
+    expect(screen.getByText("Can I play Draft Anything alone?")).toBeInTheDocument();
+    expect(document.querySelector('script[type="application/ld+json"]')?.textContent).toContain(
+      "Can I play Draft Anything alone?",
+    );
+  });
+
   it("keeps the questions, the long-form text and one h1", () => {
     const content = GAME_CONTENT["draft-anything"];
     const { container } = render(<DraftLanding />);

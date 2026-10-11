@@ -1137,8 +1137,10 @@ export type Database = {
         Row: {
           display_name: string
           draft_id: string
-          guest_id: string
+          bot_style: string | null
+          guest_id: string | null
           id: string
+          is_bot: boolean
           is_ready: boolean
           joined_at: string
           removed_at: string | null
@@ -1147,8 +1149,10 @@ export type Database = {
         Insert: {
           display_name: string
           draft_id: string
-          guest_id: string
+          bot_style?: string | null
+          guest_id?: string | null
           id?: string
+          is_bot?: boolean
           is_ready?: boolean
           joined_at?: string
           removed_at?: string | null
@@ -1157,8 +1161,10 @@ export type Database = {
         Update: {
           display_name?: string
           draft_id?: string
-          guest_id?: string
+          bot_style?: string | null
+          guest_id?: string | null
           id?: string
+          is_bot?: boolean
           is_ready?: boolean
           joined_at?: string
           removed_at?: string | null
@@ -1212,6 +1218,7 @@ export type Database = {
           topic: string
           turn_deadline: string | null
           veto_suspended_pick_index: number | null
+          vetoed_names: Json
         }
         Insert: {
           ai_personality: Database["public"]["Enums"]["ai_personality"]
@@ -1236,6 +1243,7 @@ export type Database = {
           topic: string
           turn_deadline?: string | null
           veto_suspended_pick_index?: number | null
+          vetoed_names?: Json
         }
         Update: {
           ai_personality?: Database["public"]["Enums"]["ai_personality"]
@@ -1260,6 +1268,7 @@ export type Database = {
           topic?: string
           turn_deadline?: string | null
           veto_suspended_pick_index?: number | null
+          vetoed_names?: Json
         }
         Relationships: [
           {
@@ -2366,6 +2375,15 @@ export type Database = {
           o_phase: string
         }[]
       }
+      add_bot_player: {
+        Args: {
+          p_bot_style: string
+          p_display_name: string
+          p_draft_id: string
+          p_host_guest_id: string
+        }
+        Returns: string
+      }
       auto_pick: {
         Args: { p_draft_id: string; p_guest_id: string }
         Returns: {
@@ -2373,6 +2391,10 @@ export type Database = {
           o_phase: string
           o_turn_deadline: string
         }[]
+      }
+      commence_off_the_dome: {
+        Args: { p_draft_id: string; p_guest_id: string }
+        Returns: undefined
       }
       create_draft:
         | {
@@ -2479,6 +2501,14 @@ export type Database = {
         Args: { p_draft_id: string }
         Returns: undefined
       }
+      remove_bot_player: {
+        Args: {
+          p_draft_id: string
+          p_host_guest_id: string
+          p_player_id: string
+        }
+        Returns: undefined
+      }
       reset_draft_for_rematch: {
         Args: { p_draft_id: string; p_host_guest_id: string }
         Returns: undefined
@@ -2498,6 +2528,20 @@ export type Database = {
       start_pool_review: {
         Args: { p_draft_id: string; p_guest_id: string }
         Returns: undefined
+      }
+      submit_bot_pick: {
+        Args: {
+          p_draft_id: string
+          p_expected_pick: number
+          p_forfeited?: boolean
+          p_item_id?: string
+          p_item_name?: string
+        }
+        Returns: {
+          o_current_pick_index: number
+          o_phase: string
+          o_turn_deadline: string
+        }[]
       }
       submit_defense: {
         Args: {

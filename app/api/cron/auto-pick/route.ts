@@ -73,6 +73,11 @@ export async function GET(request: Request) {
           continue;
         }
 
+        // AI drafters have no guest session and are never on a turn timer.
+        if (!player.guest_id) {
+          continue;
+        }
+
         // Call the idempotent auto_pick RPC
         const { error: rpcError } = await db.rpc("auto_pick", {
           p_draft_id: draft.id,

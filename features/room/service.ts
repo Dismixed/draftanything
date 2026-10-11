@@ -43,7 +43,8 @@ function buildProjection(
     display_name: string;
     seat: number;
     is_ready: boolean;
-    guest_id: string;
+    guest_id: string | null;
+    is_bot?: boolean;
   }>,
 ): RoomProjection {
   // Determine the host player ID from the player who matches the host guest
@@ -70,6 +71,7 @@ function buildProjection(
       seat: p.seat,
       isReady: p.is_ready,
       isHost: p.guest_id === draft.host_guest_id,
+      isBot: Boolean(p.is_bot),
     })),
   };
 }

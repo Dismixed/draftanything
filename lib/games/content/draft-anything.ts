@@ -4,7 +4,7 @@ export const draftAnything: GameContent = {
   angle: "draft anything with friends online",
   title: "Draft Anything With Friends Online",
   description:
-    "A free party game for 2 to 6 players. Draft anything with friends online: pick a topic, take turns choosing, defend your picks and let a judge decide.",
+    "A free party game for 1 to 6. Draft anything with friends online, or solo against AI: pick a topic, take turns, defend your picks and let a judge decide.",
   intro:
     "Draft Anything lets you draft anything with friends online. Pick a topic, take turns choosing from it, then argue for your picks and find out whose lineup wins.",
   sections: [
@@ -12,7 +12,7 @@ export const draftAnything: GameContent = {
       heading: "How to play",
       body: [
         "One person creates a room and chooses a topic. It can be anything you could make a list of: films, snacks, athletes, holiday destinations. The room gets a short code.",
-        "Everyone else joins with that code and a display name. Nobody needs an account. A room holds 2 to 6 players.",
+        "Everyone else joins with that code and a display name. Nobody needs an account. A room holds up to 6 players, and you can play alone against AI drafters.",
         "When the draft starts, players take turns picking from a pool of options for the topic. Once something is picked, it is gone. After the final round, each player has a lineup.",
         "Then comes the argument. Each player defends their picks, and the judging begins.",
       ],
@@ -35,6 +35,7 @@ export const draftAnything: GameContent = {
       heading: "Setting up a room",
       body: [
         "The host sets the number of players and the number of rounds, from 1 to 10. More rounds means bigger lineups and a longer game.",
+        "Short a player? The host can fill any empty seat with an AI drafter, which picks on its own turns and is judged like everyone else.",
         "The pick order can be standard, where the order repeats every round; snake, where it reverses each round; or random.",
         "A turn timer is optional, for groups that take too long to decide.",
         "When a game ends, you can start a rematch from the results screen without setting everything up again.",
@@ -45,7 +46,12 @@ export const draftAnything: GameContent = {
     {
       question: "How many people can play Draft Anything?",
       answer:
-        "2 to 6 in one room.",
+        "1 to 6. Up to six people share a room, and you can play solo against AI drafters.",
+    },
+    {
+      question: "Can I play Draft Anything alone?",
+      answer:
+        "Yes. Choose Play solo, pick how many AI drafters to face, and draft against them. They pick on their own turns and the AI judge ranks every lineup, yours included. You can also add AI drafters to empty seats in a room with friends.",
     },
     {
       question: "Do we need accounts?",

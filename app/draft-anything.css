@@ -96,6 +96,7 @@ html[data-theme="light"] .dal {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .dal .dal-btn-outline { background: transparent; color: var(--gold-hi); }
+.dal .dal-btn-ghost { background: transparent; border-color: var(--border-hi); color: var(--text); }
 .dal-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 22px var(--dal-glow); }
 .dal a:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 3px; }
 .dal-fine { margin: 16px 0 0; font-size: 13px; color: var(--dal-muted); }

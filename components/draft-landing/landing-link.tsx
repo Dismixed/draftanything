@@ -6,7 +6,7 @@ import { track } from "@/lib/analytics/track";
 
 interface LandingLinkProps {
   href: string;
-  cta: "start" | "join" | "topic";
+  cta: "start" | "join" | "solo" | "topic";
   position: "hero" | "ideas" | "closing";
   topic?: string;
   className?: string;

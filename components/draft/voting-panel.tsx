@@ -1,5 +1,6 @@
 "use client";
 
+import { AiTag } from "./ai-tag";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { DraftRoomProjection, SafePick } from "@/features/draft/types";
@@ -37,7 +38,9 @@ export function VotingPanel({ projection, myPlayerId, onVoteSubmitted }: VotingP
 
   const { draft, players, picks, availableItems, votes } = projection;
   const isHost = players.find((p) => p.id === myPlayerId)?.isHost ?? false;
-  const allVotesIn = votes.length >= players.length;
+  // AI drafters do not vote, so only people are waited on.
+  const voterCount = players.filter((p) => !p.isBot).length;
+  const allVotesIn = votes.length >= voterCount;
 
   const itemMap = useMemo(
     () => new Map(availableItems.map((item) => [item.id, item])),
@@ -136,7 +139,7 @@ export function VotingPanel({ projection, myPlayerId, onVoteSubmitted }: VotingP
         <p style={{ color: 'var(--text-dim)', fontSize: '11px', marginTop: '8px' }}>
           {allVotesIn
             ? "Everyone has voted — moving to judging..."
-            : `${votes.length} of ${players.length} votes in`}
+            : `${votes.length} of ${voterCount} votes in`}
         </p>
         {isHost && (
           <button
@@ -226,6 +229,7 @@ export function VotingPanel({ projection, myPlayerId, onVoteSubmitted }: VotingP
                   }}
                 >
                   {player.displayName}
+                  {player.isBot && <AiTag />}
                 </span>
                 <span
                   style={{

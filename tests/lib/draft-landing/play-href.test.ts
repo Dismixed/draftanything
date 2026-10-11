@@ -43,4 +43,21 @@ describe("parsePlayParams", () => {
       code: "ONE",
     });
   });
+
+  it("builds and reads the solo tab, with or without a topic", () => {
+    expect(playHref({ tab: "solo" })).toBe("/draft-anything/play?tab=solo");
+    expect(playHref({ tab: "solo", topic: "Best Snacks" })).toBe(
+      "/draft-anything/play?tab=solo&topic=Best+Snacks",
+    );
+    expect(parsePlayParams({ tab: "solo", topic: "Best Snacks" })).toEqual({
+      tab: "solo",
+      topic: "Best Snacks",
+      code: "",
+    });
+  });
+
+  it("a room code still wins over the solo tab", () => {
+    expect(playHref({ tab: "solo", code: "abcde2" })).toBe("/draft-anything/play?code=ABCDE2");
+    expect(parsePlayParams({ tab: "solo", code: "abcde2" }).tab).toBe("join");
+  });
 });

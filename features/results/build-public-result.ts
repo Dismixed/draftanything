@@ -10,6 +10,8 @@ export interface PublicPlayerResult {
   displayName: string;
   score: number | null;
   rank: number | null;
+  /** True for an AI drafter. */
+  isBot?: boolean;
 }
 
 export interface PublicAward {
@@ -67,6 +69,7 @@ export function buildPublicResult(
     displayName: p.displayName,
     score: playerScoreMap[p.id] ?? null,
     rank: playerRankMap[p.id] ?? null,
+    ...(p.isBot ? { isBot: true } : {}),
   }));
 
   if (judgment) {
