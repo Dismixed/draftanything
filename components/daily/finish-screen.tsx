@@ -68,7 +68,6 @@ export function FinishScreen({
 }: FinishScreenProps) {
   const { streaks } = useStreak();
   const countdown = useCountdown();
-  const [sweeps, setSweeps] = useState(0);
   const game = getGame(gameId);
 
   // The finish screen is only ever open for a game that was played today, so it counts
@@ -80,9 +79,8 @@ export function FinishScreen({
   const streak = Math.max(1, streaks.find((s) => s.id === gameId)?.currentStreak ?? 0);
   const allDone = played.size === DAILY_GAMES.length;
 
-  useEffect(() => {
-    if (open) setSweeps(sweepCount(readStreakStore()));
-  }, [open, streaks]);
+  // Only the Sweep panel shows the count, and the overlay only renders in the browser once open.
+  const sweeps = open && allDone ? sweepCount(readStreakStore()) : 0;
 
   // The overlay is drawn outside the game page, so it needs the game's colours handed to it.
   const style = {
