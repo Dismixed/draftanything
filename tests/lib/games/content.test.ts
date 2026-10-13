@@ -47,6 +47,9 @@ describe("gameMetadata", () => {
     const meta = gameMetadata("hot-takes");
     expect(meta.title).toBe(GAME_CONTENT["hot-takes"].title);
     expect(meta.alternates?.canonical).toBe("/hot-takes");
+    expect(meta.openGraph?.images).toEqual([
+      expect.objectContaining({ url: "/og/hot-takes", width: 1200, height: 630 }),
+    ]);
   });
 });
 

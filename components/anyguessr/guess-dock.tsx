@@ -21,11 +21,14 @@ export function GuessDock({
   selection,
   onSelect,
   onConfirm,
+  onEngage,
   busy,
 }: {
   selection: MapSelection | null;
   onSelect: (next: MapSelection | null) => void;
   onConfirm: (name: string) => void;
+  /** The player has clicked into the box or started typing. */
+  onEngage?: () => void;
   busy: boolean;
 }) {
   const [query, setQuery] = useState("");
@@ -73,7 +76,6 @@ export function GuessDock({
                 onMouseEnter={() => setActive(i)}
                 onClick={() => choose(i)}
               >
-                <span aria-hidden="true">{country.flag}</span>
                 {country.name}
               </button>
             </li>
@@ -103,8 +105,12 @@ export function GuessDock({
             setActive(0);
             setOpen(true);
             if (selection) onSelect(null);
+            onEngage?.();
           }}
-          onFocus={() => setOpen(true)}
+          onFocus={() => {
+            setOpen(true);
+            onEngage?.();
+          }}
           onBlur={() => setOpen(false)}
           onKeyDown={onKeyDown}
         />

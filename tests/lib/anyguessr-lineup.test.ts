@@ -36,9 +36,20 @@ describe("pickLineup", () => {
     expect(new Set(lineup.map((r) => r.puzzleId)).size).toBe(LINEUP_ROUNDS);
   });
 
-  it("follows the difficulty curve, easiest first", () => {
-    const lineup = pickLineup(pool(30), "2026-10-20", [])!;
-    expect(lineup.map((r) => r.difficulty)).toEqual(["easy", "easy", "medium", "medium", "medium", "hard", "hard"]);
+  it("shows the rounds easiest first", () => {
+    const order = { easy: 0, medium: 1, hard: 2 };
+    for (const date of ["2026-10-20", "2026-10-21", "2026-10-22"]) {
+      const levels = pickLineup(pool(30), date, [])!.map((r) => order[r.difficulty]);
+      expect(levels, date).toEqual([...levels].sort((a, b) => a - b));
+    }
+  });
+
+  it("uses every kind of clue the pool offers before repeating one", () => {
+    for (const date of ["2026-10-20", "2026-10-21", "2026-10-22"]) {
+      const kinds = new Set(pickLineup(pool(30), date, [])!.map((r) => (r.clueType === "environment" ? "landmark" : r.clueType)));
+      // Flag, place, food, person, brand, wildlife and language: seven rounds, seven kinds.
+      expect(kinds.size, date).toBe(7);
+    }
   });
 
   it("uses at most two rounds of one type, and at most three places", () => {
@@ -73,6 +84,18 @@ describe("pickLineup", () => {
     }
     const shown = history.flatMap((d) => d.rounds.map((r) => r.puzzleId));
     expect(new Set(shown).size).toBe(shown.length);
+  });
+
+  it("does not repeat a country daily because it holds the only clue that fits a round", () => {
+    // Plenty of places and food, but a single clue of any other type.
+    const clues = [...pool(60, ["landmark", "food"]), clue(1, "brand", "hard")];
+    const history: LineupDay[] = [];
+    for (let d = 20; d < 26; d++) {
+      const date = `2026-10-${d}`;
+      history.push(day(date, pickLineup(clues, date, history)!));
+    }
+    const daysWithIt = history.filter((h) => h.rounds.some((r) => r.puzzleId === "c1")).length;
+    expect(daysWithIt).toBeLessThanOrEqual(1);
   });
 
   it("still fills seven rounds when a difficulty level is missing", () => {

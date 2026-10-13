@@ -1,4 +1,5 @@
 import type { CategoryName } from "./categories";
+import EXTRAS from "./answer-bank-extras.json";
 import { normKey, type BankEntry } from "./normalize";
 
 const RAW_BANKS: Record<CategoryName, string[]> = {
@@ -579,8 +580,10 @@ function compileBank(lines: string[]): BankEntry[] {
 }
 
 const COMPILED: Partial<Record<CategoryName, BankEntry[]>> = {};
+// AI-suggested additions from scripts/expand-ball-knowledge-banks.ts, after the hand-written answers.
+const EXTRA_BANKS: Partial<Record<string, string[]>> = EXTRAS;
 for (const [cat, lines] of Object.entries(RAW_BANKS)) {
-  COMPILED[cat as CategoryName] = compileBank(lines);
+  COMPILED[cat as CategoryName] = compileBank([...lines, ...(EXTRA_BANKS[cat] ?? [])]);
 }
 
 export function getAnswerBank(category: string): BankEntry[] | null {

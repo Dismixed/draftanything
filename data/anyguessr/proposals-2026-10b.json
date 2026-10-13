@@ -1,0 +1,380 @@
+[
+  {
+    "cca3": "COL",
+    "country": "Colombia",
+    "clue_type": "brand",
+    "difficulty": "hard",
+    "note": "new",
+    "wiki_title": "Juan Valdez"
+  },
+  {
+    "cca3": "JAM",
+    "country": "Jamaica",
+    "clue_type": "brand",
+    "difficulty": "hard",
+    "note": "new",
+    "wiki_title": "Red Stripe"
+  },
+  {
+    "cca3": "POL",
+    "country": "Poland",
+    "clue_type": "brand",
+    "difficulty": "hard",
+    "note": "new",
+    "wiki_title": "Żubrówka"
+  },
+  {
+    "cca3": "MYS",
+    "country": "Malaysia",
+    "clue_type": "brand",
+    "difficulty": "medium",
+    "note": "new",
+    "wiki_title": "AirAsia"
+  },
+  {
+    "cca3": "UKR",
+    "country": "Ukraine",
+    "clue_type": "brand",
+    "difficulty": "hard",
+    "note": "new",
+    "wiki_title": "Antonov"
+  },
+  {
+    "cca3": "ROU",
+    "country": "Romania",
+    "clue_type": "brand",
+    "difficulty": "medium",
+    "note": "new",
+    "wiki_title": "Automobile Dacia"
+  },
+  {
+    "cca3": "NOR",
+    "country": "Norway",
+    "clue_type": "brand",
+    "difficulty": "hard",
+    "note": "replaced Equinor (rejected earlier)",
+    "wiki_title": "Helly Hansen"
+  },
+  {
+    "cca3": "RUS",
+    "country": "Russia",
+    "clue_type": "brand",
+    "difficulty": "medium",
+    "note": "replaced Gazprom (rejected earlier)",
+    "wiki_title": "Lada"
+  },
+  {
+    "cca3": "THA",
+    "country": "Thailand",
+    "clue_type": "brand",
+    "difficulty": "medium",
+    "note": "replaced Thai Airways (rejected earlier)",
+    "wiki_title": "Singha"
+  },
+  {
+    "cca3": "ZAF",
+    "country": "South Africa",
+    "clue_type": "brand",
+    "difficulty": "medium",
+    "note": "replaced Sasol (rejected earlier)",
+    "wiki_title": "Nando's"
+  },
+  {
+    "cca3": "QAT",
+    "country": "Qatar",
+    "clue_type": "brand",
+    "difficulty": "medium",
+    "note": "new",
+    "wiki_title": "Al Jazeera Media Network"
+  },
+  {
+    "cca3": "TWN",
+    "country": "Taiwan",
+    "clue_type": "wildlife",
+    "difficulty": "hard",
+    "note": "new",
+    "wiki_title": "Formosan black bear"
+  },
+  {
+    "cca3": "DZA",
+    "country": "Algeria",
+    "clue_type": "wildlife",
+    "difficulty": "medium",
+    "note": "new",
+    "wiki_title": "Fennec fox"
+  },
+  {
+    "cca3": "PAK",
+    "country": "Pakistan",
+    "clue_type": "wildlife",
+    "difficulty": "hard",
+    "note": "new",
+    "wiki_title": "Markhor"
+  },
+  {
+    "cca3": "BRA",
+    "country": "Brazil",
+    "clue_type": "wildlife",
+    "difficulty": "medium",
+    "note": "replaced Jaguar (rejected earlier)",
+    "wiki_title": "Golden lion tamarin"
+  },
+  {
+    "cca3": "RUS",
+    "country": "Russia",
+    "clue_type": "wildlife",
+    "difficulty": "medium",
+    "note": "replaced Brown bear (rejected earlier)",
+    "wiki_title": "Siberian tiger"
+  },
+  {
+    "cca3": "CRI",
+    "country": "Costa Rica",
+    "clue_type": "wildlife",
+    "difficulty": "hard",
+    "note": "new",
+    "wiki_title": "Resplendent quetzal"
+  },
+  {
+    "cca3": "CHN",
+    "country": "China",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "replaced 你好 (rejected earlier)",
+    "text": "你今天过得怎么样？",
+    "language": "Mandarin (simplified characters)",
+    "english": "How has your day been?"
+  },
+  {
+    "cca3": "TWN",
+    "country": "Taiwan",
+    "clue_type": "written_language",
+    "difficulty": "hard",
+    "note": "new",
+    "text": "請問最近的車站在哪裡？",
+    "language": "Mandarin (traditional characters)",
+    "english": "Excuse me, where is the nearest station?"
+  },
+  {
+    "cca3": "ZAF",
+    "country": "South Africa",
+    "clue_type": "written_language",
+    "difficulty": "hard",
+    "note": "replaced Sawubona (rejected earlier)",
+    "text": "Goeie môre, hoe gaan dit?",
+    "language": "Afrikaans",
+    "english": "Good morning, how are you?"
+  },
+  {
+    "cca3": "NZL",
+    "country": "New Zealand",
+    "clue_type": "written_language",
+    "difficulty": "hard",
+    "note": "replaced Kia ora (rejected earlier)",
+    "text": "Kei te pēhea koe?",
+    "language": "Māori",
+    "english": "How are you?"
+  },
+  {
+    "cca3": "JAM",
+    "country": "Jamaica",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "new",
+    "text": "Wah gwaan? Mi deh yah",
+    "language": "Jamaican Patois",
+    "english": "What's going on? I'm doing fine"
+  },
+  {
+    "cca3": "BRA",
+    "country": "Brazil",
+    "clue_type": "brand",
+    "difficulty": "medium",
+    "note": "kept",
+    "wiki_title": "Havaianas"
+  },
+  {
+    "cca3": "CHN",
+    "country": "China",
+    "clue_type": "wildlife",
+    "difficulty": "easy",
+    "note": "kept",
+    "wiki_title": "Giant panda"
+  },
+  {
+    "cca3": "CHN",
+    "country": "China",
+    "clue_type": "brand",
+    "difficulty": "medium",
+    "note": "kept",
+    "wiki_title": "Huawei"
+  },
+  {
+    "cca3": "FIN",
+    "country": "Finland",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "kept",
+    "text": "Missä on lähin rautatieasema?"
+  },
+  {
+    "cca3": "FIN",
+    "country": "Finland",
+    "clue_type": "brand",
+    "difficulty": "medium",
+    "note": "kept",
+    "wiki_title": "Nokia"
+  },
+  {
+    "cca3": "HRV",
+    "country": "Croatia",
+    "clue_type": "written_language",
+    "difficulty": "hard",
+    "note": "kept",
+    "text": "Gdje je najbliža plaža?"
+  },
+  {
+    "cca3": "HUN",
+    "country": "Hungary",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "kept",
+    "text": "Hol van a legközelebbi fürdő?"
+  },
+  {
+    "cca3": "IRN",
+    "country": "Iran",
+    "clue_type": "written_language",
+    "difficulty": "hard",
+    "note": "kept",
+    "text": "حال شما چطور است؟"
+  },
+  {
+    "cca3": "ISR",
+    "country": "Israel",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "kept",
+    "text": "בוקר טוב, מה שלומך?"
+  },
+  {
+    "cca3": "KHM",
+    "country": "Cambodia",
+    "clue_type": "written_language",
+    "difficulty": "hard",
+    "note": "kept",
+    "text": "តើអ្នកសុខសប្បាយទេ?"
+  },
+  {
+    "cca3": "LKA",
+    "country": "Sri Lanka",
+    "clue_type": "written_language",
+    "difficulty": "hard",
+    "note": "kept",
+    "text": "ඔබට සුභ දවසක් වේවා"
+  },
+  {
+    "cca3": "NOR",
+    "country": "Norway",
+    "clue_type": "written_language",
+    "difficulty": "hard",
+    "note": "kept",
+    "text": "Hvor er nærmeste togstasjon?"
+  },
+  {
+    "cca3": "NPL",
+    "country": "Nepal",
+    "clue_type": "written_language",
+    "difficulty": "hard",
+    "note": "kept",
+    "text": "तपाईं आज कस्तो हुनुहुन्छ?"
+  },
+  {
+    "cca3": "NZL",
+    "country": "New Zealand",
+    "clue_type": "wildlife",
+    "difficulty": "easy",
+    "note": "kept",
+    "wiki_title": "Kiwi (bird)"
+  },
+  {
+    "cca3": "PAK",
+    "country": "Pakistan",
+    "clue_type": "written_language",
+    "difficulty": "hard",
+    "note": "kept",
+    "text": "آپ کا دن اچھا گزرے"
+  },
+  {
+    "cca3": "POL",
+    "country": "Poland",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "kept",
+    "text": "Dziękuję bardzo za pomoc"
+  },
+  {
+    "cca3": "ROU",
+    "country": "Romania",
+    "clue_type": "written_language",
+    "difficulty": "hard",
+    "note": "kept",
+    "text": "Bună ziua, ce mai faci?"
+  },
+  {
+    "cca3": "RUS",
+    "country": "Russia",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "kept",
+    "text": "Сколько это стоит?"
+  },
+  {
+    "cca3": "THA",
+    "country": "Thailand",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "kept",
+    "text": "วันนี้อากาศดีมาก"
+  },
+  {
+    "cca3": "TUR",
+    "country": "Turkey",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "kept",
+    "text": "Bir çay alabilir miyim?"
+  },
+  {
+    "cca3": "TWN",
+    "country": "Taiwan",
+    "clue_type": "brand",
+    "difficulty": "medium",
+    "note": "kept",
+    "wiki_title": "Asus"
+  },
+  {
+    "cca3": "UKR",
+    "country": "Ukraine",
+    "clue_type": "written_language",
+    "difficulty": "hard",
+    "note": "kept",
+    "text": "Доброго ранку, як ваші справи?"
+  },
+  {
+    "cca3": "VNM",
+    "country": "Vietnam",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "kept",
+    "text": "Hôm nay trời đẹp quá"
+  },
+  {
+    "cca3": "ZAF",
+    "country": "South Africa",
+    "clue_type": "wildlife",
+    "difficulty": "hard",
+    "note": "kept",
+    "wiki_title": "Springbok"
+  }
+]

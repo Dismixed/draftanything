@@ -107,8 +107,11 @@ html[data-theme="light"] {
   stroke: var(--ag-map-coast);
   stroke-opacity: 1;
   stroke-width: 0.8;
+  stroke-linejoin: round;
   transition: fill 0.12s ease;
 }
+/* Borders keep their weight while a pinch or double-click zoom stretches the drawing. */
+.ag-map path { vector-effect: non-scaling-stroke; }
 /* Leaflet makes clicked shapes focusable; the gold highlight is the feedback, not a focus box. */
 .ag-map path:focus { outline: none; }
 .ag-map.is-playing .ag-land { cursor: pointer; }
@@ -386,6 +389,28 @@ html[data-theme="light"] {
   filter: drop-shadow(0 8px 22px rgba(0, 0, 0, 0.45));
   transition: opacity 0.35s ease;
 }
+/* Zooming: scroll or pinch on the photo, drag to move around, double-click to jump in. */
+.ag-clue:not(.is-static) .ag-clue-media img { transform-origin: 0 0; cursor: zoom-in; }
+/* Up-and-down swipes still scroll the page until the photo is zoomed; then they move the photo. */
+.ag-clue:not(.is-static) .ag-clue-media { touch-action: pan-y; }
+.ag-clue-media.is-zoomed { touch-action: none; }
+.ag-clue-media.is-zoomed img { cursor: grab; }
+.ag-clue-media.is-dragging img { cursor: grabbing; }
+.ag-stage[data-view="map"] .ag-clue-media img { cursor: default; }
+.ag-clue-unzoom {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 6px 12px;
+  border-radius: 99px;
+  border: 1px solid var(--ag-border-hi);
+  background: var(--ag-glass);
+  box-shadow: var(--ag-shadow);
+  font: 700 12px "Outfit", system-ui, sans-serif;
+  color: var(--ag-text);
+  cursor: pointer;
+}
+.ag-clue-unzoom:hover { border-color: var(--ag-accent); color: var(--ag-accent); }
 .ag-clue-loading { position: absolute; font-size: 13px; color: var(--ag-sec); }
 .ag-clue-caption {
   position: absolute;
@@ -555,6 +580,7 @@ html[data-theme="light"] {
 .ag-cta:active:not(:disabled) { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 0 var(--ag-accent-lo); }
 .ag-cta:disabled { opacity: 0.45; cursor: default; }
 .ag-cta:focus-visible,
+.ag-clue-unzoom:focus-visible,
 .ag-clue-btns button:focus-visible,
 .ag-giveup button:focus-visible,
 .ag-quiet-btn:focus-visible { outline: 2px solid var(--ag-accent); outline-offset: 2px; }

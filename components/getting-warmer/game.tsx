@@ -98,7 +98,7 @@ export default function GettingWarmerGame() {
   const [shakeInput, setShakeInput] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [igniteIndex, setIgniteIndex] = useState<number | null>(null);
-  const [loadingClue, setLoadingClue] = useState(false);
+  const [checkingGuess, setCheckingGuess] = useState(false);
   const [prefetchedClue, setPrefetchedClue] = useState<string | null>(null);
 
   const [countdown, setCountdown] = useState("");
@@ -299,7 +299,7 @@ export default function GettingWarmerGame() {
     if (!val || finished || submitting) return;
 
     setSubmitting(true);
-    setLoadingClue(true);
+    setCheckingGuess(true);
 
     try {
       const res = await fetch("/api/getting-warmer/daily/guess", {
@@ -357,7 +357,7 @@ export default function GettingWarmerGame() {
       setTimeout(() => setShakeInput(false), 350);
     } finally {
       setSubmitting(false);
-      setLoadingClue(false);
+      setCheckingGuess(false);
       if (!finished) prefetchNextClue();
       inputRef.current?.focus();
     }
@@ -497,16 +497,6 @@ export default function GettingWarmerGame() {
                     <div>{clue}</div>
                   </div>
                 ))}
-                {loadingClue && (
-                  <div className="gw-clue active loading">
-                    <div className="gw-clue-num">{clues.length + 1}</div>
-                    <div className="gw-clue-loading">
-                      <span />
-                      <span />
-                      <span />
-                    </div>
-                  </div>
-                )}
               </div>
 
               {!finished && (
@@ -530,8 +520,18 @@ export default function GettingWarmerGame() {
                       className="gw-guess-btn"
                       onClick={submitGuess}
                       disabled={submitting || !guessInput.trim()}
+                      aria-label={checkingGuess ? "Checking guess" : undefined}
                     >
-                      GUESS
+                      <span className={checkingGuess ? "gw-guess-btn-label hidden" : "gw-guess-btn-label"}>
+                        GUESS
+                      </span>
+                      {checkingGuess && (
+                        <span className="gw-guess-btn-dots" aria-hidden="true">
+                          <span />
+                          <span />
+                          <span />
+                        </span>
+                      )}
                     </button>
                   </div>
                   <div className="gw-secondary-row">

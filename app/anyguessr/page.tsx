@@ -107,7 +107,7 @@ export default function AnyGuessrPage() {
               Today&apos;s Puzzle
             </div>
             <div style={{ fontSize: "10px", color: "var(--ag-muted)" }}>
-              Ten countries. Ten clue types. Nearby guesses still score.
+              Seven rounds, seven clues. Nearby guesses still score.
             </div>
           </div>
         </Link>

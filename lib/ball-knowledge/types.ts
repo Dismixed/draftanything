@@ -20,6 +20,8 @@ export interface DailyPlayed {
   score: number;
   category: string;
   ts: number;
+  /** Accepted answers, absent on results saved before they were kept. */
+  accepted?: string[];
 }
 
 export interface JudgeResult {

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Providers } from "./providers";
 import { ProfileMenuWrapper } from "@/components/auth/profile-menu-wrapper";
+import { shareImage } from "@/lib/og/metadata";
 import { SITE_URL } from "@/lib/seo";
 import "./globals.css";
 import "./slippery-slope.css";
@@ -20,21 +21,16 @@ export const metadata: Metadata = {
     template: "%s | Stim Games",
   },
   description: "A fresh rotation of quick daily games across geography, movies, trivia, chains, hot takes, and group-chat arguments.",
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
     title: "Stim Games",
     description: "Quick daily games across geography, movies, trivia, chains, hot takes, and group-chat arguments.",
     url: "/",
     siteName: "Stim Games",
     type: "website",
+    images: [shareImage("home", "Stim Games: free daily games")],
   },
-  twitter: {
-    card: "summary",
-    title: "Stim Games",
-    description: "Quick daily games across geography, movies, trivia, chains, hot takes, and group-chat arguments.",
-  },
+  // Title, description and image are left out so each page's own are used.
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {

@@ -24,7 +24,7 @@ describe("AnyGuessr first render in the browser", () => {
     localStorage.setItem(
       STORAGE_VERSION,
       JSON.stringify({
-        state: { mode: "daily", puzzleId: "daily-x", date: "2026-10-07", status: "playing", dailyRounds: [round, { ...round, roundIndex: 1, puzzleId: "p2" }], currentRound: 1, roundResults: [result], totalScore: 100, roundRecap: null },
+        state: { mode: "daily", puzzleId: "daily-x", date: new Date().toISOString().slice(0, 10), status: "playing", dailyRounds: [round, { ...round, roundIndex: 1, puzzleId: "p2" }], currentRound: 1, roundResults: [result], totalScore: 100, roundRecap: null },
         version: 0,
       }),
     );

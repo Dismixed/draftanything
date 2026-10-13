@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { GameCard } from "@/components/home/game-card";
 import { Today } from "@/components/home/today";
+import { GAMES } from "@/lib/games/registry";
 import { utcDayNumber } from "@/lib/games/today";
+import { shareImage } from "@/lib/og/metadata";
 import { buildHomeJsonLd, JsonLdScript } from "@/lib/seo";
 
 // The featured game changes at midnight UTC. Keep the cached page close to current;
@@ -22,6 +25,7 @@ export const metadata: Metadata = {
     url: "/",
     siteName: "Stim Games",
     type: "website",
+    images: [shareImage("home", "Stim Games: free daily games")],
   },
 };
 
@@ -70,6 +74,15 @@ export default function StimGames() {
             eventProps={{ game: "slippery-slope", slot: "party", position: 2, played_today: false }}
           />
         </div>
+
+        {/* Cards open the day's puzzle directly; these link each game's main page, the one search engines index. */}
+        <nav className="home-links" aria-label="All games">
+          {GAMES.map((game) => (
+            <Link key={game.id} href={game.canonicalPath}>
+              {game.name}
+            </Link>
+          ))}
+        </nav>
 
         <p className="home-footer">Built by Stim Labs</p>
       </div>

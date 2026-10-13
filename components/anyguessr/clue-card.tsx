@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { clueDisplayUrl } from "@/lib/anyguessr/clue-image-url";
 import type { ClientClue } from "@/lib/anyguessr/types";
+import { usePhotoZoom } from "./use-photo-zoom";
 
 /** How much of the screen the clue takes: shared with the map, enlarged, or tucked away. */
 export type ClueView = "both" | "clue" | "map";
@@ -52,21 +54,40 @@ export default function ClueCard({
   /** Replaces the question beside the clue type, for example "Round 3" on the results page. */
   label?: string;
 }) {
-  const imageUrl = clue.metadata?.image_url ?? clue.metadata?.thumb_url;
+  const storedUrl = clue.metadata?.image_url ?? clue.metadata?.thumb_url;
+  const sizedUrl = storedUrl ? clueDisplayUrl(storedUrl) : undefined;
+  // A screen-sized copy is asked for first; if there is none, the stored image is shown.
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const imageUrl = sizedUrl && sizedUrl === failedUrl ? storedUrl : sizedUrl;
+  // The small copy arrives first and fills the frame, blurred, while the photo loads.
+  const blurUrl = clue.metadata?.thumb_url ?? imageUrl;
   const audioUrl = clue.metadata?.audio_url;
   const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
   const loaded = loadedUrl === imageUrl;
   const minimised = view === "map";
+  // The play screen's photo can be zoomed; the results page and the tucked-away card cannot.
+  const { frameRef, zoom, zoomed, dragging, reset } = usePhotoZoom(Boolean(onView && imageUrl) && !minimised);
+  // The frame changes size with the view, so a zoomed photo starts over.
+  const changeView = (next: ClueView) => {
+    reset();
+    onView?.(next);
+  };
+
+  // The guess bar can tuck the card away too, so a view changed from outside also starts over.
+  useEffect(() => reset(), [view, reset]);
 
   // Escape steps back from the enlarged clue.
   useEffect(() => {
     if (view !== "clue" || !onView) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onView("both");
+      if (e.key === "Escape") {
+        reset();
+        onView("both");
+      }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [view, onView]);
+  }, [view, onView, reset]);
 
   return (
     <section className={`ag-clue${onView ? "" : " is-static"}`} aria-label={`Clue: ${labelFor(clue)}`}>
@@ -77,19 +98,19 @@ export default function ClueCard({
         </span>
         {onView && <span className="ag-clue-btns">
           {view === "clue" ? (
-            <button type="button" onClick={() => onView("both")} aria-label="Show the clue and the map">
+            <button type="button" onClick={() => changeView("both")} aria-label="Show the clue and the map">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
               </svg>
             </button>
           ) : (
-            <button type="button" onClick={() => onView("clue")} aria-label="Enlarge the clue">
+            <button type="button" onClick={() => changeView("clue")} aria-label="Enlarge the clue">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
               </svg>
             </button>
           )}
-          <button type="button" onClick={() => onView("map")} aria-label="Minimise the clue">
+          <button type="button" onClick={() => changeView("map")} aria-label="Minimise the clue">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
               <path d="M5 12h14" />
             </svg>
@@ -97,8 +118,11 @@ export default function ClueCard({
         </span>}
       </div>
 
-      <div className="ag-clue-media">
-        {imageUrl && <div className="ag-clue-blur" style={{ backgroundImage: `url(${JSON.stringify(imageUrl)})` }} aria-hidden="true" />}
+      <div
+        ref={frameRef}
+        className={`ag-clue-media${zoomed ? " is-zoomed" : ""}${dragging && zoomed ? " is-dragging" : ""}`}
+      >
+        {blurUrl && <div className="ag-clue-blur" style={{ backgroundImage: `url(${JSON.stringify(blurUrl)})` }} aria-hidden="true" />}
         {imageUrl && !loaded && <span className="ag-clue-loading">Loading…</span>}
         {imageUrl && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -106,8 +130,19 @@ export default function ClueCard({
             src={imageUrl}
             alt={clue.metadata?.alt_text ?? `${clue.type} clue`}
             onLoad={() => setLoadedUrl(imageUrl)}
-            style={{ opacity: loaded ? 1 : 0 }}
+            onError={() => setFailedUrl(imageUrl)}
+            draggable={false}
+            style={{
+              opacity: loaded ? 1 : 0,
+              transform: zoomed ? `translate(${zoom.x}px, ${zoom.y}px) scale(${zoom.scale})` : undefined,
+            }}
           />
+        )}
+
+        {zoomed && (
+          <button type="button" className="ag-clue-unzoom" onClick={reset}>
+            Reset zoom
+          </button>
         )}
 
         {imageUrl && typeof clue.metadata?.caption === "string" && !minimised && (
@@ -120,7 +155,7 @@ export default function ClueCard({
         {!imageUrl && !audioUrl && <div className="ag-clue-text">{clue.content || "·"}</div>}
 
         {minimised && onView && (
-          <button type="button" className="ag-clue-restore" onClick={() => onView("both")}>
+          <button type="button" className="ag-clue-restore" onClick={() => changeView("both")}>
             Show clue
           </button>
         )}

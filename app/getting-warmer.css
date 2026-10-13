@@ -213,32 +213,6 @@ html[data-theme="light"] .gw-page {
   animation: gw-ignite 0.55s ease-out;
 }
 
-.gw-clue.loading {
-  opacity: 0.7;
-}
-
-.gw-clue-loading {
-  display: inline-flex;
-  gap: 4px;
-  align-items: center;
-}
-
-.gw-clue-loading span {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--gw-orange-bright);
-  animation: gw-pulse 1s ease-in-out infinite;
-}
-
-.gw-clue-loading span:nth-child(2) {
-  animation-delay: 0.15s;
-}
-
-.gw-clue-loading span:nth-child(3) {
-  animation-delay: 0.3s;
-}
-
 @keyframes gw-ignite {
   0% {
     transform: scale(0.85);
@@ -310,6 +284,7 @@ html[data-theme="light"] .gw-page {
 }
 
 .gw-guess-btn {
+  position: relative;
   background: linear-gradient(135deg, var(--gw-orange), #e0530a);
   color: #190a02;
   border: none;
@@ -324,6 +299,35 @@ html[data-theme="light"] .gw-page {
   transition:
     transform 0.15s,
     box-shadow 0.15s;
+}
+
+.gw-guess-btn-label.hidden {
+  visibility: hidden;
+}
+
+.gw-guess-btn-dots {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+}
+
+.gw-guess-btn-dots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: gw-pulse 1s ease-in-out infinite;
+}
+
+.gw-guess-btn-dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.gw-guess-btn-dots span:nth-child(3) {
+  animation-delay: 0.3s;
 }
 
 .gw-guess-btn:hover:not(:disabled) {

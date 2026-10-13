@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
 
 export default function GettingWarmerPage() {
-  redirect("/getting-warmer/daily");
+  permanentRedirect("/getting-warmer/daily");
 }

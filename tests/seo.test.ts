@@ -16,6 +16,15 @@ describe("SEO metadata", () => {
     expect(urls).toContain("https://stimgames.com/brain-dead");
   });
 
+  it("lists the leaderboards and free play, which have their own content", () => {
+    const urls = sitemapEntries.map((entry) => entry.url);
+
+    expect(urls).toContain("https://stimgames.com/brain-dead/freeplay");
+    expect(urls).toContain("https://stimgames.com/brain-dead/leaderboard");
+    expect(urls).toContain("https://stimgames.com/freezeframes/leaderboard");
+    expect(new Set(urls).size).toBe(urls.length);
+  });
+
   it("builds homepage structured data with website, organization, FAQ, and game catalog", () => {
     const graph = buildHomeJsonLd()["@graph"];
     const types = graph.map((node) => node["@type"]);

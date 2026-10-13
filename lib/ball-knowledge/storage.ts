@@ -31,12 +31,16 @@ export function getDailyPlayed(): DailyPlayed | null {
   }
 }
 
-export function saveDailyPlayed(score: number, category: string): void {
+export function saveDailyPlayed(
+  score: number,
+  category: string,
+  accepted: string[],
+): void {
   if (typeof window === "undefined") return;
   const playDate = getDateString();
   localStorage.setItem(
     getTodayKey(),
-    JSON.stringify({ score, category, ts: Date.now() }),
+    JSON.stringify({ score, category, ts: Date.now(), accepted }),
   );
   recordDailyCompletion("ball-knowledge", playDate);
 }

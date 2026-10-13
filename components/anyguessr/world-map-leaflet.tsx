@@ -28,7 +28,7 @@ export interface WorldMapProps {
 }
 
 /** The game's own country outlines (Natural Earth, public domain). No outside map tiles. */
-const WORLD_URL = "/anyguessr/world-countries-110m.geojson";
+const WORLD_URL = "/anyguessr/world-countries-50m.geojson";
 
 let worldCache: GeoJSON.FeatureCollection | null = null;
 
@@ -100,8 +100,9 @@ function PlayView({ selection, inset }: { selection: MapSelection | null; inset:
     const frame = () => {
       map.fitBounds(
         [
+          // Russia's far tip is drawn past the date line, joined to the rest of the country.
           [-56, -168],
-          [78, 180],
+          [78, 191],
         ],
         { paddingTopLeft: [12, inset.top], paddingBottomRight: [12, inset.bottom], animate: false },
       );
@@ -123,6 +124,46 @@ function PlayView({ selection, inset }: { selection: MapSelection | null; inset:
   return null;
 }
 
+/**
+ * Wheel and trackpad zoom that follows the fingers and redraws the outlines as it goes.
+ * Leaflet's own wheel zoom waits, jumps a step and stretches the drawing until it lands.
+ */
+function SmoothWheelZoom() {
+  const map = useMap();
+
+  useEffect(() => {
+    const el = map.getContainer();
+    let goal = map.getZoom();
+    let around = L.point(0, 0);
+    let frame = 0;
+
+    const step = () => {
+      const zoom = map.getZoom();
+      const next = Math.abs(goal - zoom) < 0.01 ? goal : zoom + (goal - zoom) * 0.35;
+      map.setZoomAround(around, next, { animate: false });
+      frame = next === goal ? 0 : requestAnimationFrame(step);
+    };
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (!frame) goal = map.getZoom();
+      const delta = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+      // A trackpad pinch arrives as a wheel with ctrl held, in much smaller steps.
+      goal = Math.min(map.getMaxZoom(), Math.max(map.getMinZoom(), goal - delta * (e.ctrlKey ? 0.012 : 0.003)));
+      around = map.mouseEventToContainerPoint(e);
+      if (!frame) frame = requestAnimationFrame(step);
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      cancelAnimationFrame(frame);
+    };
+  }, [map]);
+
+  return null;
+}
+
 /** After a guess: frame the right country together with where the player guessed. */
 function RecapView({ bounds }: { bounds: L.LatLngBounds | null }) {
   const map = useMap();
@@ -137,6 +178,9 @@ function RecapView({ bounds }: { bounds: L.LatLngBounds | null }) {
 export default function WorldMapLeaflet({ selection = null, onSelect, answer, guess, inset }: WorldMapProps) {
   const world = useWorld();
   const playing = Boolean(onSelect);
+  // Leaflet only draws a little past the visible frame and redraws when a drag or zoom ends.
+  // Drawing a full frame further each way keeps the land and the guess line whole while moving.
+  const [renderer] = useState(() => L.svg({ padding: 1 }));
 
   const answerShape = useMemo(() => (world && answer ? featuresFor(world, answer.cca3) : null), [world, answer]);
   const pickCca3 = selection?.cca3 ?? null;
@@ -163,9 +207,10 @@ export default function WorldMapLeaflet({ selection = null, onSelect, answer, gu
       zoom={2}
       minZoom={1}
       maxZoom={7}
-      zoomSnap={0.25}
-      zoomDelta={0.5}
-      wheelPxPerZoomLevel={90}
+      // Any zoom level is allowed, so the world can fit the screen exactly and a pinch stays put.
+      zoomSnap={0}
+      zoomDelta={1}
+      scrollWheelZoom={false}
       maxBounds={[
         [-80, -230],
         [88, 230],
@@ -173,6 +218,7 @@ export default function WorldMapLeaflet({ selection = null, onSelect, answer, gu
       maxBoundsViscosity={0.7}
       attributionControl={false}
       zoomControl={false}
+      renderer={renderer}
       style={{ width: "100%", height: "100%" }}
     >
       {world && (
@@ -187,6 +233,7 @@ export default function WorldMapLeaflet({ selection = null, onSelect, answer, gu
         />
       )}
 
+      <SmoothWheelZoom />
       {playing && world && onSelect && <ClickToPick world={world} onSelect={onSelect} />}
       {playing && <PlayView selection={selection} inset={inset ?? { top: 12, bottom: 12 }} />}
       {!playing && <RecapView bounds={recapBounds} />}
@@ -206,6 +253,8 @@ export default function WorldMapLeaflet({ selection = null, onSelect, answer, gu
           <Polyline
             positions={[guessAt, [answer.lat, answer.lng]]}
             interactive={false}
+            // Unclipped, so the line still reaches a guess that starts outside the drawn area.
+            noClip
             pathOptions={{ className: "ag-map-line" }}
           />
           <Marker position={guessAt} icon={tagIcon("Your guess", "guess")} interactive={false} />

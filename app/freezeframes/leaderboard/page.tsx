@@ -4,6 +4,7 @@ import FreezeFramesLeaderboard from "@/components/freezeframes/leaderboard";
 export const metadata: Metadata = {
   title: "Leaderboard — FreezeFrames",
   description: "Today's FreezeFrames daily challenge leaderboard.",
+  alternates: { canonical: "/freezeframes/leaderboard" },
 };
 
 export default function FreezeFramesLeaderboardPage() {

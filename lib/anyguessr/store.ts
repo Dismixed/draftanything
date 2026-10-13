@@ -1,5 +1,6 @@
 "use client";
 
+import { getDateString } from "@/lib/streak/date";
 import { recordDailyCompletion } from "@/lib/streak/storage";
 import { readDailyPuzzleCache, writeDailyPuzzleCache } from "@/lib/daily-puzzle-cache";
 import { create } from "zustand";
@@ -42,13 +43,6 @@ export interface AnyGuessrStore extends PersistedData {
   advanceDailyRound: () => void;
   surrender: () => Promise<void>;
   clearFeedback: () => void;
-}
-
-function getDateString(d: Date = new Date()): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
 }
 
 function isToday(dateStr: string | undefined | null): boolean {
@@ -150,7 +144,7 @@ export const useAnyGuessrStore = create<AnyGuessrStore>()(
           console.error("anyguessr init failed:", err);
           const message =
             err instanceof Error && err.message === "No puzzle available"
-              ? "Today's daily isn't ready yet — the puzzle pool can't fill all ten rounds yet."
+              ? "Today's daily isn't ready yet — the puzzle pool can't fill every round yet."
               : "Couldn't load a puzzle. Try again.";
           set({
             ...buildInitialState(),
@@ -376,7 +370,8 @@ export const useAnyGuessrStore = create<AnyGuessrStore>()(
           ...current,
           ...(persisted as PersistedData),
         };
-        if (merged.mode !== "daily" || !hasValidDailyRounds(merged.dailyRounds)) {
+        // A game from an earlier day is dropped here, before anything can draw it.
+        if (merged.mode !== "daily" || !isToday(merged.date) || !hasValidDailyRounds(merged.dailyRounds)) {
           return {
             ...current,
             ...buildInitialState(),

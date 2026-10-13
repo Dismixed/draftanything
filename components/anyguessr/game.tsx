@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import { clueDisplayUrl } from "@/lib/anyguessr/clue-image-url";
 import { LINEUP_ROUNDS } from "@/lib/anyguessr/lineup";
 import { useAnyGuessrStore } from "@/lib/anyguessr/store";
 import { useSound } from "@/lib/audio/sound-context";
@@ -122,6 +123,13 @@ export default function AnyGuessrGame() {
     void burstFrom(feedbackRef.current, 1, "gold");
   }, [feedback, showRoundRecap]);
 
+  // Fetch the next round's picture during this round, so it is ready when the round starts.
+  const nextClue = store.dailyRounds[store.currentRound + 1]?.clue.metadata;
+  const nextImageUrl = nextClue?.image_url ?? nextClue?.thumb_url;
+  useEffect(() => {
+    if (nextImageUrl) new Image().src = clueDisplayUrl(nextImageUrl);
+  }, [nextImageUrl]);
+
   const handlePick = (name: string) => {
     if (submitting) return;
     play("ui.tap");
@@ -138,6 +146,9 @@ export default function AnyGuessrGame() {
     if (next) play("ui.tap");
     setSelection(next);
   };
+
+  // Typing a guess tucks the clue away, leaving the map and the suggestions clear.
+  const minimiseClue = () => setView("map");
 
   const isLoading = !storeReady || loading || (store.dailyRounds.length === 0 && !feedback);
 
@@ -247,7 +258,7 @@ export default function AnyGuessrGame() {
 
       {canGuess && (
         <div className="ag-controls">
-          <GuessDock key={store.currentRound} selection={selection} onSelect={setSelection} onConfirm={handlePick} busy={submitting} />
+          <GuessDock key={store.currentRound} selection={selection} onSelect={setSelection} onConfirm={handlePick} onEngage={minimiseClue} busy={submitting} />
           {confirmGiveUp ? (
             <span className="ag-giveup">
               Score 0 for this round?
@@ -329,7 +340,7 @@ const MAP_INSET = { top: 170, bottom: 120 };
 
 const ANYGUESSR_HOW_IT_WORKS = [
   {
-    title: "Ten Cultural Clues",
+    title: "Seven Cultural Clues",
     body: "Each round shows a different clue — flag, currency, jersey, landmark, food, and more. Everyone gets the same puzzle today.",
   },
   {
@@ -342,6 +353,6 @@ const ANYGUESSR_HOW_IT_WORKS = [
   },
   {
     title: "One Shot Per Day",
-    body: "Play through all ten rounds once, then come back tomorrow for a fresh set of countries.",
+    body: "Play through all seven rounds once, then come back tomorrow for a fresh set of countries.",
   },
 ] as const;

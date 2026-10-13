@@ -1,9 +1,9 @@
 "use client";
 
+import { getDateString } from "@/lib/streak/date";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { WordStatus, GameMode, GameStatus } from "./types";
-import { getDateString } from "./puzzles";
 import { readDailyPuzzleCache, writeDailyPuzzleCache } from "@/lib/daily-puzzle-cache";
 
 /* ------------------------------------------------------------------ */
@@ -404,10 +404,12 @@ export const useChainlinkStore = create<ChainlinkStore>()(
         gameStatus: state.gameStatus,
         startTime: state.startTime,
       }),
-      merge: (persisted, current) => ({
-        ...current,
-        ...(persisted as PersistedData),
-      }),
+      merge: (persisted, current) => {
+        const saved = persisted as PersistedData;
+        // A daily from an earlier day is dropped here, before anything can draw it.
+        if (saved.mode === "daily" && !isToday(saved.date)) return current;
+        return { ...current, ...saved };
+      },
     },
   ),
 );

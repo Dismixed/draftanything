@@ -605,6 +605,30 @@ html[data-theme="light"] .bk-page.bk-page--complete {
   color: var(--bk-miss);
 }
 
+.bk-answer-row.missed,
+.bk-answer-row.missed .bk-icon {
+  color: var(--bk-chalk-dim);
+}
+
+.bk-missed-note {
+  font-size: 12px;
+  color: var(--bk-chalk-dim);
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.bk-missed-more {
+  display: block;
+  margin: 10px auto 0;
+  padding: 4px 8px;
+  background: none;
+  border: none;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--bk-net-blue);
+  cursor: pointer;
+}
+
 .bk-answer-row.pending .bk-icon {
   color: var(--bk-chalk-dim);
 }

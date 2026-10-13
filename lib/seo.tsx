@@ -51,6 +51,12 @@ export const sitemapEntries: MetadataRoute.Sitemap = [
     changeFrequency: "daily" as ChangeFrequency,
     priority: game.priority,
   })),
+  // Pages with their own content that are not a game's main page.
+  ...["/brain-dead/freeplay", "/brain-dead/leaderboard", "/freezeframes/leaderboard"].map((path) => ({
+    url: absoluteUrl(path),
+    changeFrequency: "daily" as ChangeFrequency,
+    priority: 0.5,
+  })),
 ];
 
 export function buildHomeJsonLd(): { "@context": "https://schema.org"; "@graph": JsonLdNode[] } {

@@ -4,6 +4,7 @@ import FreeplayPicker from "@/components/brain-dead/freeplay-picker";
 export const metadata: Metadata = {
   title: "Free Play — Brain Dead",
   description: "Pick a trivia category and play Brain Dead free play mode.",
+  alternates: { canonical: "/brain-dead/freeplay" },
 };
 
 export default function FreeplayPage() {

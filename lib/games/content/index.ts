@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getGame, type GameId } from "@/lib/games/registry";
+import { shareImage } from "@/lib/og/metadata";
 import { absoluteUrl } from "@/lib/seo";
 import { anyguessr } from "./anyguessr";
 import { ballKnowledge } from "./ball-knowledge";
@@ -48,7 +49,14 @@ export function gameMetadata(id: GameId): Metadata {
     title,
     description,
     alternates: { canonical: game.canonicalPath },
-    openGraph: { title, description, url: game.canonicalPath, siteName: "Stim Games", type: "website" },
+    openGraph: {
+      title,
+      description,
+      url: game.canonicalPath,
+      siteName: "Stim Games",
+      type: "website",
+      images: [shareImage(id, `${game.name}: ${game.blurb}`)],
+    },
   };
 }
 

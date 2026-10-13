@@ -24,6 +24,7 @@ import {
   TOTAL_TIME,
   getCountdownText,
 } from "@/lib/ball-knowledge/game-logic";
+import { getMissedAnswers } from "@/lib/ball-knowledge/missed";
 import { findMatch } from "@/lib/ball-knowledge/normalize";
 import {
   fetchTodayLeaderboard,
@@ -34,7 +35,7 @@ import {
 import type { AnswerEntry, LeaderboardEntry } from "@/lib/ball-knowledge/types";
 
 type Screen = "start" | "game" | "end" | "played";
-type EndTab = "ok" | "bad";
+type EndTab = "ok" | "bad" | "missed";
 
 const SAMPLE_CATEGORIES = [
   "Pizza Toppings",
@@ -66,6 +67,53 @@ function AnswerRow({ entry }: { entry: AnswerEntry }) {
   );
 }
 
+const MISSED_PREVIEW = 30;
+
+function MissedList({
+  missed,
+  bankSize,
+}: {
+  missed: string[];
+  bankSize: number;
+}) {
+  const [showAll, setShowAll] = useState(false);
+
+  if (missed.length === 0) {
+    return (
+      <div className="bk-empty-note">You named everything on our list.</div>
+    );
+  }
+
+  // The list runs best-known first, so the cut keeps the answers a player kicks themselves over.
+  const shown = showAll ? missed : missed.slice(0, MISSED_PREVIEW);
+
+  return (
+    <>
+      <div className="bk-missed-note">
+        Missed {missed.length} of {bankSize} on our list. Other correct answers
+        count too.
+      </div>
+      <div className="bk-answer-list bk-end-list">
+        {shown.map((answer) => (
+          <div key={answer} className="bk-answer-row missed">
+            <div className="bk-icon">–</div>
+            <div>{answer}</div>
+          </div>
+        ))}
+      </div>
+      {shown.length < missed.length && (
+        <button
+          type="button"
+          className="bk-missed-more"
+          onClick={() => setShowAll(true)}
+        >
+          Show all {missed.length}
+        </button>
+      )}
+    </>
+  );
+}
+
 export default function BallKnowledgeGame({
   category,
 }: {
@@ -88,6 +136,7 @@ export default function BallKnowledgeGame({
   const [showToast, setShowToast] = useState(false);
   const [countdown, setCountdown] = useState("");
   const [playedScore, setPlayedScore] = useState(0);
+  const [playedAccepted, setPlayedAccepted] = useState<string[] | null>(null);
   const { showHowItWorks, dismissHowItWorks } = useGameHowItWorks("ball-knowledge");
   const [completeOpen, setCompleteOpen] = useState(false);
   const { theme } = useTheme();
@@ -275,10 +324,10 @@ export default function BallKnowledgeGame({
   }, []);
 
   const finishRound = useCallback(() => {
-    saveDailyPlayed(score, category);
+    saveDailyPlayed(score, category, accepted);
     setScreen("end");
     void loadLeaderboard();
-  }, [category, loadLeaderboard, score]);
+  }, [accepted, category, loadLeaderboard, score]);
 
   const endRoundWhenReady = useCallback(() => {
     setRoundOver(true);
@@ -336,6 +385,7 @@ export default function BallKnowledgeGame({
     const played = getDailyPlayed();
     if (played && played.category === category) {
       setPlayedScore(played.score);
+      setPlayedAccepted(played.accepted ?? null);
       setScreen("played");
       void loadLeaderboard();
     }
@@ -389,6 +439,11 @@ export default function BallKnowledgeGame({
   const urgent = timeLeft <= 10 && screen === "game";
 
   const endItems = entries.filter((e) => e.status === endTab);
+  const bankSize = getMissedAnswers(category, [])?.length ?? 0;
+  const missed = getMissedAnswers(category, accepted);
+  const playedMissed = playedAccepted
+    ? getMissedAnswers(category, playedAccepted)
+    : null;
 
   return (
     <DailyCompleteShell
@@ -436,6 +491,13 @@ export default function BallKnowledgeGame({
             >
               Category: <strong style={{ color: "var(--bk-chalk)" }}>{category}</strong>
             </p>
+            {playedMissed && (
+              <>
+                <div className="bk-divider" />
+                <div className="bk-section-label">What You Missed</div>
+                <MissedList missed={playedMissed} bankSize={bankSize} />
+              </>
+            )}
             <div className="bk-divider" />
             <div className="bk-section-label">Today&apos;s Leaderboard</div>
             {lbLoading ? (
@@ -579,22 +641,35 @@ export default function BallKnowledgeGame({
                 className={`bk-tab${endTab === "bad" ? " active" : ""}`}
                 onClick={() => setEndTab("bad")}
               >
-                Missed
+                Wrong
               </button>
-            </div>
-            <div className="bk-answer-list bk-end-list">
-              {endItems.length === 0 ? (
-                <div className="bk-empty-note">
-                  {endTab === "ok"
-                    ? "Nothing accepted this round."
-                    : "Nothing missed — clean round."}
-                </div>
-              ) : (
-                [...endItems].reverse().map((entry) => (
-                  <AnswerRow key={entry.id} entry={entry} />
-                ))
+              {missed && (
+                <button
+                  type="button"
+                  className={`bk-tab${endTab === "missed" ? " active" : ""}`}
+                  onClick={() => setEndTab("missed")}
+                >
+                  Missed
+                </button>
               )}
             </div>
+            {endTab === "missed" && missed ? (
+              <MissedList missed={missed} bankSize={bankSize} />
+            ) : (
+              <div className="bk-answer-list bk-end-list">
+                {endItems.length === 0 ? (
+                  <div className="bk-empty-note">
+                    {endTab === "ok"
+                      ? "Nothing accepted this round."
+                      : "No wrong guesses — clean round."}
+                  </div>
+                ) : (
+                  [...endItems].reverse().map((entry) => (
+                    <AnswerRow key={entry.id} entry={entry} />
+                  ))
+                )}
+              </div>
+            )}
 
             <div className="bk-divider" />
             <div className="bk-section-label">Join Today&apos;s Leaderboard</div>
