@@ -10,7 +10,11 @@ vi.mock("@/lib/motion/trigger-class", () => ({ triggerAnimation: vi.fn() }));
 vi.mock("@/lib/game-how-it-works", () => ({
   useGameHowItWorks: () => ({ showHowItWorks: false, dismissHowItWorks: vi.fn() }),
 }));
-vi.mock("@/components/daily/daily-complete-overlay", () => ({ DailyCompleteOverlay: () => null }));
+vi.mock("@/components/daily/finish-screen", () => ({ FinishScreen: () => null }));
+vi.mock("@/lib/games/use-daily-percentile", () => ({
+  finishCurve: () => null,
+  useDailyPercentile: () => null,
+}));
 vi.mock("@/lib/getting-warmer/storage", () => ({
   fetchTodayLeaderboard: vi.fn().mockResolvedValue([]),
   getDailyPlayed: () => null,

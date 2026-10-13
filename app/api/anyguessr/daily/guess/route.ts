@@ -31,7 +31,8 @@ export async function POST(req: NextRequest) {
     }
 
     const db = createAdminClient();
-    const result = await validateDailyGuess(db, puzzleId, guess, roundIndex);
+    const clueType = typeof body.clueType === "string" ? body.clueType : undefined;
+    const result = await validateDailyGuess(db, puzzleId, guess, roundIndex, clueType);
     const posthog = getPostHogClient();
     posthog.capture({
       distinctId: puzzleId,

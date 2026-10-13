@@ -13,12 +13,9 @@ import { burstFrom } from "@/lib/motion/burst";
 import { impactRing } from "@/lib/motion/impact-ring";
 import { GameTitle } from "@/components/ui/game-title";
 import TutorialModal from "./tutorial-modal";
-import { OtherDailies } from "@/components/daily/other-dailies";
-import { ShareResult } from "@/components/daily/share-result";
 import { chainLinkShare } from "@/lib/share/results";
 import { getDateString as shareDate } from "@/lib/streak/date";
-import { DailyCompleteOverlay } from "@/components/daily/daily-complete-overlay";
-import { WinStreakLine } from "@/components/streak/streak-notifier";
+import { FinishScreen } from "@/components/daily/finish-screen";
 import { recordDailyCompletion } from "@/lib/streak/storage";
 
 /* ------------------------------------------------------------------ */
@@ -38,13 +35,6 @@ function capitalize(word: string): string {
 
 /** Pips shown in the status bar. Matches the store's allowance of four mistakes. */
 const MAX_TRIES = 4;
-
-/** The finish screen is drawn outside the game page, so it needs the game's colours handed to it. */
-const OVERLAY_THEME = {
-  "--bg": "var(--cl-bg)",
-  "--text": "var(--cl-text)",
-  "--text-dim": "var(--cl-gray-dim)",
-} as React.CSSProperties;
 
 function displayChar(ch: string, index: number): string {
   const lower = ch.toLowerCase();
@@ -563,24 +553,18 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
           </div>
 
           {mode === "daily" ? (
-            <DailyCompleteOverlay
+            <FinishScreen
+              gameId="chainlink"
               open={showFailOverlay || showCompleteOverlay}
               onClose={() => {
                 setShowFailOverlay(false);
                 setShowCompleteOverlay(false);
               }}
               ariaLabel={isComplete ? "Chain complete" : "Game over"}
-              style={OVERLAY_THEME}
-            >
-              <ChainResult won={isComplete} summary={summary}>
-                <p className="cl-result-note">Come back tomorrow for a new puzzle.</p>
-                <div className="cl-result-actions">
-                  <WinStreakLine gameId="chainlink" accentColor="var(--cl-green)" />
-                  <ShareResult gameId="chainlink" text={shareText} />
-                  <OtherDailies currentGameId="chainlink" />
-                </div>
-              </ChainResult>
-            </DailyCompleteOverlay>
+              result={<ChainResult won={isComplete} summary={summary} />}
+              shareText={shareText}
+              secondary={{ label: "Stats", href: "/chainlink/stats" }}
+            />
           ) : (
             (showFailOverlay || showCompleteOverlay) && (
               <div className="cl-inline-overlay anim-fade-slide-up">
@@ -629,7 +613,7 @@ function ChainResult({
 }: {
   won: boolean;
   summary: ChainSummary;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }) {
   return (
     <div className="cl-result">

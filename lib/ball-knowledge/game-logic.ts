@@ -12,15 +12,3 @@ export function getDateString(date = new Date()): string {
 export function getTodayCategory(date = new Date()): string {
   return getCategoryForDayIndex(getDayIndex(date));
 }
-
-export function getCountdownText(): string {
-  const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
-  const diff = tomorrow.getTime() - now.getTime();
-  const h = Math.floor(diff / 3_600_000);
-  const m = Math.floor((diff % 3_600_000) / 60_000);
-  const s = Math.floor((diff % 60_000) / 1000);
-  return `${h}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`;
-}

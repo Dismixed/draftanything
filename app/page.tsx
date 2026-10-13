@@ -63,7 +63,7 @@ export default function StimGames() {
         <div className="home-party">
           <GameCard
             gameId="draft-anything"
-            cta="Create a room"
+            cta="See the game"
             event="home_game_clicked"
             eventProps={{ game: "draft-anything", slot: "party", position: 1, played_today: false }}
           />

@@ -11,6 +11,8 @@ interface DailyCompleteOverlayProps {
   ariaLabel?: string;
   /** Optional theme vars for games that don't use global --bg/--text */
   style?: CSSProperties;
+  /** Shown in the top bar, to the left of the close button. */
+  headerExtra?: ReactNode;
 }
 
 export function DailyCompleteOverlay({
@@ -19,6 +21,7 @@ export function DailyCompleteOverlay({
   children,
   ariaLabel = "Daily complete",
   style,
+  headerExtra,
 }: DailyCompleteOverlayProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -56,6 +59,7 @@ export function DailyCompleteOverlay({
       <Link href="/" className="daily-complete-home">
         ← Home
       </Link>
+      {headerExtra ? <div className="daily-complete-extra">{headerExtra}</div> : null}
       <button
         type="button"
         className="daily-complete-close"

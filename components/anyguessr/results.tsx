@@ -3,9 +3,6 @@
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import ClueCard from "@/components/anyguessr/clue-card";
 import { stampTone } from "@/components/anyguessr/stamps";
-import { OtherDailies } from "@/components/daily/other-dailies";
-import { ShareResult } from "@/components/daily/share-result";
-import { anyGuessrShare } from "@/lib/share/results";
 import { DAILY_CLUE_TYPE_LABEL, DAILY_MAX_ROUND_SCORE, formatDistanceKm } from "@/lib/anyguessr/daily";
 import { useCountUp } from "@/lib/motion/count-up";
 import { useAnyGuessrStore } from "@/lib/anyguessr/store";
@@ -108,13 +105,6 @@ export default function Results({
           onNext={shown < rounds.length - 1 ? goNext : undefined}
         />
       ) : null}
-
-      <div className="ag-results-actions">
-        <ShareResult gameId="anyguessr" text={anyGuessrShare(rounds, store.totalScore, store.date)} />
-      </div>
-      <OtherDailies currentGameId="anyguessr" />
-
-      <p className="ag-results-foot">A new set of countries arrives tomorrow.</p>
     </div>
   );
 }

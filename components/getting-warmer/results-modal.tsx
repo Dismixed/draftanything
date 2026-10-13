@@ -1,10 +1,5 @@
 "use client";
 
-import { OtherDailies } from "@/components/daily/other-dailies";
-import { ShareResult } from "@/components/daily/share-result";
-import { gettingWarmerShare } from "@/lib/share/results";
-import { getDateString as shareDate } from "@/lib/streak/date";
-import { WinStreakLine } from "@/components/streak/streak-notifier";
 import type { LeaderboardEntry } from "@/lib/getting-warmer/types";
 
 interface GettingWarmerResultsModalProps {
@@ -14,7 +9,6 @@ interface GettingWarmerResultsModalProps {
   attempts: number;
   guesses: string[];
   shareEmojis: string;
-  countdown?: string;
   alreadyPlayed?: boolean;
   leaderboard: LeaderboardEntry[];
   lbLoading: boolean;
@@ -33,7 +27,6 @@ export function GettingWarmerResultsModal({
   attempts,
   guesses,
   shareEmojis,
-  countdown,
   alreadyPlayed,
   leaderboard,
   lbLoading,
@@ -156,23 +149,6 @@ export function GettingWarmerResultsModal({
             ))
           )}
         </div>
-
-        {won && (
-          <div className="gw-streak-line">
-            <WinStreakLine gameId="getting-warmer" />
-          </div>
-        )}
-
-        <ShareResult
-          gameId="getting-warmer"
-          text={gettingWarmerShare(won, attempts, shareEmojis, shareDate())}
-        />
-
-        <OtherDailies currentGameId="getting-warmer" />
-
-        {countdown ? (
-          <p className="gw-countdown">Next puzzle in {countdown}</p>
-        ) : null}
       </div>
     </div>
   );

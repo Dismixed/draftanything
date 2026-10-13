@@ -35,6 +35,20 @@ export const DAILY_CLUE_TYPE_LABEL: Record<string, string> = {
   jersey: "Jersey",
 };
 
+/** What a round's fun fact is about, by clue type; the fact describes the clue, not the country. */
+export const DAILY_FACT_LABEL: Record<string, string> = {
+  flag: "About the flag",
+  landmark: "About the place",
+  environment: "About the place",
+  written_language: "About the language",
+  person: "About the person",
+  food: "About the dish",
+  brand: "About the brand",
+  wildlife: "About the animal",
+  currency: "About the currency",
+  jersey: "About the jersey",
+};
+
 /**
  * Points decay with geographic distance. Close guesses (≤75 km) earn full round score.
  */

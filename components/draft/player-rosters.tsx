@@ -1,5 +1,6 @@
 "use client";
 
+import { AiTag } from "./ai-tag";
 import type { SafePlayer, SafePick, SafeItem } from "@/features/draft/types";
 import { getPickItemLabel } from "@/features/draft/pick-label";
 import { useMemo } from "react";
@@ -53,6 +54,7 @@ export function RosterColumn({
           }}
         >
           {player.displayName}
+          {player.isBot && <AiTag />}
           {isMe && (
             <span style={{ fontSize: '10px', fontStyle: 'normal', color: 'var(--gold)', marginLeft: '6px' }}>
               (you)

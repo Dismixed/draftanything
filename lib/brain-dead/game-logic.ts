@@ -72,15 +72,3 @@ export function getResultCopy(correct: number): {
     sub: subs[subKey],
   };
 }
-
-export function getCountdownText(): string {
-  const now = new Date();
-  const tom = new Date(now);
-  tom.setDate(tom.getDate() + 1);
-  tom.setHours(0, 0, 0, 0);
-  const diff = tom.getTime() - now.getTime();
-  const h = Math.floor(diff / 3600000);
-  const m = Math.floor((diff % 3600000) / 60000);
-  const s = Math.floor((diff % 60000) / 1000);
-  return `${h}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`;
-}

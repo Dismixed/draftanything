@@ -84,9 +84,9 @@ describe("judging service", () => {
       const { judgeDraft } = await import("./service");
 
       const players = [
-        { id: "p1", displayName: "Alice", seat: 1, isReady: false, isHost: true },
-        { id: "p2", displayName: "Bob", seat: 2, isReady: false, isHost: false },
-        { id: "p3", displayName: "Charlie", seat: 3, isReady: false, isHost: false },
+        { id: "p1", displayName: "Alice", seat: 1, isReady: false, isHost: true, isBot: false },
+        { id: "p2", displayName: "Bob", seat: 2, isReady: false, isHost: false, isBot: false },
+        { id: "p3", displayName: "Charlie", seat: 3, isReady: false, isHost: false, isBot: false },
       ];
 
       const picks: SafePick[] = [];
@@ -150,7 +150,7 @@ describe("judging service", () => {
 
       mockDb.from.mockReturnValue(mockQueryChain);
 
-      const players = [{ id: "p1", displayName: "Alice", seat: 1, isReady: false, isHost: true }];
+      const players = [{ id: "p1", displayName: "Alice", seat: 1, isReady: false, isHost: true, isBot: false }];
       const picks: SafePick[] = [];
       const rosters = [{ pickIds: [], playerId: "p1", itemIds: [], displayName: "Alice" }];
 
@@ -200,8 +200,8 @@ describe("judging service", () => {
       mockDb.from.mockReturnValue(mockQueryChain);
 
       const players = [
-        { id: "p1", displayName: "Alice", seat: 1, isReady: false, isHost: true },
-        { id: "p2", displayName: "Bob", seat: 2, isReady: false, isHost: false },
+        { id: "p1", displayName: "Alice", seat: 1, isReady: false, isHost: true, isBot: false },
+        { id: "p2", displayName: "Bob", seat: 2, isReady: false, isHost: false, isBot: false },
       ];
 
       const picks: SafePick[] = [];
@@ -267,8 +267,8 @@ describe("judging service", () => {
       mockDb.from.mockReturnValue(mockQueryChain);
 
       const players = [
-        { id: "p1", displayName: "Alice", seat: 1, isReady: false, isHost: true },
-        { id: "p2", displayName: "Bob", seat: 2, isReady: false, isHost: false },
+        { id: "p1", displayName: "Alice", seat: 1, isReady: false, isHost: true, isBot: false },
+        { id: "p2", displayName: "Bob", seat: 2, isReady: false, isHost: false, isBot: false },
       ];
 
       const picks: SafePick[] = [];

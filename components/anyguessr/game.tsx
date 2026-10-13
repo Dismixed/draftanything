@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { clueDisplayUrl } from "@/lib/anyguessr/clue-image-url";
 import { LINEUP_ROUNDS } from "@/lib/anyguessr/lineup";
+import { roundStreak } from "@/lib/anyguessr/reveal";
 import { useAnyGuessrStore } from "@/lib/anyguessr/store";
 import { useSound } from "@/lib/audio/sound-context";
 import { fireConfetti } from "@/lib/motion/confetti";
@@ -12,9 +13,10 @@ import { burstFrom } from "@/lib/motion/burst";
 import { impactRing } from "@/lib/motion/impact-ring";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
 import { GameTitle } from "@/components/ui/game-title";
-import { DailyCompleteOverlay } from "@/components/daily/daily-complete-overlay";
+import { FinishScreen } from "@/components/daily/finish-screen";
 import { useGameHowItWorks } from "@/lib/game-how-it-works";
-import { WinStreakLine } from "@/components/streak/streak-notifier";
+import { finishCurve, useDailyPercentile } from "@/lib/games/use-daily-percentile";
+import { anyGuessrShare } from "@/lib/share/results";
 import ClueCard, { type ClueView } from "./clue-card";
 import { GuessDock } from "./guess-dock";
 import Results from "./results";
@@ -32,6 +34,8 @@ export default function AnyGuessrGame() {
   const [submitting, setSubmitting] = useState(false);
   const [confirmGiveUp, setConfirmGiveUp] = useState(false);
   const playedThisVisitRef = useRef(false);
+  // Same fact as the ref, as state, so the finish is recorded once and return visits only read.
+  const [playedThisVisit, setPlayedThisVisit] = useState(false);
   const [showResultsOverlay, setShowResultsOverlay] = useState(false);
   const [mounted, setMounted] = useState(false);
   // Starts false on the server and in the browser alike, so the first render matches the
@@ -48,6 +52,17 @@ export default function AnyGuessrGame() {
   const displayScore = store.totalScore;
   const dailyRound = store.dailyRounds[store.currentRound] ?? null;
   const showRoundRecap = !!store.roundRecap;
+  // Same condition the effect below uses for the ref, adjusted during render (React's pattern
+  // for derived state) because a setState inside that effect is a lint error here.
+  if (!playedThisVisit && status === "playing" && storeReady && !loading && store.dailyRounds.length > 0) {
+    setPlayedThisVisit(true);
+  }
+  const standing = useDailyPercentile("anyguessr", store.totalScore, {
+    enabled: storeReady && !loading && isOver,
+    record: playedThisVisit,
+  });
+  // The round just played stamps the passport when its recap closes, not while it is still playing out.
+  const stampedResults = showRoundRecap ? store.roundResults.slice(0, -1) : store.roundResults;
 
   useEffect(() => {
     setMounted(true);
@@ -202,7 +217,7 @@ export default function AnyGuessrGame() {
         </div>
       </div>
       {store.dailyRounds.length > 0 && (
-        <Stamps total={totalRounds} results={store.roundResults} current={isOver ? -1 : store.currentRound} />
+        <Stamps total={totalRounds} results={stampedResults} current={isOver ? -1 : store.currentRound} />
       )}
     </header>
   );
@@ -305,6 +320,7 @@ export default function AnyGuessrGame() {
             <RoundRecap
               recap={store.roundRecap}
               totalScore={store.totalScore}
+              streak={roundStreak(store.roundResults)}
               onContinue={() => {
                 play("ui.tap");
                 store.continueDailyRound();
@@ -314,23 +330,16 @@ export default function AnyGuessrGame() {
           document.body,
         )}
 
-      <DailyCompleteOverlay
+      <FinishScreen
+        gameId="anyguessr"
         open={mounted && showResultsOverlay}
         onClose={() => setShowResultsOverlay(false)}
         ariaLabel="Puzzle results"
-        style={
-          {
-            "--bg": "var(--ag-bg)",
-            "--text": "var(--ag-text)",
-            "--text-dim": "var(--ag-muted)",
-            background: "var(--ag-bg)",
-            color: "var(--ag-text)",
-          } as CSSProperties
-        }
-      >
-        <Results scoreActive embedded />
-        {status === "won" && <WinStreakLine gameId="anyguessr" accentColor="var(--ag-accent)" />}
-      </DailyCompleteOverlay>
+        result={<Results scoreActive embedded />}
+        shareText={anyGuessrShare(store.roundResults, store.totalScore, store.date)}
+        curve={finishCurve("anyguessr", standing)}
+        theme={{ "--fin-result-w": "640px" } as CSSProperties}
+      />
     </div>
   );
 }

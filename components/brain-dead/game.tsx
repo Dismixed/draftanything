@@ -14,7 +14,6 @@ import {
   LETTERS,
   calcScore,
   getResultCopy,
-  getCountdownText,
 } from "@/lib/brain-dead/game-logic";
 import {
   getDailyPlayed,
@@ -29,24 +28,15 @@ import { impactRing } from "@/lib/motion/impact-ring";
 import { juiceLevel } from "@/lib/motion/juice-level";
 import { useCountUp } from "@/lib/motion/count-up";
 import { GameTitle } from "@/components/ui/game-title";
-import { OtherDailies } from "@/components/daily/other-dailies";
-import { ShareResult } from "@/components/daily/share-result";
 import { brainDeadShare } from "@/lib/share/results";
 import { getDateString as shareDate } from "@/lib/streak/date";
-import { DailyCompleteShell } from "@/components/daily/daily-complete-shell";
-import { WinStreakLine } from "@/components/streak/streak-notifier";
 import DailyIntroModal from "@/components/brain-dead/daily-intro-modal";
+import { FinishScreen } from "@/components/daily/finish-screen";
+import { finishCurve, useDailyPercentile } from "@/lib/games/use-daily-percentile";
 import { LifeSigns } from "@/components/brain-dead/life-signs";
 import { LIFE_SIGNS_LABELS, lifeSignsTier, nextMilestone } from "@/lib/brain-dead/life-signs";
 
 type Screen = "played" | "game" | "result";
-
-/** The finish screen is drawn outside the game page, so it needs the game's colours handed to it. */
-const OVERLAY_THEME = {
-  "--bg": "var(--bd-bg)",
-  "--text": "var(--bd-text)",
-  "--text-dim": "var(--bd-text-muted)",
-} as React.CSSProperties;
 
 interface BrainDeadGameProps {
   mode: GameMode;
@@ -74,7 +64,6 @@ export default function BrainDeadGame({
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [countdown, setCountdown] = useState("");
   const [todayScore, setTodayScore] = useState(0);
   const [todayCorrect, setTodayCorrect] = useState(0);
   const [scoreFloat, setScoreFloat] = useState<number | null>(null);
@@ -280,10 +269,8 @@ export default function BrainDeadGame({
       if (played) {
         setTodayScore(played.score);
         setTodayCorrect(played.correct);
-        setCountdown(getCountdownText());
         setScreen("played");
-        const iv = setInterval(() => setCountdown(getCountdownText()), 1000);
-        return () => { cancelled = true; clearInterval(iv); };
+        return () => { cancelled = true; };
       }
       beginGame([]);
       fetch("/api/brain-dead/daily")
@@ -396,6 +383,12 @@ export default function BrainDeadGame({
     }
   }, [isDaily, screen, qi, questions.length, fetchError, fetchMoreQuestions]);
 
+  const dailyDone = isDaily && (screen === "played" || screen === "result");
+  // A return visit reads the saved result; a run that just ended uses the live one.
+  const finalScore = screen === "played" ? todayScore : score;
+  const finalCorrect = screen === "played" ? todayCorrect : correct;
+  const standing = useDailyPercentile("brain-dead", finalScore, { enabled: dailyDone, record: screen === "result" });
+
   const handleSubmitScore = async () => {
     const name = nameInput.trim() || "Anonymous";
     setSubmitting(true);
@@ -418,101 +411,37 @@ export default function BrainDeadGame({
   const freeplayBackHref = "/brain-dead/freeplay";
   const backHref = isDaily ? "/brain-dead" : freeplayBackHref;
 
-  // `bare` drops the header: the finish overlay already has its own Home and close controls.
   const gameShell = (
     children: React.ReactNode,
-    options?: { bare?: boolean; useRouterBack?: boolean; stats?: React.ReactNode },
+    options?: { useRouterBack?: boolean; stats?: React.ReactNode },
   ) => (
     <div className="bd-game">
-      {!options?.bare && (
-        <header className="bd-head">
-          {options?.useRouterBack ? (
-            <button type="button" className="bd-back" onClick={() => router.push(backHref)}>
-              &larr; Back
-            </button>
-          ) : (
-            <Link href={backHref} className="bd-back">
-              &larr; Back
-            </Link>
-          )}
-          <GameTitle game="brain-dead" as="h1" className="bd-title" />
-          <span />
-          {options?.stats && <div className="bd-stats-line">{options.stats}</div>}
-        </header>
-      )}
+      <header className="bd-head">
+        {options?.useRouterBack ? (
+          <button type="button" className="bd-back" onClick={() => router.push(backHref)}>
+            &larr; Back
+          </button>
+        ) : (
+          <Link href={backHref} className="bd-back">
+            &larr; Back
+          </Link>
+        )}
+        <GameTitle game="brain-dead" as="h1" className="bd-title" />
+        <span />
+        {options?.stats && <div className="bd-stats-line">{options.stats}</div>}
+      </header>
       {children}
     </div>
   );
 
-  const inOverlay = isDaily && completeOpen;
+  /* ── Daily: just finished, or already played today ── */
+  if (dailyDone) {
+    const justFinished = screen === "result";
 
-  const dailyLinks = (
-    <>
-      <div className="bd-links">
-        <Link href="/brain-dead/freeplay" className="bd-btn">
-          Play Free Mode
-        </Link>
-        <Link href="/brain-dead/leaderboard" className="bd-btn">
-          Leaderboard
-        </Link>
-      </div>
-      <p className="bd-note">Daily locked. Come back tomorrow for a new set.</p>
-    </>
-  );
-
-  /* ── Already played ── */
-  if (screen === "played") {
-    return (
-      <DailyCompleteShell
-        enabled={isDaily}
-        open={completeOpen}
-        onClose={() => setCompleteOpen(false)}
-        ariaLabel="Daily complete"
-        style={OVERLAY_THEME}
-      >
-        {gameShell(
-          <div className="bd-result">
-            <p className="bd-eyebrow">Today&apos;s result</p>
-            <div className="bd-big">{todayCorrect}</div>
-            <div className="bd-big-label">correct</div>
-            <div className="bd-stats">
-              <div>
-                <b>{todayScore}</b>
-                <span>Score</span>
-              </div>
-              <div>
-                <b>{countdown}</b>
-                <span>Next challenge</span>
-              </div>
-            </div>
-
-            {isDaily && (
-              <div className="bd-result-actions">
-                <WinStreakLine gameId="brain-dead" accentColor="var(--bd-primary)" />
-                <ShareResult gameId="brain-dead" text={brainDeadShare(todayCorrect, todayScore, shareDate())} />
-              </div>
-            )}
-            {dailyLinks}
-            {isDaily && <OtherDailies currentGameId="brain-dead" />}
-          </div>,
-          { bare: inOverlay },
-        )}
-      </DailyCompleteShell>
-    );
-  }
-
-  /* ── Result ── */
-  if (screen === "result") {
-    return (
-      <DailyCompleteShell
-        enabled={isDaily}
-        open={completeOpen}
-        onClose={() => setCompleteOpen(false)}
-        ariaLabel="Daily complete"
-        style={OVERLAY_THEME}
-      >
-        {gameShell(
-          <div className="bd-result anim-fade-slide-up">
+    const body = (
+      <div className={`bd-result${justFinished ? " anim-fade-slide-up" : ""}`}>
+        {justFinished ? (
+          <>
             <div className="bd-badge" aria-hidden="true">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="8" r="7" />
@@ -521,71 +450,117 @@ export default function BrainDeadGame({
             </div>
             <h2>{result.title}</h2>
             <p className="bd-result-sub">{result.sub}</p>
-
-            <div className="bd-big">{correct}</div>
-            <div className="bd-big-label">correct</div>
-            <div className="bd-stats">
-              <div>
-                <b>{score}</b>
-                <span>Score</span>
-              </div>
-              <div>
-                <b>{avgSpeed}s</b>
-                <span>Avg time</span>
-              </div>
-            </div>
-
-            {isDaily && !submitted && (
-              <div className="bd-record">
-                <input
-                  className="bd-name"
-                  placeholder="Enter your name"
-                  aria-label="Your name for the leaderboard"
-                  maxLength={20}
-                  value={nameInput}
-                  onChange={(e) => setNameInput(e.target.value)}
-                />
-                <button type="button" className="bd-btn is-accent" onClick={handleSubmitScore} disabled={submitting}>
-                  {submitting ? "Saving..." : "Record score"}
-                </button>
-                {submitError && <p className="bd-record-note is-error">Could not save score. Try again.</p>}
-              </div>
-            )}
-            {isDaily && submitted && <p className="bd-record-note is-ok">Score recorded.</p>}
-
-            {isDaily ? (
-              <>
-                <div className="bd-result-actions">
-                  <WinStreakLine gameId="brain-dead" accentColor="var(--bd-primary)" />
-                  <ShareResult
-                    gameId="brain-dead"
-                    text={brainDeadShare(correct, score, shareDate(), questions.length || 15)}
-                  />
-                </div>
-                {dailyLinks}
-                <OtherDailies currentGameId="brain-dead" />
-              </>
-            ) : (
-              <>
-                <div className="bd-result-actions">
-                  <button type="button" className="bd-cta" onClick={handleFreeplayRestart}>
-                    Play Again
-                  </button>
-                </div>
-                <div className="bd-links">
-                  <button type="button" className="bd-btn" onClick={() => router.push(freeplayBackHref)}>
-                    Change Category
-                  </button>
-                  <button type="button" className="bd-btn" onClick={() => router.push("/")}>
-                    Home
-                  </button>
-                </div>
-              </>
-            )}
-          </div>,
-          { bare: inOverlay, useRouterBack: !isDaily },
+          </>
+        ) : (
+          <p className="bd-eyebrow">Today&apos;s result</p>
         )}
-      </DailyCompleteShell>
+
+        <div className="bd-big">{finalCorrect}</div>
+        <div className="bd-big-label">correct</div>
+        <div className="bd-stats">
+          <div>
+            <b>{finalScore}</b>
+            <span>Score</span>
+          </div>
+          {justFinished && (
+            <div>
+              <b>{avgSpeed}s</b>
+              <span>Avg time</span>
+            </div>
+          )}
+        </div>
+
+        {justFinished && !submitted && (
+          <div className="bd-record">
+            <input
+              className="bd-name"
+              placeholder="Enter your name"
+              aria-label="Your name for the leaderboard"
+              maxLength={20}
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+            />
+            <button type="button" className="bd-btn is-accent" onClick={handleSubmitScore} disabled={submitting}>
+              {submitting ? "Saving..." : "Record score"}
+            </button>
+            {submitError && <p className="bd-record-note is-error">Could not save score. Try again.</p>}
+          </div>
+        )}
+        {submitted && <p className="bd-record-note is-ok">Score recorded.</p>}
+
+        <Link href="/brain-dead/freeplay" className="bd-free-link">
+          Play Free Mode
+        </Link>
+      </div>
+    );
+
+    return (
+      <>
+        {/* Under the finish screen the page shows the same result, with a way back to the summary. */}
+        {gameShell(
+          completeOpen ? null : (
+            <>
+              {body}
+              <button type="button" className="bd-btn bd-reopen" onClick={() => setCompleteOpen(true)}>
+                Back to today&apos;s summary
+              </button>
+            </>
+          ),
+        )}
+        <FinishScreen
+          gameId="brain-dead"
+          open={completeOpen}
+          onClose={() => setCompleteOpen(false)}
+          result={body}
+          shareText={brainDeadShare(finalCorrect, finalScore, shareDate(), justFinished ? questions.length || 15 : undefined)}
+          secondary={{ label: "Leaderboard", href: "/brain-dead/leaderboard" }}
+          curve={finishCurve("brain-dead", standing)}
+        />
+      </>
+    );
+  }
+
+  /* ── Freeplay result ── */
+  if (screen === "result") {
+    return gameShell(
+      <div className="bd-result anim-fade-slide-up">
+        <div className="bd-badge" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="8" r="7" />
+            <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+          </svg>
+        </div>
+        <h2>{result.title}</h2>
+        <p className="bd-result-sub">{result.sub}</p>
+
+        <div className="bd-big">{correct}</div>
+        <div className="bd-big-label">correct</div>
+        <div className="bd-stats">
+          <div>
+            <b>{score}</b>
+            <span>Score</span>
+          </div>
+          <div>
+            <b>{avgSpeed}s</b>
+            <span>Avg time</span>
+          </div>
+        </div>
+
+        <div className="bd-result-actions">
+          <button type="button" className="bd-cta" onClick={handleFreeplayRestart}>
+            Play Again
+          </button>
+        </div>
+        <div className="bd-links">
+          <button type="button" className="bd-btn" onClick={() => router.push(freeplayBackHref)}>
+            Change Category
+          </button>
+          <button type="button" className="bd-btn" onClick={() => router.push("/")}>
+            Home
+          </button>
+        </div>
+      </div>,
+      { useRouterBack: true },
     );
   }
 

@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { AppError } from "@/lib/errors";
+import { playHref } from "@/lib/draft-landing/play-href";
 import { requireGuestSession } from "@/features/guest/session";
 import { getRoomByCode, getMyPlayerId } from "@/features/room/service";
 import { getDraftRoomProjection } from "@/features/draft/projection";
@@ -15,7 +16,7 @@ interface DraftLobbyPageProps {
  * /draft/[roomCode]
  *
  * Server Component that:
- * 1. Requires a guest session (redirects to / if missing).
+ * 1. Requires a guest session (redirects to the join form, code filled in, if missing).
  * 2. Fetches the room by code.
  * 3. Resolves the current user's player ID.
  * 4. Renders the appropriate phase component.
@@ -27,7 +28,7 @@ export default async function DraftLobbyPage({ params }: DraftLobbyPageProps) {
   try {
     ({ guestId } = await requireGuestSession());
   } catch {
-    redirect("/");
+    redirect(playHref({ code: roomCode }));
   }
 
   let room;

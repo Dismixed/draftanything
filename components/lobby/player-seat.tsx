@@ -1,11 +1,37 @@
 import type { RoomPlayer } from "@/features/room/schema";
+import { AiTag } from "@/components/draft/ai-tag";
 
 interface PlayerSeatProps {
   seat: number;
   player: RoomPlayer | null;
+  /** Host only: show the controls that add and remove AI drafters. */
+  canManageBots?: boolean;
+  onAddBot?: () => void;
+  onRemoveBot?: (playerId: string) => void;
+  busy?: boolean;
 }
 
-export function PlayerSeat({ seat, player }: PlayerSeatProps) {
+const seatButtonStyle: React.CSSProperties = {
+  background: 'transparent',
+  border: '1px solid var(--border-hi)',
+  color: 'var(--text)',
+  fontFamily: 'Outfit, sans-serif',
+  fontSize: '11px',
+  fontWeight: 500,
+  letterSpacing: '0.08em',
+  cursor: 'pointer',
+  padding: '6px 12px',
+  flexShrink: 0,
+};
+
+export function PlayerSeat({
+  seat,
+  player,
+  canManageBots = false,
+  onAddBot,
+  onRemoveBot,
+  busy = false,
+}: PlayerSeatProps) {
   const isEmpty = player === null;
 
   const filledStyle: React.CSSProperties = {
@@ -24,7 +50,8 @@ export function PlayerSeat({ seat, player }: PlayerSeatProps) {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
-    opacity: 0.5,
+    // Dimmed while it is only a placeholder; full strength when it holds a button.
+    opacity: canManageBots ? 1 : 0.5,
   };
 
   return (
@@ -38,9 +65,19 @@ export function PlayerSeat({ seat, player }: PlayerSeatProps) {
           <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px dashed var(--border-hi)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <span style={{ fontSize: '10px', color: 'var(--text-dim)' }}>{seat}</span>
           </div>
-          <span style={{ fontSize: '11px', color: 'var(--text-dim)', fontStyle: 'normal', fontFamily: 'Outfit, sans-serif' }}>
+          <span style={{ fontSize: '11px', color: 'var(--text-dim)', fontStyle: 'normal', fontFamily: 'Outfit, sans-serif', flex: 1 }}>
             Waiting for player…
           </span>
+          {canManageBots && (
+            <button
+              type="button"
+              onClick={onAddBot}
+              disabled={busy}
+              style={{ ...seatButtonStyle, opacity: busy ? 0.6 : 1 }}
+            >
+              + Add AI drafter
+            </button>
+          )}
         </>
       ) : (
         <>
@@ -54,6 +91,7 @@ export function PlayerSeat({ seat, player }: PlayerSeatProps) {
             <span style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: '14px', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {player.displayName}
             </span>
+            {player.isBot && <AiTag />}
 
             {/* Badges */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto', flexShrink: 0 }}>
@@ -65,7 +103,18 @@ export function PlayerSeat({ seat, player }: PlayerSeatProps) {
                   Host
                 </span>
               )}
-              {player.isReady && (
+              {player.isBot && canManageBots && (
+                <button
+                  type="button"
+                  onClick={() => onRemoveBot?.(player.id)}
+                  disabled={busy}
+                  aria-label={`Remove ${player.displayName}`}
+                  style={{ ...seatButtonStyle, padding: '3px 9px', opacity: busy ? 0.6 : 1 }}
+                >
+                  Remove
+                </button>
+              )}
+              {player.isReady && !player.isBot && (
                 <span
                   aria-label="Ready"
                   style={{ border: '1px solid rgba(0,229,255,0.3)', color: 'var(--cyan)', fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '2px 7px', fontFamily: 'Outfit, sans-serif' }}
@@ -84,9 +133,20 @@ export function PlayerSeat({ seat, player }: PlayerSeatProps) {
 interface SeatListProps {
   players: RoomPlayer[];
   maxPlayers: number;
+  canManageBots?: boolean;
+  onAddBot?: () => void;
+  onRemoveBot?: (playerId: string) => void;
+  busy?: boolean;
 }
 
-export function SeatList({ players, maxPlayers }: SeatListProps) {
+export function SeatList({
+  players,
+  maxPlayers,
+  canManageBots,
+  onAddBot,
+  onRemoveBot,
+  busy,
+}: SeatListProps) {
   // Build a seat map (1-indexed)
   const seatMap = new Map<number, RoomPlayer>(
     players.map((p) => [p.seat, p]),
@@ -99,6 +159,10 @@ export function SeatList({ players, maxPlayers }: SeatListProps) {
           key={seat}
           seat={seat}
           player={seatMap.get(seat) ?? null}
+          canManageBots={canManageBots}
+          onAddBot={onAddBot}
+          onRemoveBot={onRemoveBot}
+          busy={busy}
         />
       ))}
     </div>

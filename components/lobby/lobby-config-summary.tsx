@@ -19,6 +19,12 @@ const sectionLabelStyle: React.CSSProperties = {
 };
 
 export function LobbyConfigSummary({ room, playerCount, hideLabel }: LobbyConfigSummaryProps) {
+  // A draft that starts with one person and AI drafters is always judged by the AI.
+  const aiJudgeOverride =
+    room.judgingMode !== "ai" &&
+    room.players.some((p) => p.isBot) &&
+    room.players.filter((p) => !p.isBot).length === 1;
+
   return (
     <>
       {!hideLabel && (
@@ -44,6 +50,11 @@ export function LobbyConfigSummary({ room, playerCount, hideLabel }: LobbyConfig
           <dd style={{ fontSize: "13px", color: "var(--text)", margin: 0, fontWeight: 500, textTransform: "capitalize" }}>
             {room.judgingMode}
           </dd>
+          {aiJudgeOverride && (
+            <dd style={{ fontSize: "11px", color: "var(--text-dim)", margin: "2px 0 0" }}>
+              With one human player, the AI judge decides.
+            </dd>
+          )}
         </div>
         <div>
           <dt style={{ fontSize: "11px", color: "var(--text-dim)", marginBottom: "2px" }}>Rounds</dt>

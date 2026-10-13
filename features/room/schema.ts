@@ -66,6 +66,59 @@ export const createRoomSchema = z.object({
 
 export type CreateRoomInput = z.infer<typeof createRoomSchema>;
 
+export const SOLO_MIN_OPPONENTS = 1;
+export const SOLO_MAX_OPPONENTS = 5;
+
+/**
+ * A solo draft: one person against AI drafters. There is no turn timer and
+ * the AI judge always decides, so neither is asked for.
+ */
+export const soloRoomSchema = z.object({
+  displayName: displayNameSchema,
+  topic: z
+    .string()
+    .min(2, "Topic must be at least 2 characters")
+    .max(80, "Topic must be at most 80 characters"),
+  opponents: z
+    .number()
+    .int()
+    .min(SOLO_MIN_OPPONENTS, "Pick at least 1 AI opponent")
+    .max(SOLO_MAX_OPPONENTS, "Pick at most 5 AI opponents"),
+  rounds: z
+    .number()
+    .int()
+    .min(1, "Must have at least 1 round")
+    .max(10, "Cannot have more than 10 rounds"),
+  draftType: z.enum(["standard", "snake", "random"]),
+  pickingMode: z.enum(["pool", "off_the_dome"]).default("pool"),
+  aiPersonality: z.enum(["analyst", "hype", "roast", "custom"]),
+  customJudgePrompt: z
+    .string()
+    .trim()
+    .min(10, "Custom judge instructions must be at least 10 characters")
+    .max(500, "Custom judge instructions must be at most 500 characters")
+    .optional()
+    .nullable(),
+}).superRefine((data, ctx) => {
+  if (data.aiPersonality === "custom" && !data.customJudgePrompt) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Custom judge instructions are required when using a custom judge",
+      path: ["customJudgePrompt"],
+    });
+  }
+
+  if (data.aiPersonality !== "custom" && data.customJudgePrompt) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Custom judge instructions are only allowed for the custom judge",
+      path: ["customJudgePrompt"],
+    });
+  }
+});
+
+export type SoloRoomInput = z.infer<typeof soloRoomSchema>;
+
 export const updateConfigSchema = z.object({
   topic: z
     .string()
@@ -131,6 +184,8 @@ export interface RoomPlayer {
   seat: number;
   isReady: boolean;
   isHost: boolean;
+  /** True for an AI drafter: a seat with no person behind it. */
+  isBot: boolean;
 }
 
 export interface RoomProjection {

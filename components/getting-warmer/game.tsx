@@ -5,13 +5,18 @@ import {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
 } from "react";
-import { GameBackLink } from "@/components/ui/game-back-link";
+import Link from "next/link";
 import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
-import { DailyCompleteOverlay } from "@/components/daily/daily-complete-overlay";
 import { useGameHowItWorks } from "@/lib/game-how-it-works";
 import { readDailyPuzzleCache, writeDailyPuzzleCache } from "@/lib/daily-puzzle-cache";
-import { getCountdownText, getDateString } from "@/lib/getting-warmer/game-logic";
+import { getDateString } from "@/lib/getting-warmer/game-logic";
+import { FinishScreen } from "@/components/daily/finish-screen";
+import { finishCurve, useDailyPercentile } from "@/lib/games/use-daily-percentile";
+import { gettingWarmerShare } from "@/lib/share/results";
+import { foldClues, hiddenMisses } from "@/lib/getting-warmer/fold";
+import { HEAT_LABELS, heatReading } from "@/lib/getting-warmer/heat";
 import {
   fetchTodayLeaderboard,
   getDailyPlayed,
@@ -93,15 +98,14 @@ export default function GettingWarmerGame() {
   const [won, setWon] = useState(initial.played?.won ?? false);
   const [answer, setAnswer] = useState(initial.played?.answer ?? "");
   const [feedback, setFeedback] = useState("");
-  const [feedbackClass, setFeedbackClass] = useState("");
   const [guessInput, setGuessInput] = useState("");
   const [shakeInput, setShakeInput] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [igniteIndex, setIgniteIndex] = useState<number | null>(null);
   const [checkingGuess, setCheckingGuess] = useState(false);
+  const [showAllClues, setShowAllClues] = useState(false);
   const [prefetchedClue, setPrefetchedClue] = useState<string | null>(null);
 
-  const [countdown, setCountdown] = useState("");
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [lbLoading, setLbLoading] = useState(false);
   const [nameInput, setNameInput] = useState("");
@@ -140,6 +144,13 @@ export default function GettingWarmerGame() {
     const timer = setTimeout(() => setShowResultsModal(true), 400);
     return () => clearTimeout(timer);
   }, [screen]);
+
+  const isFinished = screen === "results" || screen === "played";
+  // Only a solved puzzle has a guess count to compare. Giving up gets no curve.
+  const standing = useDailyPercentile("getting-warmer", attempts, {
+    enabled: isFinished && won && attempts >= 1,
+    record: screen === "results",
+  });
 
   const loadLeaderboard = useCallback(async () => {
     setLbLoading(true);
@@ -218,13 +229,6 @@ export default function GettingWarmerGame() {
   }, [initial.screen, loadLeaderboard]);
 
   useEffect(() => {
-    const tick = () => setCountdown(getCountdownText());
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  useEffect(() => {
     if (screen === "game" && !finished) {
       prefetchNextClue();
     }
@@ -260,10 +264,8 @@ export default function GettingWarmerGame() {
         setFeedback(
           `🔥 Nailed it in ${opts.finalAttempts} ${opts.finalAttempts === 1 ? "guess" : "guesses"}`,
         );
-        setFeedbackClass("win");
       } else {
         setFeedback(opts.gaveUp ? "🏳️ Gave up" : "❄️ Out of guesses");
-        setFeedbackClass("lose");
       }
 
       saveDailyPlayed(opts.won, opts.finalAttempts, {
@@ -288,8 +290,6 @@ export default function GettingWarmerGame() {
         return updated;
       });
       setPrefetchedClue(null);
-      setFeedback("🔥 Getting warmer — new clue unlocked");
-      setFeedbackClass("warm");
     },
     [],
   );
@@ -464,40 +464,98 @@ export default function GettingWarmerGame() {
     );
   }
 
+  const live = screen === "game" || screen === "results";
+  const authored = puzzle?.authoredClueCount ?? 0;
+  const heat = heatReading(clues.length, authored, won);
+  const fold = foldClues(clues.length);
+  const hiddenWide = showAllClues ? 0 : fold.hiddenWide;
+  const hiddenNarrow = showAllClues ? 0 : fold.hiddenNarrow;
+  // The newest clue is shown large.
+  const hotIndex = clues.length - 1;
+  const earlier = clues.slice(0, hotIndex);
+  const missesHidden = hiddenMisses(wrongGuesses.length);
+  // Each clue keeps its own temperature, so the list reads from cold at the top to hot at the bottom.
+  const warmth = (i: number) => ({ "--gw-t": Math.min(1, i / Math.max(1, authored - 1)) }) as CSSProperties;
+
   return (
-    <div className="gw-page">
+    <div
+      className={`gw-page${live ? " is-live" : ""}`}
+      style={live ? ({ "--gw-h": heat.fraction } as CSSProperties) : undefined}
+    >
       {howItWorksModal}
-      <div className="gw-app">
-        <header className="gw-header">
-          <div className="gw-badge">
-            <span className="gw-badge-dot" />
-            Word Game · Solo · Daily
-          </div>
-          <h1 className="gw-title">
-            GETTING <span className="gw-title-accent">WARMER</span>
+      <div className={`gw-app${live ? " gw-app--play" : ""}`}>
+        <header className="gw-bar">
+          <Link href="/" className="gw-bar-back">
+            &larr; Back
+          </Link>
+          <h1 className="gw-wordmark">
+            GETTING <span>WARMER</span>
           </h1>
-          <div className="gw-sub">
-            Two clues to start. Guess wrong, get one more. Unlimited guesses.
-          </div>
+          {live && (
+            <span className="gw-guess-no">
+              {finished ? (won ? "Solved" : "Gave up") : `Guess ${wrongGuesses.length + 1}`}
+            </span>
+          )}
         </header>
 
-        {(screen === "game" || screen === "results") && puzzle && (
-          <>
-            <div ref={cardRef} className="gw-card" style={{ position: "relative" }}>
-              <div className="gw-back-link">
-                <GameBackLink href="/" color="var(--gw-ink-dim)" />
+        {live && puzzle && (
+          <div ref={cardRef} className="gw-play">
+            {/* One thermometer, drawn upright beside the clues on wide screens and flat above them on a phone. */}
+            <div className="gw-thermo" aria-hidden="true">
+              <div className="gw-thermo-glass">
+                <div className="gw-tube">
+                  <div className="gw-merc" />
+                </div>
+                <div className="gw-bulb" />
               </div>
-              <div className="gw-clues">
-                {clues.map((clue, i) => (
-                  <div
-                    key={`${i}-${clue}`}
-                    className={`gw-clue active${igniteIndex === i ? " ignite" : ""}`}
-                  >
-                    <div className="gw-clue-num">{i + 1}</div>
-                    <div>{clue}</div>
-                  </div>
+              <ol className="gw-ticks">
+                {HEAT_LABELS.map((label, i) => (
+                  <li key={label} className={`${i <= heat.level ? "on" : ""}${i === heat.level ? " cur" : ""}`}>
+                    {label}
+                  </li>
                 ))}
+              </ol>
+            </div>
+
+            <div className="gw-main">
+              <div className="gw-flat" aria-hidden="true">
+                <div>
+                  <i />
+                </div>
+                <p>
+                  <span>Cold</span>
+                  <span>Hot</span>
+                </p>
               </div>
+
+              <ol className={`gw-clues${fold.folded ? " is-folded" : ""}`}>
+                {(hiddenWide > 0 || hiddenNarrow > 0) && (
+                  <li className={`gw-more${hiddenWide === 0 ? " gw-hide-wide" : ""}`}>
+                    <button type="button" className="gw-clue gw-clue-more" onClick={() => setShowAllClues(true)}>
+                      <span className="gw-more-wide">+{hiddenWide} earlier</span>
+                      <span className="gw-more-narrow">+{hiddenNarrow} earlier</span>
+                    </button>
+                  </li>
+                )}
+                {earlier.map((clue, i) => (
+                  <li
+                    key={`${i}-${clue}`}
+                    className={`gw-clue${i >= authored ? " is-bonus" : ""}${i < hiddenWide ? " gw-hide-wide" : ""}${i < hiddenNarrow ? " gw-hide-narrow" : ""}`}
+                    style={warmth(i)}
+                  >
+                    <span className="gw-clue-num">{i + 1}</span>
+                    <span className="gw-clue-text">{clue}</span>
+                  </li>
+                ))}
+                <li
+                  key={`${hotIndex}-${clues[hotIndex]}`}
+                  className={`gw-clue gw-clue-hot${hotIndex >= authored ? " is-bonus" : ""}${igniteIndex === hotIndex ? " ignite" : ""}`}
+                  style={warmth(hotIndex)}
+                >
+                  <span className="gw-clue-num">{hotIndex + 1}</span>
+                  <span className="gw-clue-text">{clues[hotIndex]}</span>
+                </li>
+              </ol>
 
               {!finished && (
                 <>
@@ -507,6 +565,7 @@ export default function GettingWarmerGame() {
                       type="text"
                       className={`gw-guess-input${shakeInput ? " shake" : ""}`}
                       placeholder="Type your guess..."
+                      aria-label="Your guess"
                       value={guessInput}
                       onChange={(e) => setGuessInput(e.target.value)}
                       disabled={submitting}
@@ -534,7 +593,19 @@ export default function GettingWarmerGame() {
                       )}
                     </button>
                   </div>
-                  <div className="gw-secondary-row">
+                  <div className="gw-under">
+                    <div className="gw-past-guesses" aria-label="Wrong guesses">
+                      {missesHidden > 0 && (
+                        <span className="gw-past-guess is-more" title={wrongGuesses.slice(0, missesHidden).join(", ")}>
+                          +{missesHidden}
+                        </span>
+                      )}
+                      {wrongGuesses.slice(missesHidden).map((g, i) => (
+                        <span key={missesHidden + i} className="gw-past-guess anim-pop-in">
+                          {g}
+                        </span>
+                      ))}
+                    </div>
                     <button
                       type="button"
                       className="gw-give-up-btn"
@@ -547,28 +618,18 @@ export default function GettingWarmerGame() {
                 </>
               )}
 
-              {feedback && (
-                <div className={`gw-feedback ${feedbackClass}${feedbackClass === "win" ? " anim-pop-in" : ""}`}>{feedback}</div>
-              )}
-
-              {wrongGuesses.length > 0 && !finished && (
-                <div className="gw-past-guesses">
-                  {wrongGuesses.map((g, i) => (
-                    <div key={i} className="gw-past-guess">
-                      {g}
-                    </div>
-                  ))}
+              {finished && (
+                <div className={`gw-outcome anim-pop-in ${won ? "is-win" : "is-lose"}`}>
+                  <b>{answer}</b>
+                  <span>{feedback}</span>
                 </div>
               )}
             </div>
-          </>
+          </div>
         )}
 
         {screen === "played" && puzzle && (
           <div className="gw-card">
-            <div className="gw-back-link">
-              <GameBackLink href="/" color="var(--gw-ink-dim)" />
-            </div>
             <div className="gw-result" style={{ marginTop: 0 }}>
               <div className="gw-sub">ALREADY PLAYED TODAY</div>
               <div className="gw-result-score">
@@ -591,34 +652,41 @@ export default function GettingWarmerGame() {
           </div>
         )}
 
+        {isFinished && !showResultsModal && (
+          <button type="button" className="gw-summary-btn" onClick={() => setShowResultsModal(true)}>
+            Back to today&apos;s summary
+          </button>
+        )}
+
       </div>
 
-      <DailyCompleteOverlay
-        open={
-          showResultsModal && (screen === "results" || screen === "played")
-        }
+      <FinishScreen
+        gameId="getting-warmer"
+        open={showResultsModal && isFinished}
         onClose={() => setShowResultsModal(false)}
         ariaLabel="Puzzle results"
-      >
-        <GettingWarmerResultsModal
-          won={won}
-          gaveUp={gaveUp}
-          answer={answer}
-          attempts={attempts}
-          guesses={guessHistory}
-          shareEmojis={shareEmojis}
-          countdown={countdown}
-          alreadyPlayed={screen === "played"}
-          leaderboard={leaderboard}
-          lbLoading={lbLoading}
-          submittedEntryId={submittedEntryIdRef.current}
-          nameInput={nameInput}
-          onNameInputChange={setNameInput}
-          onJoinLeaderboard={handleJoinLeaderboard}
-          lbSubmitting={lbSubmitting}
-          lbSubmitted={lbSubmitted}
-        />
-      </DailyCompleteOverlay>
+        result={
+          <GettingWarmerResultsModal
+            won={won}
+            gaveUp={gaveUp}
+            answer={answer}
+            attempts={attempts}
+            guesses={guessHistory}
+            shareEmojis={shareEmojis}
+            alreadyPlayed={screen === "played"}
+            leaderboard={leaderboard}
+            lbLoading={lbLoading}
+            submittedEntryId={submittedEntryIdRef.current}
+            nameInput={nameInput}
+            onNameInputChange={setNameInput}
+            onJoinLeaderboard={handleJoinLeaderboard}
+            lbSubmitting={lbSubmitting}
+            lbSubmitted={lbSubmitted}
+          />
+        }
+        shareText={gettingWarmerShare(won, attempts, shareEmojis, getDateString())}
+        curve={finishCurve("getting-warmer", standing)}
+      />
     </div>
   );
 }

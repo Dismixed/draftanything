@@ -1,4 +1,5 @@
 import type { PublicPlayerResult } from "@/features/results/projection";
+import { AiTag } from "@/components/draft/ai-tag";
 
 interface RankingsProps {
   ranking: PublicPlayerResult[];
@@ -67,6 +68,7 @@ export function Rankings({ ranking }: RankingsProps) {
               </span>
               <span style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: '15px', color: 'var(--text)' }}>
                 {player.displayName}
+                {player.isBot && <AiTag />}
               </span>
             </div>
             {player.score !== null && (
