@@ -36,8 +36,8 @@ describe("game registry", () => {
 
   it("keeps the addresses games are played at today", () => {
     expect(getGame("chainlink").playHref).toBe("/chainlink");
-    expect(getGame("brain-dead").playHref).toBe("/brain-dead/daily");
-    expect(getGame("anyguessr").playHref).toBe("/anyguessr/daily");
+    expect(getGame("brain-dead").playHref).toBe("/brain-dead");
+    expect(getGame("anyguessr").playHref).toBe("/anyguessr");
     expect(getGame("hot-takes").playHref).toBe("/hot-takes");
     expect(getGame("freezeframes").playHref).toBe("/freezeframes/daily");
     expect(getGame("ball-knowledge").playHref).toBe("/ball-knowledge/daily");

@@ -8,13 +8,13 @@ import {
 } from "react";
 import Link from "next/link";
 import { GameBackLink } from "@/components/ui/game-back-link";
-import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
 import { ballKnowledgeShare } from "@/lib/share/results";
 import { FinishScreen } from "@/components/daily/finish-screen";
 import { finishCurve, useDailyPercentile } from "@/lib/games/use-daily-percentile";
 import { BallKnowledgeFinishResult } from "./finish-result";
 import { AnswerChip } from "./answer-row";
-import { useGameHowItWorks } from "@/lib/game-how-it-works";
+import { useDailyIntro } from "@/lib/daily-intro/use-daily-intro";
+import { BallKnowledgeIntro } from "./intro";
 import { useTheme, setThemeColorOverride } from "@/lib/theme/theme-context";
 import { burstFrom } from "@/lib/motion/burst";
 import { juiceLevel } from "@/lib/motion/juice-level";
@@ -63,7 +63,8 @@ export default function BallKnowledgeGame({
   const [showToast, setShowToast] = useState(false);
   const [playedScore, setPlayedScore] = useState(0);
   const [playedAccepted, setPlayedAccepted] = useState<string[] | null>(null);
-  const { showHowItWorks, dismissHowItWorks } = useGameHowItWorks("ball-knowledge");
+  // Whether today was already played is read on mount; the intro waits for that.
+  const [checkedPlayed, setCheckedPlayed] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
   const { theme } = useTheme();
   // The commentator's line for the answer graded most recently. `id` restarts its animation.
@@ -343,6 +344,7 @@ export default function BallKnowledgeGame({
       setScreen("played");
       void loadLeaderboard();
     }
+    setCheckedPlayed(true);
   }, [category, loadLeaderboard]);
 
   useEffect(() => {
@@ -403,6 +405,23 @@ export default function BallKnowledgeGame({
     />
   );
 
+  const intro = useDailyIntro("ball-knowledge", { ready: checkedPlayed, skip: screen !== "start" });
+
+  if (intro.phase !== "game") {
+    return (
+      <main className="bk-page">
+        <BallKnowledgeIntro
+          pending={intro.phase === "checking"}
+          category={category}
+          onPlay={() => {
+            intro.play();
+            startGame();
+          }}
+        />
+      </main>
+    );
+  }
+
   return (
     <>
     <main className="bk-page">
@@ -423,42 +442,6 @@ export default function BallKnowledgeGame({
             {finishResult}
             <button type="button" className="bk-btn-ghost" onClick={() => setCompleteOpen(true)}>
               Back to today&apos;s summary
-            </button>
-            {screen === "end" && (
-              <button type="button" className="bk-btn-ghost" onClick={() => setScreen("start")}>
-                Back to Start
-              </button>
-            )}
-          </div>
-        )}
-
-        {screen === "start" && (
-          <div className="bk-start">
-            <div className="bk-back-link">
-              <GameBackLink href="/" color="var(--bk-chalk-dim)" />
-            </div>
-            <h1 className="bk-title">
-              BALL
-              <br />
-              <span className="bk-title-accent">KNOWLEDGE</span>
-            </h1>
-            <div className="bk-tagline">
-              60 seconds. One random category. Name everything you know.
-            </div>
-            <div className="bk-category-chips" aria-hidden>
-            </div>
-            <div className="bk-category-panel">
-              <div className="bk-category-eyebrow">Today&apos;s Category</div>
-              <div className="bk-category-name">{category}</div>
-            </div>
-            <div className="bk-rules">
-              You&apos;ve got <b>60 seconds</b>. Type as many correct answers as
-              you can for today&apos;s category — pizza toppings, dog breeds,
-              state capitals, anything. Spelling doesn&apos;t have to be perfect,
-              but it has to be real.
-            </div>
-            <button type="button" className="bk-btn-primary" onClick={startGame}>
-              START
             </button>
           </div>
         )}
@@ -530,22 +513,6 @@ export default function BallKnowledgeGame({
         )}
       </div>
 
-      {showHowItWorks && (
-        <GameHowItWorksModal
-          subtitle="60 seconds · One category a day"
-          rules={BALL_KNOWLEDGE_HOW_IT_WORKS}
-          buttonLabel="Start Challenge"
-          onDismiss={dismissHowItWorks}
-          theme={{
-            overlay: "var(--bk-overlay)",
-            surface: "var(--bk-backboard)",
-            border: "var(--bk-line)",
-            accent: "var(--bk-net-blue)",
-            text: "var(--bk-chalk)",
-            textMuted: "var(--bk-chalk-dim)",
-          }}
-        />
-      )}
 
       <div className={`bk-toast${showToast ? " show" : ""}`}>{toastMsg}</div>
     </main>
@@ -560,22 +527,3 @@ export default function BallKnowledgeGame({
     </>
   );
 }
-
-const BALL_KNOWLEDGE_HOW_IT_WORKS = [
-  {
-    title: "One Category, 60 Seconds",
-    body: "Everyone gets the same category today: pizza toppings, dog breeds, state capitals, whatever is on the board. Name as many valid answers as you can before time runs out.",
-  },
-  {
-    title: "Type and Enter",
-    body: "Type an answer and hit enter. Accepted answers stack in your list; duplicates and wrong guesses get rejected.",
-  },
-  {
-    title: "Close Enough Counts",
-    body: "Spelling doesn't have to be perfect, but the answer has to be real. Obscure or joke answers won't make the cut.",
-  },
-  {
-    title: "One Run Per Day",
-    body: "Play once and post your score. Tomorrow gets a new category.",
-  },
-] as const;

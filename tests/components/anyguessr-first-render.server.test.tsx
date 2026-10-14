@@ -10,12 +10,13 @@ vi.mock("next/link", () => ({
 vi.mock("next/dynamic", () => ({ default: () => () => null }));
 
 describe("AnyGuessr first render on the server", () => {
-  it("renders the loading placeholder, the same thing the browser draws first", async () => {
+  it("renders the hidden intro, the same thing the browser draws first", async () => {
     const { default: AnyGuessrGame } = await import("@/components/anyguessr/game");
 
     const html = renderToString(<AnyGuessrGame />);
 
-    expect(html).toContain("Loading puzzle");
+    // The intro is drawn hidden until saved progress has been read.
+    expect(html).toContain("data-intro-pending");
     expect(html).not.toContain("ag-map-layer");
     expect(html).not.toContain("ag-stamp");
   });

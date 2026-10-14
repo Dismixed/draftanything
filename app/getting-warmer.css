@@ -1012,3 +1012,194 @@ html[data-theme="light"] .gw-page.is-live {
     transition: none;
   }
 }
+
+/* ── Intro ───────────────────────────────────────────────────────── */
+/* The wordmark is the thermometer: icy blue that fills with orange as clues land. */
+
+.gwi {
+  --intro-text: var(--gw-ink);
+  --intro-dim: var(--gw-ink-dim);
+  --intro-hair: var(--gw-line);
+  --intro-accent: var(--gw-orange);
+  --gwi-cold: #8fb7d9;
+  --gwi-cold-2: #5d7d99;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 13px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 18px 20px 48px;
+  overflow: hidden;
+  text-align: center;
+  font-family: "IBM Plex Mono", monospace;
+  color: var(--gw-ink);
+}
+.gwi > :not(.gwi-warmth, .gwi-embers, .gwi-defs) { position: relative; z-index: 2; }
+.gwi-defs { position: absolute; }
+
+/* The intro brings its own spacing, and its glow has to reach the page edges. */
+.gw-page--intro { display: block; padding: 0; }
+.gwi { width: 100%; }
+
+.gwi-top { display: flex; align-items: center; min-height: 36px; width: 100%; max-width: 1040px; }
+.gwi .intro-today, .gwi .intro-count { font-size: 12px; }
+
+/* An orange glow that rises from the bottom of the page as it heats. */
+.gwi-warmth {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(900px 520px at 50% 115%, rgba(255, 107, 26, 0.6), rgba(255, 107, 26, 0) 70%);
+  opacity: var(--gwi-heat);
+  transition: opacity 0.9s;
+}
+
+.gwi-embers {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: calc(var(--gwi-heat) * var(--gwi-heat));
+  transition: opacity 0.9s;
+}
+.gwi-embers i {
+  position: absolute;
+  bottom: -10px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #ffb347;
+  box-shadow: 0 0 8px 2px #ff6b1a;
+  animation: gwi-rise linear infinite;
+}
+@keyframes gwi-rise {
+  0% { transform: translate(0, 0); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translate(var(--dx), -560px); opacity: 0; }
+}
+
+.gwi-wordmark {
+  margin: 4px 0 0;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 64px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 0.9;
+  background: linear-gradient(90deg, #ffe7c2 0%, #ffb347 18%, #ff6b1a 34%, var(--gwi-cold) 34.01%, var(--gwi-cold-2) 100%);
+  background-size: 300% 100%;
+  background-position: var(--gwi-fill, 100%) 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  transition: background-position 1s cubic-bezier(0.3, 1, 0.4, 1);
+}
+/* Heat rising off the title. */
+.gwi-wordmark::before {
+  content: "";
+  position: absolute;
+  inset: -30% -8% -10%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(60% 55% at 50% 60%, rgba(255, 140, 50, 0.55), rgba(255, 90, 30, 0.18) 55%, transparent 75%);
+  filter: blur(14px);
+  opacity: var(--gwi-heat);
+  pointer-events: none;
+  transition: opacity 1s;
+  animation: gwi-haze 2.8s ease-in-out infinite;
+}
+@keyframes gwi-haze {
+  0%, 100% { transform: translateY(4%) scaleY(1); }
+  50% { transform: translateY(-8%) scaleY(1.12); }
+}
+
+.gwi-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transition: color 0.6s;
+}
+.gwi-chip i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; }
+.gwi-lv0 { color: #8fb7d9; }
+.gwi-lv1 { color: #d8c48f; }
+.gwi-lv2 { color: #ffb347; }
+.gwi-lv3 { color: #ff6b1a; }
+.gwi-lv4 { color: #ff3d1a; }
+html[data-theme="light"] .gwi-lv0 { color: #3f6f96; }
+html[data-theme="light"] .gwi-lv1 { color: #8a6a1f; }
+html[data-theme="light"] .gwi-lv2 { color: #b45309; }
+
+.gwi-clues {
+  width: 100%;
+  max-width: 330px;
+  min-height: 150px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-align: left;
+}
+.gwi-clues li {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--gw-line);
+  background: var(--gw-surface);
+  font-size: 13.5px;
+  animation: gwi-in 0.35s ease both;
+}
+@keyframes gwi-in { from { transform: translateY(-6px); opacity: 0; } }
+
+.gwi-tries { margin: 0; min-height: 18px; display: flex; gap: 8px; justify-content: center; font-size: 12px; }
+.gwi-tries span { color: var(--gw-cold-slate-text); text-decoration: line-through; animation: gwi-in 0.3s both; }
+.gwi-tries span.is-ok { color: var(--gw-success); text-decoration: none; font-weight: 700; }
+
+.gwi-rules {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--gw-ink-dim);
+}
+.gwi-rules b { margin-right: 4px; color: var(--gw-orange); }
+
+.gwi-play {
+  padding: 10px 36px 7px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--gw-orange);
+  color: #1a0800;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 26px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(255, 107, 26, 0.35);
+  transition: filter 0.15s, transform 0.15s;
+}
+html[data-theme="light"] .gwi-play { color: #fff; }
+.gwi-play:hover { filter: brightness(1.06); }
+.gwi-play:active { transform: scale(0.98); }
+.gwi-play:focus-visible { outline: 3px solid var(--gw-orange-bright); outline-offset: 3px; }
+
+@media (min-width: 700px) {
+  .gwi-wordmark { font-size: 104px; }
+  .gwi-clues { max-width: 440px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gwi-embers { display: none; }
+  .gwi-wordmark::before { animation: none; }
+}

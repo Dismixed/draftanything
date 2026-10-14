@@ -95,7 +95,7 @@ describe("FinishScreen", () => {
     expect(upNext).toHaveTextContent("Up next");
     expect(upNext).toHaveTextContent("~3 min");
     expect(upNext).toHaveTextContent(getGame("anyguessr").blurb);
-    expect(within(upNext).getByRole("link", { name: "Play AnyGuessr →" })).toHaveAttribute("href", "/anyguessr/daily");
+    expect(within(upNext).getByRole("link", { name: "Play AnyGuessr →" })).toHaveAttribute("href", "/anyguessr");
 
     const others = within(screen.getByTestId("finish-others")).getAllByRole("link");
     expect(others.map((link) => link.getAttribute("href"))).toEqual([

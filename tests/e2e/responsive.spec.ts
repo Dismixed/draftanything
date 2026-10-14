@@ -77,7 +77,6 @@ async function assertNoHorizontalOverflow(page: Page) {
 
 async function prepareChainlink(page: Page) {
   await page.addInitScript(() => {
-    localStorage.setItem("chainlink-tutorial-seen", "true");
     localStorage.removeItem("chainlink-v2");
   });
 }
@@ -102,7 +101,7 @@ const STATIC_PAGES = [
   { label: "Chainlink daily", path: "/chainlink/daily", prepare: prepareChainlink },
   { label: "Chainlink unlimited", path: "/chainlink/unlimited", prepare: prepareChainlink },
   { label: "Brain Dead hub", path: "/brain-dead" },
-  { label: "Brain Dead daily", path: "/brain-dead/daily", prepare: prepareBrainDeadDaily },
+  { label: "Brain Dead daily", path: "/brain-dead", prepare: prepareBrainDeadDaily },
   { label: "Brain Dead freeplay picker", path: "/brain-dead/freeplay" },
   { label: "Brain Dead leaderboard", path: "/brain-dead/leaderboard" },
   { label: "Brain Dead freeplay game", path: "/brain-dead/freeplay/play?cat=random" },

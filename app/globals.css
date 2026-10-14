@@ -1767,3 +1767,49 @@ html[data-theme="light"] .home-card {
   font: 400 13px ui-monospace, monospace;
   resize: none;
 }
+
+/* ── Daily intros: pieces shared by every game's intro ──────────── */
+/* Each intro sets --intro-text, --intro-dim, --intro-hair and --intro-accent. */
+
+/* Rendered on the server for its text, hidden until the game knows the intro is wanted. */
+[data-intro-pending] {
+  visibility: hidden;
+}
+
+.intro-today {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--intro-dim);
+}
+
+.intro-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--intro-hair);
+  color: var(--intro-text);
+  font-weight: 600;
+  font-size: 12.5px;
+}
+
+.intro-streak i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--intro-accent);
+  box-shadow: 0 0 8px var(--intro-accent);
+}
+
+.intro-count {
+  font-size: 13px;
+  color: var(--intro-dim);
+}
+
+.intro-count b {
+  color: var(--intro-text);
+  font-weight: 600;
+}

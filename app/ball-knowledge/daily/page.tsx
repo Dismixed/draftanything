@@ -1,5 +1,6 @@
 import BallKnowledgeGame from "@/components/ball-knowledge/game";
 import { GameAbout } from "@/components/games/game-about";
+import { DailyIntroScope, IntroOnly } from "@/lib/daily-intro/intro-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getDailyCategory } from "@/lib/ball-knowledge/puzzle-service";
 
@@ -14,9 +15,11 @@ export default async function BallKnowledgeDailyPage() {
     category = getTodayCategory();
   }
   return (
-    <>
+    <DailyIntroScope>
       <BallKnowledgeGame category={category} />
-      <GameAbout gameId="ball-knowledge" />
-    </>
+      <IntroOnly>
+        <GameAbout gameId="ball-knowledge" />
+      </IntroOnly>
+    </DailyIntroScope>
   );
 }

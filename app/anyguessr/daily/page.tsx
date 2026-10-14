@@ -1,9 +1,6 @@
-import AnyGuessrGame from "@/components/anyguessr/game";
+import { permanentRedirect } from "next/navigation";
 
+/** Today's puzzle plays at /anyguessr, behind its intro. */
 export default function AnyGuessrDailyPage() {
-  return (
-    <main className="ag-page">
-      <AnyGuessrGame />
-    </main>
-  );
+  permanentRedirect("/anyguessr");
 }

@@ -9,7 +9,7 @@ describe("share text", () => {
 
   it("links to where the game is played, marked as a share", () => {
     expect(shareUrl("chainlink")).toBe("https://stimgames.com/chainlink?ref=share");
-    expect(shareUrl("brain-dead")).toBe("https://stimgames.com/brain-dead/daily?ref=share");
+    expect(shareUrl("brain-dead")).toBe("https://stimgames.com/brain-dead?ref=share");
   });
 
   it("puts the game name and label first and the link last", () => {
@@ -17,7 +17,7 @@ describe("share text", () => {
     expect(text.split("\n")).toEqual([
       "Brain Dead · Oct 6",
       "11 of 15 · 4,250 pts",
-      "https://stimgames.com/brain-dead/daily?ref=share",
+      "https://stimgames.com/brain-dead?ref=share",
     ]);
   });
 

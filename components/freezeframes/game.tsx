@@ -17,7 +17,6 @@ import {
   WRONG_PEN,
   calcAvailablePoints,
   calcRoundScore,
-  getDisplayDate,
 } from "@/lib/freezeframes/game-logic";
 import { frostLevel } from "@/lib/freezeframes/frost";
 import { ROUNDS } from "@/lib/freezeframes/rounds";
@@ -37,11 +36,10 @@ import { burstFrom } from "@/lib/motion/burst";
 import { impactRing } from "@/lib/motion/impact-ring";
 import { triggerAnimation } from "@/lib/motion/trigger-class";
 import { useSound } from "@/lib/audio/sound-context";
-import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
 import { freezeFramesShare } from "@/lib/share/results";
 import { getDateString as shareDate } from "@/lib/streak/date";
-import { useGameHowItWorks } from "@/lib/game-how-it-works";
-import { WinStreakLine } from "@/components/streak/streak-notifier";
+import { useDailyIntro } from "@/lib/daily-intro/use-daily-intro";
+import { FreezeFramesIntro } from "./intro";
 import { FinishScreen } from "@/components/daily/finish-screen";
 import { FreezeFramesFinishResult } from "@/components/freezeframes/finish-result";
 import { finishCurve, useDailyPercentile } from "@/lib/games/use-daily-percentile";
@@ -214,7 +212,8 @@ export default function FreezeFramesGame() {
   const [lbSubmitting, setLbSubmitting] = useState(false);
   const [lbSubmitted, setLbSubmitted] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
-  const { showHowItWorks, dismissHowItWorks } = useGameHowItWorks("freezeframes");
+  // Whether today was already played is read on mount; the intro waits for that.
+  const [checkedPlayed, setCheckedPlayed] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
 
   const startTimeRef = useRef(0);
@@ -234,7 +233,6 @@ export default function FreezeFramesGame() {
 
   const cfg = ROUNDS[round];
   const totalScore = roundScores.reduce((a, b) => a + b, 0);
-  const displayDate = getDisplayDate();
 
   const clearRoundTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -314,16 +312,17 @@ export default function FreezeFramesGame() {
       setPlayedScore(played.score);
       setPlayedMax(played.max);
       setScreen("played");
-      return;
+      return true;
     }
 
     const data = puzzle ?? (await loadPuzzle());
-    if (!data) return;
+    if (!data) return false;
 
     setRoundScores([]);
     setRoundResults([]);
     setRound(0);
     setScreen("game");
+    return true;
   }, [puzzle, loadPuzzle]);
 
   useEffect(() => {
@@ -332,7 +331,10 @@ export default function FreezeFramesGame() {
     if (played) {
       setPlayedScore(played.score);
       setPlayedMax(played.max);
+      // Already played today: straight to the result, no intro.
+      setScreen("played");
     }
+    setCheckedPlayed(true);
     if (getSubmittedEntryId()) setLbSubmitted(true);
   }, [loadPuzzle]);
 
@@ -632,6 +634,24 @@ export default function FreezeFramesGame() {
     />
   );
 
+  const intro = useDailyIntro("freezeframes", { ready: checkedPlayed, skip: screen !== "home" });
+
+  if (intro.phase !== "game") {
+    return (
+      <>
+        <FreezeFramesIntro
+          pending={intro.phase === "checking"}
+          onPlay={() => {
+            void tryPlay().then((started) => {
+              if (started) intro.play();
+            });
+          }}
+        />
+        {fetchError && <p className="ff-error" role="alert">{fetchError}</p>}
+      </>
+    );
+  }
+
   return (
     <>
     <div className={`freezeframes-app${overlayOpen ? " is-overlay" : ""}`}>
@@ -661,23 +681,6 @@ export default function FreezeFramesGame() {
       </header>
 
       {fetchError && <p className="ff-error">{fetchError}</p>}
-
-      <div className={`freezeframes-screen ff-home${screen === "home" ? " active" : ""}`}>
-        <WinStreakLine gameId="freezeframes" accentColor="var(--ff-purple-light)" />
-        <p className="ff-eyebrow">Daily challenge · {displayDate}</p>
-        <h1 className="freezeframes-home-logo">
-          Freeze<span className="hl">Frames</span>
-        </h1>
-        <p className="ff-home-sub">
-          Four rounds. Four frames. One shot a day.
-          <br />
-          Answer before the frame freezes over.
-        </p>
-        <FilmStrip round={-1} results={[]} thumbs={[]} />
-        <button type="button" className="ff-cta ff-cta-wide" onClick={() => void tryPlay()}>
-          Play today&apos;s FreezeFrames
-        </button>
-      </div>
 
       {/* Under the finish screen the page shows the same result, with a way back to the summary. */}
       <div className={`freezeframes-screen ff-final${finishedScreen ? " active" : ""}`}>
@@ -801,21 +804,6 @@ export default function FreezeFramesGame() {
         </div>
       </div>
 
-      {showHowItWorks && (
-        <GameHowItWorksModal
-          subtitle="Four rounds · One shot a day"
-          rules={FREEZEFRAMES_HOW_IT_WORKS}
-          onDismiss={dismissHowItWorks}
-          theme={{
-            overlay: "var(--ff-overlay)",
-            surface: "var(--ff-surface)",
-            border: "var(--ff-border)",
-            accent: "var(--ff-purple-light)",
-            text: "var(--ff-text)",
-            textMuted: "var(--ff-muted)",
-          }}
-        />
-      )}
     </div>
       <FinishScreen
         gameId="freezeframes"
@@ -829,22 +817,3 @@ export default function FreezeFramesGame() {
     </>
   );
 }
-
-const FREEZEFRAMES_HOW_IT_WORKS = [
-  {
-    title: "Four Pop-Culture Rounds",
-    body: "Name the movie from a frame, the song from a 20-second clip, the TV show from a frame, and the artist from an album cover.",
-  },
-  {
-    title: "Type Your Guess",
-    body: "Enter titles or names in the box. Close spellings and partial matches count; you don't need to be letter-perfect.",
-  },
-  {
-    title: "Points Tick Down",
-    body: "Each wrong guess costs points, and the clock keeps draining your score. Solve faster to keep more on the board.",
-  },
-  {
-    title: "One Run Per Day",
-    body: "Everyone gets the same four rounds today. Play once. Tomorrow gets a fresh set.",
-  },
-] as const;

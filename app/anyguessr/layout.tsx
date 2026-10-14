@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { GameAbout } from "@/components/games/game-about";
 import { gameMetadata } from "@/lib/games/content";
 import { buildGameJsonLd, JsonLdScript } from "@/lib/seo";
 
@@ -14,7 +13,6 @@ export default function AnyGuessrLayout({
     <>
       <JsonLdScript data={buildGameJsonLd("anyguessr")} />
       {children}
-      <GameAbout gameId="anyguessr" />
     </>
   );
 }

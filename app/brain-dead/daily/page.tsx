@@ -1,11 +1,6 @@
-import BrainDeadGame from "@/components/brain-dead/game";
+import { permanentRedirect } from "next/navigation";
 
+/** Today's run moved onto the /brain-dead hub. */
 export default function DailyPage() {
-  return (
-    <main className="bd-page">
-      <div className="bd-col">
-        <BrainDeadGame mode="daily" categoryName="Daily Mix" />
-      </div>
-    </main>
-  );
+  permanentRedirect("/brain-dead");
 }

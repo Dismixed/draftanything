@@ -20,7 +20,7 @@ describe("AnyGuessr first render in the browser", () => {
 
   // The server-side half of this pair is anyguessr-first-render.server.test.tsx. Hydration
   // compares the two, so both must draw the same thing, even when a game is already saved.
-  it("draws the loading placeholder before any effect has run, ignoring saved progress", async () => {
+  it("draws the hidden intro before any effect has run, ignoring saved progress", async () => {
     localStorage.setItem(
       STORAGE_VERSION,
       JSON.stringify({
@@ -35,9 +35,11 @@ describe("AnyGuessr first render in the browser", () => {
 
     const html = renderToString(<AnyGuessrGame />);
 
-    expect(html).toContain("Loading puzzle");
+    // The intro is drawn hidden until saved progress has been read.
+    expect(html).toContain("data-intro-pending");
     expect(html).not.toContain("ag-map-layer");
     expect(html).not.toContain("ag-stamp");
-    expect(html).not.toContain(">100<");
+    // The saved score would show in the header's stats; the intro's own "100 for a bullseye" is a rule.
+    expect(html).not.toContain("ag-stats");
   });
 });
