@@ -15,6 +15,8 @@ const FACT_ABOUT: Record<string, string> = {
   food: "the food named in the clue: where it comes from, or how it is made or eaten",
   brand: "the company or brand named in the clue",
   wildlife: "the animal named in the clue",
+  traditional_dress: "the garment named in the clue: its history, or when and how it is worn",
+  satellite: "the place shown from space, named in the clue",
   written_language: "the language of the text sample, or its script",
 };
 

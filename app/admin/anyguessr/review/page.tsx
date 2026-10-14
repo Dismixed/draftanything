@@ -24,15 +24,28 @@ interface ReviewEntry {
 }
 
 /** Clue types the game is keeping; currency and jersey are being retired. */
-const REVIEW_TYPES = ["landmark", "environment", "food", "person", "brand", "wildlife", "written_language", "flag"];
+const REVIEW_TYPES = [
+  "landmark",
+  "environment",
+  "food",
+  "person",
+  "brand",
+  "wildlife",
+  "traditional_dress",
+  "satellite",
+  "written_language",
+  "flag",
+];
 
 const TYPE_LABELS: Record<string, string> = {
-  landmark: "Place",
-  environment: "Place (second)",
+  landmark: "Landmark",
+  environment: "Environment",
   food: "Food",
   person: "Person",
   brand: "Brand",
   wildlife: "Wildlife",
+  traditional_dress: "Traditional dress",
+  satellite: "Satellite",
   written_language: "Language",
   flag: "Flag",
 };

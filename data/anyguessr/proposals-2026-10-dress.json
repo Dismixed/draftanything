@@ -1,0 +1,290 @@
+[
+  {
+    "cca3": "JPN",
+    "country": "Japan",
+    "clue_type": "traditional_dress",
+    "difficulty": "easy",
+    "note": "new: worn for festivals and ceremonies",
+    "wiki_title": "Kimono"
+  },
+  {
+    "cca3": "KOR",
+    "country": "South Korea",
+    "clue_type": "traditional_dress",
+    "difficulty": "easy",
+    "note": "new: national dress",
+    "wiki_title": "Hanbok"
+  },
+  {
+    "cca3": "VNM",
+    "country": "Vietnam",
+    "clue_type": "traditional_dress",
+    "difficulty": "easy",
+    "note": "new: national dress",
+    "wiki_title": "Áo dài"
+  },
+  {
+    "cca3": "CHN",
+    "country": "China",
+    "clue_type": "traditional_dress",
+    "difficulty": "easy",
+    "note": "new: also called cheongsam",
+    "wiki_title": "Qipao"
+  },
+  {
+    "cca3": "GBR",
+    "country": "United Kingdom",
+    "clue_type": "traditional_dress",
+    "difficulty": "easy",
+    "note": "new: Scottish; lead image is a painting, so check the chosen photo",
+    "wiki_title": "Kilt"
+  },
+  {
+    "cca3": "IND",
+    "country": "India",
+    "clue_type": "traditional_dress",
+    "difficulty": "easy",
+    "note": "new: also worn in Bangladesh, Nepal and Sri Lanka, which are all close",
+    "wiki_title": "Sari"
+  },
+  {
+    "cca3": "DEU",
+    "country": "Germany",
+    "clue_type": "traditional_dress",
+    "difficulty": "easy",
+    "note": "new: Bavarian; Austria is next door",
+    "wiki_title": "Lederhosen"
+  },
+  {
+    "cca3": "AUT",
+    "country": "Austria",
+    "clue_type": "traditional_dress",
+    "difficulty": "medium",
+    "note": "new: also Bavarian; Germany is next door",
+    "wiki_title": "Dirndl"
+  },
+  {
+    "cca3": "ESP",
+    "country": "Spain",
+    "clue_type": "traditional_dress",
+    "difficulty": "medium",
+    "note": "new: Andalusian flamenco dress",
+    "wiki_title": "Traje de flamenca"
+  },
+  {
+    "cca3": "MEX",
+    "country": "Mexico",
+    "clue_type": "traditional_dress",
+    "difficulty": "medium",
+    "note": "new: charro suit and sombrero",
+    "wiki_title": "Charro"
+  },
+  {
+    "cca3": "RUS",
+    "country": "Russia",
+    "clue_type": "traditional_dress",
+    "difficulty": "medium",
+    "note": "new: fur hat",
+    "wiki_title": "Ushanka"
+  },
+  {
+    "cca3": "NLD",
+    "country": "Netherlands",
+    "clue_type": "traditional_dress",
+    "difficulty": "medium",
+    "note": "new: wooden clogs",
+    "wiki_title": "Klomp"
+  },
+  {
+    "cca3": "NOR",
+    "country": "Norway",
+    "clue_type": "traditional_dress",
+    "difficulty": "medium",
+    "note": "new: worn on Constitution Day",
+    "wiki_title": "Bunad"
+  },
+  {
+    "cca3": "PHL",
+    "country": "Philippines",
+    "clue_type": "traditional_dress",
+    "difficulty": "medium",
+    "note": "new: national dress for men",
+    "wiki_title": "Barong tagalog"
+  },
+  {
+    "cca3": "MNG",
+    "country": "Mongolia",
+    "clue_type": "traditional_dress",
+    "difficulty": "medium",
+    "note": "new: herders' robe",
+    "wiki_title": "Deel (clothing)"
+  },
+  {
+    "cca3": "MAR",
+    "country": "Morocco",
+    "clue_type": "traditional_dress",
+    "difficulty": "medium",
+    "note": "new: also worn across North Africa",
+    "wiki_title": "Djellaba"
+  },
+  {
+    "cca3": "PAK",
+    "country": "Pakistan",
+    "clue_type": "traditional_dress",
+    "difficulty": "medium",
+    "note": "new: national dress; also worn in India and Afghanistan",
+    "wiki_title": "Shalwar kameez"
+  },
+  {
+    "cca3": "UKR",
+    "country": "Ukraine",
+    "clue_type": "traditional_dress",
+    "difficulty": "medium",
+    "note": "new: embroidered shirt",
+    "wiki_title": "Vyshyvanka"
+  },
+  {
+    "cca3": "PAN",
+    "country": "Panama",
+    "clue_type": "traditional_dress",
+    "difficulty": "medium",
+    "note": "new: national dress",
+    "wiki_title": "Pollera"
+  },
+  {
+    "cca3": "GHA",
+    "country": "Ghana",
+    "clue_type": "traditional_dress",
+    "difficulty": "medium",
+    "note": "new: Ashanti and Ewe woven cloth",
+    "wiki_title": "Kente cloth"
+  },
+  {
+    "cca3": "ETH",
+    "country": "Ethiopia",
+    "clue_type": "traditional_dress",
+    "difficulty": "medium",
+    "note": "new: also worn in Eritrea, next door",
+    "wiki_title": "Habesha kemis"
+  },
+  {
+    "cca3": "IDN",
+    "country": "Indonesia",
+    "clue_type": "traditional_dress",
+    "difficulty": "medium",
+    "note": "new: also made in Malaysia, close by",
+    "wiki_title": "Batik"
+  },
+  {
+    "cca3": "GRC",
+    "country": "Greece",
+    "clue_type": "traditional_dress",
+    "difficulty": "medium",
+    "note": "new: worn by the Evzones guards; also Albanian",
+    "wiki_title": "Fustanella"
+  },
+  {
+    "cca3": "COL",
+    "country": "Colombia",
+    "clue_type": "traditional_dress",
+    "difficulty": "hard",
+    "note": "new: national symbol",
+    "wiki_title": "Sombrero vueltiao"
+  },
+  {
+    "cca3": "CUB",
+    "country": "Cuba",
+    "clue_type": "traditional_dress",
+    "difficulty": "hard",
+    "note": "new: also worn across the Caribbean and Mexico",
+    "wiki_title": "Guayabera"
+  },
+  {
+    "cca3": "ECU",
+    "country": "Ecuador",
+    "clue_type": "traditional_dress",
+    "difficulty": "hard",
+    "note": "new: made in Ecuador despite the name; the fact should say so",
+    "wiki_title": "Panama hat"
+  },
+  {
+    "cca3": "BOL",
+    "country": "Bolivia",
+    "clue_type": "traditional_dress",
+    "difficulty": "hard",
+    "note": "new: cholitas in bowler hats; title is the redirect target of Cholita",
+    "wiki_title": "Pollera women"
+  },
+  {
+    "cca3": "PER",
+    "country": "Peru",
+    "clue_type": "traditional_dress",
+    "difficulty": "hard",
+    "note": "new: Andean knitted hat; also Bolivian",
+    "wiki_title": "Chullo"
+  },
+  {
+    "cca3": "DZA",
+    "country": "Algeria",
+    "clue_type": "traditional_dress",
+    "difficulty": "hard",
+    "note": "new: Algiers velvet jacket",
+    "wiki_title": "Karakou"
+  },
+  {
+    "cca3": "ISL",
+    "country": "Iceland",
+    "clue_type": "traditional_dress",
+    "difficulty": "hard",
+    "note": "new: Icelandic wool sweater",
+    "wiki_title": "Lopapeysa"
+  },
+  {
+    "cca3": "KHM",
+    "country": "Cambodia",
+    "clue_type": "traditional_dress",
+    "difficulty": "hard",
+    "note": "new: checked scarf",
+    "wiki_title": "Krama"
+  },
+  {
+    "cca3": "NPL",
+    "country": "Nepal",
+    "clue_type": "traditional_dress",
+    "difficulty": "hard",
+    "note": "new: national cap",
+    "wiki_title": "Dhaka topi"
+  },
+  {
+    "cca3": "THA",
+    "country": "Thailand",
+    "clue_type": "traditional_dress",
+    "difficulty": "hard",
+    "note": "new: chut thai",
+    "wiki_title": "Traditional Thai clothing"
+  },
+  {
+    "cca3": "TUN",
+    "country": "Tunisia",
+    "clue_type": "traditional_dress",
+    "difficulty": "hard",
+    "note": "new: red felt cap",
+    "wiki_title": "Chechia"
+  },
+  {
+    "cca3": "MDG",
+    "country": "Madagascar",
+    "clue_type": "traditional_dress",
+    "difficulty": "hard",
+    "note": "new: lead image is unrelated, so check the chosen photo",
+    "wiki_title": "Lamba (garment)"
+  },
+  {
+    "cca3": "NGA",
+    "country": "Nigeria",
+    "clue_type": "traditional_dress",
+    "difficulty": "hard",
+    "note": "new: Yoruba robe; also worn across West Africa",
+    "wiki_title": "Agbada"
+  }
+]

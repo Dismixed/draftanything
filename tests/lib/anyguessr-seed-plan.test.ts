@@ -56,7 +56,7 @@ describe("planSeedChanges", () => {
   it("stages the removal of a live optional clue the proposals left out", () => {
     const plan = planSeedChanges(
       [existing("brand", "approved", "Japan Airlines"), existing("food", "approved", "Sushi")],
-      [proposal("food", "Sushi")],
+      [proposal("food", "Sushi"), proposal("brand", "Qantas", { cca3: "AUS", country: "Australia" })],
     );
     expect(plan.staged).toEqual([
       { id: "JPN-brand", cca3: "JPN", clue_type: "brand", from: "Japan Airlines", to: null },
@@ -66,9 +66,19 @@ describe("planSeedChanges", () => {
   it("rejects a non-live optional clue the proposals left out", () => {
     const plan = planSeedChanges(
       [existing("wildlife", "needs_review", "Grey wolf"), existing("food", "approved", "Sushi")],
-      [proposal("food", "Sushi")],
+      [proposal("food", "Sushi"), proposal("wildlife", "Koala", { cca3: "AUS", country: "Australia" })],
     );
     expect(plan.reject).toEqual(["JPN-wildlife"]);
+  });
+
+  it("leaves optional clues of a type the file does not propose at all alone", () => {
+    const plan = planSeedChanges(
+      [existing("brand", "approved", "Toyota"), existing("wildlife", "needs_review", "Japanese macaque")],
+      [proposal("traditional_dress", "Kimono")],
+    );
+    expect(plan.create).toHaveLength(1);
+    expect(plan.staged).toEqual([]);
+    expect(plan.reject).toEqual([]);
   });
 
   it("compares language clues by their text", () => {

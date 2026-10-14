@@ -248,6 +248,8 @@ const CLUE_RANKS: Record<string, number> = {
   written_language: 8,
   landmark: 9,
   wildlife: 10,
+  traditional_dress: 11,
+  satellite: 12,
 };
 
 export async function generatePuzzleForBundle(

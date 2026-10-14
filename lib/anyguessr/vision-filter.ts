@@ -31,11 +31,16 @@ export function buildVisionPrompt(options: {
           `Does this image clearly show this brand? The brand's logo or a clearly branded product is the ideal image; a storefront or building with the brand's signage is acceptable.`,
           `Reject images that do not show the brand at all, other companies' marks, maps, flags, collages, diagrams, charts, and generic stock photos.`,
         ]
-      : [
-          `Does this image plausibly depict the clue type for this country?`,
-          `Reject maps, flags (unless clue type is flag), collages, logos unrelated to the country,`,
-          `diagrams, charts, and generic stock photos.`,
-        ]),
+      : options.clueType === "traditional_dress"
+        ? [
+            `Does this image clearly show this traditional garment, ideally worn by a person? A photo of people wearing it is ideal; a garment on display is acceptable.`,
+            `Reject drawings, paintings, sewing patterns, close-ups of fabric alone, maps, flags, collages, and photos where the garment is hard to make out.`,
+          ]
+        : [
+            `Does this image plausibly depict the clue type for this country?`,
+            `Reject maps, flags (unless clue type is flag), collages, logos unrelated to the country,`,
+            `diagrams, charts, and generic stock photos.`,
+          ]),
     "",
     options.clueType === "flag"
       ? `This is a flag clue, so set shows_country_name to false.`

@@ -9,16 +9,18 @@ import { usePhotoZoom } from "./use-photo-zoom";
 export type ClueView = "both" | "clue" | "map";
 
 const CLUE_TYPE_LABEL: Record<string, string> = {
-  environment: "Place",
+  environment: "Environment",
   person: "Person",
   food: "Food",
   written_language: "Written language",
-  landmark: "Place",
+  landmark: "Landmark",
   flag: "Flag",
   currency: "Currency",
   jersey: "Jersey",
   brand: "Brand",
   wildlife: "Wildlife",
+  traditional_dress: "Traditional dress",
+  satellite: "From space",
   audio: "Spoken language",
 };
 
@@ -29,6 +31,8 @@ const CLUE_PROMPT: Record<string, string> = {
   audio: "Where is this spoken?",
   brand: "Where is this brand from?",
   wildlife: "Where does this live?",
+  traditional_dress: "Where is this worn?",
+  satellite: "Where on Earth is this?",
   currency: "Whose money is this?",
   jersey: "Whose jersey is this?",
 };
@@ -148,6 +152,11 @@ export default function ClueCard({
         {imageUrl && typeof clue.metadata?.caption === "string" && !minimised && (
           // A person's name: the round asks where they are from, not who they are.
           <div className="ag-clue-caption">{clue.metadata.caption}</div>
+        )}
+
+        {imageUrl && clue.type === "satellite" && typeof clue.metadata?.credit === "string" && !minimised && (
+          // The image's licence asks for credit. It names the source, never the place.
+          <div className="ag-clue-credit">{clue.metadata.credit}</div>
         )}
 
         {audioUrl && !minimised && <audio controls src={audioUrl} aria-label={`${clue.type} audio clue`} />}

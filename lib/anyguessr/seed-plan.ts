@@ -43,7 +43,7 @@ export interface SeedPlan {
 }
 
 /** Clue types a proposal may omit; omission means "this country has no good one". */
-const OPTIONAL_TYPES = new Set(["brand", "wildlife", "written_language"]);
+const OPTIONAL_TYPES = new Set(["brand", "wildlife", "written_language", "traditional_dress", "satellite"]);
 
 /** Statuses the game draws from. */
 const LIVE_STATUSES = new Set(["approved"]);
@@ -66,6 +66,8 @@ export function planSeedChanges(existing: readonly ExistingClue[], proposals: re
   const byKey = new Map(existing.map((clue) => [`${clue.cca3}:${clue.clue_type}`, clue]));
   const proposed = new Set(proposals.map((p) => `${p.cca3}:${p.clue_type}`));
   const reviewedCountries = new Set(proposals.map((p) => p.cca3));
+  // A file that proposes only some clue types says nothing about the others.
+  const reviewedTypes = new Set(proposals.map((p) => p.clue_type));
 
   for (const proposal of proposals) {
     const current = byKey.get(`${proposal.cca3}:${proposal.clue_type}`);
@@ -87,7 +89,7 @@ export function planSeedChanges(existing: readonly ExistingClue[], proposals: re
   }
 
   for (const clue of existing) {
-    if (!OPTIONAL_TYPES.has(clue.clue_type) || !reviewedCountries.has(clue.cca3)) continue;
+    if (!OPTIONAL_TYPES.has(clue.clue_type) || !reviewedTypes.has(clue.clue_type) || !reviewedCountries.has(clue.cca3)) continue;
     if (proposed.has(`${clue.cca3}:${clue.clue_type}`)) continue;
     if (LIVE_STATUSES.has(clue.status)) {
       plan.staged.push({ id: clue.id, cca3: clue.cca3, clue_type: clue.clue_type, from: valueOf(clue) || null, to: null });

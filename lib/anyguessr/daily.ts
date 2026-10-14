@@ -18,19 +18,20 @@ export const DAILY_EXACT_MATCH_KM = 75;
 export const DAILY_SCORE_DECAY_KM = 4500;
 
 /**
- * Round headings by clue type. Landmark and environment are one kind of
- * round to the player. Currency and jersey are retired but appear in days
- * stored before that.
+ * Round headings by clue type. Currency and jersey are retired but appear
+ * in days stored before that.
  */
 export const DAILY_CLUE_TYPE_LABEL: Record<string, string> = {
   flag: "Flag",
-  landmark: "Place",
-  environment: "Place",
+  landmark: "Landmark",
+  environment: "Environment",
   written_language: "Language",
   person: "Person",
   food: "Food",
   brand: "Brand",
   wildlife: "Wildlife",
+  traditional_dress: "Traditional dress",
+  satellite: "From space",
   currency: "Currency",
   jersey: "Jersey",
 };
@@ -38,13 +39,15 @@ export const DAILY_CLUE_TYPE_LABEL: Record<string, string> = {
 /** What a round's fun fact is about, by clue type; the fact describes the clue, not the country. */
 export const DAILY_FACT_LABEL: Record<string, string> = {
   flag: "About the flag",
-  landmark: "About the place",
+  landmark: "About the landmark",
   environment: "About the place",
   written_language: "About the language",
   person: "About the person",
   food: "About the dish",
   brand: "About the brand",
   wildlife: "About the animal",
+  traditional_dress: "About the outfit",
+  satellite: "About the place",
   currency: "About the currency",
   jersey: "About the jersey",
 };

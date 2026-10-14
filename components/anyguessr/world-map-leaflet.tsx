@@ -215,6 +215,22 @@ function RecapView({ bounds, staged, framed }: { bounds: L.LatLngBounds | null; 
   return null;
 }
 
+/**
+ * Hides the answer and the line until the reveal reaches them. They are on the map from the start:
+ * a shape added while the camera flies is drawn at the wrong scale until the flight ends.
+ */
+function RevealState({ line, answer }: { line: boolean; answer: boolean }) {
+  const map = useMap();
+
+  useEffect(() => {
+    const el = map.getContainer();
+    el.classList.toggle("is-line-hidden", !line);
+    el.classList.toggle("is-answer-hidden", !answer);
+  }, [map, line, answer]);
+
+  return null;
+}
+
 /** The line from the guess to the answer, which draws itself in when the reveal reaches it. */
 function GuessLine({ from, to, draw }: { from: L.LatLng; to: L.LatLngExpression; draw: boolean }) {
   const line = useRef<L.Polyline>(null);
@@ -307,6 +323,7 @@ export default function WorldMapLeaflet({ selection = null, onSelect, answer, gu
       {playing && world && onSelect && <ClickToPick world={world} onSelect={onSelect} />}
       {playing && <PlayView selection={selection} inset={inset ?? { top: 12, bottom: 12 }} />}
       {!playing && <RecapView bounds={recapBounds} staged={Boolean(reveal)} framed={reveal ? reveal.framed : true} />}
+      {!playing && <RevealState line={showLine} answer={showAnswer} />}
 
       {pickShape && selection && (
         <GeoJSON key={`pick-${pickCca3}`} data={pickShape} interactive={false} style={{ className: "ag-land-pick" }} />
@@ -315,13 +332,13 @@ export default function WorldMapLeaflet({ selection = null, onSelect, answer, gu
         <Marker position={[selection.lat, selection.lng]} icon={tagIcon(selection.name, "pick")} interactive={false} />
       )}
 
-      {showAnswer && answerShape && answer && (
+      {answerShape && answer && (
         <GeoJSON key={`answer-${answer.cca3}`} data={answerShape} interactive={false} style={{ className: "ag-land-answer" }} />
       )}
       {reveal && showAnswer && answer && <Marker position={[answer.lat, answer.lng]} icon={pulseIcon} interactive={false} />}
       {missed && guessAt && answer && (
         <>
-          {showLine && <GuessLine from={guessAt} to={[answer.lat, answer.lng]} draw={Boolean(reveal)} />}
+          <GuessLine from={guessAt} to={[answer.lat, answer.lng]} draw={Boolean(reveal) && showLine} />
           <Marker position={guessAt} icon={tagIcon("Your guess", "guess")} interactive={false} />
         </>
       )}

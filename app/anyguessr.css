@@ -131,6 +131,8 @@ html[data-theme="light"] {
   stroke-opacity: 1;
   stroke-width: 2;
 }
+.ag-map.is-answer-hidden .ag-land-answer,
+.ag-map.is-line-hidden .ag-map-line { visibility: hidden; }
 .ag-map .ag-map-line {
   fill: none;
   stroke: var(--ag-bad);
@@ -448,6 +450,18 @@ html[data-theme="light"] {
   font-size: 16px;
   font-weight: 600;
   text-align: center;
+}
+.ag-clue-credit {
+  position: absolute;
+  left: 8px;
+  bottom: 6px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.55);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 10px;
+  line-height: 1.4;
+  pointer-events: none;
 }
 .ag-clue-media audio { position: relative; width: 92%; max-width: 320px; }
 .ag-clue-text {

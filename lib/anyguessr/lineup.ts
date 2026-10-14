@@ -24,20 +24,24 @@ export interface LineupDay {
 
 export const LINEUP_ROUNDS = 7;
 
-/** Landmark and environment are both shown to players as "Place". */
-const GROUP: Record<string, string> = { landmark: "place", environment: "place" };
-
 /** Most rounds one kind of clue may take in a game. */
-const GROUP_LIMIT: Record<string, number> = { place: 3 };
-const DEFAULT_GROUP_LIMIT = 2;
+const TYPE_LIMIT = 2;
 
 /** A country shown within this many days is passed over while any other can fill the round. */
 const COUNTRY_REST_DAYS = 7;
 
 /** Clue types the game draws from. Currency and jersey are retired. */
-const ROUND_TYPES = new Set(["landmark", "environment", "food", "person", "brand", "wildlife", "written_language"]);
-
-const groupOf = (clueType: string) => GROUP[clueType] ?? clueType;
+const ROUND_TYPES = new Set([
+  "landmark",
+  "environment",
+  "food",
+  "person",
+  "brand",
+  "wildlife",
+  "written_language",
+  "traditional_dress",
+  "satellite",
+]);
 
 function hash(text: string): number {
   let h = 0x811c9dc5;
@@ -97,27 +101,23 @@ export function pickLineup(
   const others = pool.filter((c) => ROUND_TYPES.has(c.clueType)).sort(byFreshness);
 
   const usedCountries = new Set<string>();
-  const groupCounts = new Map<string, number>();
+  const typeCounts = new Map<string, number>();
   const picked: LineupClue[] = [];
 
   const take = (clue: LineupClue) => {
     picked.push(clue);
     usedCountries.add(clue.puzzleId);
-    const group = groupOf(clue.clueType);
-    groupCounts.set(group, (groupCounts.get(group) ?? 0) + 1);
+    typeCounts.set(clue.clueType, (typeCounts.get(clue.clueType) ?? 0) + 1);
   };
 
-  const underLimit = (clue: LineupClue) => {
-    const group = groupOf(clue.clueType);
-    return (groupCounts.get(group) ?? 0) < (GROUP_LIMIT[group] ?? DEFAULT_GROUP_LIMIT);
-  };
+  const typeCount = (clue: LineupClue) => typeCounts.get(clue.clueType) ?? 0;
 
-  const groupCount = (clue: LineupClue) => groupCounts.get(groupOf(clue.clueType)) ?? 0;
+  const underLimit = (clue: LineupClue) => typeCount(clue) < TYPE_LIMIT;
 
   /** The freshest clue of whichever kind this game has least of. */
   const mostNeeded = (from: LineupClue[]) =>
     from.reduce<LineupClue | undefined>(
-      (best, clue) => (best && groupCount(best) <= groupCount(clue) ? best : clue),
+      (best, clue) => (best && typeCount(best) <= typeCount(clue) ? best : clue),
       undefined,
     );
 

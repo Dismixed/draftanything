@@ -12,6 +12,7 @@ const ClueTypeEnum = z.enum([
   "food",
   "environment",
   "wildlife",
+  "traditional_dress",
 ]);
 
 const ProposalSchema = z.object({
@@ -48,6 +49,7 @@ export async function proposeSeedEntriesWithLlm(options: {
       "For written_language return a short native script sample or greeting in text_content (not wiki_title).",
       "For brand pick a company strongly associated with the country, not a global multinational.",
       "For wildlife pick the national animal, an endemic species, or the most iconic wild animal with a strong Wikipedia lead photo.",
+      "For traditional_dress pick a garment worn in that country and closely tied to it (kimono, hanbok, dirndl), whose Wikipedia article has a photo of people wearing it.",
       "Return exactly one entry per clue type.",
     ].join(" "),
     userPrompt: JSON.stringify(options, null, 2),

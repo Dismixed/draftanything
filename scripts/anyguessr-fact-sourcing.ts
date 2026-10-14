@@ -51,7 +51,7 @@ const CONCURRENCY = 4;
 const CACHE_DIR = ".cache/anyguessr-wiki";
 
 /** Clue types the game keeps. Currency and jersey are retired. */
-const TYPES = ["flag", "landmark", "environment", "food", "person", "brand", "wildlife", "written_language"];
+const TYPES = ["flag", "landmark", "environment", "food", "person", "brand", "wildlife", "traditional_dress", "satellite", "written_language"];
 
 async function connect() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

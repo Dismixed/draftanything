@@ -11,7 +11,9 @@ const clue = (country: number, clueType: string, difficulty: LineupClue["difficu
  * `countries` countries, each with a flag and one clue of every other type.
  * Difficulty cycles by country so every level is well represented.
  */
-function pool(countries: number, types = ["landmark", "environment", "food", "person", "brand", "wildlife", "written_language"]): LineupClue[] {
+const ROUND_TYPES = ["landmark", "environment", "food", "person", "brand", "wildlife", "written_language", "traditional_dress", "satellite"];
+
+function pool(countries: number, types = ROUND_TYPES): LineupClue[] {
   const levels: LineupClue["difficulty"][] = ["easy", "medium", "hard"];
   const clues: LineupClue[] = [];
   for (let c = 1; c <= countries; c++) {
@@ -46,19 +48,19 @@ describe("pickLineup", () => {
 
   it("uses every kind of clue the pool offers before repeating one", () => {
     for (const date of ["2026-10-20", "2026-10-21", "2026-10-22"]) {
-      const kinds = new Set(pickLineup(pool(30), date, [])!.map((r) => (r.clueType === "environment" ? "landmark" : r.clueType)));
-      // Flag, place, food, person, brand, wildlife and language: seven rounds, seven kinds.
+      const kinds = new Set(pickLineup(pool(30), date, [])!.map((r) => r.clueType));
+      // A flag and six of the nine other kinds: seven rounds, seven kinds.
       expect(kinds.size, date).toBe(7);
     }
   });
 
-  it("uses at most two rounds of one type, and at most three places", () => {
+  it("uses at most two rounds of one type when the pool has enough kinds", () => {
+    // Three kinds for six rounds: two of each, landmark and environment counted apart.
+    const clues = pool(30, ["landmark", "environment", "food"]);
     for (const date of ["2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23", "2026-10-24"]) {
-      const lineup = pickLineup(pool(30), date, [])!;
-      const count = (types: string[]) => lineup.filter((r) => types.includes(r.clueType)).length;
-      expect(count(["landmark", "environment"]), date).toBeLessThanOrEqual(3);
-      for (const type of ["food", "person", "brand", "wildlife", "written_language"]) {
-        expect(count([type]), `${date} ${type}`).toBeLessThanOrEqual(2);
+      const lineup = pickLineup(clues, date, [])!;
+      for (const type of ["landmark", "environment", "food"]) {
+        expect(lineup.filter((r) => r.clueType === type).length, `${date} ${type}`).toBe(2);
       }
     }
   });
