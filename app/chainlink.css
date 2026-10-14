@@ -732,3 +732,191 @@ html[data-theme="light"] {
   .cl-title { font-size: 44px; }
   .cl-row-tick { width: 30px; height: 30px; }
 }
+
+/* ── Intro ───────────────────────────────────────────────────────── */
+
+.cli {
+  --intro-text: var(--cl-text);
+  --intro-dim: var(--cl-gray-dim);
+  --intro-hair: var(--cl-hair);
+  --intro-accent: var(--cl-yellow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  font-family: "Outfit", system-ui, sans-serif;
+  color: var(--cl-text);
+}
+
+/* Only the back link: the top right corner belongs to the fixed sound and theme buttons. */
+.cli-top {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+}
+
+.cli-wordmark {
+  margin: 0;
+  font-size: 52px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 0.95;
+}
+
+.cli-pitch {
+  margin: -4px 0 0;
+  max-width: 340px;
+  font-size: 15.5px;
+  line-height: 1.45;
+  color: var(--cl-gray-dim);
+}
+
+.cli-chain {
+  width: 100%;
+  max-width: 320px;
+  margin-top: 4px;
+}
+
+.cli-row {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-radius: 13px;
+  background: var(--cl-lock-bg);
+  border: 1px solid var(--cl-lock-border);
+  transition: background 0.35s, border-color 0.35s, box-shadow 0.35s;
+}
+
+.cli-row.is-active {
+  background: var(--cl-surface);
+  border-color: var(--cl-yellow);
+  box-shadow: 0 0 0 3px var(--cl-yellow-dim);
+}
+
+.cli-row.is-solved {
+  background: var(--cl-green);
+  border-color: var(--cl-green);
+}
+
+.cli-cells {
+  display: flex;
+  gap: 3px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.cli-cell {
+  width: 16px;
+  text-align: center;
+  color: var(--cl-lock-text);
+}
+.cli-cell.is-blank {
+  height: 22px;
+  border-bottom: 2px solid var(--cl-lock-text);
+}
+.cli-row.is-active .cli-cell { color: var(--cl-text); }
+.cli-row.is-active .cli-cell.is-blank { border-color: var(--cl-yellow); }
+.cli-row.is-solved .cli-cell { color: #0d0f0c; border: 0; }
+
+.cli-tag {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cl-lock-text);
+}
+.cli-row.is-solved .cli-tag { color: #0d0f0c; opacity: 0.7; }
+
+.cli-link {
+  height: 12px;
+  display: flex;
+  justify-content: center;
+}
+.cli-link::before {
+  content: "";
+  width: 14px;
+  height: 100%;
+  border: 3px solid var(--cl-hair);
+  border-top: 0;
+  border-bottom: 0;
+  border-radius: 3px;
+  transition: border-color 0.3s;
+}
+.cli-link.is-on::before { border-color: var(--cl-green); }
+
+.cli-caption {
+  margin: -4px 0 0;
+  min-height: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cl-text);
+}
+
+.cli-steps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cli-steps li {
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--cl-hair);
+  font-size: 12.5px;
+  color: var(--cl-gray-dim);
+  transition: color 0.3s, border-color 0.3s;
+}
+.cli-steps li.is-lit {
+  color: var(--cl-text);
+  border-color: var(--cl-yellow);
+}
+
+.cli-teaser {
+  margin: 2px 0 0;
+  padding: 9px 14px;
+  border-radius: 12px;
+  border: 1px dashed var(--cl-border);
+  font-size: 14px;
+  color: var(--cl-gray-dim);
+}
+.cli-teaser b {
+  color: var(--cl-text);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cli-play {
+  margin-top: 2px;
+  padding: 15px 34px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--cl-green);
+  color: #0d0f0c;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(106, 170, 100, 0.28);
+  transition: filter 0.15s, transform 0.15s;
+}
+.cli-play:hover { filter: brightness(1.06); }
+.cli-play:active { transform: scale(0.98); }
+.cli-play:focus-visible { outline: 3px solid var(--cl-yellow); outline-offset: 3px; }
+
+@media (min-width: 700px) {
+  .cli { gap: 15px; }
+  .cli-wordmark { font-size: 76px; }
+  .cli-pitch { font-size: 17px; max-width: 440px; }
+  .cli-chain { max-width: 340px; }
+}

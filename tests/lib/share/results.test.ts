@@ -49,7 +49,7 @@ describe("per-game share text", () => {
       "Brain Dead · Oct 6",
       "3 of 15 · 4,250 pts",
       "✅✅✅❌",
-      "https://stimgames.com/brain-dead/daily?ref=share",
+      "https://stimgames.com/brain-dead?ref=share",
     ]);
   });
 

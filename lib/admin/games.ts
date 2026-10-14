@@ -29,7 +29,7 @@ export const ADMIN_GAMES: AdminGame[] = [
   {
     id: "anyguessr",
     name: "AnyGuessr",
-    playHref: "/anyguessr/daily",
+    playHref: "/anyguessr",
     adminHref: "/admin/anyguessr",
     description: "Seed review, image sourcing, aliases, and puzzle generation.",
     accent: "#5bc0de",
@@ -37,7 +37,7 @@ export const ADMIN_GAMES: AdminGame[] = [
   {
     id: "brain-dead",
     name: "Brain Dead",
-    playHref: "/brain-dead/daily",
+    playHref: "/brain-dead",
     adminHref: null,
     description: "Trivia question sourcing — admin tools coming soon.",
     accent: "#b565d8",

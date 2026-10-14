@@ -15,9 +15,8 @@ vi.mock("@/lib/games/use-daily-percentile", () => ({
   useDailyPercentile,
 }));
 vi.mock("@/components/daily/finish-screen", () => ({ FinishScreen: () => null }));
-vi.mock("@/lib/game-how-it-works", () => ({
-  useGameHowItWorks: () => ({ showHowItWorks: false, dismissHowItWorks: vi.fn() }),
-}));
+// jsdom has no matchMedia; a still intro also keeps its demo timers out of the way.
+vi.mock("@/lib/motion/use-reduced-motion", () => ({ useReducedMotion: () => true }));
 vi.mock("@/lib/theme/theme-context", () => ({
   useTheme: () => ({ theme: "dark" }),
   setThemeColorOverride: vi.fn(),
@@ -43,7 +42,7 @@ describe("BallKnowledgeGame", () => {
 
   it("saves the number of accepted answers as the day's score when the clock runs out", async () => {
     render(<BallKnowledgeGame category="Pizza Toppings" />);
-    fireEvent.click(screen.getByRole("button", { name: "START" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start the clock" }));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(100);
     });

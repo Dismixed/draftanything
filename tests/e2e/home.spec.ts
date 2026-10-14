@@ -3,8 +3,8 @@ import { expect, test, type Page } from "@playwright/test";
 
 const DAILY_HREFS = [
   "/chainlink",
-  "/brain-dead/daily",
-  "/anyguessr/daily",
+  "/brain-dead",
+  "/anyguessr",
   "/hot-takes",
   "/freezeframes/daily",
   "/ball-knowledge/daily",

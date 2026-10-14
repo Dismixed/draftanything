@@ -413,13 +413,3 @@ export const useChainlinkStore = create<ChainlinkStore>()(
     },
   ),
 );
-
-export function isTutorialSeen(): boolean {
-  if (typeof window === "undefined") return true;
-  return localStorage.getItem("chainlink-tutorial-seen") === "true";
-}
-
-export function markTutorialSeen(): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem("chainlink-tutorial-seen", "true");
-}

@@ -15,11 +15,12 @@ describe("Chain Link first render in the browser", () => {
 
   // The server-side half of this pair is chainlink-first-render.server.test.tsx. Hydration
   // compares the two, so both must draw the same thing.
-  it("draws the loading placeholder before any effect has run", async () => {
+  it("draws the hidden intro before any effect has run", async () => {
     const { default: ChainlinkGame } = await import("@/components/chainlink/game");
 
     const html = renderToString(<ChainlinkGame mode="daily" />);
 
-    expect(html).toContain("Loading puzzle");
+    // The intro is drawn hidden until saved progress has been read.
+    expect(html).toContain("data-intro-pending");
   });
 });

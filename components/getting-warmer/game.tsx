@@ -8,8 +8,8 @@ import {
   type CSSProperties,
 } from "react";
 import Link from "next/link";
-import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
-import { useGameHowItWorks } from "@/lib/game-how-it-works";
+import { useDailyIntro } from "@/lib/daily-intro/use-daily-intro";
+import { GettingWarmerIntro } from "./intro";
 import { readDailyPuzzleCache, writeDailyPuzzleCache } from "@/lib/daily-puzzle-cache";
 import { getDateString } from "@/lib/getting-warmer/game-logic";
 import { FinishScreen } from "@/components/daily/finish-screen";
@@ -32,43 +32,6 @@ import { triggerAnimation } from "@/lib/motion/trigger-class";
 
 type Screen = "loading" | "game" | "results" | "played";
 
-function readInitialGettingWarmerState(): {
-  screen: Screen;
-  puzzle: DailyPuzzleClient | null;
-  clues: string[];
-  authoredCount: number;
-  played: ReturnType<typeof getDailyPlayed>;
-} {
-  if (typeof window === "undefined") {
-    return { screen: "loading", puzzle: null, clues: [], authoredCount: 0, played: null };
-  }
-
-  const today = getDateString();
-  const played = getDailyPlayed();
-  const cached = readDailyPuzzleCache<DailyPuzzleClient>("getting-warmer", today);
-  if (!cached) {
-    return { screen: "loading", puzzle: null, clues: [], authoredCount: 0, played };
-  }
-
-  if (played) {
-    return {
-      screen: "played",
-      puzzle: cached,
-      clues: [],
-      authoredCount: cached.authoredClueCount,
-      played,
-    };
-  }
-
-  return {
-    screen: "game",
-    puzzle: cached,
-    clues: cached.initialClues,
-    authoredCount: cached.authoredClueCount,
-    played,
-  };
-}
-
 function buildShareEmojis(attempts: number, won: boolean): string {
   const used = Math.min(attempts, 6);
   let emojis = "";
@@ -81,22 +44,19 @@ function buildShareEmojis(attempts: number, won: boolean): string {
 }
 
 export default function GettingWarmerGame() {
-  const initial = readInitialGettingWarmerState();
-  const [screen, setScreen] = useState<Screen>(initial.screen);
-  const [puzzle, setPuzzle] = useState<DailyPuzzleClient | null>(initial.puzzle);
+  const [screen, setScreen] = useState<Screen>("loading");
+  const [puzzle, setPuzzle] = useState<DailyPuzzleClient | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
-  const [clues, setClues] = useState<string[]>(initial.clues);
+  const [clues, setClues] = useState<string[]>([]);
   const [extraClues, setExtraClues] = useState<string[]>([]);
   const [wrongGuesses, setWrongGuesses] = useState<string[]>([]);
-  const [guessHistory, setGuessHistory] = useState<string[]>(
-    initial.played?.guesses ?? [],
-  );
-  const [gaveUp, setGaveUp] = useState(initial.played?.gaveUp ?? false);
-  const [attempts, setAttempts] = useState(initial.played?.attempts ?? 0);
+  const [guessHistory, setGuessHistory] = useState<string[]>([]);
+  const [gaveUp, setGaveUp] = useState(false);
+  const [attempts, setAttempts] = useState(0);
   const [finished, setFinished] = useState(false);
-  const [won, setWon] = useState(initial.played?.won ?? false);
-  const [answer, setAnswer] = useState(initial.played?.answer ?? "");
+  const [won, setWon] = useState(false);
+  const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
   const [guessInput, setGuessInput] = useState("");
   const [shakeInput, setShakeInput] = useState(false);
@@ -110,10 +70,7 @@ export default function GettingWarmerGame() {
   const [lbLoading, setLbLoading] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const [lbSubmitting, setLbSubmitting] = useState(false);
-  const [lbSubmitted, setLbSubmitted] = useState(
-    () => initial.screen === "played" && !!getSubmittedEntryId(),
-  );
-  const { showHowItWorks, dismissHowItWorks } = useGameHowItWorks("getting-warmer");
+  const [lbSubmitted, setLbSubmitted] = useState(false);
   const [showResultsModal, setShowResultsModal] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -121,8 +78,8 @@ export default function GettingWarmerGame() {
   const submittedEntryIdRef = useRef<string | null>(getSubmittedEntryId());
   const extraCluesRef = useRef<string[]>([]);
   const wrongGuessesRef = useRef<string[]>([]);
-  const cluesRef = useRef<string[]>(initial.clues);
-  const authoredCountRef = useRef(initial.authoredCount);
+  const cluesRef = useRef<string[]>([]);
+  const authoredCountRef = useRef(0);
 
   useEffect(() => {
     extraCluesRef.current = extraClues;
@@ -180,12 +137,6 @@ export default function GettingWarmerGame() {
   }, [finished]);
 
   useEffect(() => {
-    if (initial.screen === "played") {
-      void loadLeaderboard();
-      return;
-    }
-    if (initial.screen !== "loading") return;
-
     const today = getDateString();
     const played = getDailyPlayed();
 
@@ -225,8 +176,10 @@ export default function GettingWarmerGame() {
       }
     }
 
-    void load();
-  }, [initial.screen, loadLeaderboard]);
+    const cached = readDailyPuzzleCache<DailyPuzzleClient>("getting-warmer", today);
+    if (cached) applyPuzzle(cached);
+    else void load();
+  }, [loadLeaderboard]);
 
   useEffect(() => {
     if (screen === "game" && !finished) {
@@ -408,44 +361,31 @@ export default function GettingWarmerGame() {
 
   const shareEmojis = buildShareEmojis(attempts, won);
 
-  const howItWorksModal = showHowItWorks ? (
-    <GameHowItWorksModal
-      title="How Getting Warmer Works"
-      subtitle="Guess until the answer gives itself away."
-      rules={[
-        {
-          title: "Start warm",
-          body: "You begin with two clues pointing at a secret word or phrase.",
-        },
-        {
-          title: "Unlimited guesses",
-          body: "Guess as much as you need. Every miss reveals another clue.",
-        },
-        {
-          title: "Keeps going",
-          body: "If the written clues run out, you still get new hints, with letter reveals as backup.",
-        },
-        {
-          title: "Ranked by guesses",
-          body: "The leaderboard sorts by fewest guesses. Solve it in one shot and you're at the top.",
-        },
-      ]}
-      onDismiss={dismissHowItWorks}
-      theme={{
-        overlay: "var(--gw-overlay)",
-        surface: "var(--gw-surface)",
-        border: "color-mix(in srgb, var(--gw-orange) 30%, transparent)",
-        accent: "var(--gw-orange)",
-        text: "var(--gw-ink)",
-        textMuted: "var(--gw-ink-dim)",
-      }}
-    />
-  ) : null;
+  // The puzzle is read from the session cache after mount, or fetched; until then the
+  // intro stays hidden. Nothing in progress is saved, so only a finished day skips it.
+  const intro = useDailyIntro("getting-warmer", {
+    ready: screen !== "loading" || Boolean(fetchError),
+    skip: screen === "played" || Boolean(fetchError),
+  });
+
+  if (intro.phase !== "game") {
+    return (
+      <div className="gw-page gw-page--intro">
+        <GettingWarmerIntro
+          pending={intro.phase === "checking"}
+          onPlay={() => {
+            intro.play();
+            // The answer box is the first thing a player needs.
+            setTimeout(() => inputRef.current?.focus(), 50);
+          }}
+        />
+      </div>
+    );
+  }
 
   if (fetchError) {
     return (
       <div className="gw-page">
-        {howItWorksModal}
         <div className="gw-app">
           <div className="gw-error">{fetchError}</div>
         </div>
@@ -456,7 +396,6 @@ export default function GettingWarmerGame() {
   if (screen === "loading" && !fetchError) {
     return (
       <div className="gw-page">
-        {howItWorksModal}
         <div className="gw-app">
           <div className="gw-loading-page">Loading today&apos;s puzzle…</div>
         </div>
@@ -482,7 +421,6 @@ export default function GettingWarmerGame() {
       className={`gw-page${live ? " is-live" : ""}`}
       style={live ? ({ "--gw-h": heat.fraction } as CSSProperties) : undefined}
     >
-      {howItWorksModal}
       <div className={`gw-app${live ? " gw-app--play" : ""}`}>
         <header className="gw-bar">
           <Link href="/" className="gw-bar-back">

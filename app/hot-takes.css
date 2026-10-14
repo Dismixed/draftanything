@@ -725,3 +725,171 @@ html:not([data-theme="light"]) .hot-takes-ink {
 }
 .hot-takes-bar-pct { font-size: 9px; font-weight: 700; color: #1a1a1a; }
 .hot-takes-reopen { margin-top: 20px; }
+
+/* ── Intro ───────────────────────────────────────────────────────── */
+
+.hti {
+  --intro-text: var(--ht-text);
+  --intro-dim: var(--ht-text-dim);
+  --intro-hair: var(--ht-line);
+  --intro-accent: var(--ht-accent);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 18px 20px 48px;
+  text-align: center;
+  font-family: "Inter", system-ui, sans-serif;
+  color: var(--ht-text);
+}
+
+.hti-top { align-self: stretch; display: flex; align-items: center; min-height: 36px; }
+
+.hti-wordmark {
+  margin: 0;
+  font-size: 50px;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.05em;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.hti-category { margin: 0; font-size: 13px; color: var(--ht-text-dim); }
+.hti-category small { font-size: inherit; }
+.hti-category b {
+  display: block;
+  margin-top: 2px;
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: var(--ht-text);
+}
+
+.hti-stage {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
+  margin-top: 6px;
+  padding-top: 40px;
+}
+
+.hti-hold {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 3;
+  padding: 7px 13px;
+  border-radius: 3px;
+  background: var(--ht-paper);
+  color: #1b1916;
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
+  transform: translateX(-50%) rotate(-3deg);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.hti-hold.is-on { opacity: 1; }
+
+.hti-stamp {
+  position: absolute;
+  top: 26px;
+  right: -6px;
+  z-index: 4;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 3px solid var(--ht-accent);
+  font-size: 24px;
+  opacity: 0;
+  transform: rotate(-14deg) scale(2);
+  transition: opacity 0.3s, transform 0.3s cubic-bezier(0.2, 1.7, 0.4, 1);
+}
+.hti-stamp.is-on { opacity: 1; transform: rotate(-14deg) scale(1); }
+
+.hti-tiers { display: flex; flex-direction: column; gap: 4px; }
+
+.hti-tier {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  border-radius: 9px;
+  border: 1px solid var(--ht-line);
+  background: var(--ht-surface);
+}
+.hti-tier b {
+  flex: none;
+  width: 34px;
+  align-self: stretch;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  font-weight: 900;
+  color: #16151a;
+}
+.hti-tier-S b { background: var(--ht-heat-s); }
+.hti-tier-A b { background: var(--ht-heat-a); }
+.hti-tier-B b { background: var(--ht-heat-b); }
+.hti-tier-C b { background: var(--ht-heat-c); }
+.hti-tier-D b { background: var(--ht-heat-d); }
+html[data-theme="light"] .hti-tier b { color: #fff; }
+
+.hti-slips { display: flex; gap: 4px; overflow: hidden; }
+
+.hti-slip {
+  padding: 4px 7px;
+  border-radius: 3px;
+  background: var(--ht-paper);
+  color: #1b1916;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  animation: hti-drop 0.4s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+@keyframes hti-drop { from { transform: translateY(-30px) rotate(-8deg) scale(1.25); opacity: 0; } }
+
+.hti-rules {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+  font-size: 13px;
+  color: var(--ht-text-dim);
+}
+.hti-rules b { margin-right: 4px; color: var(--ht-accent); }
+
+.hti-play {
+  padding: 15px 34px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--ht-accent);
+  color: #fff;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(255, 90, 54, 0.3);
+  transition: filter 0.15s, transform 0.15s;
+}
+.hti-play:hover { filter: brightness(1.06); }
+.hti-play:active { transform: scale(0.98); }
+.hti-play:focus-visible { outline: 3px solid var(--ht-accent-2); outline-offset: 3px; }
+
+@media (min-width: 700px) {
+  .hti { max-width: 760px; }
+  .hti-wordmark { font-size: 84px; }
+  .hti-category b { font-size: 34px; }
+  .hti-stage { max-width: 470px; }
+  .hti-tier { height: 38px; }
+}

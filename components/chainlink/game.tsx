@@ -12,7 +12,8 @@ import { triggerAnimation } from "@/lib/motion/trigger-class";
 import { burstFrom } from "@/lib/motion/burst";
 import { impactRing } from "@/lib/motion/impact-ring";
 import { GameTitle } from "@/components/ui/game-title";
-import TutorialModal from "./tutorial-modal";
+import { ChainlinkIntro } from "./intro";
+import { useDailyIntro } from "@/lib/daily-intro/use-daily-intro";
 import { chainLinkShare } from "@/lib/share/results";
 import { getDateString as shareDate } from "@/lib/streak/date";
 import { FinishScreen } from "@/components/daily/finish-screen";
@@ -378,6 +379,9 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
   useEffect(() => {
     if (!isComplete || savedAttemptRef.current) return;
     savedAttemptRef.current = true;
+    // A finish restored from storage was recorded when it happened. Posting it again on every
+    // visit would inflate the daily play count the intro shows.
+    if (!playedThisVisitRef.current) return;
     if (mode === "daily") {
       recordDailyCompletion("chainlink");
     }
@@ -402,6 +406,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
   useEffect(() => {
     if (!isFailed || savedFailRef.current) return;
     savedFailRef.current = true;
+    if (!playedThisVisitRef.current) return;
     if (mode === "daily") {
       recordDailyCompletion("chainlink");
     }
@@ -478,13 +483,35 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
   const isPuzzleLoading =
     !loadError && (!storeReady || loading || puzzleWords.length === 0);
 
+  // The intro is for a daily nobody has touched yet: no guesses, no hints, nothing solved.
+  const touched =
+    wordAttempts.some((attempts) => attempts.length > 0) ||
+    wordStatuses.slice(1).some((status) => status === "solved") ||
+    revealedLetters.some((row) => row.some((shown, pos) => pos > 0 && shown));
+  const intro = useDailyIntro("chainlink", {
+    ready: Boolean(loadError) || !isPuzzleLoading,
+    skip: mode !== "daily" || Boolean(loadError) || gameStatus !== "playing" || touched,
+  });
+
   const totalTries = Math.max(MAX_TRIES, hintsRemaining);
   const summary = summarizeChain(puzzleWords, wordStatuses, wordAttempts, revealedLetters);
   const shareText = chainLinkShare(wordStatuses, wordAttempts, revealedLetters, shareDate());
 
+  if (intro.phase !== "game") {
+    return (
+      <ChainlinkIntro
+        pending={intro.phase === "checking"}
+        teaser={puzzleWords.length > 0 ? { startWord: puzzleWords[0]!, words: puzzleWords.length } : null}
+        onPlay={() => {
+          useChainlinkStore.setState({ startTime: Date.now() });
+          intro.play();
+        }}
+      />
+    );
+  }
+
   return (
     <>
-      <TutorialModal />
       {loadError ? (
       <div className="cl-game cl-state">
         <p>{loadError}</p>

@@ -11,13 +11,13 @@ import { useSound } from "@/lib/audio/sound-context";
 import { fireConfetti } from "@/lib/motion/confetti";
 import { burstFrom } from "@/lib/motion/burst";
 import { impactRing } from "@/lib/motion/impact-ring";
-import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
 import { GameTitle } from "@/components/ui/game-title";
 import { FinishScreen } from "@/components/daily/finish-screen";
-import { useGameHowItWorks } from "@/lib/game-how-it-works";
+import { useDailyIntro } from "@/lib/daily-intro/use-daily-intro";
 import { finishCurve, useDailyPercentile } from "@/lib/games/use-daily-percentile";
 import { anyGuessrShare } from "@/lib/share/results";
 import ClueCard, { type ClueView } from "./clue-card";
+import { AnyGuessrIntro } from "./intro";
 import { GuessDock } from "./guess-dock";
 import Results from "./results";
 import RoundRecap from "./round-recap";
@@ -41,7 +41,6 @@ export default function AnyGuessrGame() {
   // Starts false on the server and in the browser alike, so the first render matches the
   // server's HTML. The effect below switches it on once saved progress has loaded.
   const [storeReady, setStoreReady] = useState(false);
-  const { showHowItWorks, dismissHowItWorks } = useGameHowItWorks("anyguessr");
 
   const loading = store.loading;
   const status = store.status;
@@ -176,24 +175,11 @@ export default function AnyGuessrGame() {
     (feedback.message.includes("isn't ready") ||
       feedback.message.includes("No daily puzzle"));
 
-  const howItWorksModal = showHowItWorks ? (
-    <GameHowItWorksModal
-      subtitle={`${store.dailyRounds.length || LINEUP_ROUNDS} rounds · One puzzle a day`}
-      rules={ANYGUESSR_HOW_IT_WORKS}
-      onDismiss={() => {
-        dismissHowItWorks();
-        play("ui.tap");
-      }}
-      theme={{
-        overlay: "var(--ag-overlay)",
-        surface: "var(--ag-surface)",
-        border: "var(--ag-border)",
-        accent: "var(--ag-accent)",
-        text: "var(--ag-text)",
-        textMuted: "var(--ag-muted)",
-      }}
-    />
-  ) : null;
+  // The intro is for a daily nobody has started: no round played yet and not finished.
+  const intro = useDailyIntro("anyguessr", {
+    ready: !isLoading || dailyUnavailable,
+    skip: dailyUnavailable || isOver || store.currentRound > 0 || store.roundResults.length > 0,
+  });
 
   const totalRounds = store.dailyRounds.length || LINEUP_ROUNDS;
   const canGuess = !isOver && !showRoundRecap && Boolean(dailyRound);
@@ -224,10 +210,23 @@ export default function AnyGuessrGame() {
     </header>
   );
 
+  if (intro.phase !== "game") {
+    const first = store.dailyRounds[0];
+    return (
+      <AnyGuessrIntro
+        pending={intro.phase === "checking"}
+        teaser={first ? { firstClueType: first.clueType, rounds: store.dailyRounds.length } : null}
+        onPlay={() => {
+          play("ui.tap");
+          intro.play();
+        }}
+      />
+    );
+  }
+
   if (isLoading || dailyUnavailable) {
     return (
       <div className="ag-stage">
-        {howItWorksModal}
         {header}
         <div className="ag-notice">
           {isLoading ? (
@@ -248,8 +247,6 @@ export default function AnyGuessrGame() {
 
   return (
     <div className="ag-stage" data-view={dailyRound && !isOver ? view : "map"}>
-      {howItWorksModal}
-
       <div className="ag-map-layer">
         <WorldMap selection={selection} onSelect={handleMapSelect} onEngage={canGuess ? handleMapEngage : undefined} inset={MAP_INSET} />
       </div>
@@ -348,22 +345,3 @@ export default function AnyGuessrGame() {
 
 /** Space the map leaves clear for the header and the guess bar when it frames the world. */
 const MAP_INSET = { top: 170, bottom: 120 };
-
-const ANYGUESSR_HOW_IT_WORKS = [
-  {
-    title: "Seven Cultural Clues",
-    body: "Each round shows a different clue — flag, currency, jersey, landmark, food, and more. Everyone gets the same puzzle today.",
-  },
-  {
-    title: "Pin a Country",
-    body: "Tap the map and pick the country you think matches the clue. You get one guess per round.",
-  },
-  {
-    title: "Closer Is Better",
-    body: "Points depend on how close your guess is. Nail it and you earn full round points; far-off guesses still earn partial credit.",
-  },
-  {
-    title: "One Shot Per Day",
-    body: "Play through all seven rounds once, then come back tomorrow for a fresh set of countries.",
-  },
-] as const;

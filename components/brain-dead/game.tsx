@@ -30,7 +30,8 @@ import { useCountUp } from "@/lib/motion/count-up";
 import { GameTitle } from "@/components/ui/game-title";
 import { brainDeadShare } from "@/lib/share/results";
 import { getDateString as shareDate } from "@/lib/streak/date";
-import DailyIntroModal from "@/components/brain-dead/daily-intro-modal";
+import { BrainDeadIntro } from "@/components/brain-dead/intro";
+import { useDailyIntro } from "@/lib/daily-intro/use-daily-intro";
 import { FinishScreen } from "@/components/daily/finish-screen";
 import { finishCurve, useDailyPercentile } from "@/lib/games/use-daily-percentile";
 import { LifeSigns } from "@/components/brain-dead/life-signs";
@@ -68,7 +69,8 @@ export default function BrainDeadGame({
   const [todayCorrect, setTodayCorrect] = useState(0);
   const [scoreFloat, setScoreFloat] = useState<number | null>(null);
   const [questionAnim, setQuestionAnim] = useState<"in" | "out" | null>(null);
-  const [showIntro, setShowIntro] = useState(mode === "daily");
+  // The daily reads whether today was already played on mount; the hub waits for that.
+  const [checkedDaily, setCheckedDaily] = useState(false);
 
   const [fetchError, setFetchError] = useState<string | null>(null);
   const loadingRef = useRef(false);
@@ -91,6 +93,10 @@ export default function BrainDeadGame({
 
   const router = useRouter();
   const isDaily = mode === "daily";
+  // The daily's hub always shows first, even once today's run is done: it is also the way in
+  // to free play. Free play has no intro.
+  const intro = useDailyIntro("brain-dead", { ready: !isDaily || checkedDaily, skip: !isDaily });
+  const inIntro = intro.phase !== "game";
   const q = questions[qi];
   const [completeOpen, setCompleteOpen] = useState(false);
 
@@ -266,6 +272,7 @@ export default function BrainDeadGame({
 
     if (isDaily) {
       const played = getDailyPlayed();
+      setCheckedDaily(true);
       if (played) {
         setTodayScore(played.score);
         setTodayCorrect(played.correct);
@@ -298,11 +305,11 @@ export default function BrainDeadGame({
   }, [isDaily, category]);
 
   useEffect(() => {
-    if (screen === "game" && q && answered === "idle" && !showIntro) {
+    if (screen === "game" && q && answered === "idle" && !inIntro) {
       startTimer();
     }
     return clearIntervalTimer;
-  }, [screen, qi, q, answered, showIntro, startTimer, clearIntervalTimer]);
+  }, [screen, qi, q, answered, inIntro, startTimer, clearIntervalTimer]);
 
   const handleAnswer = (idx: number, btn: HTMLElement) => {
     if (!q || answered !== "idle") return;
@@ -409,7 +416,8 @@ export default function BrainDeadGame({
   const result = getResultCopy(correct);
 
   const freeplayBackHref = "/brain-dead/freeplay";
-  const backHref = isDaily ? "/brain-dead" : freeplayBackHref;
+  // The daily now plays on the /brain-dead hub itself, so its back link leaves the game.
+  const backHref = isDaily ? "/" : freeplayBackHref;
 
   const gameShell = (
     children: React.ReactNode,
@@ -433,6 +441,19 @@ export default function BrainDeadGame({
       {children}
     </div>
   );
+
+  if (isDaily && inIntro) {
+    return (
+      <BrainDeadIntro
+        pending={intro.phase === "checking"}
+        done={screen === "played"}
+        onPlay={() => {
+          play("ui.tap");
+          intro.play();
+        }}
+      />
+    );
+  }
 
   /* ── Daily: just finished, or already played today ── */
   if (dailyDone) {
@@ -564,22 +585,10 @@ export default function BrainDeadGame({
     );
   }
 
-  const intro = isDaily && showIntro && (
-    <DailyIntroModal
-      onStart={() => {
-        play("ui.tap");
-        setShowIntro(false);
-      }}
-    />
-  );
-
   /* ── Game ── */
   if (!q) {
     return gameShell(
-      <>
-        {intro}
-        <div className="bd-state">{fetchError ?? "Loading questions…"}</div>
-      </>,
+      <div className="bd-state">{fetchError ?? "Loading questions…"}</div>,
     );
   }
 
@@ -614,8 +623,6 @@ export default function BrainDeadGame({
 
   return gameShell(
     <>
-      {intro}
-
       <div ref={playAreaRef} className="bd-play" style={{ "--juice": juiceLevel(correct) } as React.CSSProperties}>
         <LifeSigns streak={correct} dead={runOver} />
         <div className={`bd-vitals${runOver ? " is-dead" : ""}`} data-tier={lifeSignsTier(runOver ? 0 : correct)}>

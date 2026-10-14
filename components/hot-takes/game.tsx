@@ -6,15 +6,17 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import Link from "next/link";
 import { GameTitle } from "@/components/ui/game-title";
-import { GameHowItWorksModal } from "@/components/ui/game-how-it-works-modal";
 import { hotTakesShare } from "@/lib/share/results";
 import { FinishScreen } from "@/components/daily/finish-screen";
-import { useGameHowItWorks } from "@/lib/game-how-it-works";
+import { useDailyIntro } from "@/lib/daily-intro/use-daily-intro";
+import { getHotTakesPlayed, saveHotTakesPlayed } from "@/lib/hot-takes/storage";
+import { HotTakesIntro } from "./intro";
 import { HotTakesImage } from "@/components/hot-takes/optimized-image";
 import { tiltFor } from "@/lib/hot-takes/tilt";
 import type { HotTakesDailyCategory, HotTakesDailyItem } from "@/lib/hot-takes/types";
@@ -23,6 +25,7 @@ import { useCountUp } from "@/lib/motion/count-up";
 import { recordDailyCompletion } from "@/lib/streak/storage";
 
 const TIERS = ["S", "A", "B", "C", "D"] as const;
+const subscribeNever = () => () => {};
 type Tier = (typeof TIERS)[number];
 type DropZone = Tier | "tray";
 
@@ -154,7 +157,8 @@ export default function HotTakesGame({
   const [dragOverZone, setDragOverZone] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [trayShuffle, setTrayShuffle] = useState(0);
-  const { showHowItWorks, dismissHowItWorks } = useGameHowItWorks("hot-takes");
+  // A ranking locked in earlier today is restored on mount; the intro waits for that check.
+  const [checkedPlayed, setCheckedPlayed] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
   const [lastPlacedId, setLastPlacedId] = useState<string | null>(null);
   const scoreNumRef = useRef<HTMLDivElement>(null);
@@ -163,6 +167,23 @@ export default function HotTakesGame({
     () => new Map(category.items.map((item, index) => [item.id, tiltFor(index)])),
     [category.items],
   );
+  // Restored once the page has hydrated, so the server and the browser draw the same first frame.
+  // Done during render (React's pattern for derived state) rather than in an effect.
+  const hydrated = useSyncExternalStore(subscribeNever, () => true, () => false);
+  if (hydrated && !checkedPlayed) {
+    setCheckedPlayed(true);
+    const played = getHotTakesPlayed(category.name);
+    if (played) {
+      const restored = { ...placements };
+      for (const id of Object.keys(restored)) {
+        const tier = played.placements[id];
+        if (tier && (TIERS as readonly string[]).includes(tier)) restored[id] = tier as Tier;
+      }
+      setPlacements(restored);
+      setSubmitted(true);
+    }
+  }
+
   const pointerDragRef = useRef<{
     id: string;
     pointerId: number;
@@ -365,6 +386,21 @@ export default function HotTakesGame({
     </div>
   ) : null;
 
+  const intro = useDailyIntro("hot-takes", { ready: checkedPlayed, skip: submitted });
+
+  if (intro.phase !== "game") {
+    return (
+      <div className="hot-takes-page">
+        <HotTakesIntro
+          pending={intro.phase === "checking"}
+          category={category.name}
+          labels={category.items.map((item) => item.label)}
+          onPlay={intro.play}
+        />
+      </div>
+    );
+  }
+
   return (
     <>
     <div className="hot-takes-page">
@@ -465,6 +501,7 @@ export default function HotTakesGame({
               disabled={remaining !== 0}
               onClick={() => {
                 setSubmitted(true);
+                saveHotTakesPlayed({ category: category.name, placements });
                 recordDailyCompletion("hot-takes");
               }}
             >
@@ -499,21 +536,6 @@ export default function HotTakesGame({
         </footer>
       </div>
 
-      {showHowItWorks && (
-        <GameHowItWorksModal
-          subtitle="15 items · One ranking a day"
-          rules={HOT_TAKES_HOW_IT_WORKS}
-          onDismiss={dismissHowItWorks}
-          theme={{
-            overlay: "var(--ht-overlay)",
-            surface: "var(--ht-surface)",
-            border: "var(--ht-line)",
-            accent: "var(--ht-accent)",
-            text: "var(--ht-text)",
-            textMuted: "var(--ht-text-dim)",
-          }}
-        />
-      )}
     </div>
 
       <FinishScreen
@@ -526,22 +548,3 @@ export default function HotTakesGame({
     </>
   );
 }
-
-const HOT_TAKES_HOW_IT_WORKS = [
-  {
-    title: "Rank Today's Category",
-    body: "Everyone gets the same 15 items in one category — drag or tap each into your S, A, B, C, or D tiers.",
-  },
-  {
-    title: "From the Tray",
-    body: "Items start in the tray. Drag them into a tier, or tap an item then tap a tier. Move them back anytime before you lock in.",
-  },
-  {
-    title: "Lock It In",
-    body: "Place every item before you submit. Once you lock in your ranking, you can't change it.",
-  },
-  {
-    title: "See the Crowd",
-    body: "After you submit, compare your tiers to how everyone else ranked — find out if you're aligned or controversial.",
-  },
-] as const;

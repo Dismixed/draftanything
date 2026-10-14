@@ -9,12 +9,13 @@ vi.mock("next/link", () => ({
 }));
 
 describe("Chain Link first render on the server", () => {
-  it("renders the loading placeholder, the same thing the browser draws first", async () => {
+  it("renders the hidden intro, the same thing the browser draws first", async () => {
     const { default: ChainlinkGame } = await import("@/components/chainlink/game");
 
     const html = renderToString(<ChainlinkGame mode="daily" />);
 
-    expect(html).toContain("Loading puzzle");
+    // The intro is drawn hidden until saved progress has been read.
+    expect(html).toContain("data-intro-pending");
     expect(html).not.toContain("game-shell");
   });
 });

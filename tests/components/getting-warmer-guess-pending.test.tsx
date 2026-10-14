@@ -7,10 +7,9 @@ import { getDateString } from "@/lib/getting-warmer/game-logic";
 vi.mock("@/lib/motion/burst", () => ({ burstFrom: vi.fn() }));
 vi.mock("@/lib/motion/impact-ring", () => ({ impactRing: vi.fn() }));
 vi.mock("@/lib/motion/trigger-class", () => ({ triggerAnimation: vi.fn() }));
-vi.mock("@/lib/game-how-it-works", () => ({
-  useGameHowItWorks: () => ({ showHowItWorks: false, dismissHowItWorks: vi.fn() }),
-}));
 vi.mock("@/components/daily/finish-screen", () => ({ FinishScreen: () => null }));
+// jsdom has no matchMedia; a still intro also keeps its demo timers out of the way.
+vi.mock("@/lib/motion/use-reduced-motion", () => ({ useReducedMotion: () => true }));
 vi.mock("@/lib/games/use-daily-percentile", () => ({
   finishCurve: () => null,
   useDailyPercentile: () => null,
@@ -65,6 +64,7 @@ describe("Getting Warmer while a guess is being checked", () => {
   async function guess(text: string) {
     const user = userEvent.setup();
     const view = render(<GettingWarmerGame />);
+    await user.click(screen.getByRole("button", { name: "Start guessing" }));
     await user.type(screen.getByPlaceholderText("Type your guess..."), text);
     await user.click(screen.getByRole("button", { name: "GUESS" }));
     return view;
