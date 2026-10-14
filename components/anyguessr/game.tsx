@@ -164,6 +164,8 @@ export default function AnyGuessrGame() {
 
   // Typing a guess tucks the clue away, leaving the map and the suggestions clear.
   const minimiseClue = () => setView("map");
+  // Scrolling or pressing the map tucks it away too, once the player starts looking around.
+  const handleMapEngage = () => setView((v) => (v === "both" ? "map" : v));
 
   const isLoading = !storeReady || loading || (store.dailyRounds.length === 0 && !feedback);
 
@@ -249,7 +251,7 @@ export default function AnyGuessrGame() {
       {howItWorksModal}
 
       <div className="ag-map-layer">
-        <WorldMap selection={selection} onSelect={handleMapSelect} inset={MAP_INSET} />
+        <WorldMap selection={selection} onSelect={handleMapSelect} onEngage={canGuess ? handleMapEngage : undefined} inset={MAP_INSET} />
       </div>
 
       {header}

@@ -31,6 +31,8 @@ export interface WorldMapProps {
   selection?: MapSelection | null;
   /** Present on the play screen: called when a country, or open sea, is clicked. */
   onSelect?: (next: MapSelection | null) => void;
+  /** Called when the player presses, drags or scrolls the map. */
+  onEngage?: () => void;
   /** Present after a guess: the right country, and where the player guessed. */
   answer?: { cca3: string; lat: number; lng: number };
   guess?: { cca3: string | null; lat: number | null; lng: number | null };
@@ -115,6 +117,31 @@ function ClickToPick({ world, onSelect }: { world: GeoJSON.FeatureCollection; on
       onSelect(cca3 && name ? { cca3, name, lat, lng } : null);
     },
   });
+
+  return null;
+}
+
+/**
+ * Reports a press or a scroll on the map. Listens to the page events rather than Leaflet's
+ * move and zoom events, which also fire when the game moves the camera itself.
+ */
+function EngageWatch({ onEngage }: { onEngage: () => void }) {
+  const map = useMap();
+  const latest = useRef(onEngage);
+  useEffect(() => {
+    latest.current = onEngage;
+  }, [onEngage]);
+
+  useEffect(() => {
+    const el = map.getContainer();
+    const engage = () => latest.current();
+    el.addEventListener("pointerdown", engage);
+    el.addEventListener("wheel", engage, { passive: true });
+    return () => {
+      el.removeEventListener("pointerdown", engage);
+      el.removeEventListener("wheel", engage);
+    };
+  }, [map]);
 
   return null;
 }
@@ -255,7 +282,7 @@ function GuessLine({ from, to, draw }: { from: L.LatLng; to: L.LatLngExpression;
   );
 }
 
-export default function WorldMapLeaflet({ selection = null, onSelect, answer, guess, inset, reveal, onReady }: WorldMapProps) {
+export default function WorldMapLeaflet({ selection = null, onSelect, onEngage, answer, guess, inset, reveal, onReady }: WorldMapProps) {
   const world = useWorld();
   const playing = Boolean(onSelect);
   // Leaflet only draws a little past the visible frame and redraws when a drag or zoom ends.
@@ -320,6 +347,7 @@ export default function WorldMapLeaflet({ selection = null, onSelect, answer, gu
       )}
 
       <SmoothWheelZoom />
+      {onEngage && <EngageWatch onEngage={onEngage} />}
       {playing && world && onSelect && <ClickToPick world={world} onSelect={onSelect} />}
       {playing && <PlayView selection={selection} inset={inset ?? { top: 12, bottom: 12 }} />}
       {!playing && <RecapView bounds={recapBounds} staged={Boolean(reveal)} framed={reveal ? reveal.framed : true} />}
