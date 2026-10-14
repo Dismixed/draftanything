@@ -59,7 +59,8 @@ function hash(text: string): number {
  * Countries and clues not seen recently are preferred, with a hash of the
  * date as the tie-break, so the result is the same however often it is
  * computed. Each round goes to the kind of clue the game has least of so
- * far. A country shown in the last week is used only when nothing else is
+ * far and, among those, the kind shown least in the last week, so a new or
+ * rarely drawn kind comes up soon. A country shown in the last week is used only when nothing else is
  * left: the type limits give way first, so one scarce clue cannot appear day
  * after day. Both give way before the round count does: a thin pool produces
  * a samier game, never a short one.
@@ -69,15 +70,22 @@ export function pickLineup(
   date: string,
   history: readonly LineupDay[],
 ): LineupClue[] | null {
+  const restedSince = new Date(`${date}T12:00:00Z`);
+  restedSince.setUTCDate(restedSince.getUTCDate() - COUNTRY_REST_DAYS);
+  const restCutoff = restedSince.toISOString().slice(0, 10);
+
   // Most recent date each country and each clue was shown; "" means never.
   const countrySeen = new Map<string, string>();
   const clueSeen = new Map<string, string>();
+  // How many rounds of each kind the last week showed.
+  const typeShown = new Map<string, number>();
   for (const day of history) {
     if (day.date >= date) continue;
     for (const round of day.rounds) {
       if ((countrySeen.get(round.puzzleId) ?? "") < day.date) countrySeen.set(round.puzzleId, day.date);
       const key = `${round.puzzleId}:${round.clueType}`;
       if ((clueSeen.get(key) ?? "") < day.date) clueSeen.set(key, day.date);
+      if (day.date >= restCutoff) typeShown.set(round.clueType, (typeShown.get(round.clueType) ?? 0) + 1);
     }
   }
 
@@ -92,9 +100,6 @@ export function pickLineup(
     return hash(`${date}:${a.puzzleId}:${a.clueType}`) - hash(`${date}:${b.puzzleId}:${b.clueType}`);
   };
 
-  const restedSince = new Date(`${date}T12:00:00Z`);
-  restedSince.setUTCDate(restedSince.getUTCDate() - COUNTRY_REST_DAYS);
-  const restCutoff = restedSince.toISOString().slice(0, 10);
   const rested = (clue: LineupClue) => (countrySeen.get(clue.puzzleId) ?? "") < restCutoff;
 
   const flags = pool.filter((c) => c.clueType === "flag").sort(byFreshness);
@@ -114,12 +119,14 @@ export function pickLineup(
 
   const underLimit = (clue: LineupClue) => typeCount(clue) < TYPE_LIMIT;
 
-  /** The freshest clue of whichever kind this game has least of. */
+  const shown = (clue: LineupClue) => typeShown.get(clue.clueType) ?? 0;
+
+  /** Fewer in this game first, then fewer in the last week. Ties keep the fresher clue. */
+  const needier = (a: LineupClue, b: LineupClue) => typeCount(a) - typeCount(b) || shown(a) - shown(b);
+
+  /** The freshest clue of whichever kind this game, then the last week, has least of. */
   const mostNeeded = (from: LineupClue[]) =>
-    from.reduce<LineupClue | undefined>(
-      (best, clue) => (best && typeCount(best) <= typeCount(clue) ? best : clue),
-      undefined,
-    );
+    from.reduce<LineupClue | undefined>((best, clue) => (best && needier(best, clue) <= 0 ? best : clue), undefined);
 
   for (let round = 1; round < LINEUP_ROUNDS; round++) {
     const free = others.filter((c) => !usedCountries.has(c.puzzleId));

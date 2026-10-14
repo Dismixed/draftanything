@@ -65,6 +65,18 @@ describe("pickLineup", () => {
     }
   });
 
+  it("brings in a kind of clue the last week has not shown", () => {
+    // A week of games drawn without satellite clues, then the pool gains them.
+    const before = pool(60, ROUND_TYPES.filter((t) => t !== "satellite"));
+    const history: LineupDay[] = [];
+    for (let d = 13; d < 20; d++) {
+      const date = `2026-10-${d}`;
+      history.push(day(date, pickLineup(before, date, history)!));
+    }
+    const today = pickLineup(pool(60), "2026-10-20", history)!;
+    expect(today.some((r) => r.clueType === "satellite")).toBe(true);
+  });
+
   it("gives the same lineup for the same date and a different one for another date", () => {
     const a = pickLineup(pool(30), "2026-10-20", []);
     expect(pickLineup(pool(30), "2026-10-20", [])).toEqual(a);
