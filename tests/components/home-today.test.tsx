@@ -88,7 +88,7 @@ describe("Today", () => {
     const done = screen.getByTestId("home-all-done");
     expect(done).toHaveTextContent("All seven done.");
     expect(done).toHaveTextContent("New puzzles in 8h 37m");
-    expect(within(done).getByRole("link")).toHaveAttribute("href", "/draft-anything");
+    expect(within(done).getByRole("link")).toHaveAttribute("href", "/draft-anything/play");
     expect(within(screen.getByTestId("home-lineup")).getAllByRole("link")).toHaveLength(7);
     expect(screen.getByTestId("home-progress")).toHaveTextContent("7 of 7 done today");
   });

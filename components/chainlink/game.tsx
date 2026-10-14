@@ -491,6 +491,9 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
   const intro = useDailyIntro("chainlink", {
     ready: Boolean(loadError) || !isPuzzleLoading,
     skip: mode !== "daily" || Boolean(loadError) || gameStatus !== "playing" || touched,
+    start: () => {
+      useChainlinkStore.setState({ startTime: Date.now() });
+    },
   });
 
   const totalTries = Math.max(MAX_TRIES, hintsRemaining);
@@ -502,10 +505,7 @@ export default function ChainlinkGame({ mode = "daily" }: { mode?: GameMode }) {
       <ChainlinkIntro
         pending={intro.phase === "checking"}
         teaser={puzzleWords.length > 0 ? { startWord: puzzleWords[0]!, words: puzzleWords.length } : null}
-        onPlay={() => {
-          useChainlinkStore.setState({ startTime: Date.now() });
-          intro.play();
-        }}
+        onPlay={intro.play}
       />
     );
   }

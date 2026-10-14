@@ -5,6 +5,7 @@ import Link from "next/link";
 import { GameCardPreview } from "@/components/daily/game-card-preview";
 import { GameTitle } from "@/components/ui/game-title";
 import { track } from "@/lib/analytics/track";
+import { requestDirectPlay } from "@/lib/daily-intro/direct-play";
 import { getGame, isDailyGame, type GameId } from "@/lib/games/registry";
 
 export interface GameCardProps {
@@ -13,6 +14,10 @@ export interface GameCardProps {
   streak?: number;
   /** Action label when the game is not played. Defaults to "Play". */
   cta?: string;
+  /** Defaults to the game's `playHref`. */
+  href?: string;
+  /** Open a daily game straight into play, without its intro. */
+  skipIntro?: boolean;
   event: "home_game_clicked" | "game_about_link_clicked";
   eventProps: Record<string, string | number | boolean>;
 }
@@ -22,6 +27,8 @@ export function GameCard({
   played = false,
   streak = 0,
   cta = "Play",
+  href,
+  skipIntro = false,
   event,
   eventProps,
 }: GameCardProps) {
@@ -29,10 +36,13 @@ export function GameCard({
 
   return (
     <Link
-      href={game.playHref}
+      href={href ?? game.playHref}
       className={`home-card${played ? " is-done" : ""}`}
       style={{ "--accent": game.theme.accent, "--brand": game.brand.color } as CSSProperties}
-      onClick={() => track(event, eventProps)}
+      onClick={() => {
+        if (skipIntro && isDailyGame(gameId)) requestDirectPlay(gameId);
+        track(event, eventProps);
+      }}
     >
       <div className="home-card-body">
         <div className="home-card-row">

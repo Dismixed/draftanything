@@ -1130,6 +1130,8 @@ html[data-theme="light"] .ff-stage.is-song .ff-cracks path {
   gap: 13px;
   width: 100%;
   max-width: 1040px;
+  min-height: 100vh;
+  min-height: 100dvh;
   margin: 0 auto;
   padding: 18px 20px 48px;
   text-align: center;

@@ -366,19 +366,16 @@ export default function GettingWarmerGame() {
   const intro = useDailyIntro("getting-warmer", {
     ready: screen !== "loading" || Boolean(fetchError),
     skip: screen === "played" || Boolean(fetchError),
+    // The answer box is the first thing a player needs.
+    start: () => {
+      setTimeout(() => inputRef.current?.focus(), 50);
+    },
   });
 
   if (intro.phase !== "game") {
     return (
       <div className="gw-page gw-page--intro">
-        <GettingWarmerIntro
-          pending={intro.phase === "checking"}
-          onPlay={() => {
-            intro.play();
-            // The answer box is the first thing a player needs.
-            setTimeout(() => inputRef.current?.focus(), 50);
-          }}
-        />
+        <GettingWarmerIntro pending={intro.phase === "checking"} onPlay={intro.play} />
       </div>
     );
   }

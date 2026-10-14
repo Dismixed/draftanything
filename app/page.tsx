@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
+import { AllGamesNav } from "@/components/home/all-games-nav";
 import { GameCard } from "@/components/home/game-card";
 import { Today } from "@/components/home/today";
-import { GAMES } from "@/lib/games/registry";
+import { playHref as draftPlayHref } from "@/lib/draft-landing/play-href";
 import { utcDayNumber } from "@/lib/games/today";
 import { shareImage } from "@/lib/og/metadata";
 import { buildHomeJsonLd, JsonLdScript } from "@/lib/seo";
@@ -63,7 +63,8 @@ export default function StimGames() {
         <div className="home-party">
           <GameCard
             gameId="draft-anything"
-            cta="See the game"
+            href={draftPlayHref()}
+            cta="Start a draft"
             event="home_game_clicked"
             eventProps={{ game: "draft-anything", slot: "party", position: 1, played_today: false }}
           />
@@ -75,14 +76,7 @@ export default function StimGames() {
           />
         </div>
 
-        {/* Cards open the day's puzzle directly; these link each game's main page, the one search engines index. */}
-        <nav className="home-links" aria-label="All games">
-          {GAMES.map((game) => (
-            <Link key={game.id} href={game.canonicalPath}>
-              {game.name}
-            </Link>
-          ))}
-        </nav>
+        <AllGamesNav />
 
         <p className="home-footer">Built by Stim Labs</p>
       </div>

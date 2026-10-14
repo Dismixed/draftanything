@@ -6,6 +6,8 @@ import { GameCardPreview } from "@/components/daily/game-card-preview";
 import { GameCard } from "@/components/home/game-card";
 import { GameTitle } from "@/components/ui/game-title";
 import { track } from "@/lib/analytics/track";
+import { requestDirectPlay } from "@/lib/daily-intro/direct-play";
+import { playHref as draftPlayHref } from "@/lib/draft-landing/play-href";
 import { DAILY_GAMES, getGame, type DailyGameId } from "@/lib/games/registry";
 import {
   buildTodayView,
@@ -42,11 +44,12 @@ export function Today({ dayNumber }: { dayNumber: number }) {
   );
 
   const view = buildTodayView(day, played);
-  const featured = view.featured ? getGame(view.featured) : null;
+  const featuredId = view.featured;
+  const featured = featuredId ? getGame(featuredId) : null;
 
   return (
     <>
-      {featured && view.featured ? (
+      {featured && featuredId ? (
         <section
           className="home-featured"
           data-testid="home-featured"
@@ -61,20 +64,21 @@ export function Today({ dayNumber }: { dayNumber: number }) {
             <Link
               href={featured.playHref}
               className="home-cta"
-              onClick={() =>
+              onClick={() => {
+                requestDirectPlay(featuredId);
                 track("home_game_clicked", {
                   game: featured.id,
                   slot: "featured",
                   position: 0,
                   played_today: false,
-                })
-              }
+                });
+              }}
             >
               Play today&apos;s {featured.name} →
             </Link>
           </div>
           <div className="home-featured-preview">
-            <GameCardPreview gameId={view.featured} size="lg" />
+            <GameCardPreview gameId={featuredId} size="lg" />
           </div>
         </section>
       ) : (
@@ -89,7 +93,7 @@ export function Today({ dayNumber }: { dayNumber: number }) {
               Until then, grab some friends for a round of Draft Anything.
             </p>
             <Link
-              href="/draft-anything"
+              href={draftPlayHref()}
               className="home-cta"
               onClick={() =>
                 track("home_game_clicked", {
@@ -128,6 +132,7 @@ export function Today({ dayNumber }: { dayNumber: number }) {
             gameId={id}
             played={played.has(id)}
             streak={streakFor.get(id) ?? 0}
+            skipIntro
             event="home_game_clicked"
             eventProps={{
               game: id,

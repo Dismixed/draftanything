@@ -405,19 +405,16 @@ export default function BallKnowledgeGame({
     />
   );
 
-  const intro = useDailyIntro("ball-knowledge", { ready: checkedPlayed, skip: screen !== "start" });
+  const intro = useDailyIntro("ball-knowledge", {
+    ready: checkedPlayed,
+    skip: screen !== "start",
+    start: startGame,
+  });
 
   if (intro.phase !== "game") {
     return (
       <main className="bk-page">
-        <BallKnowledgeIntro
-          pending={intro.phase === "checking"}
-          category={category}
-          onPlay={() => {
-            intro.play();
-            startGame();
-          }}
-        />
+        <BallKnowledgeIntro pending={intro.phase === "checking"} category={category} onPlay={intro.play} />
       </main>
     );
   }

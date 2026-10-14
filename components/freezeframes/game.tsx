@@ -223,6 +223,7 @@ export default function FreezeFramesGame() {
   const gameWrapRef = useRef<HTMLDivElement>(null);
   const resultCardRef = useRef<HTMLDivElement>(null);
   const songIvRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const puzzleRequestRef = useRef<Promise<DailyPuzzleClient | null> | null>(null);
   const [songPlaying, setSongPlaying] = useState(false);
   const [songPos, setSongPos] = useState(0);
   const songPosRef = useRef(0);
@@ -246,18 +247,23 @@ export default function FreezeFramesGame() {
     if (audioRef.current) audioRef.current.pause();
   }, []);
 
-  const loadPuzzle = useCallback(async () => {
-    try {
-      const res = await fetch("/api/freezeframes/daily");
-      if (!res.ok) throw new Error("Failed to load puzzle");
-      const data = (await res.json()) as DailyPuzzleClient;
-      setPuzzle(data);
-      setFetchError(null);
-      return data;
-    } catch {
-      setFetchError("Could not load today's FreezeFrames. Try again in a moment.");
-      return null;
-    }
+  // Play can fire while the mount-time fetch is still in flight; both share one request.
+  const loadPuzzle = useCallback(() => {
+    puzzleRequestRef.current ??= (async () => {
+      try {
+        const res = await fetch("/api/freezeframes/daily");
+        if (!res.ok) throw new Error("Failed to load puzzle");
+        const data = (await res.json()) as DailyPuzzleClient;
+        setPuzzle(data);
+        setFetchError(null);
+        return data;
+      } catch {
+        setFetchError("Could not load today's FreezeFrames. Try again in a moment.");
+        puzzleRequestRef.current = null;
+        return null;
+      }
+    })();
+    return puzzleRequestRef.current;
   }, []);
 
   const initRound = useCallback(
@@ -634,19 +640,16 @@ export default function FreezeFramesGame() {
     />
   );
 
-  const intro = useDailyIntro("freezeframes", { ready: checkedPlayed, skip: screen !== "home" });
+  const intro = useDailyIntro("freezeframes", {
+    ready: checkedPlayed,
+    skip: screen !== "home",
+    start: tryPlay,
+  });
 
   if (intro.phase !== "game") {
     return (
       <>
-        <FreezeFramesIntro
-          pending={intro.phase === "checking"}
-          onPlay={() => {
-            void tryPlay().then((started) => {
-              if (started) intro.play();
-            });
-          }}
-        />
+        <FreezeFramesIntro pending={intro.phase === "checking"} onPlay={intro.play} />
         {fetchError && <p className="ff-error" role="alert">{fetchError}</p>}
       </>
     );
