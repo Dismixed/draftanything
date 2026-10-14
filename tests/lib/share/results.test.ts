@@ -8,6 +8,7 @@ import {
   gettingWarmerShare,
   hotTakesShare,
 } from "@/lib/share/results";
+import { resultUrl } from "@/lib/share/share-text";
 
 const DATE = "2026-10-06";
 const lines = (text: string) => text.split("\n");
@@ -23,7 +24,7 @@ describe("per-game share text", () => {
     expect(lines(text)).toEqual([
       "Chain Link · Oct 6",
       "🟩🟨🟥🟥",
-      "https://stimgames.com/chainlink?ref=share",
+      resultUrl("chainlink", { label: "Oct 6", lines: ["🟩🟨🟥🟥"] }),
     ]);
     expect(text.toLowerCase()).not.toContain("ball");
   });
@@ -49,7 +50,7 @@ describe("per-game share text", () => {
       "Brain Dead · Oct 6",
       "3 of 15 · 4,250 pts",
       "✅✅✅❌",
-      "https://stimgames.com/brain-dead?ref=share",
+      resultUrl("brain-dead", { label: "Oct 6", lines: ["3 of 15 · 4,250 pts", "✅✅✅❌"] }),
     ]);
   });
 

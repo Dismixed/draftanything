@@ -2,7 +2,8 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { CSSProperties, ReactNode } from "react";
 import { ImageResponse } from "next/og";
-import { GAMES, getGame } from "@/lib/games/registry";
+import { GAMES, getGame, type DailyGameId } from "@/lib/games/registry";
+import { shareDare, type SharedResult } from "@/lib/share/result-link";
 import { SHARE_IMAGE_SIZE, type ShareImageId } from "./metadata";
 
 interface Palette {
@@ -287,6 +288,65 @@ function loadAssets() {
   return assets;
 }
 
+const fonts = (medium: Buffer, heavy: Buffer) => [
+  { name: "Outfit", data: medium, weight: 500 as const, style: "normal" as const },
+  { name: "Outfit", data: heavy, weight: 800 as const, style: "normal" as const },
+];
+
+// Emoji draw about a square wide; letters about half that.
+function lineWidth(line: string): number {
+  return Array.from(line).reduce((sum, char) => sum + (/\p{Extended_Pictographic}/u.test(char) ? 1.05 : 0.56), 0);
+}
+
+/** The image a shared result unfurls with: the friend's result, large, and a dare to beat it. */
+export async function createResultImage(id: DailyGameId, result: SharedResult): Promise<ImageResponse> {
+  const { medium, heavy, badge } = await loadAssets();
+  const p = PALETTES[id];
+  const game = getGame(id);
+  // Every line shares one size, set by the widest, so a row of squares and a score line up.
+  const widest = Math.max(...result.lines.map(lineWidth));
+  const lineSize = Math.max(34, Math.min(result.lines.length > 1 ? 76 : 96, Math.floor(1040 / widest)));
+
+  return new ImageResponse(
+    (
+      <div style={{ ...col, width: "100%", height: "100%", padding: "52px 72px", background: p.bg, color: p.text, fontFamily: "Outfit" }}>
+        <div style={{ ...row, justifyContent: "space-between" }}>
+          <div style={{ ...row, gap: 14 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={badge} width={40} height={46} alt="" />
+            <div style={{ display: "flex", fontSize: 26, fontWeight: 800, letterSpacing: 3, color: p.dim }}>STIM GAMES</div>
+          </div>
+          <div style={{ display: "flex", fontSize: 28, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: p.accent }}>
+            {result.label}
+          </div>
+        </div>
+
+        <div style={{ ...col, flex: 1, justifyContent: "center" }}>
+          <div style={{ display: "flex", fontSize: 84, fontWeight: 800, letterSpacing: -2, lineHeight: 1.05 }}>
+            <span style={{ whiteSpace: "pre" }}>{game.brand.first}</span>
+            <span style={{ color: p.brand }}>{game.brand.second}</span>
+          </div>
+          <div style={{ ...col, marginTop: 26, gap: 12 }}>
+            {result.lines.map((line, i) => (
+              <div key={i} style={{ display: "flex", fontSize: lineSize, fontWeight: 800, lineHeight: 1.15 }}>
+                {line}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ ...row, justifyContent: "space-between" }}>
+          <div style={{ display: "flex", fontSize: 34, fontWeight: 800, color: p.text }}>{shareDare(id)}</div>
+          <div style={{ display: "flex", padding: "12px 26px", borderRadius: 14, fontSize: 28, fontWeight: 800, color: p.bg, background: p.accent }}>
+            {`stimgames.com${game.canonicalPath}`}
+          </div>
+        </div>
+      </div>
+    ),
+    { ...SHARE_IMAGE_SIZE, fonts: fonts(medium, heavy) },
+  );
+}
+
 /** The image a link to the site unfurls with in chat apps and on social sites. */
 export async function createShareImage(id: ShareImageId): Promise<ImageResponse> {
   const { medium, heavy, badge } = await loadAssets();
@@ -325,12 +385,6 @@ export async function createShareImage(id: ShareImageId): Promise<ImageResponse>
         <div style={{ ...row, justifyContent: "center", width: 380, height: "100%" }}>{MOTIFS[id](p)}</div>
       </div>
     ),
-    {
-      ...SHARE_IMAGE_SIZE,
-      fonts: [
-        { name: "Outfit", data: medium, weight: 500, style: "normal" },
-        { name: "Outfit", data: heavy, weight: 800, style: "normal" },
-      ],
-    },
+    { ...SHARE_IMAGE_SIZE, fonts: fonts(medium, heavy) },
   );
 }
