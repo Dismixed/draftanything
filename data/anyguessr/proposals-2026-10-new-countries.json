@@ -1,0 +1,1746 @@
+[
+  {
+    "cca3": "ALB",
+    "country": "Albania",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Skanderbeg Square"
+  },
+  {
+    "cca3": "ALB",
+    "country": "Albania",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Albanian Riviera"
+  },
+  {
+    "cca3": "ALB",
+    "country": "Albania",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Tavë kosi"
+  },
+  {
+    "cca3": "ALB",
+    "country": "Albania",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Ismail Kadare"
+  },
+  {
+    "cca3": "ALB",
+    "country": "Albania",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "new country",
+    "text": "Mirëmëngjes, si jeni sot?",
+    "language": "Albanian",
+    "english": "Good morning, how are you today?"
+  },
+  {
+    "cca3": "ALB",
+    "country": "Albania",
+    "clue_type": "traditional_dress",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Qeleshe"
+  },
+  {
+    "cca3": "ARM",
+    "country": "Armenia",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Geghard"
+  },
+  {
+    "cca3": "ARM",
+    "country": "Armenia",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Lake Sevan"
+  },
+  {
+    "cca3": "ARM",
+    "country": "Armenia",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Ghapama"
+  },
+  {
+    "cca3": "ARM",
+    "country": "Armenia",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Aram Khachaturian"
+  },
+  {
+    "cca3": "ARM",
+    "country": "Armenia",
+    "clue_type": "brand",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Ararat (brandy)"
+  },
+  {
+    "cca3": "ARM",
+    "country": "Armenia",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "new country",
+    "text": "Բարի լույս, ինչպե՞ս եք",
+    "language": "Armenian",
+    "english": "Good morning, how are you?"
+  },
+  {
+    "cca3": "AZE",
+    "country": "Azerbaijan",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Flame Towers"
+  },
+  {
+    "cca3": "AZE",
+    "country": "Azerbaijan",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Gobustan State Historical and Cultural Reserve"
+  },
+  {
+    "cca3": "AZE",
+    "country": "Azerbaijan",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Qutab"
+  },
+  {
+    "cca3": "AZE",
+    "country": "Azerbaijan",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "new country",
+    "text": "Sabahınız xeyir, necəsiniz?",
+    "language": "Azerbaijani",
+    "english": "Good morning, how are you?"
+  },
+  {
+    "cca3": "BGR",
+    "country": "Bulgaria",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Rila Monastery"
+  },
+  {
+    "cca3": "BGR",
+    "country": "Bulgaria",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Seven Rila Lakes"
+  },
+  {
+    "cca3": "BGR",
+    "country": "Bulgaria",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Banitsa"
+  },
+  {
+    "cca3": "BGR",
+    "country": "Bulgaria",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Hristo Stoichkov"
+  },
+  {
+    "cca3": "BGR",
+    "country": "Bulgaria",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "new country",
+    "text": "Добро утро, как сте днес?",
+    "language": "Bulgarian",
+    "english": "Good morning, how are you today?"
+  },
+  {
+    "cca3": "BIH",
+    "country": "Bosnia and Herzegovina",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Stari Most"
+  },
+  {
+    "cca3": "BIH",
+    "country": "Bosnia and Herzegovina",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Kravica (waterfall)"
+  },
+  {
+    "cca3": "BIH",
+    "country": "Bosnia and Herzegovina",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Ćevapi"
+  },
+  {
+    "cca3": "BIH",
+    "country": "Bosnia and Herzegovina",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Edin Džeko"
+  },
+  {
+    "cca3": "BLR",
+    "country": "Belarus",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Mir Castle Complex"
+  },
+  {
+    "cca3": "BLR",
+    "country": "Belarus",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Narach (lake)"
+  },
+  {
+    "cca3": "BLR",
+    "country": "Belarus",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Svetlana Alexievich"
+  },
+  {
+    "cca3": "BLR",
+    "country": "Belarus",
+    "clue_type": "wildlife",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "European bison"
+  },
+  {
+    "cca3": "BLR",
+    "country": "Belarus",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "new country",
+    "text": "Добрай раніцы, як справы?",
+    "language": "Belarusian",
+    "english": "Good morning, how are things?"
+  },
+  {
+    "cca3": "CYP",
+    "country": "Cyprus",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Kourion"
+  },
+  {
+    "cca3": "CYP",
+    "country": "Cyprus",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Petra tou Romiou"
+  },
+  {
+    "cca3": "CYP",
+    "country": "Cyprus",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Halloumi"
+  },
+  {
+    "cca3": "CYP",
+    "country": "Cyprus",
+    "clue_type": "wildlife",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Cyprus mouflon"
+  },
+  {
+    "cca3": "CYP",
+    "country": "Cyprus",
+    "clue_type": "brand",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "KEO (company)"
+  },
+  {
+    "cca3": "EST",
+    "country": "Estonia",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Tallinn Old Town"
+  },
+  {
+    "cca3": "EST",
+    "country": "Estonia",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Lahemaa National Park"
+  },
+  {
+    "cca3": "EST",
+    "country": "Estonia",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Kama (food)"
+  },
+  {
+    "cca3": "EST",
+    "country": "Estonia",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Arvo Pärt"
+  },
+  {
+    "cca3": "EST",
+    "country": "Estonia",
+    "clue_type": "brand",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Skype"
+  },
+  {
+    "cca3": "EST",
+    "country": "Estonia",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "new country",
+    "text": "Tere hommikust, kuidas läheb?",
+    "language": "Estonian",
+    "english": "Good morning, how is it going?"
+  },
+  {
+    "cca3": "GEO",
+    "country": "Georgia",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Gergeti Trinity Church"
+  },
+  {
+    "cca3": "GEO",
+    "country": "Georgia",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Ushguli"
+  },
+  {
+    "cca3": "GEO",
+    "country": "Georgia",
+    "clue_type": "food",
+    "difficulty": "easy",
+    "note": "new country",
+    "wiki_title": "Khachapuri"
+  },
+  {
+    "cca3": "GEO",
+    "country": "Georgia",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Khvicha Kvaratskhelia"
+  },
+  {
+    "cca3": "GEO",
+    "country": "Georgia",
+    "clue_type": "written_language",
+    "difficulty": "easy",
+    "note": "new country",
+    "text": "დილა მშვიდობისა, როგორ ხარ?",
+    "language": "Georgian",
+    "english": "Good morning, how are you?"
+  },
+  {
+    "cca3": "GEO",
+    "country": "Georgia",
+    "clue_type": "traditional_dress",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Chokha"
+  },
+  {
+    "cca3": "LTU",
+    "country": "Lithuania",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Hill of Crosses"
+  },
+  {
+    "cca3": "LTU",
+    "country": "Lithuania",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Curonian Spit"
+  },
+  {
+    "cca3": "LTU",
+    "country": "Lithuania",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Cepelinai"
+  },
+  {
+    "cca3": "LTU",
+    "country": "Lithuania",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Arvydas Sabonis"
+  },
+  {
+    "cca3": "LTU",
+    "country": "Lithuania",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "new country",
+    "text": "Labas rytas, kaip sekasi?",
+    "language": "Lithuanian",
+    "english": "Good morning, how is it going?"
+  },
+  {
+    "cca3": "LVA",
+    "country": "Latvia",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "House of the Blackheads (Riga)"
+  },
+  {
+    "cca3": "LVA",
+    "country": "Latvia",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Gauja National Park"
+  },
+  {
+    "cca3": "LVA",
+    "country": "Latvia",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Grey peas"
+  },
+  {
+    "cca3": "LVA",
+    "country": "Latvia",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Kristaps Porziņģis"
+  },
+  {
+    "cca3": "LVA",
+    "country": "Latvia",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "new country",
+    "text": "Labrīt, kā jums klājas?",
+    "language": "Latvian",
+    "english": "Good morning, how are you doing?"
+  },
+  {
+    "cca3": "MDA",
+    "country": "Moldova",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Old Orhei"
+  },
+  {
+    "cca3": "MDA",
+    "country": "Moldova",
+    "clue_type": "brand",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Cricova (winery)"
+  },
+  {
+    "cca3": "MKD",
+    "country": "North Macedonia",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Church of St. John at Kaneo"
+  },
+  {
+    "cca3": "MKD",
+    "country": "North Macedonia",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Lake Ohrid"
+  },
+  {
+    "cca3": "MKD",
+    "country": "North Macedonia",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Tavče gravče"
+  },
+  {
+    "cca3": "MKD",
+    "country": "North Macedonia",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Mother Teresa"
+  },
+  {
+    "cca3": "MNE",
+    "country": "Montenegro",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Sveti Stefan"
+  },
+  {
+    "cca3": "MNE",
+    "country": "Montenegro",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Bay of Kotor"
+  },
+  {
+    "cca3": "MNE",
+    "country": "Montenegro",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Njeguški pršut"
+  },
+  {
+    "cca3": "SRB",
+    "country": "Serbia",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Church of Saint Sava"
+  },
+  {
+    "cca3": "SRB",
+    "country": "Serbia",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Đavolja Varoš"
+  },
+  {
+    "cca3": "SRB",
+    "country": "Serbia",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Pljeskavica"
+  },
+  {
+    "cca3": "SRB",
+    "country": "Serbia",
+    "clue_type": "person",
+    "difficulty": "easy",
+    "note": "new country",
+    "wiki_title": "Novak Djokovic"
+  },
+  {
+    "cca3": "SRB",
+    "country": "Serbia",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "new country",
+    "text": "Добро јутро, како сте?",
+    "language": "Serbian",
+    "english": "Good morning, how are you?"
+  },
+  {
+    "cca3": "SVK",
+    "country": "Slovakia",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Spiš Castle"
+  },
+  {
+    "cca3": "SVK",
+    "country": "Slovakia",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "High Tatras"
+  },
+  {
+    "cca3": "SVK",
+    "country": "Slovakia",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Bryndzové halušky"
+  },
+  {
+    "cca3": "SVK",
+    "country": "Slovakia",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Peter Sagan"
+  },
+  {
+    "cca3": "SVK",
+    "country": "Slovakia",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "new country",
+    "text": "Dobré ráno, ako sa máte?",
+    "language": "Slovak",
+    "english": "Good morning, how are you?"
+  },
+  {
+    "cca3": "SVN",
+    "country": "Slovenia",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Predjama Castle"
+  },
+  {
+    "cca3": "SVN",
+    "country": "Slovenia",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Lake Bled"
+  },
+  {
+    "cca3": "SVN",
+    "country": "Slovenia",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Potica"
+  },
+  {
+    "cca3": "SVN",
+    "country": "Slovenia",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Luka Dončić"
+  },
+  {
+    "cca3": "SVN",
+    "country": "Slovenia",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "new country",
+    "text": "Dober dan, kako si danes?",
+    "language": "Slovene",
+    "english": "Good day, how are you today?"
+  },
+  {
+    "cca3": "AFG",
+    "country": "Afghanistan",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Mausoleum of Imam Ali"
+  },
+  {
+    "cca3": "AFG",
+    "country": "Afghanistan",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Band-e Amir National Park"
+  },
+  {
+    "cca3": "AFG",
+    "country": "Afghanistan",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Kabuli pulao"
+  },
+  {
+    "cca3": "KAZ",
+    "country": "Kazakhstan",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Baiterek (monument)"
+  },
+  {
+    "cca3": "KAZ",
+    "country": "Kazakhstan",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Charyn Canyon"
+  },
+  {
+    "cca3": "KAZ",
+    "country": "Kazakhstan",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Beshbarmak"
+  },
+  {
+    "cca3": "KAZ",
+    "country": "Kazakhstan",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Gennady Golovkin"
+  },
+  {
+    "cca3": "KAZ",
+    "country": "Kazakhstan",
+    "clue_type": "wildlife",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Saiga antelope"
+  },
+  {
+    "cca3": "KAZ",
+    "country": "Kazakhstan",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "new country",
+    "text": "Қайырлы таң, қалайсыз?",
+    "language": "Kazakh",
+    "english": "Good morning, how are you?"
+  },
+  {
+    "cca3": "KGZ",
+    "country": "Kyrgyzstan",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Burana Tower"
+  },
+  {
+    "cca3": "KGZ",
+    "country": "Kyrgyzstan",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Issyk-Kul"
+  },
+  {
+    "cca3": "KGZ",
+    "country": "Kyrgyzstan",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Kuurdak"
+  },
+  {
+    "cca3": "LAO",
+    "country": "Laos",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Pha That Luang"
+  },
+  {
+    "cca3": "LAO",
+    "country": "Laos",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Kuang Si Falls"
+  },
+  {
+    "cca3": "LAO",
+    "country": "Laos",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Khao piak sen"
+  },
+  {
+    "cca3": "MMR",
+    "country": "Myanmar",
+    "clue_type": "landmark",
+    "difficulty": "easy",
+    "note": "new country",
+    "wiki_title": "Shwedagon Pagoda"
+  },
+  {
+    "cca3": "MMR",
+    "country": "Myanmar",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Bagan"
+  },
+  {
+    "cca3": "MMR",
+    "country": "Myanmar",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Mohinga"
+  },
+  {
+    "cca3": "MMR",
+    "country": "Myanmar",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Aung San Suu Kyi"
+  },
+  {
+    "cca3": "MMR",
+    "country": "Myanmar",
+    "clue_type": "traditional_dress",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Longyi"
+  },
+  {
+    "cca3": "OMN",
+    "country": "Oman",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Sultan Qaboos Grand Mosque"
+  },
+  {
+    "cca3": "OMN",
+    "country": "Oman",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Sharqiya Sands"
+  },
+  {
+    "cca3": "OMN",
+    "country": "Oman",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Shuwa"
+  },
+  {
+    "cca3": "KWT",
+    "country": "Kuwait",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Kuwait Towers"
+  },
+  {
+    "cca3": "BTN",
+    "country": "Bhutan",
+    "clue_type": "landmark",
+    "difficulty": "easy",
+    "note": "new country",
+    "wiki_title": "Paro Taktsang"
+  },
+  {
+    "cca3": "BTN",
+    "country": "Bhutan",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Phobjikha Valley"
+  },
+  {
+    "cca3": "BTN",
+    "country": "Bhutan",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Ema datshi"
+  },
+  {
+    "cca3": "BTN",
+    "country": "Bhutan",
+    "clue_type": "traditional_dress",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Gho"
+  },
+  {
+    "cca3": "UZB",
+    "country": "Uzbekistan",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Registan"
+  },
+  {
+    "cca3": "UZB",
+    "country": "Uzbekistan",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Itchan Kala"
+  },
+  {
+    "cca3": "UZB",
+    "country": "Uzbekistan",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Samsa (food)"
+  },
+  {
+    "cca3": "UZB",
+    "country": "Uzbekistan",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "new country",
+    "text": "Xayrli tong, qalaysiz?",
+    "language": "Uzbek",
+    "english": "Good morning, how are you?"
+  },
+  {
+    "cca3": "TKM",
+    "country": "Turkmenistan",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Darvaza gas crater"
+  },
+  {
+    "cca3": "TKM",
+    "country": "Turkmenistan",
+    "clue_type": "wildlife",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Akhal-Teke"
+  },
+  {
+    "cca3": "TJK",
+    "country": "Tajikistan",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Iskanderkul"
+  },
+  {
+    "cca3": "TJK",
+    "country": "Tajikistan",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Qurutob"
+  },
+  {
+    "cca3": "TJK",
+    "country": "Tajikistan",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "new country",
+    "text": "Субҳ ба хайр, аҳволатон чӣ хел?",
+    "language": "Tajik",
+    "english": "Good morning, how are you?"
+  },
+  {
+    "cca3": "SGP",
+    "country": "Singapore",
+    "clue_type": "landmark",
+    "difficulty": "easy",
+    "note": "new country",
+    "wiki_title": "Marina Bay Sands"
+  },
+  {
+    "cca3": "SGP",
+    "country": "Singapore",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Gardens by the Bay"
+  },
+  {
+    "cca3": "SGP",
+    "country": "Singapore",
+    "clue_type": "brand",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Tiger Beer"
+  },
+  {
+    "cca3": "YEM",
+    "country": "Yemen",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Shibam"
+  },
+  {
+    "cca3": "YEM",
+    "country": "Yemen",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Socotra"
+  },
+  {
+    "cca3": "YEM",
+    "country": "Yemen",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Saltah"
+  },
+  {
+    "cca3": "SYR",
+    "country": "Syria",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Krak des Chevaliers"
+  },
+  {
+    "cca3": "SYR",
+    "country": "Syria",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Palmyra"
+  },
+  {
+    "cca3": "AGO",
+    "country": "Angola",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Kalandula Falls"
+  },
+  {
+    "cca3": "AGO",
+    "country": "Angola",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Moambe chicken"
+  },
+  {
+    "cca3": "AGO",
+    "country": "Angola",
+    "clue_type": "wildlife",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Giant sable antelope"
+  },
+  {
+    "cca3": "BEN",
+    "country": "Benin",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Ganvie"
+  },
+  {
+    "cca3": "BEN",
+    "country": "Benin",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Angélique Kidjo"
+  },
+  {
+    "cca3": "BFA",
+    "country": "Burkina Faso",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Grand Mosque of Bobo-Dioulasso"
+  },
+  {
+    "cca3": "BFA",
+    "country": "Burkina Faso",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Sindou"
+  },
+  {
+    "cca3": "BFA",
+    "country": "Burkina Faso",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Thomas Sankara"
+  },
+  {
+    "cca3": "BWA",
+    "country": "Botswana",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Tsodilo"
+  },
+  {
+    "cca3": "BWA",
+    "country": "Botswana",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Okavango Delta"
+  },
+  {
+    "cca3": "BWA",
+    "country": "Botswana",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Seswaa"
+  },
+  {
+    "cca3": "BWA",
+    "country": "Botswana",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Seretse Khama"
+  },
+  {
+    "cca3": "CMR",
+    "country": "Cameroon",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Mount Cameroon"
+  },
+  {
+    "cca3": "CMR",
+    "country": "Cameroon",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Ndolé"
+  },
+  {
+    "cca3": "CMR",
+    "country": "Cameroon",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Samuel Eto'o"
+  },
+  {
+    "cca3": "CIV",
+    "country": "Ivory Coast",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Basilica of Our Lady of Peace"
+  },
+  {
+    "cca3": "CIV",
+    "country": "Ivory Coast",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Acheke"
+  },
+  {
+    "cca3": "CIV",
+    "country": "Ivory Coast",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Didier Drogba"
+  },
+  {
+    "cca3": "COD",
+    "country": "DR Congo",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Mount Nyiragongo"
+  },
+  {
+    "cca3": "COD",
+    "country": "DR Congo",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Patrice Lumumba"
+  },
+  {
+    "cca3": "COD",
+    "country": "DR Congo",
+    "clue_type": "wildlife",
+    "difficulty": "easy",
+    "note": "new country",
+    "wiki_title": "Okapi"
+  },
+  {
+    "cca3": "GAB",
+    "country": "Gabon",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Loango National Park"
+  },
+  {
+    "cca3": "GIN",
+    "country": "Guinea",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Fouta Djallon"
+  },
+  {
+    "cca3": "LBY",
+    "country": "Libya",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Leptis Magna"
+  },
+  {
+    "cca3": "LBY",
+    "country": "Libya",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Acacus Mountains"
+  },
+  {
+    "cca3": "MLI",
+    "country": "Mali",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Great Mosque of Djenné"
+  },
+  {
+    "cca3": "MLI",
+    "country": "Mali",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Bandiagara Escarpment"
+  },
+  {
+    "cca3": "MLI",
+    "country": "Mali",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Salif Keita"
+  },
+  {
+    "cca3": "MOZ",
+    "country": "Mozambique",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Island of Mozambique"
+  },
+  {
+    "cca3": "MOZ",
+    "country": "Mozambique",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Bazaruto Archipelago"
+  },
+  {
+    "cca3": "MRT",
+    "country": "Mauritania",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Chinguetti"
+  },
+  {
+    "cca3": "MRT",
+    "country": "Mauritania",
+    "clue_type": "environment",
+    "difficulty": "easy",
+    "note": "new country",
+    "wiki_title": "Richat Structure"
+  },
+  {
+    "cca3": "MWI",
+    "country": "Malawi",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Lake Malawi"
+  },
+  {
+    "cca3": "NAM",
+    "country": "Namibia",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Kolmanskop"
+  },
+  {
+    "cca3": "NAM",
+    "country": "Namibia",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Sossusvlei"
+  },
+  {
+    "cca3": "NER",
+    "country": "Niger",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Agadez Mosque"
+  },
+  {
+    "cca3": "NER",
+    "country": "Niger",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Aïr Mountains"
+  },
+  {
+    "cca3": "RWA",
+    "country": "Rwanda",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Volcanoes National Park"
+  },
+  {
+    "cca3": "RWA",
+    "country": "Rwanda",
+    "clue_type": "wildlife",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Mountain gorilla"
+  },
+  {
+    "cca3": "RWA",
+    "country": "Rwanda",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Paul Kagame"
+  },
+  {
+    "cca3": "SDN",
+    "country": "Sudan",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Meroë"
+  },
+  {
+    "cca3": "SOM",
+    "country": "Somalia",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Laas Geel"
+  },
+  {
+    "cca3": "SOM",
+    "country": "Somalia",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Iman (model)"
+  },
+  {
+    "cca3": "TCD",
+    "country": "Chad",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Ennedi Plateau"
+  },
+  {
+    "cca3": "UGA",
+    "country": "Uganda",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Kasubi Tombs"
+  },
+  {
+    "cca3": "UGA",
+    "country": "Uganda",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Murchison Falls"
+  },
+  {
+    "cca3": "UGA",
+    "country": "Uganda",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Rolex (food)"
+  },
+  {
+    "cca3": "ZMB",
+    "country": "Zambia",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "South Luangwa National Park"
+  },
+  {
+    "cca3": "ZWE",
+    "country": "Zimbabwe",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Great Zimbabwe"
+  },
+  {
+    "cca3": "ZWE",
+    "country": "Zimbabwe",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Victoria Falls"
+  },
+  {
+    "cca3": "LBR",
+    "country": "Liberia",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "George Weah"
+  },
+  {
+    "cca3": "SLE",
+    "country": "Sierra Leone",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Tiwai Island"
+  },
+  {
+    "cca3": "DOM",
+    "country": "Dominican Republic",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Columbus Lighthouse"
+  },
+  {
+    "cca3": "DOM",
+    "country": "Dominican Republic",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Saona Island"
+  },
+  {
+    "cca3": "DOM",
+    "country": "Dominican Republic",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Mangú"
+  },
+  {
+    "cca3": "DOM",
+    "country": "Dominican Republic",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "David Ortiz"
+  },
+  {
+    "cca3": "DOM",
+    "country": "Dominican Republic",
+    "clue_type": "brand",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Presidente (beer)"
+  },
+  {
+    "cca3": "GTM",
+    "country": "Guatemala",
+    "clue_type": "landmark",
+    "difficulty": "easy",
+    "note": "new country",
+    "wiki_title": "Tikal"
+  },
+  {
+    "cca3": "GTM",
+    "country": "Guatemala",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Lake Atitlán"
+  },
+  {
+    "cca3": "GTM",
+    "country": "Guatemala",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Pepián"
+  },
+  {
+    "cca3": "GTM",
+    "country": "Guatemala",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Rigoberta Menchú"
+  },
+  {
+    "cca3": "GTM",
+    "country": "Guatemala",
+    "clue_type": "traditional_dress",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Huipil"
+  },
+  {
+    "cca3": "HND",
+    "country": "Honduras",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Copán"
+  },
+  {
+    "cca3": "HND",
+    "country": "Honduras",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Roatán"
+  },
+  {
+    "cca3": "HND",
+    "country": "Honduras",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Baleada"
+  },
+  {
+    "cca3": "HTI",
+    "country": "Haiti",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Citadelle Laferrière"
+  },
+  {
+    "cca3": "HTI",
+    "country": "Haiti",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Griot (food)"
+  },
+  {
+    "cca3": "HTI",
+    "country": "Haiti",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Toussaint Louverture"
+  },
+  {
+    "cca3": "HTI",
+    "country": "Haiti",
+    "clue_type": "written_language",
+    "difficulty": "medium",
+    "note": "new country",
+    "text": "Bonjou, kijan ou ye jodi a?",
+    "language": "Haitian Creole",
+    "english": "Hello, how are you today?"
+  },
+  {
+    "cca3": "NIC",
+    "country": "Nicaragua",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "León Cathedral"
+  },
+  {
+    "cca3": "NIC",
+    "country": "Nicaragua",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Ometepe"
+  },
+  {
+    "cca3": "PRY",
+    "country": "Paraguay",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Jesuit Missions of La Santísima Trinidad de Paraná and Jesús de Tavarangue"
+  },
+  {
+    "cca3": "PRY",
+    "country": "Paraguay",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Sopa paraguaya"
+  },
+  {
+    "cca3": "SLV",
+    "country": "El Salvador",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Joya de Cerén"
+  },
+  {
+    "cca3": "SLV",
+    "country": "El Salvador",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Santa Ana Volcano"
+  },
+  {
+    "cca3": "SLV",
+    "country": "El Salvador",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Pupusa"
+  },
+  {
+    "cca3": "BLZ",
+    "country": "Belize",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Xunantunich"
+  },
+  {
+    "cca3": "BLZ",
+    "country": "Belize",
+    "clue_type": "environment",
+    "difficulty": "easy",
+    "note": "new country",
+    "wiki_title": "Great Blue Hole"
+  },
+  {
+    "cca3": "GUY",
+    "country": "Guyana",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Kaieteur Falls"
+  },
+  {
+    "cca3": "GUY",
+    "country": "Guyana",
+    "clue_type": "wildlife",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Hoatzin"
+  },
+  {
+    "cca3": "SUR",
+    "country": "Suriname",
+    "clue_type": "landmark",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Saint Peter and Paul Cathedral, Paramaribo"
+  },
+  {
+    "cca3": "SUR",
+    "country": "Suriname",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Central Suriname Nature Reserve"
+  },
+  {
+    "cca3": "TTO",
+    "country": "Trinidad and Tobago",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Pitch Lake"
+  },
+  {
+    "cca3": "TTO",
+    "country": "Trinidad and Tobago",
+    "clue_type": "food",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Doubles (food)"
+  },
+  {
+    "cca3": "TTO",
+    "country": "Trinidad and Tobago",
+    "clue_type": "person",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Nicki Minaj"
+  },
+  {
+    "cca3": "BHS",
+    "country": "Bahamas",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Pig Beach"
+  },
+  {
+    "cca3": "PNG",
+    "country": "Papua New Guinea",
+    "clue_type": "wildlife",
+    "difficulty": "medium",
+    "note": "new country",
+    "wiki_title": "Raggiana bird-of-paradise"
+  },
+  {
+    "cca3": "VUT",
+    "country": "Vanuatu",
+    "clue_type": "environment",
+    "difficulty": "hard",
+    "note": "new country",
+    "wiki_title": "Mount Yasur"
+  }
+]

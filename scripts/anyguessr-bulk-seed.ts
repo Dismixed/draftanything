@@ -173,8 +173,17 @@ async function main() {
   for (const { id, difficulty } of plan.setDifficulty) await updateSeedEntry(db, id, { difficulty });
   for (const id of plan.reject) await updateSeedEntry(db, id, { status: "rejected" });
 
-  writeFileSync(STAGED_PATH, `${JSON.stringify(plan.staged, null, 2)}\n`);
-  console.log(`Applied. ${plan.staged.length} staged changes written to ${STAGED_PATH}.`);
+  // Add to the changes already waiting rather than replacing them; a newer change to the same clue wins.
+  let waiting: import("../lib/anyguessr/seed-plan").StagedChange[] = [];
+  try {
+    waiting = JSON.parse(readFileSync(STAGED_PATH, "utf8"));
+  } catch {
+    waiting = [];
+  }
+  const newIds = new Set(plan.staged.map((s) => s.id));
+  const merged = [...waiting.filter((s) => !newIds.has(s.id)), ...plan.staged];
+  writeFileSync(STAGED_PATH, `${JSON.stringify(merged, null, 2)}\n`);
+  console.log(`Applied. ${plan.staged.length} new staged changes; ${merged.length} now waiting in ${STAGED_PATH}.`);
 }
 
 async function fetchImages(db: unknown, drafts: import("../lib/anyguessr/seed-types").SeedEntryRow[]) {

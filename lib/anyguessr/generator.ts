@@ -13,6 +13,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { fetchWithRetry } from "./async-pool";
 import { expandAltAnswers } from "./country-aliases";
+import { getAltNamesForCca3 } from "./country-geo";
 import { resolveImageCandidates, resolveTitlesToCandidates } from "./image-sourcing";
 import {
   buildCoverageReport,
@@ -301,9 +302,10 @@ export async function generatePuzzleForBundle(
       ? `${bundle.common} is home to sights like ${env.metadata.source}.`
       : `${bundle.common} is part of the ${bundle.region} region.`;
 
+  // REST Countries is a bonus: its v3.1 API was retired, so the bundled names always go in.
   const altBase = Array.from(
     new Set(
-      [meta?.name.common, meta?.name.official, ...(meta?.altSpellings ?? [])].filter(
+      [meta?.name.common, meta?.name.official, ...(meta?.altSpellings ?? []), ...getAltNamesForCca3(bundle.cca3)].filter(
         (v): v is string => !!v,
       ),
     ),

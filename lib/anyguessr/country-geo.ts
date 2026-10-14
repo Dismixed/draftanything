@@ -36,6 +36,12 @@ export function getNameForCca3(cca3: string): string | null {
   return byCca3.get(cca3)?.name ?? null;
 }
 
+/** The country's name and other spellings from the bundled data, for accepting typed guesses. */
+export function getAltNamesForCca3(cca3: string): string[] {
+  const entry = byCca3.get(cca3);
+  return entry ? [entry.name, ...entry.alt] : [];
+}
+
 /** Static flag image URL derived from bundled country metadata. */
 export function getFlagUrlForCca3(cca3: string): string | null {
   const cca2 = byCca3.get(cca3)?.cca2;
