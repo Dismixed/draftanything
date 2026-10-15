@@ -169,7 +169,8 @@ function dedupeCandidates(candidates: ImageCandidate[]): ImageCandidate[] {
   const seen = new Set<string>();
   const out: ImageCandidate[] = [];
   for (const c of candidates) {
-    const key = c.image_url;
+    // The same file comes back with different ?utm_ tracking parameters depending on which API found it.
+    const key = c.image_url?.split("?")[0];
     if (!key || seen.has(key)) continue;
     seen.add(key);
     out.push(c);

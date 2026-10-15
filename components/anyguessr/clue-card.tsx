@@ -41,6 +41,12 @@ const CLUE_PROMPT: Record<string, string> = {
   jersey: "Whose jersey is this?",
 };
 
+/**
+ * Clue types whose images are self-hosted under neutral names, with a credit written by hand.
+ * Other types still carry Commons' raw credit field ("Own work"), which is not fit to show.
+ */
+const CREDITED_TYPES = new Set(["satellite", "street", "road_sign"]);
+
 function labelFor(clue: ClientClue): string {
   return CLUE_TYPE_LABEL[clue.type] ?? clue.type.charAt(0).toUpperCase() + clue.type.slice(1);
 }
@@ -158,7 +164,7 @@ export default function ClueCard({
           <div className="ag-clue-caption">{clue.metadata.caption}</div>
         )}
 
-        {imageUrl && clue.type === "satellite" && typeof clue.metadata?.credit === "string" && !minimised && (
+        {imageUrl && CREDITED_TYPES.has(clue.type) && typeof clue.metadata?.credit === "string" && !minimised && (
           // The image's licence asks for credit. It names the source, never the place.
           <div className="ag-clue-credit">{clue.metadata.credit}</div>
         )}
