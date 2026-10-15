@@ -89,16 +89,7 @@ export function buildHomeJsonLd(): { "@context": "https://schema.org"; "@graph":
           url: absoluteUrl(game.path),
         })),
       },
-      {
-        "@type": "FAQPage",
-        "@id": absoluteUrl("/#faq"),
-        mainEntity: [
-          faq("What is Stim Games?", "Stim Games is a daily games hub with quick browser challenges across geography, movies, trivia, word chains, rankings, and group play."),
-          faq("Do Stim Games have a new daily challenge?", "Yes. Most games are built around daily puzzles, streaks, and quick sessions you can finish in a few minutes."),
-          faq("Can I play Stim Games without an account?", "Yes. Games are designed for quick browser play, and multiplayer rooms support room-code play without requiring an account."),
-          faq("Which Stim Games are multiplayer?", "Draft Anything and Slippery Slope support multiplayer party-game sessions."),
-        ],
-      },
+      // No FAQPage here: structured data must match visible content, and the homepage shows no FAQ.
     ],
   };
 }
@@ -143,15 +134,4 @@ export function JsonLdScript({ data }: { data: JsonLdNode | { "@context": string
       }}
     />
   );
-}
-
-function faq(name: string, text: string): JsonLdNode {
-  return {
-    "@type": "Question",
-    name,
-    acceptedAnswer: {
-      "@type": "Answer",
-      text,
-    },
-  };
 }

@@ -12,6 +12,8 @@ export const SEED_CLUE_TYPES = [
   "wildlife",
   "traditional_dress",
   "satellite",
+  "street",
+  "road_sign",
 ] as const;
 
 /** All clue types authored in the admin panel (flag + seed types). */

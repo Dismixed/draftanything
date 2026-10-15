@@ -21,6 +21,8 @@ const CLUE_TYPE_LABEL: Record<string, string> = {
   wildlife: "Wildlife",
   traditional_dress: "Traditional dress",
   satellite: "From space",
+  street: "On the street",
+  road_sign: "Road sign",
   audio: "Spoken language",
 };
 
@@ -33,6 +35,8 @@ const CLUE_PROMPT: Record<string, string> = {
   wildlife: "Where does this live?",
   traditional_dress: "Where is this worn?",
   satellite: "Where on Earth is this?",
+  street: "Where is this street?",
+  road_sign: "Where is this sign?",
   currency: "Whose money is this?",
   jersey: "Whose jersey is this?",
 };

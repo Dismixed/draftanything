@@ -19,7 +19,7 @@ export const anyguessr: GameContent = {
     {
       heading: "The kinds of clue",
       body: [
-        "The first round is always a flag. The other six are drawn from landmarks, landscapes, food, famous people, brands, wildlife, traditional dress, views from space and written languages, so the mix changes from day to day.",
+        "The first round is always a flag. The other six are drawn from landmarks, landscapes, food, famous people, brands, wildlife, traditional dress, views from space, street scenes, road signs and written languages, so the mix changes from day to day.",
         "Some are direct. If you have played a guess the country by flag quiz, that round is familiar ground. Others take more thought: a banknote, a sign in an unfamiliar script, or an animal that only lives in one part of the world.",
         "That mix is what sets it apart from a country guessing game like Wordle, where you narrow down one answer over several tries. Here you get seven separate countries and one shot at each.",
       ],

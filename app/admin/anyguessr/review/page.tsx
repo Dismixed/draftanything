@@ -33,6 +33,8 @@ const REVIEW_TYPES = [
   "wildlife",
   "traditional_dress",
   "satellite",
+  "street",
+  "road_sign",
   "written_language",
   "flag",
 ];
@@ -46,6 +48,8 @@ const TYPE_LABELS: Record<string, string> = {
   wildlife: "Wildlife",
   traditional_dress: "Traditional dress",
   satellite: "Satellite",
+  street: "Street",
+  road_sign: "Road sign",
   written_language: "Language",
   flag: "Flag",
 };

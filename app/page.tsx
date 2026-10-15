@@ -5,8 +5,10 @@ import { GameCard } from "@/components/home/game-card";
 import { Today } from "@/components/home/today";
 import { playHref as draftPlayHref } from "@/lib/draft-landing/play-href";
 import { utcDayNumber } from "@/lib/games/today";
+import { getDailyCategoryForPlay } from "@/lib/hot-takes/daily-service";
 import { shareImage } from "@/lib/og/metadata";
 import { buildHomeJsonLd, JsonLdScript } from "@/lib/seo";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // The featured game changes at midnight UTC. Keep the cached page close to current;
 // <Today /> corrects any remaining gap from the browser's clock.
@@ -29,7 +31,19 @@ export const metadata: Metadata = {
   },
 };
 
-export default function StimGames() {
+async function todaysDebateCategory(): Promise<string | null> {
+  try {
+    return (await getDailyCategoryForPlay(createAdminClient())).name;
+  } catch (error) {
+    console.error("home: hot-takes category lookup failed:", error);
+    return null;
+  }
+}
+
+export default async function StimGames() {
+  const dayNumber = utcDayNumber();
+  const debateCategory = await todaysDebateCategory();
+
   return (
     <main className="home-page game-page">
       <JsonLdScript data={buildHomeJsonLd()} />
@@ -54,7 +68,7 @@ export default function StimGames() {
           Connections. No sign-up.
         </p>
 
-        <Today dayNumber={utcDayNumber()} />
+        <Today dayNumber={dayNumber} debateCategory={debateCategory} />
 
         <div className="home-section-head">
           <h2 className="home-section-label">Play with friends</h2>

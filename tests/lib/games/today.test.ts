@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DAILY_GAMES, FEATURED_GAMES, type DailyGameId } from "@/lib/games/registry";
+import { DAILY_GAMES, FEATURED_GAMES, PUZZLE_GAMES, type DailyGameId } from "@/lib/games/registry";
 import {
   buildTodayView,
   featuredGameForDay,
@@ -48,8 +48,9 @@ describe("buildTodayView", () => {
     expect(view.featured).toBe(featured);
     expect(view.isUpNext).toBe(false);
     expect(view.doneCount).toBe(0);
-    expect(view.lineup).toHaveLength(6);
+    expect(view.lineup).toHaveLength(5);
     expect(view.lineup).not.toContain(featured);
+    expect(view.lineup).not.toContain("hot-takes");
   });
 
   it("moves to the next unplayed game once the featured one is played", () => {
@@ -72,27 +73,34 @@ describe("buildTodayView", () => {
     expect(view.doneCount).toBe(3);
   });
 
-  it("features the last unplayed daily, whichever it is", () => {
+  it("features the last unplayed puzzle, whichever it is", () => {
     const allButOne = new Set<DailyGameId>(DAILY_GAMES.filter((id) => id !== "getting-warmer"));
     const view = buildTodayView(DAY, allButOne);
     expect(view.featured).toBe("getting-warmer");
+    expect(view.doneCount).toBe(5);
+  });
+
+  it("never features Hot Takes and does not count it as done", () => {
+    const view = buildTodayView(DAY, new Set<DailyGameId>([...PUZZLE_GAMES]));
+    expect(view.featured).toBeNull();
     expect(view.doneCount).toBe(6);
+    expect(buildTodayView(DAY, new Set<DailyGameId>(["hot-takes"])).doneCount).toBe(0);
   });
 
   it("puts unplayed games before played games in the lineup", () => {
-    const playedGame: DailyGameId = "hot-takes";
+    const playedGame: DailyGameId = "getting-warmer";
     const view = buildTodayView(DAY, new Set<DailyGameId>([playedGame]));
     expect(view.featured).toBe(featured);
     expect(view.lineup[view.lineup.length - 1]).toBe(playedGame);
-    expect(view.lineup.slice(0, 5)).not.toContain(playedGame);
+    expect(view.lineup.slice(0, 4)).not.toContain(playedGame);
   });
 
-  it("has no featured game and all seven in the lineup when everything is played", () => {
+  it("has no featured game and all six puzzles in the lineup when everything is played", () => {
     const view = buildTodayView(DAY, new Set<DailyGameId>(DAILY_GAMES));
     expect(view.featured).toBeNull();
     expect(view.isUpNext).toBe(false);
-    expect(view.doneCount).toBe(7);
-    expect(view.lineup).toHaveLength(7);
+    expect(view.doneCount).toBe(6);
+    expect(view.lineup).toEqual([...PUZZLE_GAMES]);
   });
 });
 
@@ -110,15 +118,16 @@ describe("countdown", () => {
 });
 
 describe("otherDailies", () => {
-  it("returns three other dailies and never the game itself", () => {
+  it("returns three other puzzles and never the game itself or Hot Takes", () => {
     for (const id of DAILY_GAMES) {
       const others = otherDailies(id);
       expect(others).toHaveLength(3);
       expect(others).not.toContain(id);
+      expect(others).not.toContain("hot-takes");
     }
   });
 
-  it("returns dailies for a party game", () => {
-    expect(otherDailies("draft-anything")).toEqual(DAILY_GAMES.slice(0, 3));
+  it("returns puzzles for a party game", () => {
+    expect(otherDailies("draft-anything")).toEqual(PUZZLE_GAMES.slice(0, 3));
   });
 });

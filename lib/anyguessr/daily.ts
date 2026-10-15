@@ -32,6 +32,8 @@ export const DAILY_CLUE_TYPE_LABEL: Record<string, string> = {
   wildlife: "Wildlife",
   traditional_dress: "Traditional dress",
   satellite: "From space",
+  street: "On the street",
+  road_sign: "Road sign",
   currency: "Currency",
   jersey: "Jersey",
 };
@@ -48,6 +50,8 @@ export const DAILY_FACT_LABEL: Record<string, string> = {
   wildlife: "About the animal",
   traditional_dress: "About the outfit",
   satellite: "About the place",
+  street: "About the street",
+  road_sign: "About the sign",
   currency: "About the currency",
   jersey: "About the jersey",
 };

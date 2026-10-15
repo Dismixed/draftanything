@@ -4,11 +4,12 @@ import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from
 import Link from "next/link";
 import { DailyCompleteOverlay } from "@/components/daily/daily-complete-overlay";
 import { FinishBellCurve } from "@/components/daily/finish-bell-curve";
+import { FinishBackToPuzzles } from "@/components/daily/finish-debate";
 import { FinishRun } from "@/components/daily/finish-run";
 import { FinishStreak } from "@/components/daily/finish-streak";
 import { FinishUpNext } from "@/components/daily/finish-up-next";
 import { ShareResult } from "@/components/daily/share-result";
-import { DAILY_GAMES, getGame, type DailyGameId } from "@/lib/games/registry";
+import { DEBATE_GAME, PUZZLE_GAMES, getGame, type DailyGameId } from "@/lib/games/registry";
 import { formatCountdown, msUntilNextUtcDay } from "@/lib/games/today";
 import { useStreak } from "@/lib/streak/context";
 import { readStreakStore } from "@/lib/streak/storage";
@@ -54,7 +55,10 @@ function useCountdown(): string {
   return text;
 }
 
-/** The screen every daily ends on: the run, the game's result, where to go next and why to come back. */
+/**
+ * The screen every daily ends on: the run, the game's result, where to go next and why to come
+ * back. Hot Takes is an opinion, not a puzzle, so its screen leaves out the puzzle run.
+ */
 export function FinishScreen({
   gameId,
   open,
@@ -77,10 +81,11 @@ export function FinishScreen({
     [gameId, streaks],
   );
   const streak = Math.max(1, streaks.find((s) => s.id === gameId)?.currentStreak ?? 0);
-  const allDone = played.size === DAILY_GAMES.length;
+  const isDebate = gameId === DEBATE_GAME;
+  const allDone = PUZZLE_GAMES.every((id) => played.has(id));
 
   // Only the Sweep panel shows the count, and the overlay only renders in the browser once open.
-  const sweeps = open && allDone ? sweepCount(readStreakStore()) : 0;
+  const sweeps = open && allDone && !isDebate ? sweepCount(readStreakStore()) : 0;
 
   // The overlay is drawn outside the game page, so it needs the game's colours handed to it.
   const style = {
@@ -107,14 +112,14 @@ export function FinishScreen({
       }
     >
       <div className="fin" data-game={gameId}>
-        <FinishRun gameId={gameId} played={played} />
+        {isDebate ? null : <FinishRun gameId={gameId} played={played} />}
 
         <div className="fin-result">{result}</div>
 
         {curve ? <FinishBellCurve {...curve} /> : null}
 
         <div className="fin-actions">
-          <ShareResult gameId={gameId} text={shareText} />
+          <ShareResult gameId={gameId} text={shareText} label={isDebate ? "Start an argument" : undefined} />
           {secondary?.href ? (
             <Link href={secondary.href} className="fin-ghost" onClick={secondary.onClick}>
               {secondary.label}
@@ -126,11 +131,16 @@ export function FinishScreen({
           ) : null}
         </div>
 
-        <FinishUpNext gameId={gameId} played={played} sweeps={sweeps} countdown={countdown} />
+        {isDebate ? (
+          <FinishBackToPuzzles played={played} />
+        ) : (
+          <FinishUpNext gameId={gameId} played={played} sweeps={sweeps} countdown={countdown} />
+        )}
 
         <FinishStreak streak={streak} />
 
-        {allDone ? null : (
+        {/* The Sweep panel carries its own countdown. */}
+        {allDone && !isDebate ? null : (
           <p className="fin-countdown" data-testid="finish-countdown">
             New puzzles in {countdown}
           </p>

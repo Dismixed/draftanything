@@ -41,6 +41,8 @@ const ROUND_TYPES = new Set([
   "written_language",
   "traditional_dress",
   "satellite",
+  "street",
+  "road_sign",
 ]);
 
 function hash(text: string): number {

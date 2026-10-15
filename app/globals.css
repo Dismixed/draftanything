@@ -1117,7 +1117,37 @@ html[data-theme="light"] .fin-play[data-game="freezeframes"] { color: #fff; }
 .fin-other-name { display: block; font-size: 13.5px; font-weight: 700; }
 .fin-other-blurb { display: block; margin-top: 1px; font-size: 11.5px; line-height: 1.3; color: var(--text-dim); }
 
-/* All seven done */
+/* Today's debate: Hot Takes, kept apart from the puzzle run */
+.fin-debate {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: 440px;
+  margin: 14px auto 0;
+  padding: 11px 13px;
+  border-radius: 13px;
+  border: 1.5px dashed color-mix(in srgb, var(--nx) 55%, transparent);
+  text-align: left;
+}
+.fin-debate .fin-label { color: var(--nx); }
+.fin-debate-line { margin: 2px 0 0; font-size: 12.5px; color: var(--text-dim); }
+.fin-debate-cta {
+  flex: none;
+  padding: 8px 13px;
+  border-radius: 10px;
+  border: 1.5px solid var(--nx);
+  color: var(--nx);
+  font: 800 13.5px "Outfit", system-ui, sans-serif;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.fin-debate-cta:hover { background: color-mix(in srgb, var(--nx) 14%, transparent); }
+.fin-back { margin: 20px 0 0; font-size: 13.5px; font-weight: 700; color: var(--text-dim); }
+.fin-back a { color: var(--text); text-decoration: none; border-bottom: 1.5px solid color-mix(in srgb, var(--text) 30%, transparent); }
+.fin-back a:hover { border-bottom-color: var(--text); }
+
+/* All six puzzles done */
 .fin-sweep {
   --nx: var(--gold-hi);
   margin-top: 20px;
@@ -1597,6 +1627,93 @@ html[data-theme="light"] .home-card {
   color: var(--home-dim);
 }
 
+/* Hot Takes sits apart from the puzzle lineup: an opinion to settle, not a puzzle to solve. */
+.home-debate {
+  --brand-ink: var(--brand);
+  --cta-bg: var(--brand);
+  --cta-fg: #fff;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 20px;
+  margin-top: 28px;
+  padding: 20px 22px;
+  background:
+    linear-gradient(100deg, color-mix(in srgb, var(--brand) 9%, transparent), transparent 60%),
+    var(--panel);
+  border: 1.5px dashed color-mix(in srgb, var(--brand) 45%, var(--border));
+  border-radius: 16px;
+}
+html[data-theme="light"] .home-debate {
+  --brand-ink: color-mix(in srgb, var(--brand) 72%, #000);
+  --cta-bg: color-mix(in srgb, var(--brand) 78%, #000);
+}
+.home-debate-tiers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 3px;
+}
+.home-debate-tiers li {
+  width: 34px;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--heat);
+  color: #0b0b0e;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 14px;
+  padding-left: 5px;
+}
+html[data-theme="light"] .home-debate-tiers li {
+  color: #fff;
+}
+.home-debate-copy {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.home-debate .home-kicker {
+  color: var(--brand-ink);
+}
+.home-debate-title {
+  font-size: clamp(22px, 3.6vw, 28px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin: 0;
+}
+.home-debate-line {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--home-dim);
+  margin: 0;
+}
+.home-debate-cta {
+  background: var(--cta-bg);
+  color: var(--cta-fg);
+  font-size: 16px;
+  font-weight: 700;
+  padding: 12px 18px;
+  border-radius: 10px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.home-debate-cta:hover {
+  opacity: 0.86;
+}
+.home-debate.is-done .home-debate-cta {
+  background: transparent;
+  color: var(--brand-ink);
+  border: 1.5px solid currentColor;
+}
+.home-debate.is-done .home-debate-tiers {
+  opacity: 0.6;
+}
+
 .home-links {
   display: flex;
   flex-wrap: wrap;
@@ -1651,6 +1768,15 @@ html[data-theme="light"] .home-card {
   }
   .home-party {
     grid-template-columns: 1fr;
+  }
+  .home-debate {
+    grid-template-columns: auto 1fr;
+    gap: 14px 16px;
+    padding: 18px 16px;
+  }
+  .home-debate-cta {
+    grid-column: 1 / -1;
+    text-align: center;
   }
   .home-cta {
     width: 100%;

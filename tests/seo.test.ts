@@ -25,14 +25,15 @@ describe("SEO metadata", () => {
     expect(new Set(urls).size).toBe(urls.length);
   });
 
-  it("builds homepage structured data with website, organization, FAQ, and game catalog", () => {
+  it("builds homepage structured data with website, organization, and game catalog", () => {
     const graph = buildHomeJsonLd()["@graph"];
     const types = graph.map((node) => node["@type"]);
 
     expect(types).toContain("WebSite");
     expect(types).toContain("Organization");
-    expect(types).toContain("FAQPage");
     expect(types).toContain("ItemList");
+    // The homepage shows no FAQ, so it must not claim one.
+    expect(types).not.toContain("FAQPage");
   });
 
   it("builds game structured data for crawler-visible game facts", () => {

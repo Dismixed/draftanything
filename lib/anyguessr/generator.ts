@@ -251,6 +251,8 @@ const CLUE_RANKS: Record<string, number> = {
   wildlife: 10,
   traditional_dress: 11,
   satellite: 12,
+  street: 13,
+  road_sign: 14,
 };
 
 export async function generatePuzzleForBundle(

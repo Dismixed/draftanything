@@ -17,6 +17,8 @@ const FACT_ABOUT: Record<string, string> = {
   wildlife: "the animal named in the clue",
   traditional_dress: "the garment named in the clue: its history, or when and how it is worn",
   satellite: "the place shown from space, named in the clue",
+  street: "the vehicle or street named in the clue: its history, or what makes it typical of the country",
+  road_sign: "the country's road signs: what makes them distinctive, or the history of the sign shown",
   written_language: "the language of the text sample, or its script",
 };
 

@@ -14,7 +14,14 @@ function prefersShareSheet(): boolean {
 
 type Status = "idle" | "copied" | "manual";
 
-export function ShareResult({ gameId, text }: { gameId: DailyGameId; text: string }) {
+interface ShareResultProps {
+  gameId: DailyGameId;
+  text: string;
+  /** Button label. Defaults to "Share result". */
+  label?: string;
+}
+
+export function ShareResult({ gameId, text, label = "Share result" }: ShareResultProps) {
   const [status, setStatus] = useState<Status>("idle");
 
   async function copy() {
@@ -49,7 +56,7 @@ export function ShareResult({ gameId, text }: { gameId: DailyGameId; text: strin
   return (
     <div className="share-result-wrap">
       <button type="button" className="share-result" onClick={handleClick} aria-live="polite">
-        {status === "copied" ? "Copied" : "Share result"}
+        {status === "copied" ? "Copied" : label}
       </button>
       {status === "manual" ? (
         <label className="share-result-manual">

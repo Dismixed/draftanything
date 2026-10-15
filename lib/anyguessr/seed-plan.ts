@@ -43,7 +43,7 @@ export interface SeedPlan {
 }
 
 /** Clue types a proposal may omit; omission means "this country has no good one". */
-const OPTIONAL_TYPES = new Set(["brand", "wildlife", "written_language", "traditional_dress", "satellite"]);
+const OPTIONAL_TYPES = new Set(["brand", "wildlife", "written_language", "traditional_dress", "satellite", "street", "road_sign"]);
 
 /** Statuses the game draws from. */
 const LIVE_STATUSES = new Set(["approved"]);

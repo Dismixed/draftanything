@@ -15,6 +15,32 @@ const VisionResultSchema = z.object({
 
 export type VisionResult = z.infer<typeof VisionResultSchema>;
 
+/** What a good image looks like for each clue type, where the general check is too loose. */
+const CLUE_CHECKS: Record<string, string[]> = {
+  brand: [
+    `Does this image clearly show this brand? The brand's logo or a clearly branded product is the ideal image; a storefront or building with the brand's signage is acceptable.`,
+    `Reject images that do not show the brand at all, other companies' marks, maps, flags, collages, diagrams, charts, and generic stock photos.`,
+  ],
+  traditional_dress: [
+    `Does this image clearly show this traditional garment, ideally worn by a person? A photo of people wearing it is ideal; a garment on display is acceptable.`,
+    `Reject drawings, paintings, sewing patterns, close-ups of fabric alone, maps, flags, collages, and photos where the garment is hard to make out.`,
+  ],
+  street: [
+    `Does this image show a street or road in this country, ideally with a typical local vehicle (a jeepney, a black cab, a matatu) or everyday street life? A real photo taken at street level is ideal.`,
+    `Reject museum pieces, vehicles photographed out of context against a plain background, drawings, maps, flags, collages, and interiors.`,
+  ],
+  road_sign: [
+    `Does this image show a real road sign, or a road scene with signs, as they look in this country? One clear photo of a sign or signs by the road is ideal.`,
+    `Reject charts or sheets listing many signs, vector drawings of a single sign on a blank background, maps, flags and collages. Also set shows_country_name to true if a sign names a city, region or road that gives the country away.`,
+  ],
+};
+
+const DEFAULT_CHECK = [
+  `Does this image plausibly depict the clue type for this country?`,
+  `Reject maps, flags (unless clue type is flag), collages, logos unrelated to the country,`,
+  `diagrams, charts, and generic stock photos.`,
+];
+
 export function buildVisionPrompt(options: {
   clueType: string;
   country: string;
@@ -26,21 +52,7 @@ export function buildVisionPrompt(options: {
     `Clue type: ${options.clueType}`,
     options.wikiTitle ? `Wikipedia article: ${options.wikiTitle}` : "",
     "",
-    ...(options.clueType === "brand"
-      ? [
-          `Does this image clearly show this brand? The brand's logo or a clearly branded product is the ideal image; a storefront or building with the brand's signage is acceptable.`,
-          `Reject images that do not show the brand at all, other companies' marks, maps, flags, collages, diagrams, charts, and generic stock photos.`,
-        ]
-      : options.clueType === "traditional_dress"
-        ? [
-            `Does this image clearly show this traditional garment, ideally worn by a person? A photo of people wearing it is ideal; a garment on display is acceptable.`,
-            `Reject drawings, paintings, sewing patterns, close-ups of fabric alone, maps, flags, collages, and photos where the garment is hard to make out.`,
-          ]
-        : [
-            `Does this image plausibly depict the clue type for this country?`,
-            `Reject maps, flags (unless clue type is flag), collages, logos unrelated to the country,`,
-            `diagrams, charts, and generic stock photos.`,
-          ]),
+    ...(CLUE_CHECKS[options.clueType] ?? DEFAULT_CHECK),
     "",
     options.clueType === "flag"
       ? `This is a flag clue, so set shows_country_name to false.`

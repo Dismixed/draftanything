@@ -25,8 +25,18 @@ export const DAILY_GAMES = [
 
 export type DailyGameId = (typeof DAILY_GAMES)[number];
 
+/** The daily opinion game. It keeps its own streak but sits outside the puzzle run and the Sweep. */
+export const DEBATE_GAME = "hot-takes" as const satisfies DailyGameId;
+
+/** The dailies with an answer to get right. Playing all of them is a Sweep. */
+export const PUZZLE_GAMES = DAILY_GAMES.filter(
+  (id): id is Exclude<DailyGameId, typeof DEBATE_GAME> => id !== DEBATE_GAME,
+);
+
+export type PuzzleGameId = (typeof PUZZLE_GAMES)[number];
+
 /** The only games shown in the home page's featured slot, in rotation order. */
-export const FEATURED_GAMES = ["chainlink", "brain-dead", "anyguessr"] as const satisfies readonly DailyGameId[];
+export const FEATURED_GAMES = ["chainlink", "brain-dead", "anyguessr"] as const satisfies readonly PuzzleGameId[];
 
 export interface GameTheme {
   page: string;

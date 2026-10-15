@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DAILY_GAMES, type DailyGameId } from "@/lib/games/registry";
+import { DAILY_GAMES, PUZZLE_GAMES, type DailyGameId } from "@/lib/games/registry";
 import { nextDaily, remainingDailies } from "@/lib/games/next";
 
 const played = (...ids: DailyGameId[]) => new Set<DailyGameId>(ids);
@@ -21,6 +21,13 @@ describe("nextDaily", () => {
   it("returns null when everything is played", () => {
     expect(nextDaily(played(...DAILY_GAMES))).toBeNull();
   });
+
+  it("never offers Hot Takes, and is done once the six puzzles are", () => {
+    expect(nextDaily(played(...PUZZLE_GAMES))).toBeNull();
+    expect(nextDaily(played("chainlink", "brain-dead", "anyguessr", "freezeframes", "ball-knowledge"))).toBe(
+      "getting-warmer",
+    );
+  });
 });
 
 describe("remainingDailies", () => {
@@ -28,13 +35,12 @@ describe("remainingDailies", () => {
     expect(remainingDailies(played("chainlink", "brain-dead"))).toEqual([
       "freezeframes",
       "ball-knowledge",
-      "hot-takes",
       "getting-warmer",
     ]);
   });
 
   it("is empty when one game is left, and when none are", () => {
-    expect(remainingDailies(played(...DAILY_GAMES.filter((id) => id !== "hot-takes")))).toEqual([]);
+    expect(remainingDailies(played(...PUZZLE_GAMES.filter((id) => id !== "getting-warmer")))).toEqual([]);
     expect(remainingDailies(played(...DAILY_GAMES))).toEqual([]);
   });
 });

@@ -13,6 +13,8 @@ const ClueTypeEnum = z.enum([
   "environment",
   "wildlife",
   "traditional_dress",
+  "street",
+  "road_sign",
 ]);
 
 const ProposalSchema = z.object({
@@ -50,6 +52,8 @@ export async function proposeSeedEntriesWithLlm(options: {
       "For brand pick a company strongly associated with the country, not a global multinational.",
       "For wildlife pick the national animal, an endemic species, or the most iconic wild animal with a strong Wikipedia lead photo.",
       "For traditional_dress pick a garment worn in that country and closely tied to it (kimono, hanbok, dirndl), whose Wikipedia article has a photo of people wearing it.",
+      "For street pick a vehicle or street scene typical of that country and rarely seen elsewhere (jeepney, black cab, matatu, tuk-tuk only where it is iconic), whose Wikipedia article has a photo of it on a street.",
+      'For road_sign use the article on the country\'s road signs ("Road signs in Japan"), or a famous sign specific to it.',
       "Return exactly one entry per clue type.",
     ].join(" "),
     userPrompt: JSON.stringify(options, null, 2),

@@ -18,15 +18,12 @@ import { useDailyIntro } from "@/lib/daily-intro/use-daily-intro";
 import { getHotTakesPlayed, saveHotTakesPlayed } from "@/lib/hot-takes/storage";
 import { HotTakesIntro } from "./intro";
 import { HotTakesImage } from "@/components/hot-takes/optimized-image";
+import { rankTakes, TIERS, type Tier } from "@/lib/hot-takes/hottest";
 import { tiltFor } from "@/lib/hot-takes/tilt";
 import type { HotTakesDailyCategory, HotTakesDailyItem } from "@/lib/hot-takes/types";
-import { burstFrom } from "@/lib/motion/burst";
-import { useCountUp } from "@/lib/motion/count-up";
 import { recordDailyCompletion } from "@/lib/streak/storage";
 
-const TIERS = ["S", "A", "B", "C", "D"] as const;
 const subscribeNever = () => () => {};
-type Tier = (typeof TIERS)[number];
 type DropZone = Tier | "tray";
 
 const DRAG_THRESHOLD_PX = 8;
@@ -161,7 +158,6 @@ export default function HotTakesGame({
   const [checkedPlayed, setCheckedPlayed] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
   const [lastPlacedId, setLastPlacedId] = useState<string | null>(null);
-  const scoreNumRef = useRef<HTMLDivElement>(null);
   const consensus = useMemo(() => generateConsensus(category.items), [category.items]);
   const tilts = useMemo(
     () => new Map(category.items.map((item, index) => [item.id, tiltFor(index)])),
@@ -283,44 +279,10 @@ export default function HotTakesGame({
     setTrayShuffle((n) => n + 1);
   }
 
-  const results = useMemo(() => {
-    if (!submitted) return null;
-
-    let totalAgree = 0;
-    let hottestLabel = "";
-    let hottestTier: Tier = "S";
-    let hottestPct = 101;
-
-    const rows = category.items.map((item) => {
-      const yourTier = placements[item.id] as Tier;
-      const dist = consensus[item.id]!;
-      const agree = dist[yourTier];
-      totalAgree += agree;
-      if (agree < hottestPct) {
-        hottestLabel = item.label;
-        hottestTier = yourTier;
-        hottestPct = agree;
-      }
-      return { item, yourTier, dist };
-    });
-
-    const avg = Math.round(totalAgree / category.items.length);
-    const hottest =
-      hottestPct <= 100
-        ? { label: hottestLabel, tier: hottestTier, pct: hottestPct }
-        : null;
-    return { rows, avg, hottest };
-  }, [submitted, category.items, placements, consensus]);
-
-  const displayAvg = useCountUp(results?.avg ?? 0, submitted, 900);
-  const resultsAvg = results?.avg;
-  useEffect(() => {
-    if (resultsAvg === undefined) return;
-    const timer = setTimeout(() => {
-      void burstFrom(scoreNumRef.current, resultsAvg >= 70 ? 2 : resultsAvg >= 50 ? 1 : 0, "gold");
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [resultsAvg]);
+  const results = useMemo(
+    () => (submitted ? rankTakes(category.items, placements as Record<string, Tier>, consensus) : null),
+    [submitted, category.items, placements, consensus],
+  );
 
   // Shares the player's own S tier. The crowd percentages shown in the game are simulated.
   const shareText = hotTakesShare(
@@ -343,20 +305,26 @@ export default function HotTakesGame({
 
   const resultsBody = results ? (
     <div className="hot-takes-finish">
-      <div className="hot-takes-score-banner anim-pop-in">
-        <div ref={scoreNumRef} className="hot-takes-score-num">{displayAvg}%</div>
-        <div className="hot-takes-score-text">
-          average agreement with the crowd across your 15 picks.
+      <div className="hot-takes-hottest anim-pop-in">
+        <div className="hot-takes-hottest-head">
+          {results.withCrowd ? "Mostly with the crowd" : "Your hottest takes"}
         </div>
-        {results.hottest && (
-          <div className="hot-takes-hot-stamp">
-            Hottest take · {results.hottest.label} in {results.hottest.tier} · only{" "}
-            {results.hottest.pct}% agree
-          </div>
-        )}
+        <ol className="hot-takes-hottest-list">
+          {results.hottest.map(({ item, tier, agree }) => (
+            <li key={item.id}>
+              <span className="hot-takes-hottest-tier" style={{ background: TIER_COLORS[tier] }}>
+                {tier}
+              </span>
+              <span className="hot-takes-hottest-name">{item.label}</span>
+              <span className="hot-takes-hottest-pct">
+                {agree === 0 ? "nobody agrees" : `${agree < 50 ? "only " : ""}${agree}% agree`}
+              </span>
+            </li>
+          ))}
+        </ol>
       </div>
 
-      {results.rows.map(({ item, yourTier, dist }) => (
+      {results.rows.map(({ item, tier: yourTier, dist }) => (
         <div key={item.id} className="hot-takes-consensus-item">
           <div className="hot-takes-consensus-top">
             <HotTakesImage src={item.imageUrl} alt="" width={28} />
@@ -513,8 +481,8 @@ export default function HotTakesGame({
 
         {results && (
           <div className="hot-takes-results" id="hot-takes-results">
-            <h2>How you stack up</h2>
-            <p className="hot-takes-sub">Here&apos;s how everyone else ranked today&apos;s category.</p>
+            <h2>Where you split from the crowd</h2>
+            <p className="hot-takes-sub">Your picks, hottest first, against how everyone else ranked them.</p>
             {/* The finish screen shows the same breakdown while it is open. */}
             {!completeOpen && (
               <>

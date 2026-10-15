@@ -12,6 +12,8 @@ const IMAGE_CLUE_TYPES = new Set([
   "wildlife",
   "traditional_dress",
   "satellite",
+  "street",
+  "road_sign",
 ]);
 
 export function isImageClueType(type: string): boolean {

@@ -11,7 +11,7 @@ const clue = (country: number, clueType: string, difficulty: LineupClue["difficu
  * `countries` countries, each with a flag and one clue of every other type.
  * Difficulty cycles by country so every level is well represented.
  */
-const ROUND_TYPES = ["landmark", "environment", "food", "person", "brand", "wildlife", "written_language", "traditional_dress", "satellite"];
+const ROUND_TYPES = ["landmark", "environment", "food", "person", "brand", "wildlife", "written_language", "traditional_dress", "satellite", "street", "road_sign"];
 
 function pool(countries: number, types = ROUND_TYPES): LineupClue[] {
   const levels: LineupClue["difficulty"][] = ["easy", "medium", "hard"];

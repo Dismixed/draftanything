@@ -4,11 +4,12 @@ import { useMemo, useSyncExternalStore, type CSSProperties } from "react";
 import Link from "next/link";
 import { GameCardPreview } from "@/components/daily/game-card-preview";
 import { GameCard } from "@/components/home/game-card";
+import { TodayDebate } from "@/components/home/today-debate";
 import { GameTitle } from "@/components/ui/game-title";
 import { track } from "@/lib/analytics/track";
 import { requestDirectPlay } from "@/lib/daily-intro/direct-play";
 import { playHref as draftPlayHref } from "@/lib/draft-landing/play-href";
-import { DAILY_GAMES, getGame, type DailyGameId } from "@/lib/games/registry";
+import { DEBATE_GAME, PUZZLE_GAMES, getGame, type DailyGameId } from "@/lib/games/registry";
 import {
   buildTodayView,
   formatCountdown,
@@ -25,7 +26,13 @@ function subscribeToClock(onChange: () => void) {
 const currentMinute = () => Math.floor(Date.now() / 60_000);
 const noMinuteOnServer = () => null;
 
-export function Today({ dayNumber }: { dayNumber: number }) {
+interface TodayProps {
+  dayNumber: number;
+  /** Today's Hot Takes category as of `dayNumber`, or null if it could not be loaded. */
+  debateCategory: string | null;
+}
+
+export function Today({ dayNumber, debateCategory }: TodayProps) {
   const { streaks } = useStreak();
 
   // The server-rendered page can be cached across midnight UTC. Hydrate with the server's
@@ -85,7 +92,7 @@ export function Today({ dayNumber }: { dayNumber: number }) {
         <section className="home-featured is-all-done" data-testid="home-all-done">
           <div className="home-featured-copy">
             <p className="home-kicker">Today</p>
-            <h2 className="home-featured-title">All seven done.</h2>
+            <h2 className="home-featured-title">All six done.</h2>
             <p className="home-featured-pitch">
               {now === null
                 ? "New puzzles arrive at midnight UTC."
@@ -108,7 +115,7 @@ export function Today({ dayNumber }: { dayNumber: number }) {
             </Link>
           </div>
           <ul className="home-streaks">
-            {DAILY_GAMES.map((id) => (
+            {PUZZLE_GAMES.map((id) => (
               <li key={id}>
                 {getGame(id).name} 🔥 {streakFor.get(id) ?? 0}
               </li>
@@ -121,7 +128,9 @@ export function Today({ dayNumber }: { dayNumber: number }) {
         <h2 className="home-section-label">Today&apos;s lineup</h2>
         <span className="home-section-rule" aria-hidden />
         <span className="home-progress" data-testid="home-progress">
-          {view.doneCount === 0 ? "7 new puzzles today" : `${view.doneCount} of 7 done today`}
+          {view.doneCount === 0
+            ? `${PUZZLE_GAMES.length} new puzzles today`
+            : `${view.doneCount} of ${PUZZLE_GAMES.length} done today`}
         </span>
       </div>
 
@@ -143,6 +152,13 @@ export function Today({ dayNumber }: { dayNumber: number }) {
           />
         ))}
       </div>
+
+      <TodayDebate
+        // A page cached from before midnight UTC carries yesterday's category.
+        category={day === dayNumber ? debateCategory : null}
+        played={played.has(DEBATE_GAME)}
+        streak={streakFor.get(DEBATE_GAME) ?? 0}
+      />
     </>
   );
 }

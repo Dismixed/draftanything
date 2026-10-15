@@ -1,4 +1,4 @@
-import { DAILY_GAMES, FEATURED_GAMES, type DailyGameId, type GameId } from "@/lib/games/registry";
+import { FEATURED_GAMES, PUZZLE_GAMES, type DailyGameId, type GameId, type PuzzleGameId } from "@/lib/games/registry";
 
 const MS_PER_DAY = 86_400_000;
 
@@ -8,39 +8,39 @@ export function utcDayNumber(date: Date = new Date()): number {
 }
 
 /** The three featured games, starting from the one whose turn it is on this day. */
-function featuredRotation(dayNumber: number): DailyGameId[] {
+function featuredRotation(dayNumber: number): PuzzleGameId[] {
   const count = FEATURED_GAMES.length;
   const start = ((dayNumber % count) + count) % count;
   return FEATURED_GAMES.map((_, i) => FEATURED_GAMES[(start + i) % count]);
 }
 
-export function featuredGameForDay(dayNumber: number): DailyGameId {
+export function featuredGameForDay(dayNumber: number): PuzzleGameId {
   return featuredRotation(dayNumber)[0];
 }
 
 export interface TodayView {
-  /** The game in the featured slot, or null when every daily is played. */
-  featured: DailyGameId | null;
+  /** The puzzle in the featured slot, or null when every puzzle is played. */
+  featured: PuzzleGameId | null;
   /** True when the day's featured game is already played and the slot shows the next one. */
   isUpNext: boolean;
-  /** Every daily except the featured one: unplayed first, then played. */
-  lineup: DailyGameId[];
+  /** Every puzzle except the featured one: unplayed first, then played. Hot Takes is not here. */
+  lineup: PuzzleGameId[];
   doneCount: number;
 }
 
 export function buildTodayView(dayNumber: number, played: ReadonlySet<DailyGameId>): TodayView {
   const rotation = featuredRotation(dayNumber);
   // The slot works through the three featured games first, then the remaining dailies, so
-  // it always has something to offer until everything is played.
-  const candidates = [...rotation, ...DAILY_GAMES.filter((id) => !rotation.includes(id))];
+  // it always has something to offer until every puzzle is played.
+  const candidates = [...rotation, ...PUZZLE_GAMES.filter((id) => !rotation.includes(id))];
   const featured = candidates.find((id) => !played.has(id)) ?? null;
-  const rest = DAILY_GAMES.filter((id) => id !== featured);
+  const rest = PUZZLE_GAMES.filter((id) => id !== featured);
 
   return {
     featured,
     isUpNext: featured !== null && featured !== rotation[0],
     lineup: [...rest.filter((id) => !played.has(id)), ...rest.filter((id) => played.has(id))],
-    doneCount: DAILY_GAMES.filter((id) => played.has(id)).length,
+    doneCount: PUZZLE_GAMES.filter((id) => played.has(id)).length,
   };
 }
 
@@ -53,11 +53,11 @@ export function formatCountdown(ms: number): string {
   return `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m`;
 }
 
-/** The next `count` dailies after `gameId` in rotation order, skipping `gameId` itself. */
-export function otherDailies(gameId: GameId, count = 3): DailyGameId[] {
-  const index = (DAILY_GAMES as readonly string[]).indexOf(gameId);
+/** The next `count` puzzles after `gameId` in rotation order, skipping `gameId` itself. */
+export function otherDailies(gameId: GameId, count = 3): PuzzleGameId[] {
+  const index = (PUZZLE_GAMES as readonly string[]).indexOf(gameId);
   const start = index === -1 ? 0 : index + 1;
-  return DAILY_GAMES.map((_, i) => DAILY_GAMES[(start + i) % DAILY_GAMES.length])
+  return PUZZLE_GAMES.map((_, i) => PUZZLE_GAMES[(start + i) % PUZZLE_GAMES.length])
     .filter((id) => id !== gameId)
     .slice(0, count);
 }

@@ -35,6 +35,24 @@ describe("buildVisionPrompt for brands", () => {
   });
 });
 
+describe("buildVisionPrompt for road signs", () => {
+  const prompt = buildVisionPrompt({ clueType: "road_sign", country: "Japan", wikiTitle: "Road signs in Japan" });
+
+  it("rejects sheets of many signs", () => {
+    expect(prompt).toMatch(/reject charts or sheets listing many signs/i);
+  });
+
+  it("treats a place name on a sign as giving the country away", () => {
+    expect(prompt).toMatch(/names a city, region or road/i);
+  });
+});
+
+describe("buildVisionPrompt for streets", () => {
+  it("asks for a street-level photo with a local vehicle", () => {
+    expect(buildVisionPrompt({ clueType: "street", country: "Philippines", wikiTitle: "Jeepney" })).toMatch(/street level/i);
+  });
+});
+
 describe("visionAccepts", () => {
   const good = { pass: true, score: 0.9, reason: "", shows_country_name: false };
 

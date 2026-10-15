@@ -4,17 +4,18 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import { requestDirectPlayFromFinish } from "@/lib/daily-intro/direct-play";
 import { nextDaily } from "@/lib/games/next";
-import { DAILY_GAMES, GAME_META, type DailyGameId } from "@/lib/streak/types";
+import { PUZZLE_GAMES } from "@/lib/games/registry";
+import { GAME_META, type DailyGameId } from "@/lib/streak/types";
 
 export function FinishRun({ gameId, played }: { gameId: DailyGameId; played: ReadonlySet<DailyGameId> }) {
   const next = nextDaily(played);
-  const done = DAILY_GAMES.filter((id) => played.has(id)).length;
-  const left = DAILY_GAMES.length - done;
+  const done = PUZZLE_GAMES.filter((id) => played.has(id)).length;
+  const left = PUZZLE_GAMES.length - done;
 
   return (
     <div className="fin-run">
       <nav className="fin-rail" aria-label="Today's games">
-        {DAILY_GAMES.map((id) => {
+        {PUZZLE_GAMES.map((id) => {
           const meta = GAME_META[id];
           const className = [
             "fin-chip",
@@ -42,7 +43,9 @@ export function FinishRun({ gameId, played }: { gameId: DailyGameId; played: Rea
         })}
       </nav>
       <p className="fin-sweep-line" data-testid="finish-sweep-line">
-        {left === 0 ? "Sweep. All seven done today." : `${done} of 7 today · ${left} to go for a Sweep`}
+        {left === 0
+          ? "Sweep. All six done today."
+          : `${done} of ${PUZZLE_GAMES.length} today · ${left} to go for a Sweep`}
       </p>
     </div>
   );

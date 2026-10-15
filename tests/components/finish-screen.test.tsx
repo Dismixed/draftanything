@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FinishScreen, type FinishScreenProps } from "@/components/daily/finish-screen";
 import { clearDirectPlay, isDirectPlayRequested } from "@/lib/daily-intro/direct-play";
-import { DAILY_GAMES, getGame, type DailyGameId } from "@/lib/games/registry";
+import { DAILY_GAMES, PUZZLE_GAMES, getGame, type DailyGameId } from "@/lib/games/registry";
 import type { GameStreakInfo } from "@/lib/streak/types";
 
 let streaks: GameStreakInfo[] = [];
@@ -86,7 +86,8 @@ describe("FinishScreen", () => {
     expect(screen.getByTestId("finish-chip-anyguessr")).toHaveClass("is-next");
     expect(screen.getByTestId("finish-chip-anyguessr")).toHaveTextContent("next");
     expect(screen.getByTestId("finish-chip-freezeframes")).not.toHaveClass("is-next");
-    expect(screen.getByTestId("finish-sweep-line")).toHaveTextContent("2 of 7 today · 5 to go for a Sweep");
+    expect(screen.queryByTestId("finish-chip-hot-takes")).toBeNull();
+    expect(screen.getByTestId("finish-sweep-line")).toHaveTextContent("2 of 6 today · 4 to go for a Sweep");
   });
 
   it("guides to the next unplayed game and lists the rest with what they are", () => {
@@ -102,7 +103,6 @@ describe("FinishScreen", () => {
     expect(others.map((link) => link.getAttribute("href"))).toEqual([
       "/freezeframes/daily",
       "/ball-knowledge/daily",
-      "/hot-takes",
       "/getting-warmer/daily",
     ]);
     expect(others[0]).toHaveTextContent(getGame("freezeframes").blurb);
@@ -115,7 +115,7 @@ describe("FinishScreen", () => {
     expect(isDirectPlayRequested("anyguessr")).toBe(true);
     clearDirectPlay("anyguessr");
 
-    fireEvent.click(screen.getByTestId("finish-chip-hot-takes"));
+    fireEvent.click(within(screen.getByTestId("finish-debate")).getByRole("link"));
     expect(isDirectPlayRequested("hot-takes")).toBe(true);
     clearDirectPlay("hot-takes");
 
@@ -131,7 +131,7 @@ describe("FinishScreen", () => {
     renderScreen();
 
     expect(screen.getByTestId("finish-chip-brain-dead")).toHaveClass("is-done", "is-current");
-    expect(screen.getByTestId("finish-sweep-line")).toHaveTextContent("1 of 7 today · 6 to go for a Sweep");
+    expect(screen.getByTestId("finish-sweep-line")).toHaveTextContent("1 of 6 today · 5 to go for a Sweep");
     expect(within(screen.getByTestId("finish-up-next")).getByRole("link")).toHaveAttribute("href", "/chainlink");
     expect(screen.getByTestId("finish-streak")).toHaveTextContent("Day 1 of your streak. Come back tomorrow to make it 2.");
   });
@@ -148,26 +148,79 @@ describe("FinishScreen", () => {
     expect(screen.getByTestId("finish-countdown")).toHaveTextContent("New puzzles in 8h 37m");
   });
 
-  it("swaps Up next for a Sweep panel when every daily is played", () => {
-    streaks = streaksWithPlayed([...DAILY_GAMES]);
+  it("offers today's debate apart from the puzzles until Hot Takes is played", () => {
+    const { unmount } = renderScreen();
+    const debate = screen.getByTestId("finish-debate");
+    expect(debate).toHaveTextContent("Today's debate");
+    expect(within(debate).getByRole("link", { name: "Rank it →" })).toHaveAttribute("href", "/hot-takes");
+    unmount();
+
+    streaks = streaksWithPlayed(["chainlink", "brain-dead", "hot-takes"]);
+    renderScreen();
+    expect(screen.queryByTestId("finish-debate")).toBeNull();
+  });
+
+  function saveSweepDay(ids: readonly DailyGameId[]) {
     localStorage.setItem(
       "stim_daily_streaks",
       JSON.stringify({
         version: 1,
-        games: Object.fromEntries(DAILY_GAMES.map((id) => [id, { playDates: ["2026-10-06"] }])),
+        games: Object.fromEntries(DAILY_GAMES.map((id) => [id, { playDates: ids.includes(id) ? ["2026-10-06"] : [] }])),
       }),
     );
+  }
+
+  it("swaps Up next for a Sweep panel once every puzzle is played, and sends you to the debate", () => {
+    streaks = streaksWithPlayed([...PUZZLE_GAMES]);
+    saveSweepDay(PUZZLE_GAMES);
     renderScreen();
 
     expect(screen.queryByTestId("finish-up-next")).toBeNull();
     expect(screen.queryByTestId("finish-others")).toBeNull();
+    expect(screen.queryByTestId("finish-debate")).toBeNull();
     expect(screen.queryByTestId("finish-countdown")).toBeNull();
     const sweep = screen.getByTestId("finish-sweep");
-    expect(sweep).toHaveTextContent("Sweep. All seven done today.");
+    expect(sweep).toHaveTextContent("Sweep. All six done today.");
     expect(sweep).toHaveTextContent("Your 1st Sweep.");
     expect(sweep).toHaveTextContent("New puzzles in 8h 37m");
+    expect(within(sweep).getByRole("link", { name: "Now settle today's debate →" })).toHaveAttribute("href", "/hot-takes");
+    expect(screen.getByTestId("finish-sweep-line")).toHaveTextContent("Sweep. All six done today.");
+  });
+
+  it("offers a Draft room after a Sweep when the debate is already settled", () => {
+    streaks = streaksWithPlayed([...DAILY_GAMES]);
+    saveSweepDay(DAILY_GAMES);
+    renderScreen();
+
+    const sweep = screen.getByTestId("finish-sweep");
     expect(within(sweep).getByRole("link", { name: "Create a Draft room →" })).toHaveAttribute("href", "/draft-anything");
-    expect(screen.getByTestId("finish-sweep-line")).toHaveTextContent("Sweep. All seven done today.");
+  });
+
+  describe("for Hot Takes", () => {
+    it("leaves out the puzzle run and points back to the puzzles instead", () => {
+      renderScreen({ gameId: "hot-takes" });
+
+      expect(screen.getByText("RESULT BODY")).toBeInTheDocument();
+      expect(screen.queryByTestId("finish-sweep-line")).toBeNull();
+      expect(screen.queryByTestId("finish-up-next")).toBeNull();
+      expect(screen.queryByTestId("finish-others")).toBeNull();
+      expect(screen.queryByTestId("finish-debate")).toBeNull();
+      const back = screen.getByTestId("finish-back-to-puzzles");
+      expect(within(back).getByRole("link", { name: "Back to the puzzles · 4 left →" })).toHaveAttribute(
+        "href",
+        "/anyguessr",
+      );
+      expect(screen.getByRole("button", { name: "Start an argument" })).toBeInTheDocument();
+      expect(screen.getByTestId("finish-countdown")).toHaveTextContent("New puzzles in 8h 37m");
+    });
+
+    it("says so when every puzzle is already done", () => {
+      streaks = streaksWithPlayed([...PUZZLE_GAMES]);
+      renderScreen({ gameId: "hot-takes" });
+
+      expect(screen.getByTestId("finish-back-to-puzzles")).toHaveTextContent("All six puzzles done today.");
+      expect(screen.queryByTestId("finish-sweep")).toBeNull();
+    });
   });
 
   it("hands the game's colours to the overlay", () => {

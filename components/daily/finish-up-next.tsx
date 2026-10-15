@@ -2,10 +2,11 @@
 
 import type { CSSProperties } from "react";
 import Link from "next/link";
+import { FinishDebate } from "@/components/daily/finish-debate";
 import { track } from "@/lib/analytics/track";
 import { requestDirectPlayFromFinish } from "@/lib/daily-intro/direct-play";
 import { nextDaily, remainingDailies } from "@/lib/games/next";
-import { getGame, type DailyGameId } from "@/lib/games/registry";
+import { DEBATE_GAME, getGame, type DailyGameId } from "@/lib/games/registry";
 
 function ordinal(n: number): string {
   const tens = n % 100;
@@ -24,17 +25,31 @@ interface FinishUpNextProps {
 
 export function FinishUpNext({ gameId, played, sweeps, countdown }: FinishUpNextProps) {
   const next = nextDaily(played);
+  const debateOpen = !played.has(DEBATE_GAME);
 
   if (!next) {
     return (
       <section className="fin-sweep" data-testid="finish-sweep">
-        <h3>Sweep. All seven done today.</h3>
+        <h3>Sweep. All six done today.</h3>
         <p>
           Your {ordinal(Math.max(1, sweeps))} Sweep. New puzzles in {countdown}.
         </p>
-        <Link href="/draft-anything" className="fin-play">
-          Create a Draft room →
-        </Link>
+        {debateOpen ? (
+          <Link
+            href={getGame(DEBATE_GAME).playHref}
+            className="fin-play"
+            onClick={() => {
+              requestDirectPlayFromFinish(DEBATE_GAME);
+              track("finish_next_clicked", { from: gameId, game: DEBATE_GAME, slot: "sweep" });
+            }}
+          >
+            Now settle today&apos;s debate →
+          </Link>
+        ) : (
+          <Link href="/draft-anything" className="fin-play">
+            Create a Draft room →
+          </Link>
+        )}
       </section>
     );
   }
@@ -89,6 +104,8 @@ export function FinishUpNext({ gameId, played, sweeps, countdown }: FinishUpNext
           </div>
         </section>
       ) : null}
+
+      {debateOpen ? <FinishDebate gameId={gameId} /> : null}
     </>
   );
 }

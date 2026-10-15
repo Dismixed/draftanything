@@ -12,8 +12,6 @@ vi.mock("@/components/hot-takes/intro", () => ({
 }));
 vi.mock("@/components/hot-takes/optimized-image", () => ({ HotTakesImage: () => null }));
 vi.mock("@/components/daily/finish-screen", () => ({ FinishScreen: () => null }));
-vi.mock("@/lib/motion/burst", () => ({ burstFrom: vi.fn() }));
-vi.mock("@/lib/motion/count-up", () => ({ useCountUp: (value: number) => value }));
 vi.mock("@/lib/analytics/track", () => ({ track: vi.fn() }));
 
 const category = {
@@ -38,7 +36,7 @@ describe("Hot Takes saved ranking", () => {
     const { container } = render(<HotTakesGame initialCategory={category} />);
     expect(screen.queryByText("Start ranking")).not.toBeInTheDocument();
     expect(container.querySelector('[data-drop-zone="S"]')).toHaveTextContent("First pick");
-    expect(screen.getByText("How you stack up")).toBeInTheDocument();
+    expect(screen.getByText("Where you split from the crowd")).toBeInTheDocument();
     expect(container.querySelector(".hot-takes-game-area")).toHaveClass("is-locked");
   });
 

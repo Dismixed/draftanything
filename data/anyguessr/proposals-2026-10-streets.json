@@ -1,0 +1,306 @@
+[
+  {
+    "cca3": "PHL",
+    "country": "Philippines",
+    "clue_type": "street",
+    "difficulty": "easy",
+    "note": "new: the Philippines' signature shared taxi",
+    "wiki_title": "Jeepney"
+  },
+  {
+    "cca3": "GBR",
+    "country": "United Kingdom",
+    "clue_type": "street",
+    "difficulty": "easy",
+    "note": "new: London black cab",
+    "wiki_title": "Hackney carriage"
+  },
+  {
+    "cca3": "USA",
+    "country": "United States",
+    "clue_type": "street",
+    "difficulty": "easy",
+    "note": "new: yellow New York cabs",
+    "wiki_title": "Taxis of New York City"
+  },
+  {
+    "cca3": "NLD",
+    "country": "Netherlands",
+    "clue_type": "street",
+    "difficulty": "easy",
+    "note": "new: bike-filled Dutch streets",
+    "wiki_title": "Cycling in the Netherlands"
+  },
+  {
+    "cca3": "KEN",
+    "country": "Kenya",
+    "clue_type": "street",
+    "difficulty": "medium",
+    "note": "new: decorated Nairobi minibuses",
+    "wiki_title": "Matatu"
+  },
+  {
+    "cca3": "THA",
+    "country": "Thailand",
+    "clue_type": "street",
+    "difficulty": "medium",
+    "note": "new: pickup-truck shared taxi",
+    "wiki_title": "Songthaew"
+  },
+  {
+    "cca3": "PAK",
+    "country": "Pakistan",
+    "clue_type": "street",
+    "difficulty": "medium",
+    "note": "new: lead photo is a Pakistani painted truck",
+    "wiki_title": "Truck art in South Asia"
+  },
+  {
+    "cca3": "TUR",
+    "country": "Turkey",
+    "clue_type": "street",
+    "difficulty": "medium",
+    "note": "new: Turkish shared minibus",
+    "wiki_title": "Dolmuş"
+  },
+  {
+    "cca3": "GTM",
+    "country": "Guatemala",
+    "clue_type": "street",
+    "difficulty": "medium",
+    "note": "new: lead photo: chicken buses in Antigua Guatemala",
+    "wiki_title": "Bus transport in Central America"
+  },
+  {
+    "cca3": "HTI",
+    "country": "Haiti",
+    "clue_type": "street",
+    "difficulty": "medium",
+    "note": "new: painted Haitian shared taxis",
+    "wiki_title": "Tap tap"
+  },
+  {
+    "cca3": "NGA",
+    "country": "Nigeria",
+    "clue_type": "street",
+    "difficulty": "medium",
+    "note": "new: yellow Lagos minibuses",
+    "wiki_title": "Danfo"
+  },
+  {
+    "cca3": "GHA",
+    "country": "Ghana",
+    "clue_type": "street",
+    "difficulty": "medium",
+    "note": "new: Ghanaian shared minibus",
+    "wiki_title": "Trotro"
+  },
+  {
+    "cca3": "AUS",
+    "country": "Australia",
+    "clue_type": "street",
+    "difficulty": "medium",
+    "note": "new: outback road trains",
+    "wiki_title": "Road train"
+  },
+  {
+    "cca3": "PRT",
+    "country": "Portugal",
+    "clue_type": "street",
+    "difficulty": "medium",
+    "note": "new: Lisbon's yellow trams",
+    "wiki_title": "Trams in Lisbon"
+  },
+  {
+    "cca3": "IND",
+    "country": "India",
+    "clue_type": "street",
+    "difficulty": "medium",
+    "note": "new: the classic Indian taxi car",
+    "wiki_title": "Hindustan Ambassador"
+  },
+  {
+    "cca3": "UGA",
+    "country": "Uganda",
+    "clue_type": "street",
+    "difficulty": "hard",
+    "note": "new: bicycle and motorbike taxis",
+    "wiki_title": "Boda boda"
+  },
+  {
+    "cca3": "JPN",
+    "country": "Japan",
+    "clue_type": "road_sign",
+    "difficulty": "medium",
+    "note": "new: Japanese script on signs",
+    "wiki_title": "Road signs in Japan"
+  },
+  {
+    "cca3": "GBR",
+    "country": "United Kingdom",
+    "clue_type": "road_sign",
+    "difficulty": "medium",
+    "note": "new: distinctive UK sign design",
+    "wiki_title": "Road signs in the United Kingdom"
+  },
+  {
+    "cca3": "USA",
+    "country": "United States",
+    "clue_type": "road_sign",
+    "difficulty": "medium",
+    "note": "new: yellow diamond warnings, green guide signs",
+    "wiki_title": "Road signs in the United States"
+  },
+  {
+    "cca3": "SWE",
+    "country": "Sweden",
+    "clue_type": "road_sign",
+    "difficulty": "medium",
+    "note": "new: yellow-backed warning signs",
+    "wiki_title": "Road signs in Sweden"
+  },
+  {
+    "cca3": "AUS",
+    "country": "Australia",
+    "clue_type": "road_sign",
+    "difficulty": "medium",
+    "note": "new: green guide signs, wildlife warnings",
+    "wiki_title": "Road signs in Australia"
+  },
+  {
+    "cca3": "DEU",
+    "country": "Germany",
+    "clue_type": "road_sign",
+    "difficulty": "medium",
+    "note": "new: Autobahn blue guide signs",
+    "wiki_title": "Road signs in Germany"
+  },
+  {
+    "cca3": "FRA",
+    "country": "France",
+    "clue_type": "road_sign",
+    "difficulty": "medium",
+    "note": "new: French directional signs",
+    "wiki_title": "Road signs in France"
+  },
+  {
+    "cca3": "MEX",
+    "country": "Mexico",
+    "clue_type": "road_sign",
+    "difficulty": "medium",
+    "note": "new: Spanish-language signs",
+    "wiki_title": "Road signs in Mexico"
+  },
+  {
+    "cca3": "IND",
+    "country": "India",
+    "clue_type": "road_sign",
+    "difficulty": "medium",
+    "note": "new: multilingual Devanagari and English signs",
+    "wiki_title": "Road signs in India"
+  },
+  {
+    "cca3": "KOR",
+    "country": "South Korea",
+    "clue_type": "road_sign",
+    "difficulty": "medium",
+    "note": "new: Hangul on signs",
+    "wiki_title": "Road signs in South Korea"
+  },
+  {
+    "cca3": "CHN",
+    "country": "China",
+    "clue_type": "road_sign",
+    "difficulty": "medium",
+    "note": "new: Chinese characters with pinyin",
+    "wiki_title": "Road signs in China"
+  },
+  {
+    "cca3": "THA",
+    "country": "Thailand",
+    "clue_type": "road_sign",
+    "difficulty": "medium",
+    "note": "new: Thai script on signs",
+    "wiki_title": "Road signs in Thailand"
+  },
+  {
+    "cca3": "IRL",
+    "country": "Ireland",
+    "clue_type": "road_sign",
+    "difficulty": "medium",
+    "note": "new: bilingual Irish and English signs",
+    "wiki_title": "Road signs in Ireland"
+  },
+  {
+    "cca3": "ISL",
+    "country": "Iceland",
+    "clue_type": "road_sign",
+    "difficulty": "hard",
+    "note": "new: Icelandic letters on signs",
+    "wiki_title": "Road signs in Iceland"
+  },
+  {
+    "cca3": "RUS",
+    "country": "Russia",
+    "clue_type": "road_sign",
+    "difficulty": "medium",
+    "note": "new: Cyrillic signs",
+    "wiki_title": "Road signs in Russia"
+  },
+  {
+    "cca3": "GRC",
+    "country": "Greece",
+    "clue_type": "road_sign",
+    "difficulty": "medium",
+    "note": "new: Greek script with Latin transliteration",
+    "wiki_title": "Road signs in Greece"
+  },
+  {
+    "cca3": "ISR",
+    "country": "Israel",
+    "clue_type": "road_sign",
+    "difficulty": "medium",
+    "note": "new: Hebrew, Arabic and English signs",
+    "wiki_title": "Road signs in Israel"
+  },
+  {
+    "cca3": "ARE",
+    "country": "United Arab Emirates",
+    "clue_type": "road_sign",
+    "difficulty": "medium",
+    "note": "new: Arabic and English signs",
+    "wiki_title": "Road signs in the United Arab Emirates"
+  },
+  {
+    "cca3": "TWN",
+    "country": "Taiwan",
+    "clue_type": "road_sign",
+    "difficulty": "hard",
+    "note": "new: traditional Chinese characters",
+    "wiki_title": "Road signs in Taiwan"
+  },
+  {
+    "cca3": "MAR",
+    "country": "Morocco",
+    "clue_type": "road_sign",
+    "difficulty": "medium",
+    "note": "new: Arabic, Tifinagh and French signs",
+    "wiki_title": "Road signs in Morocco"
+  },
+  {
+    "cca3": "NOR",
+    "country": "Norway",
+    "clue_type": "road_sign",
+    "difficulty": "hard",
+    "note": "new: Norwegian road signs",
+    "wiki_title": "Road signs in Norway"
+  },
+  {
+    "cca3": "ITA",
+    "country": "Italy",
+    "clue_type": "road_sign",
+    "difficulty": "medium",
+    "note": "new: Italian directional signs",
+    "wiki_title": "Road signs in Italy"
+  }
+]
