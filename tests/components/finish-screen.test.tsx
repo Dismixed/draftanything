@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FinishScreen, type FinishScreenProps } from "@/components/daily/finish-screen";
+import { clearDirectPlay, isDirectPlayRequested } from "@/lib/daily-intro/direct-play";
 import { DAILY_GAMES, getGame, type DailyGameId } from "@/lib/games/registry";
 import type { GameStreakInfo } from "@/lib/streak/types";
 
@@ -105,6 +106,24 @@ describe("FinishScreen", () => {
       "/getting-warmer/daily",
     ]);
     expect(others[0]).toHaveTextContent(getGame("freezeframes").blurb);
+  });
+
+  it("opens the other games straight into play, but Ball Knowledge on its intro", () => {
+    renderScreen();
+
+    fireEvent.click(screen.getByRole("link", { name: "Play AnyGuessr →" }));
+    expect(isDirectPlayRequested("anyguessr")).toBe(true);
+    clearDirectPlay("anyguessr");
+
+    fireEvent.click(screen.getByTestId("finish-chip-hot-takes"));
+    expect(isDirectPlayRequested("hot-takes")).toBe(true);
+    clearDirectPlay("hot-takes");
+
+    const others = within(screen.getByTestId("finish-others"));
+    fireEvent.click(others.getByText(getGame("ball-knowledge").name));
+    expect(isDirectPlayRequested("ball-knowledge")).toBe(false);
+    fireEvent.click(screen.getByTestId("finish-chip-ball-knowledge"));
+    expect(isDirectPlayRequested("ball-knowledge")).toBe(false);
   });
 
   it("counts the game just finished for a first-time visitor with no saved streaks", () => {

@@ -16,12 +16,12 @@ describe("SEO metadata", () => {
     expect(urls).toContain("https://stimgames.com/brain-dead");
   });
 
-  it("lists the leaderboards and free play, which have their own content", () => {
+  it("leaves the thin noindex pages (leaderboards, free play) out of the sitemap", () => {
     const urls = sitemapEntries.map((entry) => entry.url);
 
-    expect(urls).toContain("https://stimgames.com/brain-dead/freeplay");
-    expect(urls).toContain("https://stimgames.com/brain-dead/leaderboard");
-    expect(urls).toContain("https://stimgames.com/freezeframes/leaderboard");
+    expect(urls).not.toContain("https://stimgames.com/brain-dead/freeplay");
+    expect(urls).not.toContain("https://stimgames.com/brain-dead/leaderboard");
+    expect(urls).not.toContain("https://stimgames.com/freezeframes/leaderboard");
     expect(new Set(urls).size).toBe(urls.length);
   });
 

@@ -18,3 +18,11 @@ export function isDirectPlayRequested(game: DailyGameId): boolean {
 export function clearDirectPlay(game: DailyGameId): void {
   if (pending === game) pending = null;
 }
+
+/**
+ * Opening another daily from a finish screen skips its intro, except Ball Knowledge: its clock
+ * starts as soon as play begins, so the player lands on its intro and starts when ready.
+ */
+export function requestDirectPlayFromFinish(game: DailyGameId): void {
+  if (game !== "ball-knowledge") requestDirectPlay(game);
+}

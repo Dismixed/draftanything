@@ -51,13 +51,11 @@ export const sitemapEntries: MetadataRoute.Sitemap = [
     changeFrequency: "daily" as ChangeFrequency,
     priority: game.priority,
   })),
-  // Pages with their own content that are not a game's main page.
-  ...["/brain-dead/freeplay", "/brain-dead/leaderboard", "/freezeframes/leaderboard"].map((path) => ({
-    url: absoluteUrl(path),
-    changeFrequency: "daily" as ChangeFrequency,
-    priority: 0.5,
-  })),
+  // Leaderboards and free play are left out: they are thin and set noindex (see NOINDEX).
 ];
+
+/** Thin utility pages: keep them out of the index but let crawlers follow their links. */
+export const NOINDEX = { index: false, follow: true } as const;
 
 export function buildHomeJsonLd(): { "@context": "https://schema.org"; "@graph": JsonLdNode[] } {
   return {

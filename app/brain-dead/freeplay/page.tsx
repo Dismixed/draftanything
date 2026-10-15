@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { NOINDEX } from "@/lib/seo";
 import FreeplayPicker from "@/components/brain-dead/freeplay-picker";
 
 export const metadata: Metadata = {
   title: "Free Play — Brain Dead",
   description: "Pick a trivia category and play Brain Dead free play mode.",
   alternates: { canonical: "/brain-dead/freeplay" },
+  robots: NOINDEX,
 };
 
 export default function FreeplayPage() {

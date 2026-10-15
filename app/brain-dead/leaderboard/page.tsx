@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { NOINDEX } from "@/lib/seo";
 import Leaderboard from "@/components/brain-dead/leaderboard";
 
 export const metadata: Metadata = {
   title: "Leaderboard — Brain Dead",
   description: "Today's Brain Dead daily challenge leaderboard.",
   alternates: { canonical: "/brain-dead/leaderboard" },
+  robots: NOINDEX,
 };
 
 export default function LeaderboardPage() {

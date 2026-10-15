@@ -3,7 +3,7 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import { track } from "@/lib/analytics/track";
-import { requestDirectPlay } from "@/lib/daily-intro/direct-play";
+import { requestDirectPlayFromFinish } from "@/lib/daily-intro/direct-play";
 import { nextDaily, remainingDailies } from "@/lib/games/next";
 import { getGame, type DailyGameId } from "@/lib/games/registry";
 
@@ -56,7 +56,7 @@ export function FinishUpNext({ gameId, played, sweeps, countdown }: FinishUpNext
           className="fin-play"
           data-game={next}
           onClick={() => {
-            requestDirectPlay(next);
+            requestDirectPlayFromFinish(next);
             track("finish_next_clicked", { from: gameId, game: next, slot: "up_next" });
           }}
         >
@@ -77,7 +77,7 @@ export function FinishUpNext({ gameId, played, sweeps, countdown }: FinishUpNext
                   className="fin-other"
                   style={{ "--c": other.theme.accent } as CSSProperties}
                   onClick={() => {
-                    requestDirectPlay(id);
+                    requestDirectPlayFromFinish(id);
                     track("finish_next_clicked", { from: gameId, game: id, slot: "other" });
                   }}
                 >

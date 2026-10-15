@@ -1,6 +1,7 @@
 import { z } from "zod/v4";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { fuzzyMatch } from "@/lib/freezeframes/game-logic";
+import { jevAccepts } from "@/lib/freezeframes/jev-judge";
 import { getDailyAnswers } from "@/lib/freezeframes/puzzle-service";
 import type { RoundKey } from "@/lib/freezeframes/types";
 import { getPostHogClient } from "@/lib/posthog-server";
@@ -46,12 +47,14 @@ export async function POST(request: Request) {
       return Response.json({ correct: false, answer });
     }
 
-    const correct = fuzzyMatch(guess!, answer);
+    const fuzzy = fuzzyMatch(guess!, answer);
+    const viaJev = !fuzzy && (await jevAccepts(roundKey as RoundKey, guess!, answer));
+    const correct = fuzzy || viaJev;
     const posthog = getPostHogClient();
     posthog.capture({
       distinctId: roundKey,
       event: "freezeframes_guess_submitted",
-      properties: { round_key: roundKey, skipped: false, correct },
+      properties: { round_key: roundKey, skipped: false, correct, via_jev: viaJev },
     });
     await posthog.flush();
     return Response.json({

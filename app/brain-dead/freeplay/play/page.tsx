@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { NOINDEX } from "@/lib/seo";
 import FreeplayGame from "./game";
 
 export const metadata: Metadata = {
@@ -6,6 +7,7 @@ export const metadata: Metadata = {
   description: "Brain Dead trivia free play.",
   // Every category shares this page, so search engines are pointed at the picker.
   alternates: { canonical: "/brain-dead/freeplay" },
+  robots: NOINDEX,
 };
 
 export default function FreeplayPlayPage({

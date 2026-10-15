@@ -20,12 +20,30 @@ export function getDisplayDate(): string {
   });
 }
 
+/** Lowercase words without accents, punctuation or a leading article; "&" reads as "and". */
 function normalise(s: string): string {
   return s
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
-    .replace(/[''`]/g, "")
+    .replace(/&/g, " and ")
+    .replace(/['‘’`]/g, "")
     .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^(the|a|an) /, "");
+}
+
+/**
+ * The title without what trails it: bracketed notes, a featured credit, a
+ * subtitle after ":" or " - ". "Hips Don't Lie (feat. Wyclef Jean)" gives
+ * "Hips Don't Lie"; "Avatar: The Last Airbender" gives "Avatar".
+ */
+function mainTitle(answer: string): string {
+  return answer
+    .replace(/\s*[([].*?[)\]]/g, "")
+    .replace(/\s+(feat\.?|ft\.?|featuring)\s.*$/i, "")
+    .split(/:|\s+[-–—]\s+/)[0]
     .trim();
 }
 
@@ -47,16 +65,20 @@ function lev(a: string, b: string): number {
   return d[m][n];
 }
 
+/** True when the guess is close to the whole answer or to its main title, typos allowed. */
 export function fuzzyMatch(input: string, answer: string): boolean {
+  return [answer, mainTitle(answer)].some((form) => closeTo(input, form));
+}
+
+function closeTo(input: string, answer: string): boolean {
   const a = normalise(input);
   const b = normalise(answer);
   if (!a || !b) return false;
   if (a === b) return true;
-  if (b.includes(a) && a.length >= Math.floor(b.length * 0.6)) return true;
+  // A guess may say more than the answer ("Hips Don't Lie Shakira"), not less.
   if (a.includes(b) && b.length >= Math.floor(a.length * 0.6)) return true;
-  const dist = lev(a, b);
   const threshold = Math.max(2, Math.floor(Math.max(a.length, b.length) * 0.25));
-  return dist <= threshold;
+  return lev(a, b) <= threshold;
 }
 
 export function calcAvailablePoints(
