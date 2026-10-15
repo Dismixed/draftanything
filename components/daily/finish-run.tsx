@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from "react";
 import Link from "next/link";
+import { requestDirectPlay } from "@/lib/daily-intro/direct-play";
 import { nextDaily } from "@/lib/games/next";
 import { DAILY_GAMES, GAME_META, type DailyGameId } from "@/lib/streak/types";
 
@@ -31,6 +32,7 @@ export function FinishRun({ gameId, played }: { gameId: DailyGameId; played: Rea
               className={className}
               style={{ "--c": meta.theme.accent } as CSSProperties}
               aria-current={id === gameId ? "true" : undefined}
+              onClick={() => requestDirectPlay(id)}
               data-testid={`finish-chip-${id}`}
             >
               {meta.label}

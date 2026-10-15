@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import { track } from "@/lib/analytics/track";
+import { requestDirectPlay } from "@/lib/daily-intro/direct-play";
 import { nextDaily, remainingDailies } from "@/lib/games/next";
 import { getGame, type DailyGameId } from "@/lib/games/registry";
 
@@ -54,7 +55,10 @@ export function FinishUpNext({ gameId, played, sweeps, countdown }: FinishUpNext
           href={game.playHref}
           className="fin-play"
           data-game={next}
-          onClick={() => track("finish_next_clicked", { from: gameId, game: next, slot: "up_next" })}
+          onClick={() => {
+            requestDirectPlay(next);
+            track("finish_next_clicked", { from: gameId, game: next, slot: "up_next" });
+          }}
         >
           Play {game.name} →
         </Link>
@@ -72,7 +76,10 @@ export function FinishUpNext({ gameId, played, sweeps, countdown }: FinishUpNext
                   href={other.playHref}
                   className="fin-other"
                   style={{ "--c": other.theme.accent } as CSSProperties}
-                  onClick={() => track("finish_next_clicked", { from: gameId, game: id, slot: "other" })}
+                  onClick={() => {
+                    requestDirectPlay(id);
+                    track("finish_next_clicked", { from: gameId, game: id, slot: "other" });
+                  }}
                 >
                   <span className="fin-other-name">{other.name}</span>
                   <span className="fin-other-blurb">{other.blurb}</span>
