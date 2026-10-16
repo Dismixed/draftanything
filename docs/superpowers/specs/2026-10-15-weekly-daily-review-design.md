@@ -143,11 +143,15 @@ This reuses the existing single cron (06:00 UTC); no new Vercel cron entry.
 
 ### Email
 
-- Provider: Resend (`resend` package), via `lib/email/send.ts`, so the provider can be
-  swapped later.
-- Env: `RESEND_API_KEY`, `REVIEW_EMAIL_FROM`, and recipients from the existing
-  `ADMIN_EMAILS`. If `RESEND_API_KEY` is unset the job logs and reports
-  `{ skipped: "no RESEND_API_KEY" }` instead of failing.
+- Provider: Gmail SMTP via `nodemailer` (`smtp.gmail.com`, port 465, TLS), wrapped in
+  `lib/email/send.ts` so the provider can be swapped later. No domain verification or
+  third-party email service; Gmail's ~500/day limit is far above the ~1/week volume.
+- Env: `SMTP_USER` (the sending Gmail address, also used as `From`) and `SMTP_PASS` (a
+  Google app password; requires 2FA on that account). Recipients come from the
+  existing `ADMIN_EMAILS`. If either SMTP var is unset the job logs and reports
+  `{ skipped: "SMTP not configured" }` instead of failing.
+- Runs in the Node.js runtime (the cron route already does; `nodemailer` needs raw
+  sockets, so it must not move to Edge).
 - Content (plain HTML, no images): subject `"N dailies need review (Oct 16–Oct 25)"`; a
   short per-game count list (`Hot Takes — 6 unreviewed, first: Fri Oct 17`); one button
   linking to `${NEXT_PUBLIC_SITE_URL}/admin/review`.
@@ -206,8 +210,8 @@ Bodies are validated with zod; `game` must be one of the `ReviewGame` values.
 - Unit: Ball Knowledge LRU excludes retired categories.
 - Route tests: auth guard rejects non-admins; locked date returns 409; swap with
   `retire: true` archives the old content.
-- Manual: run the cron locally with `RESEND_API_KEY` unset (skip path) and set to a
-  test key with `ADMIN_EMAILS` limited to the developer.
+- Manual: run the cron locally with `SMTP_USER`/`SMTP_PASS` unset (skip path), then
+  set with `ADMIN_EMAILS` limited to the developer and confirm the email arrives.
 - `pnpm typecheck`, `pnpm lint`, `pnpm test`.
 
 ## Trade-offs
