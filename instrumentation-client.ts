@@ -14,6 +14,8 @@ if (!token) {
     ui_host: "https://us.posthog.com",
     defaults: "2026-01-30",
     capture_exceptions: true,
+    // Tells our own API routes who the player is, so server-side events join their person.
+    tracing_headers: [window.location.hostname],
     debug: process.env.NODE_ENV === "development",
   });
 }

@@ -2,7 +2,7 @@ import { AppError } from "@/lib/errors";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { requireGuestSession } from "@/features/guest/session";
 import { resetForRematch } from "@/features/room/service";
-import { getPostHogClient } from "@/lib/posthog-server";
+import { getPostHogClient, withRequestIdentity } from "@/lib/posthog-server";
 
 /**
  * POST /api/drafts/[draftId]/rematch
@@ -11,7 +11,7 @@ import { getPostHogClient } from "@/lib/posthog-server";
  * Only the host can trigger this.
  */
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ draftId: string }> },
 ) {
   try {
@@ -36,11 +36,10 @@ export async function POST(
 
     const projection = await resetForRematch(draftId, guestId);
     const posthog = getPostHogClient();
-    posthog.capture({
-      distinctId: guestId,
+    posthog.capture(withRequestIdentity(request, {
       event: "draft_rematch_initiated",
       properties: { draft_id: draftId },
-    });
+    }, guestId));
     await posthog.flush();
     return Response.json(projection);
   } catch (e) {

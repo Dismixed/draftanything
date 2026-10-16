@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { validateDailyGuess } from "@/lib/anyguessr/puzzle-service";
 import { MAX_DAILY_ROUNDS } from "@/lib/anyguessr/daily";
 import { guessEventProperties } from "@/lib/anyguessr/guess-event";
-import { getPostHogClient } from "@/lib/posthog-server";
+import { getPostHogClient, withRequestIdentity } from "@/lib/posthog-server";
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,11 +34,10 @@ export async function POST(req: NextRequest) {
     const clueType = typeof body.clueType === "string" ? body.clueType : undefined;
     const result = await validateDailyGuess(db, puzzleId, guess, roundIndex, clueType);
     const posthog = getPostHogClient();
-    posthog.capture({
-      distinctId: puzzleId,
+    posthog.capture(withRequestIdentity(req, {
       event: "anyguessr_daily_guess_submitted",
       properties: guessEventProperties(puzzleId, roundIndex, result, body.clueType),
-    });
+    }));
     await posthog.flush();
     return NextResponse.json(result);
   } catch (err) {

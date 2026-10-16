@@ -8,7 +8,7 @@ import { makeBotPick } from "@/features/bots/service";
 import { handleCommentaryForPick } from "@/features/ai/commentary";
 import { generateRequestId, setRequestIdHeader } from "@/lib/request-id";
 import { logRoute } from "@/lib/logger";
-import { getPostHogClient } from "@/lib/posthog-server";
+import { getPostHogClient, withRequestIdentity } from "@/lib/posthog-server";
 
 const botPickSchema = z.object({
   expectedPick: z.number().int().min(0),
@@ -87,8 +87,7 @@ export async function POST(
       });
 
       const posthog = getPostHogClient();
-      posthog.capture({
-        distinctId: guestId,
+      posthog.capture(withRequestIdentity(request, {
         event: "draft_bot_pick",
         properties: {
           draft_id: draftId,
@@ -96,7 +95,7 @@ export async function POST(
           picking_mode: outcome.pickingMode,
           forfeited: outcome.forfeited,
         },
-      });
+      }, guestId));
       await posthog.flush();
     }
 

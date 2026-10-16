@@ -5,7 +5,7 @@ import { soloRoomSchema } from "@/features/room/schema";
 import { createSoloRoom } from "@/features/bots/solo";
 import { generateRequestId, setRequestIdHeader } from "@/lib/request-id";
 import { logRoute } from "@/lib/logger";
-import { getPostHogClient } from "@/lib/posthog-server";
+import { getPostHogClient, withRequestIdentity } from "@/lib/posthog-server";
 
 // Shared with POST /api/drafts: a solo draft is still a room.
 const CREATE_RATE_LIMIT_MAX = 5;
@@ -74,8 +74,7 @@ export async function POST(request: Request) {
     const room = await createSoloRoom(parseResult.data, guestId);
 
     const posthog = getPostHogClient();
-    posthog.capture({
-      distinctId: guestId,
+    posthog.capture(withRequestIdentity(request, {
       event: "draft_solo_started",
       properties: {
         draft_id: room.draftId,
@@ -83,7 +82,7 @@ export async function POST(request: Request) {
         picking_mode: parseResult.data.pickingMode,
         rounds: parseResult.data.rounds,
       },
-    });
+    }, guestId));
     await posthog.flush();
 
     return respond(room, 201, "success", room.draftId);

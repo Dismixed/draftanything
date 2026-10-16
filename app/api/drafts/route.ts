@@ -5,7 +5,7 @@ import { createRoomSchema } from "@/features/room/schema";
 import { createRoom } from "@/features/room/service";
 import { generateRequestId, setRequestIdHeader } from "@/lib/request-id";
 import { logRoute } from "@/lib/logger";
-import { getPostHogClient } from "@/lib/posthog-server";
+import { getPostHogClient, withRequestIdentity } from "@/lib/posthog-server";
 
 const CREATE_RATE_LIMIT_MAX = 5;
 const CREATE_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
@@ -61,8 +61,7 @@ export async function POST(request: Request) {
 
     const room = await createRoom(parseResult.data, guestId);
     const posthog = getPostHogClient();
-    posthog.capture({
-      distinctId: guestId,
+    posthog.capture(withRequestIdentity(request, {
       event: "draft_room_created",
       properties: {
         draft_id: room.draftId,
@@ -73,7 +72,7 @@ export async function POST(request: Request) {
         rounds: parseResult.data.rounds,
         has_timer: parseResult.data.timerSeconds !== null,
       },
-    });
+    }, guestId));
     await posthog.flush();
     const res = Response.json(room, { status: 201 });
     setRequestIdHeader(res, requestId);

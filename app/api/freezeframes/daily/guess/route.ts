@@ -4,7 +4,7 @@ import { fuzzyMatch } from "@/lib/freezeframes/game-logic";
 import { jevAccepts } from "@/lib/freezeframes/jev-judge";
 import { getDailyAnswers } from "@/lib/freezeframes/puzzle-service";
 import type { RoundKey } from "@/lib/freezeframes/types";
-import { getPostHogClient } from "@/lib/posthog-server";
+import { getPostHogClient, withRequestIdentity } from "@/lib/posthog-server";
 
 const guessSchema = z
   .object({
@@ -38,11 +38,10 @@ export async function POST(request: Request) {
 
     if (skip) {
       const posthog = getPostHogClient();
-      posthog.capture({
-        distinctId: roundKey,
+      posthog.capture(withRequestIdentity(request, {
         event: "freezeframes_guess_submitted",
         properties: { round_key: roundKey, skipped: true, correct: false },
-      });
+      }));
       await posthog.flush();
       return Response.json({ correct: false, answer });
     }
@@ -51,11 +50,10 @@ export async function POST(request: Request) {
     const viaJev = !fuzzy && (await jevAccepts(roundKey as RoundKey, guess!, answer));
     const correct = fuzzy || viaJev;
     const posthog = getPostHogClient();
-    posthog.capture({
-      distinctId: roundKey,
+    posthog.capture(withRequestIdentity(request, {
       event: "freezeframes_guess_submitted",
       properties: { round_key: roundKey, skipped: false, correct, via_jev: viaJev },
-    });
+    }));
     await posthog.flush();
     return Response.json({
       correct,

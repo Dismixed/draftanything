@@ -3,7 +3,7 @@ import { AppError } from "@/lib/errors";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { requireGuestSession } from "@/features/guest/session";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getPostHogClient } from "@/lib/posthog-server";
+import { getPostHogClient, withRequestIdentity } from "@/lib/posthog-server";
 
 const startDraftSchema = z.object({
   pickOrder: z.array(
@@ -79,14 +79,13 @@ export async function POST(
     }
 
     const posthog = getPostHogClient();
-    posthog.capture({
-      distinctId: guestId,
+    posthog.capture(withRequestIdentity(request, {
       event: "draft_started",
       properties: {
         draft_id: draftId,
         total_picks: parseResult.data.pickOrder.length,
       },
-    });
+    }, guestId));
     await posthog.flush();
     return Response.json({ success: true });
   } catch (e) {

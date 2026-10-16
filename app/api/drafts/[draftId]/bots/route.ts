@@ -3,7 +3,7 @@ import { AppError } from "@/lib/errors";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { requireGuestSession } from "@/features/guest/session";
 import { addBot, removeBot } from "@/features/bots/service";
-import { getPostHogClient } from "@/lib/posthog-server";
+import { getPostHogClient, withRequestIdentity } from "@/lib/posthog-server";
 
 const removeBotSchema = z.object({
   playerId: z.string().uuid(),
@@ -47,7 +47,7 @@ function rateLimited(draftId: string, guestId: string): Response | null {
  * Returns: RoomProjection
  */
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ draftId: string }> },
 ) {
   try {
@@ -60,11 +60,10 @@ export async function POST(
     const { room, style } = await addBot(draftId, guestId);
 
     const posthog = getPostHogClient();
-    posthog.capture({
-      distinctId: guestId,
+    posthog.capture(withRequestIdentity(request, {
       event: "draft_bot_added",
       properties: { draft_id: draftId, style },
-    });
+    }, guestId));
     await posthog.flush();
 
     return Response.json(room);
@@ -102,11 +101,10 @@ export async function DELETE(
     const room = await removeBot(draftId, guestId, parseResult.data.playerId);
 
     const posthog = getPostHogClient();
-    posthog.capture({
-      distinctId: guestId,
+    posthog.capture(withRequestIdentity(request, {
       event: "draft_bot_removed",
       properties: { draft_id: draftId },
-    });
+    }, guestId));
     await posthog.flush();
 
     return Response.json(room);

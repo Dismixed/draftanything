@@ -6,7 +6,7 @@ import {
   validateClueState,
 } from "@/lib/getting-warmer/game-logic";
 import { getDailyAnswer, resolveNextClue } from "@/lib/getting-warmer/puzzle-service";
-import { getPostHogClient } from "@/lib/posthog-server";
+import { getPostHogClient, withRequestIdentity } from "@/lib/posthog-server";
 
 const bodySchema = z.object({
   guess: z.string().trim().max(120).optional(),
@@ -55,11 +55,10 @@ export async function POST(request: Request) {
 
     if (giveUp) {
       const posthog = getPostHogClient();
-      posthog.capture({
-        distinctId: puzzle.answer,
+      posthog.capture(withRequestIdentity(request, {
         event: "getting_warmer_guess_submitted",
         properties: { gave_up: true, correct: false, attempts: wrongGuesses.length },
-      });
+      }));
       await posthog.flush();
       return Response.json({
         correct: false,
@@ -78,11 +77,10 @@ export async function POST(request: Request) {
 
     if (correct) {
       const posthog = getPostHogClient();
-      posthog.capture({
-        distinctId: puzzle.answer,
+      posthog.capture(withRequestIdentity(request, {
         event: "getting_warmer_guess_submitted",
         properties: { gave_up: false, correct: true, attempts },
-      });
+      }));
       await posthog.flush();
       return Response.json({
         correct: true,

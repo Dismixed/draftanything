@@ -7,7 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { handleCommentaryForPick } from "@/features/ai/commentary";
 import { generateRequestId, setRequestIdHeader } from "@/lib/request-id";
 import { logRoute } from "@/lib/logger";
-import { getPostHogClient } from "@/lib/posthog-server";
+import { getPostHogClient, withRequestIdentity } from "@/lib/posthog-server";
 
 const poolPickSchema = z.object({
   itemId: z.string().uuid(),
@@ -130,15 +130,14 @@ export async function POST(
       });
     }
     const posthog = getPostHogClient();
-    posthog.capture({
-      distinctId: guestId,
+    posthog.capture(withRequestIdentity(request, {
       event: "draft_pick_submitted",
       properties: {
         draft_id: draftId,
         picking_mode: isOffTheDome ? "off_the_dome" : "pool",
         pick_index: parseResult.data.expectedPick,
       },
-    });
+    }, guestId));
     await posthog.flush();
     const res = Response.json(result ?? { success: true });
     setRequestIdHeader(res, requestId);
