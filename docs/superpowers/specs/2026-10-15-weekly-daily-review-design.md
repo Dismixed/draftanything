@@ -106,7 +106,6 @@ export interface ReviewAdapter {
   /** Replace the schedule row for `date` with `contentId`. */
   swap(db, date: string, contentId: string): Promise<void>;
   retire(db, contentId: string): Promise<void>;
-  unretire(db, contentId: string): Promise<void>;
 }
 ```
 
@@ -169,11 +168,12 @@ on `/admin`, showing an "N need review" count.
   **Approve**; **Swap** per alternate; **Swap + retire** per alternate (inline confirm).
 - Bulk: "Approve all unreviewed" per row and per column.
 - After every action the grid refetches.
-- Must work in both light and dark themes and at phone width (the review email is
-  likely opened on a phone).
+- Matches the existing dark admin styling (`AdminShell`) and works at phone width (the
+  review email is likely opened on a phone).
 
-Each game's existing admin page gets a small **Retired** list with an Un-retire button,
-which calls the unretire route.
+Ball Knowledge's admin page gets a **Retired** list with an Un-retire button. The other
+four games restore retired content through their existing status controls
+(`rejected`/`archived` → `approved`).
 
 ### API routes
 
@@ -184,7 +184,7 @@ guard; the reviewer email comes from the signed-in session, never the request bo
 - `GET /alternates?game=&date=` → 3 alternates.
 - `POST /approve` `{ game, date }` (bulk variant: `{ items: { game, date }[] }`)
 - `POST /swap` `{ game, date, contentId, retire?: boolean }`
-- `GET /retired?game=` and `POST /unretire` `{ game, contentId }`
+- `GET /api/admin/ball-knowledge/retired` and `DELETE` `{ category }` to un-retire.
 
 Bodies are validated with zod; `game` must be one of the `ReviewGame` values.
 
