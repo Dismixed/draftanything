@@ -491,6 +491,21 @@ export type Database = {
         }
         Relationships: []
       }
+      ball_knowledge_retired_categories: {
+        Row: {
+          category: string
+          retired_at: string
+        }
+        Insert: {
+          category: string
+          retired_at?: string
+        }
+        Update: {
+          category?: string
+          retired_at?: string
+        }
+        Relationships: []
+      }
       getting_warmer_leaderboard: {
         Row: {
           created_at: string
@@ -1124,6 +1139,51 @@ export type Database = {
           play_date?: string
           score?: number
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      daily_review_emails: {
+        Row: {
+          id: string
+          sent_at: string
+          unreviewed_count: number
+        }
+        Insert: {
+          id?: string
+          sent_at?: string
+          unreviewed_count: number
+        }
+        Update: {
+          id?: string
+          sent_at?: string
+          unreviewed_count?: number
+        }
+        Relationships: []
+      }
+      daily_reviews: {
+        Row: {
+          content_id: string
+          game: string
+          id: string
+          publish_date: string
+          reviewed_at: string
+          reviewed_by: string
+        }
+        Insert: {
+          content_id: string
+          game: string
+          id?: string
+          publish_date: string
+          reviewed_at?: string
+          reviewed_by: string
+        }
+        Update: {
+          content_id?: string
+          game?: string
+          id?: string
+          publish_date?: string
+          reviewed_at?: string
+          reviewed_by?: string
         }
         Relationships: []
       }

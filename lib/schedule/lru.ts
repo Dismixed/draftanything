@@ -37,3 +37,20 @@ export function pickLru<T>(
 ): T | null {
   return orderByLru(items, getKey, lastUsedByKey)[0] ?? null;
 }
+
+/**
+ * Key → latest date it ran strictly before `date`. Rows on or after `date`
+ * do not count, so a future booking does not hide an item from an earlier day.
+ */
+export function lastUsedBefore(
+  rows: readonly { key: string; date: string }[],
+  date: string,
+): Map<string, string> {
+  const lastUsed = new Map<string, string>();
+  for (const row of rows) {
+    if (row.date >= date) continue;
+    const previous = lastUsed.get(row.key);
+    if (!previous || row.date > previous) lastUsed.set(row.key, row.date);
+  }
+  return lastUsed;
+}

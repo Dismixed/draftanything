@@ -16,6 +16,7 @@ export default function AdminBallKnowledgePage() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [retired, setRetired] = useState<string[]>([]);
 
   const [assignCategory, setAssignCategory] = useState("");
   const [assignDate, setAssignDate] = useState(
@@ -37,10 +38,42 @@ export default function AdminBallKnowledgePage() {
     }
   }, []);
 
+  /** Categories retired from the review page; they stay out of the rotation until un-retired. */
+  const fetchRetired = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/ball-knowledge/retired");
+      if (!res.ok) return;
+      const data = await res.json();
+      setRetired(data.retired ?? []);
+    } catch {
+      // The pool still renders; it just shows nothing as retired.
+    }
+  }, []);
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- matches existing admin pages
-    void fetchSchedule().finally(() => setLoading(false));
-  }, [fetchSchedule]);
+    void Promise.all([fetchSchedule(), fetchRetired()]).finally(() => setLoading(false));
+  }, [fetchSchedule, fetchRetired]);
+
+  async function unretire(category: string) {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/ball-knowledge/retired", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Un-retire failed");
+      setMessage(`Un-retired "${category}".`);
+      await fetchRetired();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Un-retire failed");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   const lastUsedByCategory = useMemo(() => {
     const map = new Map<string, string>();
@@ -160,6 +193,19 @@ export default function AdminBallKnowledgePage() {
           <h3 style={sectionTitle}>Category pool ({CATEGORIES.length})</h3>
           {CATEGORIES.map((cat) => {
             const lastUsed = lastUsedByCategory.get(cat);
+            if (retired.includes(cat)) {
+              return (
+                <div key={cat} style={rowStyle}>
+                  <span style={{ color: "#e8e8e8", opacity: 0.5 }}>{cat}</span>
+                  <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <span style={muted}>retired</span>
+                    <button type="button" disabled={busy} onClick={() => unretire(cat)} style={btnStyle}>
+                      Un-retire
+                    </button>
+                  </span>
+                </div>
+              );
+            }
             return (
               <div key={cat} style={rowStyle}>
                 <span style={{ color: "#e8e8e8" }}>{cat}</span>
