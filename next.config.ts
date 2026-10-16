@@ -20,6 +20,10 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async headers() {
+    // Crawlers may fetch the API while rendering a page, but should never index its JSON.
+    return [{ source: "/api/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex" }] }];
+  },
   async redirects() {
     return [
       { source: "/frames", destination: "/freezeframes", permanent: true },
