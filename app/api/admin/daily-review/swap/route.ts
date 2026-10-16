@@ -10,6 +10,8 @@ const bodySchema = z.object({
   game: gameSchema,
   date: dateSchema,
   contentId: z.string().min(1),
+  /** What the admin saw scheduled (null for an empty day); a slot edited since is refused. */
+  currentId: z.string().min(1).nullable(),
   retire: z.boolean().optional(),
 });
 
@@ -17,7 +19,7 @@ export async function POST(req: Request) {
   const admin = await checkAdmin();
   if (!admin) return unauthorized();
   const body = bodySchema.safeParse(await readJson(req));
-  if (!body.success) return badRequest("game, date and contentId are required");
+  if (!body.success) return badRequest("game, date, contentId and currentId are required");
   try {
     await swap(createReviewContext(createAdminClient()), {
       ...body.data,

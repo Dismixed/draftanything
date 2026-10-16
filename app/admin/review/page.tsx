@@ -29,6 +29,11 @@ function dayLabel(date: string): string {
 
 const needsReview = (cell: ReviewCell) => !cell.locked && cell.contentId !== null && !cell.reviewedBy;
 
+/** An approval names the content the admin saw, so a slot edited since is refused. */
+type ApproveItem = { game: ReviewGame; date: string; contentId: string };
+
+const STALE_NOTE = "That slot changed since you opened it — the grid has been reloaded.";
+
 export default function AdminReviewPage() {
   const [grid, setGrid] = useState<ReviewGrid | null>(null);
   const [summary, setSummary] = useState<ReviewSummary | null>(null);
@@ -58,7 +63,7 @@ export default function AdminReviewPage() {
     void fetchGrid();
   }, [fetchGrid]);
 
-  async function approveMany(items: { game: ReviewGame; date: string }[]) {
+  async function approveMany(items: ApproveItem[]) {
     if (items.length === 0) return;
     setBusy(true);
     setMessage(null);
@@ -82,11 +87,13 @@ export default function AdminReviewPage() {
 
   const pendingInRow = (date: string) =>
     (grid?.columns ?? []).flatMap((column) =>
-      column.cells.filter((c) => c.date === date && needsReview(c)).map((c) => ({ game: column.game, date: c.date })),
+      column.cells
+        .filter((c) => c.date === date && needsReview(c))
+        .map((c) => ({ game: column.game, date: c.date, contentId: c.contentId! })),
     );
 
   const pendingInColumn = (column: ReviewColumn) =>
-    column.cells.filter(needsReview).map((c) => ({ game: column.game, date: c.date }));
+    column.cells.filter(needsReview).map((c) => ({ game: column.game, date: c.date, contentId: c.contentId! }));
 
   const unlockedDates = (grid?.dates ?? []).filter((d) => grid && d > grid.today);
 
@@ -188,6 +195,11 @@ export default function AdminReviewPage() {
           key={`${selection.column.game}|${selection.cell.date}`}
           selection={selection}
           onClose={() => setSelection(null)}
+          onStale={async () => {
+            setSelection(null);
+            setError(STALE_NOTE);
+            await fetchGrid();
+          }}
           onDone={async (note) => {
             setSelection(null);
             setMessage(note);
@@ -243,10 +255,13 @@ function CellButton({ cell, soon, onOpen }: { cell: ReviewCell; soon: boolean; o
 function ReviewPanel({
   selection,
   onClose,
+  onStale,
   onDone,
 }: {
   selection: Selection;
   onClose: () => void;
+  /** The slot or the pick changed under the admin; the parent reloads the grid. */
+  onStale: () => Promise<void>;
   onDone: (note: string) => Promise<void>;
 }) {
   const { column, cell } = selection;
@@ -254,11 +269,13 @@ function ReviewPanel({
   const [panelError, setPanelError] = useState<string | null>(null);
   const [confirmRetire, setConfirmRetire] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   const loadAlternates = useCallback(async () => {
     setAlternates(null);
     try {
-      const res = await fetch(`/api/admin/daily-review/alternates?game=${column.game}&date=${cell.date}`);
+      const all = showAll ? "&all=1" : "";
+      const res = await fetch(`/api/admin/daily-review/alternates?game=${column.game}&date=${cell.date}${all}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to load alternates");
       setAlternates(data.alternates);
@@ -266,7 +283,7 @@ function ReviewPanel({
       setPanelError(err instanceof Error ? err.message : "Failed to load alternates");
       setAlternates([]);
     }
-  }, [column.game, cell.date]);
+  }, [column.game, cell.date, showAll]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- matches existing admin pages
@@ -292,9 +309,7 @@ function ReviewPanel({
       });
       const data = await res.json();
       if (res.status === 409 && data.error === "STALE") {
-        setPanelError("That pick changed since you opened this — alternates reloaded.");
-        setConfirmRetire(null);
-        await loadAlternates();
+        await onStale();
         return;
       }
       if (res.status === 409 && data.error === "LOCKED") {
@@ -303,6 +318,10 @@ function ReviewPanel({
       }
       if (!res.ok) throw new Error(data.error ?? "Action failed");
       if (Array.isArray(data.failed) && data.failed.length > 0) {
+        if (data.failed[0].error === "STALE") {
+          await onStale();
+          return;
+        }
         throw new Error(`Not approved: ${data.failed[0].error}`);
       }
       await onDone(note);
@@ -317,7 +336,7 @@ function ReviewPanel({
   const swap = (alt: Candidate, retire: boolean) =>
     act(
       "/api/admin/daily-review/swap",
-      { game: column.game, date: cell.date, contentId: alt.contentId, retire },
+      { game: column.game, date: cell.date, contentId: alt.contentId, currentId: cell.contentId, retire },
       `${column.name} ${dayLabel(cell.date)}: swapped to "${alt.preview.title}"${retire ? `, retired "${current?.title}"` : ""}.`,
     );
 
@@ -359,7 +378,7 @@ function ReviewPanel({
           onClick={() =>
             act(
               "/api/admin/daily-review/approve",
-              { items: [{ game: column.game, date: cell.date }] },
+              { items: [{ game: column.game, date: cell.date, contentId: cell.contentId }] },
               `${column.name} ${dayLabel(cell.date)} approved.`,
             )
           }
@@ -374,7 +393,14 @@ function ReviewPanel({
         )}
       </div>
 
-      <h3 style={{ ...sectionTitle, marginTop: 24 }}>Alternates</h3>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+        <h3 style={{ ...sectionTitle, marginTop: 24 }}>{showAll ? "Everything available" : "Alternates"}</h3>
+        {!showAll && (
+          <button type="button" onClick={() => setShowAll(true)} style={linkBtn}>
+            Show all
+          </button>
+        )}
+      </div>
       {alternates === null ? (
         <p style={muted}>Loading…</p>
       ) : alternates.length === 0 ? (

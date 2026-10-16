@@ -44,6 +44,15 @@ export const ballKnowledgeAdapter: ReviewAdapter = {
     }));
   },
 
+  async listBookedIds(db, from) {
+    const { data, error } = await db
+      .from("ball_knowledge_schedule")
+      .select("category")
+      .gte("publish_date", from);
+    if (error) throw new Error(`Failed to load ball knowledge bookings: ${error.message}`);
+    return new Set((data ?? []).map((row) => row.category));
+  },
+
   async swap(db, date, contentId) {
     const { error } = await db
       .from("ball_knowledge_schedule")
@@ -51,5 +60,13 @@ export const ballKnowledgeAdapter: ReviewAdapter = {
     if (error) throw new Error(`Failed to swap ball knowledge for ${date}: ${error.message}`);
   },
 
-  retire: (db, contentId) => retireCategory(db, contentId),
+  async retire(db, contentId, clearFrom) {
+    await retireCategory(db, contentId);
+    const { error } = await db
+      .from("ball_knowledge_schedule")
+      .delete()
+      .eq("category", contentId)
+      .gte("publish_date", clearFrom);
+    if (error) throw new Error(`Failed to clear bookings for ${contentId}: ${error.message}`);
+  },
 };

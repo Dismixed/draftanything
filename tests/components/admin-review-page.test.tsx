@@ -66,13 +66,30 @@ describe("AdminReviewPage", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("opens a panel with alternates and reports a stale swap", async () => {
+  it("swaps from what the admin saw, and reloads the grid when that changed", async () => {
     render(<AdminReviewPage />);
     fireEvent.click(await screen.findByText("Cereals"));
     expect(await screen.findByText("Candy")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Swap" }));
-    expect(await screen.findByText(/changed since you opened this/)).toBeInTheDocument();
+    expect(await screen.findByText(/changed since you opened it/)).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/admin/daily-review/swap",
+      expect.objectContaining({
+        body: JSON.stringify({ game: "hot-takes", date: "2026-10-16", contentId: "c2", currentId: "Cereals", retire: false }),
+      }),
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(fetchMock.mock.calls.filter(([url]) => url === "/api/admin/daily-review")).toHaveLength(2);
+  });
+
+  it("lists every eligible item on request", async () => {
+    render(<AdminReviewPage />);
+    fireEvent.click(await screen.findByText("Cereals"));
+    fireEvent.click(await screen.findByRole("button", { name: "Show all" }));
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith("/api/admin/daily-review/alternates?game=hot-takes&date=2026-10-16&all=1"),
+    );
   });
 
   it("asks before swap + retire", async () => {
@@ -91,7 +108,9 @@ describe("AdminReviewPage", () => {
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(
         "/api/admin/daily-review/approve",
-        expect.objectContaining({ body: JSON.stringify({ items: [{ game: "hot-takes", date: "2026-10-16" }] }) }),
+        expect.objectContaining({
+          body: JSON.stringify({ items: [{ game: "hot-takes", date: "2026-10-16", contentId: "Cereals" }] }),
+        }),
       ),
     );
   });

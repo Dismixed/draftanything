@@ -96,6 +96,15 @@ export function poolTableAdapter(config: PoolTableConfig): ReviewAdapter {
       return rankPool(pool, history, date).map((row) => ({ contentId: row.id, preview: config.toPreview(row) }));
     },
 
+    async listBookedIds(db, from) {
+      const { data, error } = await raw(db)
+        .from(config.scheduleTable)
+        .select(config.contentColumn)
+        .gte("publish_date", from);
+      if (error) throw new Error(`Failed to load ${config.scheduleTable}: ${error.message}`);
+      return new Set(((data ?? []) as unknown as Record<string, string>[]).map((r) => r[config.contentColumn]!));
+    },
+
     async swap(db, date, contentId) {
       const { error } = await raw(db)
         .from(config.scheduleTable)
@@ -103,12 +112,22 @@ export function poolTableAdapter(config: PoolTableConfig): ReviewAdapter {
       if (error) throw new Error(`Failed to swap ${config.game} for ${date}: ${error.message}`);
     },
 
-    async retire(db, contentId) {
+    async retire(db, contentId, clearFrom) {
       const { error } = await raw(db)
         .from(config.poolTable)
         .update({ status: config.retiredStatus })
         .eq("id", contentId);
       if (error) throw new Error(`Failed to retire ${config.game} ${contentId}: ${error.message}`);
+
+      // These games serve whatever is booked regardless of status.
+      const { error: clearError } = await raw(db)
+        .from(config.scheduleTable)
+        .delete()
+        .eq(config.contentColumn, contentId)
+        .gte("publish_date", clearFrom);
+      if (clearError) {
+        throw new Error(`Failed to clear bookings for ${config.game} ${contentId}: ${clearError.message}`);
+      }
     },
   };
 }

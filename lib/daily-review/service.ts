@@ -1,6 +1,6 @@
 import "server-only";
 
-import { isLocked, reviewWindow, todayUtc } from "./dates";
+import { addDays, isLocked, reviewWindow, todayUtc } from "./dates";
 import type { ReviewStore } from "./store";
 import {
   ReviewError,
@@ -87,45 +87,55 @@ export function summarize(grid: ReviewGrid): ReviewSummary {
   return { total: byGame.reduce((sum, g) => sum + g.count, 0), byGame };
 }
 
-/** Candidates for `date` that are not already scheduled anywhere in the review window. */
+/**
+ * Candidates for `date` that are not booked on any day from today on. Bulk
+ * auto-schedules can book items months ahead, so checking only the review
+ * window would let a swap put one item on two days.
+ */
 async function eligibleCandidates(
   ctx: ReviewContext,
   adapter: ReviewAdapter,
   date: string,
   today: string,
 ): Promise<Candidate[]> {
-  const { from, to } = windowBounds(today);
-  const [scheduled, candidates] = await Promise.all([
-    adapter.listScheduled(ctx.db, from, to),
+  const [booked, candidates] = await Promise.all([
+    adapter.listBookedIds(ctx.db, today),
     adapter.listCandidates(ctx.db, date),
   ]);
-  const inWindow = new Set(scheduled.map((slot) => slot.contentId));
-  return candidates.filter((c) => !inWindow.has(c.contentId));
+  return candidates.filter((c) => !booked.has(c.contentId));
 }
 
+/** The top `limit` alternates; pass Infinity for every eligible item. */
 export async function listAlternates(
   ctx: ReviewContext,
   game: ReviewGame,
   date: string,
   today = todayUtc(),
+  limit = ALTERNATES_PER_SLOT,
 ): Promise<Candidate[]> {
   const adapter = adapterFor(ctx, game);
-  return (await eligibleCandidates(ctx, adapter, date, today)).slice(0, ALTERNATES_PER_SLOT);
+  const eligible = await eligibleCandidates(ctx, adapter, date, today);
+  return Number.isFinite(limit) ? eligible.slice(0, limit) : eligible;
 }
 
 async function scheduledOn(ctx: ReviewContext, adapter: ReviewAdapter, date: string) {
   return (await adapter.listScheduled(ctx.db, date, date))[0] ?? null;
 }
 
+/**
+ * Approves the content the admin was shown (`contentId`). If the slot has
+ * changed since, the approval would land on something nobody looked at.
+ */
 export async function approve(
   ctx: ReviewContext,
-  input: { game: ReviewGame; date: string; email: string },
+  input: { game: ReviewGame; date: string; contentId: string; email: string },
   today = todayUtc(),
 ): Promise<void> {
   if (isLocked(input.date, today)) throw new ReviewError("LOCKED");
   const adapter = adapterFor(ctx, input.game);
   const slot = await scheduledOn(ctx, adapter, input.date);
   if (!slot) throw new ReviewError("NOT_SCHEDULED");
+  if (slot.contentId !== input.contentId) throw new ReviewError("STALE");
   await ctx.store.upsertReview({
     game: input.game,
     publishDate: input.date,
@@ -136,7 +146,15 @@ export async function approve(
 
 export async function swap(
   ctx: ReviewContext,
-  input: { game: ReviewGame; date: string; contentId: string; retire: boolean; email: string },
+  input: {
+    game: ReviewGame;
+    date: string;
+    contentId: string;
+    /** What the admin saw scheduled; "retire" must hit that, not a later edit. */
+    currentId: string | null;
+    retire: boolean;
+    email: string;
+  },
   today = todayUtc(),
 ): Promise<void> {
   if (isLocked(input.date, today)) throw new ReviewError("LOCKED");
@@ -146,13 +164,15 @@ export async function swap(
     scheduledOn(ctx, adapter, input.date),
     eligibleCandidates(ctx, adapter, input.date, today),
   ]);
-  // Re-checked here because the panel's list may be stale: the pick could
-  // since have been scheduled elsewhere in the window or retired.
+  const previous = current?.contentId ?? null;
+  // Re-checked here because the panel may be stale: the slot may have been
+  // edited, or the pick since booked elsewhere or retired.
+  if (previous !== input.currentId) throw new ReviewError("STALE");
   if (!eligible.some((c) => c.contentId === input.contentId)) throw new ReviewError("STALE");
 
-  const previous = current?.contentId ?? null;
   await adapter.swap(ctx.db, input.date, input.contentId, previous);
-  if (input.retire && previous) await adapter.retire(ctx.db, previous);
+  // Today is locked, so its booking stays; later ones are dropped.
+  if (input.retire && previous) await adapter.retire(ctx.db, previous, addDays(today, 1));
 
   // Choosing an alternate is the approval.
   await ctx.store.upsertReview({

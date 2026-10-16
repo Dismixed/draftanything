@@ -12,7 +12,15 @@ export async function GET(req: Request) {
   const date = dateSchema.safeParse(params.get("date"));
   if (!game.success || !date.success) return badRequest("game and date are required");
   try {
-    const alternates = await listAlternates(createReviewContext(createAdminClient()), game.data, date.data);
+    // all=1 lists every eligible item, so an admin can put a specific one on a day.
+    const limit = params.get("all") === "1" ? Infinity : undefined;
+    const alternates = await listAlternates(
+      createReviewContext(createAdminClient()),
+      game.data,
+      date.data,
+      undefined,
+      limit,
+    );
     return NextResponse.json({ alternates });
   } catch (err) {
     return errorResponse(err);

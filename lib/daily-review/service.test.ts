@@ -23,6 +23,9 @@ function fakeAdapter(
     listCandidates: vi.fn(async (): Promise<Candidate[]> =>
       pool.map((contentId) => ({ contentId, preview: preview(contentId) })),
     ),
+    listBookedIds: vi.fn(async (_db: Db, from: string) =>
+      new Set(Object.entries(schedule).filter(([date]) => date >= from).map(([, id]) => id)),
+    ),
     swap: vi.fn(async (_db: Db, date: string, contentId: string) => {
       schedule[date] = contentId;
     }),
@@ -113,10 +116,22 @@ describe("listAlternates", () => {
     expect(alts.map((a) => a.contentId)).toEqual(["b", "d", "e"]);
   });
 
+  it("skips content booked beyond the window too", async () => {
+    const adapter = fakeAdapter({ "2026-10-16": "a", "2026-11-20": "b" }, ["a", "b", "c"]);
+    const alts = await listAlternates(ctx([adapter]), "hot-takes", "2026-10-16", TODAY);
+    expect(alts.map((a) => a.contentId)).toEqual(["c"]);
+  });
+
   it("returns fewer than 3 when the pool is small", async () => {
     const adapter = fakeAdapter({ "2026-10-16": "a" }, ["a", "b"]);
     const alts = await listAlternates(ctx([adapter]), "hot-takes", "2026-10-16", TODAY);
     expect(alts.map((a) => a.contentId)).toEqual(["b"]);
+  });
+
+  it("returns every eligible candidate when asked for all", async () => {
+    const adapter = fakeAdapter({ "2026-10-16": "a" }, ["a", "b", "c", "d", "e"]);
+    const alts = await listAlternates(ctx([adapter]), "hot-takes", "2026-10-16", TODAY, Infinity);
+    expect(alts.map((a) => a.contentId)).toEqual(["b", "c", "d", "e"]);
   });
 });
 
@@ -125,7 +140,7 @@ describe("approve", () => {
     const store = fakeStore();
     await approve(
       ctx([fakeAdapter({ "2026-10-16": "a" }, [])], store),
-      { game: "hot-takes", date: "2026-10-16", email: "j@x.com" },
+      { game: "hot-takes", date: "2026-10-16", contentId: "a", email: "j@x.com" },
       TODAY,
     );
     expect(store.upsertReview).toHaveBeenCalledWith({
@@ -136,70 +151,89 @@ describe("approve", () => {
     });
   });
 
+  it("refuses when the slot changed since the admin looked", async () => {
+    const store = fakeStore();
+    await expect(
+      approve(
+        ctx([fakeAdapter({ "2026-10-16": "c" }, [])], store),
+        { game: "hot-takes", date: "2026-10-16", contentId: "a", email: "j" },
+        TODAY,
+      ),
+    ).rejects.toMatchObject({ code: "STALE" });
+    expect(store.upsertReview).not.toHaveBeenCalled();
+  });
+
   it("refuses today", async () => {
     await expect(
-      approve(ctx([fakeAdapter({ [TODAY]: "a" }, [])]), { game: "hot-takes", date: TODAY, email: "j" }, TODAY),
+      approve(
+        ctx([fakeAdapter({ [TODAY]: "a" }, [])]),
+        { game: "hot-takes", date: TODAY, contentId: "a", email: "j" },
+        TODAY,
+      ),
     ).rejects.toMatchObject({ code: "LOCKED" });
   });
 
   it("refuses a day with nothing scheduled", async () => {
     await expect(
-      approve(ctx([fakeAdapter({}, [])]), { game: "hot-takes", date: "2026-10-16", email: "j" }, TODAY),
+      approve(
+        ctx([fakeAdapter({}, [])]),
+        { game: "hot-takes", date: "2026-10-16", contentId: "a", email: "j" },
+        TODAY,
+      ),
     ).rejects.toMatchObject({ code: "NOT_SCHEDULED" });
   });
 });
 
 describe("swap", () => {
-  it("swaps, retires the old pick when asked, and approves the new one", async () => {
+  const input = (contentId: string, extra: Partial<Parameters<typeof swap>[1]> = {}) => ({
+    game: "hot-takes" as const,
+    date: "2026-10-16",
+    contentId,
+    currentId: "a",
+    retire: false,
+    email: "j",
+    ...extra,
+  });
+
+  it("swaps, retires the old pick from tomorrow on, and approves the new one", async () => {
     const adapter = fakeAdapter({ "2026-10-16": "a" }, ["a", "b"]);
     const store = fakeStore();
-    await swap(
-      ctx([adapter], store),
-      { game: "hot-takes", date: "2026-10-16", contentId: "b", retire: true, email: "j" },
-      TODAY,
-    );
+    await swap(ctx([adapter], store), input("b", { retire: true }), TODAY);
     expect(adapter.swap).toHaveBeenCalledWith(expect.anything(), "2026-10-16", "b", "a");
-    expect(adapter.retire).toHaveBeenCalledWith(expect.anything(), "a");
+    expect(adapter.retire).toHaveBeenCalledWith(expect.anything(), "a", "2026-10-16");
     expect(store.rows[0]).toMatchObject({ contentId: "b", reviewedBy: "j" });
   });
 
   it("does not retire without the flag", async () => {
     const adapter = fakeAdapter({ "2026-10-16": "a" }, ["a", "b"]);
-    await swap(
-      ctx([adapter]),
-      { game: "hot-takes", date: "2026-10-16", contentId: "b", retire: false, email: "j" },
-      TODAY,
-    );
+    await swap(ctx([adapter]), input("b"), TODAY);
+    expect(adapter.retire).not.toHaveBeenCalled();
+  });
+
+  it("refuses when the slot changed since the admin looked, so the wrong pick is never retired", async () => {
+    const adapter = fakeAdapter({ "2026-10-16": "c" }, ["a", "b", "c"]);
+    await expect(swap(ctx([adapter]), input("b", { retire: true }), TODAY)).rejects.toMatchObject({
+      code: "STALE",
+    });
+    expect(adapter.swap).not.toHaveBeenCalled();
     expect(adapter.retire).not.toHaveBeenCalled();
   });
 
   it("refuses a candidate already scheduled in the window", async () => {
     const adapter = fakeAdapter({ "2026-10-16": "a", "2026-10-19": "b" }, ["a", "b", "c"]);
-    await expect(
-      swap(
-        ctx([adapter]),
-        { game: "hot-takes", date: "2026-10-16", contentId: "b", retire: false, email: "j" },
-        TODAY,
-      ),
-    ).rejects.toMatchObject({ code: "STALE" });
+    await expect(swap(ctx([adapter]), input("b"), TODAY)).rejects.toMatchObject({ code: "STALE" });
     expect(adapter.swap).not.toHaveBeenCalled();
   });
 
   it("refuses an unknown or retired candidate", async () => {
     const adapter = fakeAdapter({ "2026-10-16": "a" }, ["a", "b"]);
-    await expect(
-      swap(
-        ctx([adapter]),
-        { game: "hot-takes", date: "2026-10-16", contentId: "zzz", retire: false, email: "j" },
-        TODAY,
-      ),
-    ).rejects.toMatchObject({ code: "STALE" });
+    await expect(swap(ctx([adapter]), input("zzz"), TODAY)).rejects.toMatchObject({ code: "STALE" });
   });
 
   it("refuses today", async () => {
     const adapter = fakeAdapter({ [TODAY]: "a" }, ["a", "b"]);
-    await expect(
-      swap(ctx([adapter]), { game: "hot-takes", date: TODAY, contentId: "b", retire: false, email: "j" }, TODAY),
-    ).rejects.toMatchObject({ code: "LOCKED" });
+    await expect(swap(ctx([adapter]), input("b", { date: TODAY }), TODAY)).rejects.toMatchObject({
+      code: "LOCKED",
+    });
   });
 });

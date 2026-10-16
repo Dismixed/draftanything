@@ -2,6 +2,8 @@ import "server-only";
 
 import nodemailer from "nodemailer";
 
+const SMTP_TIMEOUT_MS = 15_000;
+
 export interface EmailInput {
   to: string[];
   subject: string;
@@ -25,6 +27,10 @@ export async function sendEmail(input: EmailInput): Promise<void> {
     port: 465,
     secure: true,
     auth: { user, pass },
+    // nodemailer's defaults wait minutes; this runs at the end of a 300s cron.
+    connectionTimeout: SMTP_TIMEOUT_MS,
+    greetingTimeout: SMTP_TIMEOUT_MS,
+    socketTimeout: SMTP_TIMEOUT_MS,
   });
   await transporter.sendMail({ from: user, ...input, to: input.to.join(", ") });
 }

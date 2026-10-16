@@ -75,6 +75,15 @@ export const chainlinkAdapter: ReviewAdapter = {
     return (data ?? []).map((row) => ({ contentId: row.id, preview: preview(row) }));
   },
 
+  async listBookedIds(db, from) {
+    const { data, error } = await db
+      .from("daily_chain_puzzles")
+      .select("puzzle_id")
+      .gte("publish_date", from);
+    if (error) throw new Error(`Failed to load chain bookings: ${error.message}`);
+    return new Set((data ?? []).map((row) => row.puzzle_id));
+  },
+
   async swap(db, date, contentId, previous) {
     const { error } = await db
       .from("daily_chain_puzzles")
@@ -83,9 +92,26 @@ export const chainlinkAdapter: ReviewAdapter = {
 
     await setStatus(db, contentId, "scheduled");
     // Back into the pool; retire() runs after this when the admin also retires it.
-    if (previous && previous !== contentId) await setStatus(db, previous, "approved");
+    // A chain the cron generated was never human-approved, so it goes to draft.
+    if (previous && previous !== contentId) {
+      const { data: old, error: oldError } = await db
+        .from("chain_puzzles")
+        .select("created_by")
+        .eq("id", previous)
+        .maybeSingle();
+      if (oldError) throw new Error(`Failed to load chain ${previous}: ${oldError.message}`);
+      await setStatus(db, previous, old?.created_by === "cron" ? "draft" : "approved");
+    }
     revalidateTag(dailyChainTag(date), { expire: 0 });
   },
 
-  retire: (db, contentId) => setStatus(db, contentId, "rejected"),
+  async retire(db, contentId, clearFrom) {
+    await setStatus(db, contentId, "rejected");
+    const { error } = await db
+      .from("daily_chain_puzzles")
+      .delete()
+      .eq("puzzle_id", contentId)
+      .gte("publish_date", clearFrom);
+    if (error) throw new Error(`Failed to clear bookings for chain ${contentId}: ${error.message}`);
+  },
 };

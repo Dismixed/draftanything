@@ -39,12 +39,19 @@ export interface ReviewAdapter {
   /**
    * Every eligible (non-retired) pool item in the order the game's own
    * scheduler would pick them for `date`. The service removes anything
-   * already scheduled in the review window.
+   * booked from today on (see `listBookedIds`).
    */
   listCandidates(db: Db, date: string): Promise<Candidate[]>;
+  /** Content ids booked on `from` or later, however far ahead (bulk auto-schedules book months out). */
+  listBookedIds(db: Db, from: string): Promise<Set<string>>;
   /** Make `contentId` the content for `date`. `previous` is what was there (or null). */
   swap(db: Db, date: string, contentId: string, previous: string | null): Promise<void>;
-  retire(db: Db, contentId: string): Promise<void>;
+  /**
+   * Take `contentId` out of the pool for good, and drop its bookings from
+   * `clearFrom` on so it does not still play on a day booked earlier. Emptied
+   * days are refilled by the game's own scheduler.
+   */
+  retire(db: Db, contentId: string, clearFrom: string): Promise<void>;
 }
 
 export interface ReviewCell {

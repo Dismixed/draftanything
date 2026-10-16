@@ -117,11 +117,17 @@ One file per game in `lib/daily-review/adapters/`, built on that game's existing
 
 - `getReviewGrid(db, from, to)` — calls every adapter's `listScheduled`, joins
   `daily_reviews`, and returns `{ game, date, contentId, preview, review: { by, at } | null, locked }[]`.
-- `approve(db, { game, date, email })` — upserts `daily_reviews` with the currently
-  scheduled content id.
-- `swap(db, { game, date, contentId, retire, email })` — reads the current content id,
-  calls `adapter.swap`, optionally `adapter.retire(old)`, then upserts `daily_reviews`
-  with the new content id (choosing an alternate counts as approving it).
+- `approve(db, { game, date, contentId, email })` — `contentId` is what the admin was
+  shown; refused with `STALE` if the slot has changed since. Upserts `daily_reviews`.
+- `swap(db, { game, date, contentId, currentId, retire, email })` — refused with `STALE`
+  if the scheduled content is no longer `currentId` (so "retire" never hits a pick the
+  admin did not see) or if `contentId` is no longer eligible. Calls `adapter.swap`,
+  optionally `adapter.retire(old, tomorrow)`, then upserts `daily_reviews` with the new
+  content id (choosing an alternate counts as approving it).
+- Alternates exclude anything booked on any day from today on, not just the window:
+  bulk auto-schedules book items months ahead.
+- Retiring also deletes the item's bookings from tomorrow on, because these games
+  serve whatever is booked regardless of status; the game's scheduler refills those days.
 - `countUnreviewed(db, from, to)`.
 - `isLocked(date)` — true for today (UTC) and earlier; locked slots reject approve/swap.
 
@@ -166,6 +172,9 @@ on `/admin`, showing an "N need review" count.
 - Clicking a cell opens a side panel: the current pick's preview with a link to its
   detail in that game's admin, plus 3 alternates (fetched lazily). Actions:
   **Approve**; **Swap** per alternate; **Swap + retire** per alternate (inline confirm).
+  **Show all** lists every eligible item, so an admin can put a specific one on a day
+  (the cron now fills 10 days, which the game pages' manual assign refuses to overwrite).
+- A `STALE` response closes the panel and reloads the grid with a notice.
 - Bulk: "Approve all unreviewed" per row and per column.
 - After every action the grid refetches.
 - Matches the existing dark admin styling (`AdminShell`) and works at phone width (the
