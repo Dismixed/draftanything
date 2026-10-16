@@ -1,9 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { ADMIN_GAMES } from "@/lib/admin/games";
 
 export default function AdminHubPage() {
+  const [needsReview, setNeedsReview] = useState(0);
+
+  useEffect(() => {
+    // The card links either way; the count is a nudge, so errors are ignored.
+    fetch("/api/admin/daily-review")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setNeedsReview(data?.summary?.total ?? 0))
+      .catch(() => {});
+  }, []);
+
   return (
     <div
       style={{
@@ -24,6 +35,47 @@ export default function AdminHubPage() {
             Puzzle authoring, scheduling, and content review. Pick a game to manage its admin tools.
           </p>
         </header>
+
+        <Link
+          href="/admin/review"
+          style={{
+            display: "block",
+            padding: "16px 18px",
+            borderRadius: "10px",
+            border: "1px solid #ff6b1a",
+            background: "#1c1c1e",
+            color: "#e8e8e8",
+            textDecoration: "none",
+            marginBottom: "20px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+            <span
+              style={{ width: "10px", height: "10px", borderRadius: "50%", background: "#ff6b1a", flexShrink: 0 }}
+              aria-hidden
+            />
+            <strong style={{ fontSize: "16px" }}>Review dailies</strong>
+            {needsReview > 0 && (
+              <span
+                style={{
+                  fontSize: "10px",
+                  fontWeight: 600,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  color: "#ff6b1a",
+                  border: "1px solid #ff6b1a",
+                  borderRadius: "4px",
+                  padding: "2px 6px",
+                }}
+              >
+                {needsReview} need review
+              </span>
+            )}
+          </div>
+          <p style={{ fontSize: "13px", color: "#9aa0a6", margin: 0, lineHeight: 1.45 }}>
+            Approve or swap the next 10 days of dailies before they go live.
+          </p>
+        </Link>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           {ADMIN_GAMES.map((game) => {
