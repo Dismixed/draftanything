@@ -70,6 +70,31 @@ async function listScheduleRows(
   return data ?? [];
 }
 
+/** Retired category names; the review page retires a category it never wants again. */
+export async function listRetiredCategories(db: SupabaseClient<Database>): Promise<string[]> {
+  const { data, error } = await db.from("ball_knowledge_retired_categories").select("category");
+  if (error) throw new Error(`Failed to load retired categories: ${error.message}`);
+  return (data ?? []).map((row) => row.category);
+}
+
+export async function retireCategory(db: SupabaseClient<Database>, category: string): Promise<void> {
+  const { error } = await db.from("ball_knowledge_retired_categories").insert({ category });
+  if (error && error.code !== "23505") {
+    throw new Error(`Failed to retire category: ${error.message}`);
+  }
+}
+
+export async function unretireCategory(db: SupabaseClient<Database>, category: string): Promise<void> {
+  const { error } = await db.from("ball_knowledge_retired_categories").delete().eq("category", category);
+  if (error) throw new Error(`Failed to un-retire category: ${error.message}`);
+}
+
+/** The rotation pool, in CATEGORIES order, without retired categories. */
+export function activeCategories(retired: readonly string[]): string[] {
+  const skip = new Set(retired);
+  return CATEGORIES.filter((category) => !skip.has(category));
+}
+
 export async function getScheduledCategory(
   db: SupabaseClient<Database>,
   date: string,
@@ -91,9 +116,9 @@ export async function getScheduledCategory(
 export async function pickLruCategory(
   db: SupabaseClient<Database>,
 ): Promise<string | null> {
-  const rows = await listScheduleRows(db);
+  const [rows, retired] = await Promise.all([listScheduleRows(db), listRetiredCategories(db)]);
   const lastUsed = computeLastUsedByCategory(rows);
-  return pickLru(CATEGORIES, (category) => category, lastUsed);
+  return pickLru(activeCategories(retired), (category) => category, lastUsed);
 }
 
 export async function scheduleDailyCategory(
@@ -131,11 +156,11 @@ export async function autoScheduleCategories(
     throw new Error("startDate must be YYYY-MM-DD format");
   }
 
-  const rows = await listScheduleRows(db);
+  const [rows, retired] = await Promise.all([listScheduleRows(db), listRetiredCategories(db)]);
   const occupiedDates = new Set(rows.map((row) => row.publish_date));
   const lastUsed = computeLastUsedByCategory(rows);
 
-  const ordered = orderByLru(CATEGORIES, (category) => category, lastUsed);
+  const ordered = orderByLru(activeCategories(retired), (category) => category, lastUsed);
 
   const entries: AutoScheduleEntry[] = [];
   let cursor = startDate;

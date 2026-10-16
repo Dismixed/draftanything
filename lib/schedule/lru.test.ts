@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { orderByLru, pickLru } from "./lru";
+import { lastUsedBefore, orderByLru, pickLru } from "./lru";
 
 const key = (s: string) => s;
 
@@ -65,5 +65,20 @@ describe("pickLru", () => {
 
   it("returns null for an empty pool", () => {
     expect(pickLru([], key, new Map())).toBeNull();
+  });
+});
+
+describe("lastUsedBefore", () => {
+  it("keeps the latest date per key, ignoring rows on or after the target date", () => {
+    const map = lastUsedBefore(
+      [
+        { key: "a", date: "2026-10-01" },
+        { key: "a", date: "2026-10-09" },
+        { key: "b", date: "2026-10-20" },
+      ],
+      "2026-10-16",
+    );
+    expect(map.get("a")).toBe("2026-10-09");
+    expect(map.has("b")).toBe(false);
   });
 });
