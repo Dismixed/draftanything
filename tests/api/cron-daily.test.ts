@@ -16,9 +16,17 @@ vi.mock("@/lib/getting-warmer/schedule-service", () => ({
   scheduleDailyPuzzle: vi.fn(async (_db: unknown, date: string) => ({ puzzleId: "p", date, alreadyScheduled: false })),
 }));
 vi.mock("@/lib/hot-takes/schedule-service", () => ({ scheduleDailyCategory: vi.fn(async () => null) }));
+vi.mock("@/lib/daily-review/adapters", () => ({ createReviewContext: () => ({}) }));
+vi.mock("@/lib/daily-review/email", () => ({
+  sendReviewEmailIfDue: vi.fn(async () => ({ sent: false, reason: "SMTP not configured" })),
+}));
 
 import { GET } from "@/app/api/cron/daily/route";
-import { countUnusedApproved } from "@/lib/getting-warmer/schedule-service";
+import { topUpDailyChains } from "@/lib/chainlink/top-up";
+import {
+  countUnusedApproved,
+  scheduleDailyPuzzle as scheduleGettingWarmer,
+} from "@/lib/getting-warmer/schedule-service";
 import { scheduleDailyCategory as scheduleHotTakes } from "@/lib/hot-takes/schedule-service";
 
 const run = () => GET(new Request("https://example.test/api/cron/daily", { headers: { authorization: "Bearer secret" } }));
@@ -47,7 +55,8 @@ describe("GET /api/cron/daily", () => {
       ok: true,
       result: { unusedDays: 3, low: true },
     });
-    expect(body.report["getting-warmer"].result.today.puzzleId).toBe("p");
+    const days = body.report["getting-warmer"].result.days;
+    expect(Object.keys(days)).toHaveLength(10);
     expect(console.warn).toHaveBeenCalledWith(expect.stringContaining("getting-warmer has 3 unused"));
   });
 
@@ -55,6 +64,21 @@ describe("GET /api/cron/daily", () => {
     await run();
     const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
     expect(countUnusedApproved).toHaveBeenCalledWith(expect.anything(), tomorrow);
+  });
+
+  it("schedules ten days ahead and tops Chain Link up for the same window", async () => {
+    vi.mocked(scheduleGettingWarmer).mockClear();
+    await run();
+    expect(scheduleGettingWarmer).toHaveBeenCalledTimes(10);
+    expect(topUpDailyChains).toHaveBeenCalledWith(expect.anything(), { daysAhead: 9 });
+  });
+
+  it("reports the review email job", async () => {
+    const body = await (await run()).json();
+    expect(body.report["review-email"]).toEqual({
+      ok: true,
+      result: { sent: false, reason: "SMTP not configured" },
+    });
   });
 
   it("still reports Getting Warmer when another game's job fails", async () => {
