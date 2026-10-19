@@ -1,3 +1,4 @@
+import { dailyDate } from "@/lib/daily-day";
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -7,7 +8,7 @@ import { validateChainWithLlm } from "./llm-validate";
 import { scheduleNextApprovedPuzzle } from "./schedule-service";
 
 export interface TopUpOptions {
-  /** UTC date to start from; defaults to today. */
+  /** Date to start from; defaults to today's daily. */
   today?: string;
   /** How many days beyond `today` to keep filled. */
   daysAhead?: number;
@@ -38,7 +39,7 @@ export async function topUpDailyChains(
   db: SupabaseClient<Database>,
   options: TopUpOptions = {},
 ): Promise<TopUpEntry[]> {
-  const today = options.today ?? new Date().toISOString().slice(0, 10);
+  const today = options.today ?? dailyDate();
   const daysAhead = options.daysAhead ?? 7;
 
   const { data: scheduled, error } = await db

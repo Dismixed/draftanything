@@ -29,10 +29,10 @@ describe("Chain Link saved progress", () => {
     vi.resetModules();
     localStorage.clear();
     sessionStorage.clear();
-    // Evening of the 8th in Los Angeles, already the 9th in UTC, which is the day the server deals.
+    // Evening of the 8th in Los Angeles, already the 9th in US Eastern time, which is the day the server deals.
     process.env.TZ = "America/Los_Angeles";
     vi.useFakeTimers({ toFake: ["Date"] });
-    vi.setSystemTime(new Date("2026-10-09T02:00:00Z"));
+    vi.setSystemTime(new Date("2026-10-09T05:00:00Z"));
   });
 
   afterEach(() => {

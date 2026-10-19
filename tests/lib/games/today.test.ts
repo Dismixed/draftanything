@@ -4,18 +4,23 @@ import {
   buildTodayView,
   featuredGameForDay,
   formatCountdown,
-  msUntilNextUtcDay,
+  msUntilNextDailyDay,
   otherDailies,
-  utcDayNumber,
+  dailyDayNumber,
 } from "@/lib/games/today";
 
 const DAY = 20_000;
 
-describe("utcDayNumber", () => {
-  it("changes at midnight UTC, not local midnight", () => {
-    const before = utcDayNumber(new Date("2026-10-06T23:59:59Z"));
-    const after = utcDayNumber(new Date("2026-10-07T00:00:00Z"));
+describe("dailyDayNumber", () => {
+  it("changes at midnight US Eastern, not midnight UTC", () => {
+    const before = dailyDayNumber(new Date("2026-10-07T03:59:59Z"));
+    const after = dailyDayNumber(new Date("2026-10-07T04:00:00Z"));
     expect(after).toBe(before + 1);
+    expect(dailyDayNumber(new Date("2026-10-07T00:00:00Z"))).toBe(before);
+  });
+
+  it("numbers a day the same as the matching UTC date did, so the rotation carries on", () => {
+    expect(dailyDayNumber(new Date("2026-10-07T12:00:00Z"))).toBe(Date.parse("2026-10-07") / 86_400_000);
   });
 });
 
@@ -105,9 +110,21 @@ describe("buildTodayView", () => {
 });
 
 describe("countdown", () => {
-  it("measures the time to the next UTC midnight", () => {
+  it("measures the time to the next Eastern midnight (EDT, 04:00 UTC)", () => {
     const now = Date.parse("2026-10-06T15:23:00Z");
-    expect(msUntilNextUtcDay(now)).toBe((8 * 60 + 37) * 60 * 1000);
+    expect(msUntilNextDailyDay(now)).toBe((12 * 60 + 37) * 60 * 1000);
+  });
+
+  it("uses EST (05:00 UTC) in winter", () => {
+    const now = Date.parse("2026-12-01T05:00:00Z");
+    expect(msUntilNextDailyDay(now)).toBe(24 * 60 * 60 * 1000);
+  });
+
+  it("is right across the nights the clocks change", () => {
+    // Clocks go back on Nov 1, 2026: the Nov 1 day is 25 hours long.
+    expect(msUntilNextDailyDay(Date.parse("2026-11-01T04:00:00Z"))).toBe(25 * 60 * 60 * 1000);
+    // Clocks go forward on Mar 8, 2026: the Mar 8 day is 23 hours long.
+    expect(msUntilNextDailyDay(Date.parse("2026-03-08T05:00:00Z"))).toBe(23 * 60 * 60 * 1000);
   });
 
   it("formats hours and minutes", () => {

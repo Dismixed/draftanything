@@ -1,3 +1,4 @@
+import { dailyDate } from "@/lib/daily-day";
 import type { Category } from "./types";
 
 export const CATEGORIES: Category[] = [
@@ -25,7 +26,7 @@ export const DIFF_LABELS: Record<number, string> = {
 };
 
 export function getDateString(): string {
-  return new Date().toISOString().slice(0, 10);
+  return dailyDate();
 }
 
 export function calcScore(difficulty: number, timeTaken: number): number {

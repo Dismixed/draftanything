@@ -1,6 +1,6 @@
 import "server-only";
 
-import { addDays, isLocked, reviewWindow, todayUtc } from "./dates";
+import { addDays, isLocked, reviewWindow, todayDate } from "./dates";
 import type { ReviewStore } from "./store";
 import {
   ReviewError,
@@ -33,7 +33,7 @@ function windowBounds(today: string): { from: string; to: string } {
   return { from: dates[0]!, to: dates[dates.length - 1]! };
 }
 
-export async function getReviewGrid(ctx: ReviewContext, today = todayUtc()): Promise<ReviewGrid> {
+export async function getReviewGrid(ctx: ReviewContext, today = todayDate()): Promise<ReviewGrid> {
   const dates = reviewWindow(today);
   const { from, to } = windowBounds(today);
   const reviews = await ctx.store.listReviews(from, to);
@@ -110,7 +110,7 @@ export async function listAlternates(
   ctx: ReviewContext,
   game: ReviewGame,
   date: string,
-  today = todayUtc(),
+  today = todayDate(),
   limit = ALTERNATES_PER_SLOT,
 ): Promise<Candidate[]> {
   const adapter = adapterFor(ctx, game);
@@ -129,7 +129,7 @@ async function scheduledOn(ctx: ReviewContext, adapter: ReviewAdapter, date: str
 export async function approve(
   ctx: ReviewContext,
   input: { game: ReviewGame; date: string; contentId: string; email: string },
-  today = todayUtc(),
+  today = todayDate(),
 ): Promise<void> {
   if (isLocked(input.date, today)) throw new ReviewError("LOCKED");
   const adapter = adapterFor(ctx, input.game);
@@ -155,7 +155,7 @@ export async function swap(
     retire: boolean;
     email: string;
   },
-  today = todayUtc(),
+  today = todayDate(),
 ): Promise<void> {
   if (isLocked(input.date, today)) throw new ReviewError("LOCKED");
   const adapter = adapterFor(ctx, input.game);

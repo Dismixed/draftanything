@@ -1,3 +1,4 @@
+import { dailyDate } from "@/lib/daily-day";
 import { NextRequest, NextResponse } from "next/server";
 import { parseBulkStatus } from "@/lib/admin/bulk-status";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -58,7 +59,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Today's game, read from the stored lineup.
-    const today = new Date().toISOString().slice(0, 10);
+    const today = dailyDate();
     const { data: lineup } = await db
       .from("ag_daily_lineups")
       .select("play_date, puzzle")

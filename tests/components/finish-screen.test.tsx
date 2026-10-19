@@ -145,7 +145,7 @@ describe("FinishScreen", () => {
 
   it("counts down to the next puzzles in the same words for every game", () => {
     renderScreen();
-    expect(screen.getByTestId("finish-countdown")).toHaveTextContent("New puzzles in 8h 37m");
+    expect(screen.getByTestId("finish-countdown")).toHaveTextContent("New puzzles in 12h 37m");
   });
 
   it("offers today's debate apart from the puzzles until Hot Takes is played", () => {
@@ -182,7 +182,7 @@ describe("FinishScreen", () => {
     const sweep = screen.getByTestId("finish-sweep");
     expect(sweep).toHaveTextContent("Sweep. All six done today.");
     expect(sweep).toHaveTextContent("Your 1st Sweep.");
-    expect(sweep).toHaveTextContent("New puzzles in 8h 37m");
+    expect(sweep).toHaveTextContent("New puzzles in 12h 37m");
     expect(within(sweep).getByRole("link", { name: "Now settle today's debate →" })).toHaveAttribute("href", "/hot-takes");
     expect(screen.getByTestId("finish-sweep-line")).toHaveTextContent("Sweep. All six done today.");
   });
@@ -211,7 +211,7 @@ describe("FinishScreen", () => {
         "/anyguessr",
       );
       expect(screen.getByRole("button", { name: "Start an argument" })).toBeInTheDocument();
-      expect(screen.getByTestId("finish-countdown")).toHaveTextContent("New puzzles in 8h 37m");
+      expect(screen.getByTestId("finish-countdown")).toHaveTextContent("New puzzles in 12h 37m");
     });
 
     it("says so when every puzzle is already done", () => {

@@ -1,10 +1,11 @@
+import { dailyDate } from "@/lib/daily-day";
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 
 export interface AutoScheduleOptions {
-  /** First calendar day to consider (YYYY-MM-DD). Defaults to today (UTC). */
+  /** First calendar day to consider (YYYY-MM-DD). Defaults to today's daily. */
   startDate?: string;
 }
 
@@ -75,10 +76,6 @@ export function pickNextCandidate(
 /*  Date helpers                                                       */
 /* ------------------------------------------------------------------ */
 
-function todayUtc(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 function addDays(dateStr: string, days: number): string {
   const d = new Date(`${dateStr}T12:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);
@@ -108,7 +105,7 @@ export async function autoScheduleApprovedPuzzles(
   db: SupabaseClient<Database>,
   options: AutoScheduleOptions = {},
 ): Promise<AutoScheduleResult> {
-  const startDate = options.startDate ?? todayUtc();
+  const startDate = options.startDate ?? dailyDate();
 
   if (!isValidDate(startDate)) {
     throw new Error("startDate must be YYYY-MM-DD format");

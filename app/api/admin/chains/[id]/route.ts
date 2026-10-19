@@ -1,3 +1,4 @@
+import { dailyDate } from "@/lib/daily-day";
 import { NextRequest, NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { dailyChainTag } from "@/lib/chainlink/daily-cache";
@@ -109,7 +110,7 @@ export async function DELETE(
     }
 
     // Deleting a puzzle also deletes its schedule row; today's may be cached.
-    revalidateTag(dailyChainTag(new Date().toISOString().slice(0, 10)), { expire: 0 });
+    revalidateTag(dailyChainTag(dailyDate()), { expire: 0 });
 
     return NextResponse.json({ success: true });
   } catch (err) {

@@ -1,3 +1,4 @@
+import { dailyDate } from "@/lib/daily-day";
 import { NextRequest, NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { dailyChainTag } from "@/lib/chainlink/daily-cache";
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Only a cached day can be stale, and only today is ever cached.
-    const today = new Date().toISOString().slice(0, 10);
+    const today = dailyDate();
     if (result.entries.some((entry) => entry.publishDate === today)) {
       revalidateTag(dailyChainTag(today), { expire: 0 });
     }

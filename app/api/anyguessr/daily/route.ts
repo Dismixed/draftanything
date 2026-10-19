@@ -1,3 +1,4 @@
+import { dailyDate } from "@/lib/daily-day";
 import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -21,7 +22,7 @@ function getCachedDailyPuzzle(today: string) {
 
 export async function GET() {
   try {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = dailyDate();
     const puzzle = await getCachedDailyPuzzle(today);
     if (!puzzle) {
       return NextResponse.json({ error: "No puzzle available" }, { status: 404 });

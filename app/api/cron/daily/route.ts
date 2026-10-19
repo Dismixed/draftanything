@@ -1,3 +1,4 @@
+import { dailyDate } from "@/lib/daily-day";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateAll } from "@/lib/anyguessr/generator";
 import { getDailyPuzzle as buildAnyGuessr } from "@/lib/anyguessr/puzzle-service";
@@ -6,7 +7,7 @@ import { getDailyQuestions as buildBrainDead } from "@/lib/brain-dead/daily-serv
 import { topUpDailyChains } from "@/lib/chainlink/top-up";
 import { runJobs } from "@/lib/cron/run-jobs";
 import { createReviewContext } from "@/lib/daily-review/adapters";
-import { reviewWindow } from "@/lib/daily-review/dates";
+import { addDays, reviewWindow } from "@/lib/daily-review/dates";
 import { sendReviewEmailIfDue } from "@/lib/daily-review/email";
 import { generatePuzzleBundles } from "@/lib/freezeframes/generator";
 import {
@@ -49,8 +50,8 @@ export async function GET(request: Request) {
   }
 
   const db = createAdminClient();
-  const today = new Date().toISOString().slice(0, 10);
-  const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+  const today = dailyDate();
+  const tomorrow = addDays(today, 1);
 
   /**
    * Runs a game's own lazy scheduler for every day in the review window, in

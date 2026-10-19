@@ -1,10 +1,11 @@
+import { dailyDate } from "@/lib/daily-day";
 export const INITIAL_CLUES = 2;
 export const MAX_LEADERBOARD_GUESSES = 500;
 
 const EPOCH = new Date("2025-01-01T00:00:00Z").getTime();
 
 export function getDateString(date = new Date()): string {
-  return date.toISOString().slice(0, 10);
+  return dailyDate(date);
 }
 
 export function getDayNumber(date = new Date()): number {

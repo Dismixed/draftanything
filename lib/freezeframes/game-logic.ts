@@ -1,3 +1,4 @@
+import { dailyDate } from "@/lib/daily-day";
 import type { GuessHistoryRow } from "./types";
 
 export const MAX_PTS = 1000;
@@ -9,7 +10,7 @@ export const MAX_DAILY_SCORE = MAX_PTS * 4;
 export const TEXT_CLUE_MAX_PTS = 700;
 
 export function getDateString(): string {
-  return new Date().toISOString().slice(0, 10);
+  return dailyDate();
 }
 
 export function getDisplayDate(): string {

@@ -1,8 +1,9 @@
+import { dailyDate } from "@/lib/daily-day";
 /** Days shown for review: today through today + 9. */
 export const REVIEW_WINDOW_DAYS = 10;
 
-export function todayUtc(now: Date = new Date()): string {
-  return now.toISOString().slice(0, 10);
+export function todayDate(now: Date = new Date()): string {
+  return dailyDate(now);
 }
 
 export function addDays(date: string, days: number): string {

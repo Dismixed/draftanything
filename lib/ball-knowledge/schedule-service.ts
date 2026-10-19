@@ -1,3 +1,4 @@
+import { dailyDate } from "@/lib/daily-day";
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -26,10 +27,6 @@ export interface ScheduleRow {
   publish_date: string;
   category: string;
   created_at: string;
-}
-
-function todayUtc(): string {
-  return new Date().toISOString().slice(0, 10);
 }
 
 function addDays(dateStr: string, days: number): string {
@@ -125,7 +122,7 @@ export async function scheduleDailyCategory(
   db: SupabaseClient<Database>,
   date?: string,
 ): Promise<{ category: string; date: string; alreadyScheduled: boolean } | null> {
-  const targetDate = date ?? todayUtc();
+  const targetDate = date ?? dailyDate();
 
   const existing = await getScheduledCategory(db, targetDate);
   if (existing) {
@@ -150,7 +147,7 @@ export async function autoScheduleCategories(
   db: SupabaseClient<Database>,
   options: AutoScheduleOptions = {},
 ): Promise<AutoScheduleResult> {
-  const startDate = options.startDate ?? todayUtc();
+  const startDate = options.startDate ?? dailyDate();
 
   if (!isValidDate(startDate)) {
     throw new Error("startDate must be YYYY-MM-DD format");

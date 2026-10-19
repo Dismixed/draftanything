@@ -1,5 +1,6 @@
 "use client";
 
+import { dailyDate } from "@/lib/daily-day";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { CATEGORIES } from "@/lib/ball-knowledge/categories";
@@ -20,7 +21,7 @@ export default function AdminBallKnowledgePage() {
 
   const [assignCategory, setAssignCategory] = useState("");
   const [assignDate, setAssignDate] = useState(
-    new Date().toISOString().slice(0, 10),
+    dailyDate(),
   );
 
   const fetchSchedule = useCallback(async () => {

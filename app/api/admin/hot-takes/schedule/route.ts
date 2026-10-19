@@ -1,3 +1,4 @@
+import { dailyDate } from "@/lib/daily-day";
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkAdmin } from "@/lib/chainlink/admin-guard";
@@ -9,7 +10,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const { searchParams } = new URL(req.url);
-    const from = searchParams.get("from") ?? new Date().toISOString().slice(0, 10);
+    const from = searchParams.get("from") ?? dailyDate();
     const db = createAdminClient();
     const schedule = await listSchedule(db, { from });
     return NextResponse.json({ schedule });

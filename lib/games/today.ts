@@ -1,11 +1,6 @@
 import { FEATURED_GAMES, PUZZLE_GAMES, type DailyGameId, type GameId, type PuzzleGameId } from "@/lib/games/registry";
 
-const MS_PER_DAY = 86_400_000;
-
-/** Whole UTC days since the Unix epoch. Matches the day boundary used by `getDateString()`. */
-export function utcDayNumber(date: Date = new Date()): number {
-  return Math.floor(date.getTime() / MS_PER_DAY);
-}
+export { dailyDayNumber, msUntilNextDailyDay } from "@/lib/daily-day";
 
 /** The three featured games, starting from the one whose turn it is on this day. */
 function featuredRotation(dayNumber: number): PuzzleGameId[] {
@@ -42,10 +37,6 @@ export function buildTodayView(dayNumber: number, played: ReadonlySet<DailyGameI
     lineup: [...rest.filter((id) => !played.has(id)), ...rest.filter((id) => played.has(id))],
     doneCount: PUZZLE_GAMES.filter((id) => played.has(id)).length,
   };
-}
-
-export function msUntilNextUtcDay(now: number): number {
-  return MS_PER_DAY - (now % MS_PER_DAY);
 }
 
 export function formatCountdown(ms: number): string {

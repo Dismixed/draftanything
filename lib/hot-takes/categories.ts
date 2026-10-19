@@ -1,3 +1,4 @@
+import { dailyDate } from "@/lib/daily-day";
 import { LEGACY_CATEGORIES } from "./seed";
 import type { HotTakesDailyCategory } from "./types";
 
@@ -14,7 +15,7 @@ export function getDailyCategoryIndex(dateStr: string, poolSize?: number): numbe
 
 /** Sync legacy fallback for client-only previews without DB. */
 export function getLegacyDailyCategory(date: Date = new Date()): HotTakesDailyCategory {
-  const dateStr = date.toISOString().slice(0, 10);
+  const dateStr = dailyDate(date);
   const legacy = LEGACY_CATEGORIES[getDailyCategoryIndex(dateStr)]!;
   return {
     name: legacy.name,

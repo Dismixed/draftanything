@@ -1,3 +1,4 @@
+import { dailyDate } from "@/lib/daily-day";
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -181,7 +182,7 @@ export async function getDailyPuzzle(
   db: SupabaseClient<Database>,
   date?: string,
 ): Promise<ClientDailyPuzzle | null> {
-  const targetDate = date ?? new Date().toISOString().slice(0, 10);
+  const targetDate = date ?? dailyDate();
 
   const stored = await loadStoredLineup(db, targetDate);
   if (stored) return stored;

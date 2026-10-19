@@ -10,7 +10,7 @@ import { FinishStreak } from "@/components/daily/finish-streak";
 import { FinishUpNext } from "@/components/daily/finish-up-next";
 import { ShareResult } from "@/components/daily/share-result";
 import { DEBATE_GAME, PUZZLE_GAMES, getGame, type DailyGameId } from "@/lib/games/registry";
-import { formatCountdown, msUntilNextUtcDay } from "@/lib/games/today";
+import { formatCountdown, msUntilNextDailyDay } from "@/lib/games/today";
 import { useStreak } from "@/lib/streak/context";
 import { readStreakStore } from "@/lib/streak/storage";
 import { sweepCount } from "@/lib/streak/sweep";
@@ -43,10 +43,10 @@ export interface FinishScreenProps {
 }
 
 function useCountdown(): string {
-  const [text, setText] = useState(() => formatCountdown(msUntilNextUtcDay(Date.now())));
+  const [text, setText] = useState(() => formatCountdown(msUntilNextDailyDay(Date.now())));
 
   useEffect(() => {
-    const tick = () => setText(formatCountdown(msUntilNextUtcDay(Date.now())));
+    const tick = () => setText(formatCountdown(msUntilNextDailyDay(Date.now())));
     tick();
     const id = window.setInterval(tick, 30_000);
     return () => window.clearInterval(id);

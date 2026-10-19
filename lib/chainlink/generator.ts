@@ -1,3 +1,4 @@
+import { dailyDate } from "@/lib/daily-day";
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -270,7 +271,7 @@ export async function loadActivePhrases(db: SupabaseClient<Database>): Promise<P
  * today's and upcoming dailies.
  */
 async function loadRecentDailyLinks(db: SupabaseClient<Database>): Promise<Set<string>> {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = dailyDate();
   const since = new Date(Date.now() - RECENT_DAILY_DAYS * 86_400_000).toISOString().slice(0, 10);
 
   const { data: scheduled, error: scheduleError } = await db

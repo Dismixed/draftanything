@@ -22,7 +22,7 @@ describe("StreakProvider keeps 'played today' current", () => {
   beforeEach(() => {
     localStorage.clear();
     vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-10-06T23:50:00Z"));
+    vi.setSystemTime(new Date("2026-10-07T03:50:00Z"));
   });
 
   afterEach(() => {
@@ -30,7 +30,7 @@ describe("StreakProvider keeps 'played today' current", () => {
     vi.useRealTimers();
   });
 
-  it("clears yesterday's plays when the UTC day rolls over in an open tab", () => {
+  it("clears yesterday's plays when the daily reset passes in an open tab", () => {
     recordDailyCompletion("chainlink");
     renderProvider();
     expect(screen.getByTestId("played")).toHaveTextContent("chainlink");

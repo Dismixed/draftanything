@@ -1,3 +1,4 @@
+import { dailyDate } from "@/lib/daily-day";
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -25,7 +26,7 @@ export async function getDailyCategoryForPlay(
   db: SupabaseClient<Database>,
   date: Date = new Date(),
 ): Promise<HotTakesDailyCategory> {
-  const dateStr = date.toISOString().slice(0, 10);
+  const dateStr = dailyDate(date);
 
   const { data: scheduled, error: scheduleError } = await db
     .from("hot_takes_schedule")

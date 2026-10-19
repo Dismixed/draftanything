@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { SHOW_AUTH_UI } from "@/lib/auth/config";
+import { dailyDate } from "@/lib/daily-day";
 import { GameTitle } from "@/components/ui/game-title";
 
 interface Stats {
@@ -153,14 +154,14 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
 
 function Heatmap({ dates }: { dates: string[] }) {
   const dateSet = new Set(dates);
-  const today = new Date();
+  const today = new Date(`${dailyDate()}T12:00:00Z`);
   const cells: { date: string; filled: boolean; dayOfWeek: number }[] = [];
 
   for (let i = 89; i >= 0; i--) {
     const d = new Date(today);
-    d.setDate(d.getDate() - i);
+    d.setUTCDate(d.getUTCDate() - i);
     const dateStr = d.toISOString().slice(0, 10);
-    cells.push({ date: dateStr, filled: dateSet.has(dateStr), dayOfWeek: d.getDay() });
+    cells.push({ date: dateStr, filled: dateSet.has(dateStr), dayOfWeek: d.getUTCDay() });
   }
 
   return (

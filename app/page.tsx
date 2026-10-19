@@ -4,13 +4,13 @@ import { AllGamesNav } from "@/components/home/all-games-nav";
 import { GameCard } from "@/components/home/game-card";
 import { Today } from "@/components/home/today";
 import { playHref as draftPlayHref } from "@/lib/draft-landing/play-href";
-import { utcDayNumber } from "@/lib/games/today";
+import { dailyDayNumber } from "@/lib/games/today";
 import { getDailyCategoryForPlay } from "@/lib/hot-takes/daily-service";
 import { shareImage } from "@/lib/og/metadata";
 import { buildHomeJsonLd, JsonLdScript } from "@/lib/seo";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-// The featured game changes at midnight UTC. Keep the cached page close to current;
+// The featured game changes at the daily reset. Keep the cached page close to current;
 // <Today /> corrects any remaining gap from the browser's clock.
 export const revalidate = 300;
 
@@ -41,7 +41,7 @@ async function todaysDebateCategory(): Promise<string | null> {
 }
 
 export default async function StimGames() {
-  const dayNumber = utcDayNumber();
+  const dayNumber = dailyDayNumber();
   const debateCategory = await todaysDebateCategory();
 
   return (

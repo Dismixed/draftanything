@@ -1,3 +1,4 @@
+import { dailyDate } from "@/lib/daily-day";
 import type { Puzzle } from "./types";
 
 /* ------------------------------------------------------------------ */
@@ -81,11 +82,7 @@ export function getRandomPuzzle(): Puzzle {
 }
 
 export function getDateString(date?: Date): string {
-  const d = date ?? new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  return dailyDate(date);
 }
 
 /** Display helper: "apple" + "juice" → "Apple Juice" */

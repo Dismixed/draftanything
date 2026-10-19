@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { addDays, isLocked, reviewWindow, todayUtc } from "./dates";
+import { addDays, isLocked, reviewWindow, todayDate } from "./dates";
 
 describe("daily review dates", () => {
-  it("uses the UTC date", () => {
-    expect(todayUtc(new Date("2026-10-15T23:30:00-07:00"))).toBe("2026-10-16");
+  it("uses the US Eastern date", () => {
+    expect(todayDate(new Date("2026-10-15T23:30:00-07:00"))).toBe("2026-10-16");
+    expect(todayDate(new Date("2026-10-16T03:30:00Z"))).toBe("2026-10-15");
   });
 
   it("adds days across a month boundary", () => {

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Today } from "@/components/home/today";
 import { track } from "@/lib/analytics/track";
 import { DAILY_GAMES, PUZZLE_GAMES, getGame, type DailyGameId } from "@/lib/games/registry";
-import { featuredGameForDay, utcDayNumber } from "@/lib/games/today";
+import { featuredGameForDay, dailyDayNumber } from "@/lib/games/today";
 import type { GameStreakInfo } from "@/lib/streak/types";
 
 let streaks: GameStreakInfo[] = [];
@@ -22,7 +22,7 @@ vi.mock("next/link", () => ({
 }));
 
 const NOW = new Date("2026-10-06T15:23:00Z");
-const DAY = utcDayNumber(NOW);
+const DAY = dailyDayNumber(NOW);
 
 function streaksWithPlayed(played: DailyGameId[]): GameStreakInfo[] {
   return DAILY_GAMES.map((id) => ({
@@ -89,7 +89,7 @@ describe("Today", () => {
     expect(screen.queryByTestId("home-featured")).toBeNull();
     const done = screen.getByTestId("home-all-done");
     expect(done).toHaveTextContent("All six done.");
-    expect(done).toHaveTextContent("New puzzles in 8h 37m");
+    expect(done).toHaveTextContent("New puzzles in 12h 37m");
     expect(done).not.toHaveTextContent("Hot Takes");
     expect(within(done).getByRole("link")).toHaveAttribute("href", "/draft-anything/play");
     expect(within(screen.getByTestId("home-lineup")).getAllByRole("link")).toHaveLength(6);
@@ -128,7 +128,7 @@ describe("Today", () => {
 
   it("tracks a click on the debate panel", async () => {
     vi.useRealTimers();
-    render(<Today dayNumber={utcDayNumber()} debateCategory="Fast food chains" />);
+    render(<Today dayNumber={dailyDayNumber()} debateCategory="Fast food chains" />);
 
     const link = within(screen.getByTestId("home-debate")).getByRole("link");
     link.addEventListener("click", (event) => event.preventDefault());
@@ -152,7 +152,7 @@ describe("Today", () => {
 
   it("tracks a click on the featured game", async () => {
     vi.useRealTimers();
-    const day = utcDayNumber();
+    const day = dailyDayNumber();
     render(<Today dayNumber={day} debateCategory="Fast food chains" />);
 
     const link = within(screen.getByTestId("home-featured")).getByRole("link");

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { isEmailConfigured, sendEmail } from "@/lib/email/send";
+import { todayDate } from "./dates";
 import { getReviewGrid, summarize, type ReviewContext } from "./service";
 import type { ReviewSummary } from "./types";
 
@@ -67,7 +68,7 @@ export async function sendReviewEmailIfDue(
     return { sent: false, reason: "not due" };
   }
 
-  const grid = await getReviewGrid(ctx, now.toISOString().slice(0, 10));
+  const grid = await getReviewGrid(ctx, todayDate(now));
   const summary = summarize(grid);
   if (summary.total === 0) return { sent: false, reason: "nothing to review" };
 

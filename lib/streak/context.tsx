@@ -48,7 +48,7 @@ export function StreakProvider({ children }: { children: ReactNode }) {
     refreshStreaks();
   }, [refreshStreaks]);
 
-  // "Played today" goes stale in a tab left open: the UTC day rolls over, or another tab
+  // "Played today" goes stale in a tab left open: the daily reset passes, or another tab
   // finishes a game. Re-read on a day change, when the tab is shown again, and on storage events.
   useEffect(() => {
     let lastDate = getDateString();

@@ -1,13 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { DAILY_TIME_ZONE } from "@/lib/daily-day";
 import { useIntroCount } from "@/lib/daily-intro/use-intro-count";
 import type { DailyGameId } from "@/lib/games/registry";
 import { useStreakOptional } from "@/lib/streak/context";
 
-/** "Tue 14 Oct", in UTC to match the day every daily is keyed on. */
+/** "Tue 14 Oct", in US Eastern time to match the day every daily is keyed on. */
 export function introDate(date: Date = new Date()): string {
-  return date.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+  return date.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: DAILY_TIME_ZONE });
 }
 
 /** Today's date and, once the player has one, their streak for this game. */
@@ -15,7 +16,7 @@ export function IntroToday({ game, className }: { game: DailyGameId; className?:
   const streak = useStreakOptional()?.streaks.find((s) => s.id === game)?.currentStreak ?? 0;
   return (
     <span className={className ?? "intro-today"}>
-      {/* The server renders a different day than the browser around midnight UTC. */}
+      {/* The server renders a different day than the browser around the daily reset. */}
       <span suppressHydrationWarning>{introDate()}</span>
       {streak > 0 && (
         <span className="intro-streak">

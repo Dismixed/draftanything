@@ -1,5 +1,6 @@
 "use client";
 
+import { dailyDate } from "@/lib/daily-day";
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { AdminShell } from "@/components/admin/admin-shell";
@@ -78,7 +79,7 @@ export default function AdminFreezeFramesPage() {
 
   const [selected, setSelected] = useState<SeedEntry | null>(null);
   const [schedulePuzzle, setSchedulePuzzle] = useState<Puzzle | null>(null);
-  const [scheduleDate, setScheduleDate] = useState(new Date().toISOString().slice(0, 10));
+  const [scheduleDate, setScheduleDate] = useState(dailyDate());
   const [usedDates, setUsedDates] = useState<Set<string>>(new Set());
   const [scheduleByPuzzle, setScheduleByPuzzle] = useState<Map<string, string[]>>(new Map());
 
@@ -325,7 +326,7 @@ export default function AdminFreezeFramesPage() {
   }
 
   async function autoSchedule() {
-    const startDate = new Date().toISOString().slice(0, 10);
+    const startDate = dailyDate();
     if (!confirm(`Auto-schedule approved puzzles starting ${startDate}?`)) return;
     setBusy(true);
     try {
@@ -538,7 +539,7 @@ export default function AdminFreezeFramesPage() {
                         <button
                           onClick={() => {
                             setSchedulePuzzle(puzzle);
-                            setScheduleDate(new Date().toISOString().slice(0, 10));
+                            setScheduleDate(dailyDate());
                           }}
                           disabled={busy}
                           style={miniBtn("#6aaa64")}

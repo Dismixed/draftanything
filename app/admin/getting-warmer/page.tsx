@@ -1,5 +1,6 @@
 "use client";
 
+import { dailyDate } from "@/lib/daily-day";
 import { useCallback, useEffect, useState } from "react";
 import { AdminShell } from "@/components/admin/admin-shell";
 
@@ -42,7 +43,7 @@ export default function AdminGettingWarmerPage() {
 
   const [schedulePuzzle, setSchedulePuzzle] = useState<Puzzle | null>(null);
   const [scheduleDate, setScheduleDate] = useState(
-    new Date().toISOString().slice(0, 10),
+    dailyDate(),
   );
 
   const fetchPuzzles = useCallback(async () => {

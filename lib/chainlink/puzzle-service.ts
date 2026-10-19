@@ -1,3 +1,4 @@
+import { dailyDate } from "@/lib/daily-day";
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -156,7 +157,7 @@ export async function getDailyPuzzle(
   db: SupabaseClient<Database>,
   date?: string,
 ): Promise<PlayablePuzzle | null> {
-  const targetDate = date ?? new Date().toISOString().slice(0, 10);
+  const targetDate = date ?? dailyDate();
 
   // 1. The scheduled puzzle.
   const scheduled = await loadScheduledPuzzle(db, targetDate);
@@ -242,7 +243,7 @@ export async function getInfinitePuzzle(
     excludeIds?: string[];
   },
 ): Promise<PlayablePuzzle | null> {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = dailyDate();
 
   const { data: past, error: pastError } = await db
     .from("daily_chain_puzzles")

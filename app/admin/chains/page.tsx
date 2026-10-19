@@ -1,5 +1,6 @@
 "use client";
 
+import { dailyDate } from "@/lib/daily-day";
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { AdminShell } from "@/components/admin/admin-shell";
@@ -67,7 +68,7 @@ export default function AdminChainsPage() {
   const [editingPuzzle, setEditingPuzzle] = useState<Puzzle | null>(null);
   const [schedulePuzzle, setSchedulePuzzle] = useState<Puzzle | null>(null);
   const [scheduleDate, setScheduleDate] = useState(
-    new Date().toISOString().slice(0, 10),
+    dailyDate(),
   );
   const [generating, setGenerating] = useState(false);
   const [autoScheduling, setAutoScheduling] = useState(false);
@@ -279,7 +280,7 @@ export default function AdminChainsPage() {
 
   /* ---- Auto-schedule all approved puzzles ---- */
   const autoScheduleAll = async () => {
-    const startDate = new Date().toISOString().slice(0, 10);
+    const startDate = dailyDate();
     const confirmed = confirm(
       `Schedule all approved puzzles on consecutive open dates starting ${startDate}? Puzzles already on the calendar are skipped.`,
     );
@@ -637,7 +638,7 @@ export default function AdminChainsPage() {
                     )}
                     {puzzle.status === "approved" && (
                       <button
-                        onClick={() => { setSchedulePuzzle(puzzle); setScheduleDate(new Date().toISOString().slice(0, 10)); }}
+                        onClick={() => { setSchedulePuzzle(puzzle); setScheduleDate(dailyDate()); }}
                         style={actionBtnStyle("#6aaa64")}
                       >
                         Schedule
@@ -766,7 +767,7 @@ export default function AdminChainsPage() {
               value={scheduleDate}
               onChange={(e) => setScheduleDate(e.target.value)}
               style={inputStyle}
-              min={new Date().toISOString().slice(0, 10)}
+              min={dailyDate()}
             />
 
             {usedDates.has(scheduleDate) && (

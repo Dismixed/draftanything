@@ -1,3 +1,4 @@
+import { dailyDate } from "@/lib/daily-day";
 import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { getDailyQuestions } from "@/lib/brain-dead/daily-service";
@@ -22,7 +23,7 @@ function getCachedDailyQuestions(today: string) {
 }
 
 export async function GET() {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = dailyDate();
 
   try {
     const questions = await getCachedDailyQuestions(today);

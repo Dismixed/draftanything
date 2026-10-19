@@ -13,8 +13,8 @@ import { DEBATE_GAME, PUZZLE_GAMES, getGame, type DailyGameId } from "@/lib/game
 import {
   buildTodayView,
   formatCountdown,
-  msUntilNextUtcDay,
-  utcDayNumber,
+  msUntilNextDailyDay,
+  dailyDayNumber,
 } from "@/lib/games/today";
 import { useStreak } from "@/lib/streak/context";
 
@@ -35,9 +35,9 @@ interface TodayProps {
 export function Today({ dayNumber, debateCategory }: TodayProps) {
   const { streaks } = useStreak();
 
-  // The server-rendered page can be cached across midnight UTC. Hydrate with the server's
+  // The server-rendered page can be cached across the daily reset. Hydrate with the server's
   // day, then trust the browser's clock.
-  const day = useSyncExternalStore(subscribeToClock, utcDayNumber, () => dayNumber);
+  const day = useSyncExternalStore(subscribeToClock, dailyDayNumber, () => dayNumber);
   const minute = useSyncExternalStore(subscribeToClock, currentMinute, noMinuteOnServer);
   const now = minute === null ? null : minute * 60_000;
 
@@ -95,8 +95,8 @@ export function Today({ dayNumber, debateCategory }: TodayProps) {
             <h2 className="home-featured-title">All six done.</h2>
             <p className="home-featured-pitch">
               {now === null
-                ? "New puzzles arrive at midnight UTC."
-                : `New puzzles in ${formatCountdown(msUntilNextUtcDay(now))}.`}{" "}
+                ? "New puzzles arrive at midnight ET."
+                : `New puzzles in ${formatCountdown(msUntilNextDailyDay(now))}.`}{" "}
               Until then, grab some friends for a round of Draft Anything.
             </p>
             <Link
@@ -154,7 +154,7 @@ export function Today({ dayNumber, debateCategory }: TodayProps) {
       </div>
 
       <TodayDebate
-        // A page cached from before midnight UTC carries yesterday's category.
+        // A page cached from before the daily reset carries yesterday's category.
         category={day === dayNumber ? debateCategory : null}
         played={played.has(DEBATE_GAME)}
         streak={streakFor.get(DEBATE_GAME) ?? 0}

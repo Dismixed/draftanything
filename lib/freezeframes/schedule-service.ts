@@ -1,3 +1,4 @@
+import { dailyDate } from "@/lib/daily-day";
 import "server-only";
 import { pickLru } from "@/lib/schedule/lru";
 
@@ -21,10 +22,6 @@ export interface AutoScheduleResult {
   entries: AutoScheduleEntry[];
 }
 
-function todayUtc(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 function addDays(dateStr: string, days: number): string {
   const d = new Date(`${dateStr}T12:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);
@@ -39,7 +36,7 @@ export async function autoScheduleApprovedPuzzles(
   db: SupabaseClient<Database>,
   options: AutoScheduleOptions = {},
 ): Promise<AutoScheduleResult> {
-  const startDate = options.startDate ?? todayUtc();
+  const startDate = options.startDate ?? dailyDate();
 
   if (!isValidDate(startDate)) {
     throw new Error("startDate must be YYYY-MM-DD format");
@@ -181,7 +178,7 @@ export async function scheduleDailyPuzzle(
   db: SupabaseClient<Database>,
   date?: string,
 ): Promise<{ puzzleId: string; date: string; alreadyScheduled: boolean } | null> {
-  const targetDate = date ?? todayUtc();
+  const targetDate = date ?? dailyDate();
 
   const { data: existing, error: existingError } = await db
     .from("daily_freezeframes_puzzles")

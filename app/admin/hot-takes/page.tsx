@@ -1,5 +1,6 @@
 "use client";
 
+import { dailyDate } from "@/lib/daily-day";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { HotTakesImage } from "@/components/hot-takes/optimized-image";
@@ -51,7 +52,7 @@ export default function AdminHotTakesPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("");
   const [newName, setNewName] = useState("");
-  const [scheduleDate, setScheduleDate] = useState(new Date().toISOString().slice(0, 10));
+  const [scheduleDate, setScheduleDate] = useState(dailyDate());
   const [scheduleCategoryId, setScheduleCategoryId] = useState("");
   const [manualImageUrl, setManualImageUrl] = useState("");
 

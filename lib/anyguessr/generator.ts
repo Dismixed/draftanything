@@ -7,6 +7,7 @@
  *   3. Resolve image candidates (DB-stored or Wikipedia + Commons search).
  *   4. Assemble Clue[] and persist via puzzle-service.
  */
+import { dailyDate } from "@/lib/daily-day";
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -388,7 +389,7 @@ export async function scheduleDailyPuzzle(
   db: SupabaseClient<Database>,
   date?: string,
 ): Promise<{ puzzleId: string; date: string; alreadyScheduled: boolean } | null> {
-  const targetDate = date ?? new Date().toISOString().slice(0, 10);
+  const targetDate = date ?? dailyDate();
 
   const existing = await db
     .from("daily_ag_puzzles")
