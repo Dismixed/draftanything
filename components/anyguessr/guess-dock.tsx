@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { rankCountries } from "@/lib/anyguessr/country-list";
-import { getLatLngForIso2, resolveGuessToCca3 } from "@/lib/anyguessr/country-geo";
+import { COUNTRIES, rankCountries, type CountryItem } from "@/lib/anyguessr/country-list";
+import { getIso2ForCca3, getLatLngForIso2, resolveGuessToCca3 } from "@/lib/anyguessr/country-geo";
+import { normalizeAnswer } from "@/lib/anyguessr/normalize";
 import type { MapSelection } from "./world-map";
 
 const MAX_SUGGESTIONS = 5;
@@ -11,6 +12,22 @@ const MAX_SUGGESTIONS = 5;
 function selectionFor(name: string, iso2?: string): MapSelection {
   const at = iso2 ? getLatLngForIso2(iso2) : null;
   return { cca3: resolveGuessToCca3(name), name, lat: at?.[0] ?? 0, lng: at?.[1] ?? 0 };
+}
+
+/**
+ * Suggestions for the typed text, best first. Another spelling of a country ("USA", "Holland",
+ * "Burma") puts that country first, unless the text also starts a listed name ("Ni" stays
+ * Niger, Nigeria, Nicaragua).
+ */
+function suggestionsFor(query: string): readonly CountryItem[] {
+  const q = normalizeAnswer(query);
+  if (!q) return [];
+  const ranked = rankCountries(query);
+  if (ranked[0] && normalizeAnswer(ranked[0].name).startsWith(q)) return ranked.slice(0, MAX_SUGGESTIONS);
+  const cca3 = resolveGuessToCca3(query);
+  const iso2 = cca3 ? getIso2ForCca3(cca3) : null;
+  const named = iso2 ? COUNTRIES.find((c) => c.iso2 === iso2) : undefined;
+  return (named ? [named, ...ranked.filter((c) => c !== named)] : ranked).slice(0, MAX_SUGGESTIONS);
 }
 
 /**
@@ -37,14 +54,24 @@ export function GuessDock({
 
   // While a country is picked (here or on the map) the box shows its name.
   const value = selection ? selection.name : query;
-  const matches = useMemo(() => (query.trim() ? rankCountries(query).slice(0, MAX_SUGGESTIONS) : []), [query]);
+  const matches = useMemo(() => suggestionsFor(query), [query]);
   const showList = open && !selection && matches.length > 0;
+  // Confirm guesses the picked country, or else the highlighted suggestion for the typed text,
+  // so "Serb" then Confirm guesses Serbia. This holds after the list closes too: tapping
+  // Confirm on a phone blurs the box and closes the list before the click lands.
+  const guess = selection?.name ?? matches[active]?.name;
 
   const choose = (index: number) => {
     const country = matches[index];
     if (!country) return;
     onSelect(selectionFor(country.name, country.iso2));
     setOpen(false);
+  };
+
+  const confirmGuess = () => {
+    if (!guess || busy) return;
+    if (!selection) choose(active);
+    onConfirm(guess);
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -56,7 +83,7 @@ export function GuessDock({
     } else if (e.key === "Enter") {
       e.preventDefault();
       if (showList) choose(active);
-      else if (selection && !busy) onConfirm(selection.name);
+      else confirmGuess();
     } else if (e.key === "Escape") {
       setOpen(false);
     }
@@ -119,10 +146,10 @@ export function GuessDock({
       <button
         type="button"
         className="ag-cta"
-        disabled={!selection || busy}
-        onClick={() => selection && onConfirm(selection.name)}
+        disabled={!guess || busy}
+        onClick={confirmGuess}
       >
-        {selection ? `Confirm ${selection.name}` : "Confirm"}
+        {guess ? `Confirm ${guess}` : "Confirm"}
       </button>
     </div>
   );
