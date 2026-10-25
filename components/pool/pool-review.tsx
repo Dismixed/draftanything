@@ -198,7 +198,7 @@ export function PoolReview({ draftId, myPlayerId, hostPlayerId, room }: PoolRevi
             <p style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: '4px' }}>
               Pool Review
             </p>
-            <h1 style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', color: 'var(--text)', fontSize: 'clamp(20px,4vw,28px)', margin: 0 }}>
+            <h1 style={{ fontFamily: 'var(--font-playfair-display), serif', fontStyle: 'italic', color: 'var(--text)', fontSize: 'clamp(20px,4vw,28px)', margin: 0 }}>
               {room.topic}
             </h1>
           </div>

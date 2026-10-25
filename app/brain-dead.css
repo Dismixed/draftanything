@@ -48,7 +48,7 @@ html[data-theme="light"] {
   --bd-letter: 30px;
   width: 100%;
   margin: 0 auto;
-  font-family: "Outfit", system-ui, sans-serif;
+  font-family: var(--font-outfit), system-ui, sans-serif;
   color: var(--bd-text);
 }
 
@@ -76,7 +76,7 @@ html[data-theme="light"] {
   padding: 6px 0;
   border: none;
   background: transparent;
-  font: 500 13px "Outfit", system-ui, sans-serif;
+  font: 500 13px var(--font-outfit), system-ui, sans-serif;
   color: var(--bd-text-secondary);
   text-decoration: none;
   cursor: pointer;
@@ -347,7 +347,7 @@ html[data-theme="light"] {
   border-bottom: 3px solid var(--bd-edge);
   background: var(--bd-surface);
   color: var(--bd-text);
-  font: 500 var(--bd-a-font) "Outfit", system-ui, sans-serif;
+  font: 500 var(--bd-a-font) var(--font-outfit), system-ui, sans-serif;
   text-align: left;
   cursor: pointer;
 }
@@ -398,7 +398,7 @@ html[data-theme="light"] {
   padding: 0 18px;
   border: none;
   border-radius: 13px;
-  font: 700 15px "Outfit", system-ui, sans-serif;
+  font: 700 15px var(--font-outfit), system-ui, sans-serif;
   color: #fff;
   text-decoration: none;
   background: linear-gradient(180deg, color-mix(in srgb, var(--bd-primary) 86%, #fff) 0%, var(--bd-primary) 55%);
@@ -427,7 +427,7 @@ html[data-theme="light"] {
   border-bottom: 3px solid var(--bd-edge);
   background: var(--bd-surface);
   color: var(--bd-text);
-  font: 600 14px "Outfit", system-ui, sans-serif;
+  font: 600 14px var(--font-outfit), system-ui, sans-serif;
   text-decoration: none;
   cursor: pointer;
 }
@@ -459,7 +459,7 @@ html[data-theme="light"] {
   border: 1px solid var(--bd-hair);
   border-radius: 22px;
   box-shadow: 0 20px 50px rgba(2, 6, 23, 0.3);
-  font-family: "Outfit", system-ui, sans-serif;
+  font-family: var(--font-outfit), system-ui, sans-serif;
   color: var(--bd-text);
 }
 .bd-modal-icon {
@@ -524,7 +524,7 @@ html[data-theme="light"] {
   width: 100%;
   max-width: 400px;
   margin: 0 auto;
-  font-family: "Outfit", system-ui, sans-serif;
+  font-family: var(--font-outfit), system-ui, sans-serif;
   color: var(--bd-text);
   padding: 8px 0 28px;
   text-align: center;
@@ -629,7 +629,7 @@ html[data-theme="light"] {
   background: var(--bd-surface);
   color: var(--bd-text);
   /* 16px stops iOS Safari zooming the page when the field takes focus. */
-  font: 500 16px "Outfit", system-ui, sans-serif;
+  font: 500 16px var(--font-outfit), system-ui, sans-serif;
 }
 .bd-name::placeholder { color: var(--bd-text-muted); }
 .bd-record-note { grid-column: 1 / -1; margin: 0; font-size: 13px; }
@@ -755,7 +755,7 @@ html[data-theme="light"] {
   align-items: center;
   gap: 14px;
   text-align: center;
-  font-family: "Outfit", system-ui, sans-serif;
+  font-family: var(--font-outfit), system-ui, sans-serif;
   color: var(--bd-text);
 }
 

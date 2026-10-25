@@ -48,7 +48,7 @@ body:has(.bk-page) {
     ),
     var(--bk-court-navy);
   color: var(--bk-chalk);
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-inter), sans-serif;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -207,7 +207,7 @@ html[data-theme="light"] .bk-page {
 }
 
 .bk-title {
-  font-family: "Teko", sans-serif;
+  font-family: var(--font-teko), sans-serif;
   font-weight: 700;
   font-size: 56px;
   line-height: 0.9;
@@ -269,7 +269,7 @@ html[data-theme="light"] .bk-page {
 }
 
 .bk-category-name {
-  font-family: "Teko", sans-serif;
+  font-family: var(--font-teko), sans-serif;
   font-size: 32px;
   font-weight: 600;
   letter-spacing: 0.01em;
@@ -295,7 +295,7 @@ html[data-theme="light"] .bk-page {
   border-radius: 10px;
   background: linear-gradient(180deg, #2f7bdc, var(--bk-hardwood));
   color: white;
-  font-family: "Teko", sans-serif;
+  font-family: var(--font-teko), sans-serif;
   font-size: 24px;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -327,7 +327,7 @@ html[data-theme="light"] .bk-page {
   border-radius: 10px;
   background: transparent;
   color: var(--bk-chalk);
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-inter), sans-serif;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -344,7 +344,7 @@ html[data-theme="light"] .bk-page {
   border: 1.5px solid var(--bk-line);
   background-color: var(--bk-input-bg);
   color: var(--bk-chalk);
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-inter), sans-serif;
   font-size: 16px;
   font-weight: 500;
   outline: none;
@@ -389,7 +389,7 @@ html[data-theme="light"] .bk-page {
 }
 
 .bk-end-score .bk-end-num {
-  font-family: "Teko", sans-serif;
+  font-family: var(--font-teko), sans-serif;
   font-size: 88px;
   font-weight: 700;
   line-height: 0.85;
@@ -459,7 +459,7 @@ html[data-theme="light"] .bk-page {
   border: 1.5px solid var(--bk-line);
   background-color: var(--bk-input-bg);
   color: var(--bk-chalk);
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-inter), sans-serif;
   font-size: 14px;
   outline: none;
   appearance: none;
@@ -477,7 +477,7 @@ html[data-theme="light"] .bk-page {
   border-radius: 9px;
   background: var(--bk-hardwood);
   color: white;
-  font-family: "Teko", sans-serif;
+  font-family: var(--font-teko), sans-serif;
   font-size: 18px;
   font-weight: 600;
   cursor: pointer;
@@ -503,7 +503,7 @@ html[data-theme="light"] .bk-page {
 .bk-lb-rank {
   width: 22px;
   text-align: center;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-weight: 700;
   color: var(--bk-chalk-dim);
   font-size: 13px;
@@ -527,7 +527,7 @@ html[data-theme="light"] .bk-page {
 }
 
 .bk-lb-score {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-weight: 700;
 }
 
@@ -573,7 +573,7 @@ html[data-theme="light"] .bk-page {
 }
 
 /* ── Finish result ── */
-.bk-finish { color: var(--bk-chalk); font-family: "Inter", sans-serif; text-align: left; }
+.bk-finish { color: var(--bk-chalk); font-family: var(--font-inter), sans-serif; text-align: left; }
 .bk-finish .bk-end-score { text-align: center; }
 .bk-finish-category {
   margin: 0 0 20px;
@@ -621,7 +621,7 @@ html[data-theme="light"] .bk-page {
 }
 
 .bk-wordmark {
-  font-family: "Teko", sans-serif;
+  font-family: var(--font-teko), sans-serif;
   font-weight: 700;
   font-size: 26px;
   line-height: 1;
@@ -641,7 +641,7 @@ html[data-theme="light"] .bk-page {
   border-radius: 8px;
   overflow: hidden;
   transform: skewX(-6deg);
-  font-family: "Teko", sans-serif;
+  font-family: var(--font-teko), sans-serif;
   font-weight: 600;
   box-shadow: 0 14px 34px -12px rgba(0, 0, 0, 0.55);
 }
@@ -745,7 +745,7 @@ html[data-theme="light"] .bk-page {
 }
 
 .bk-booth-idle {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -761,7 +761,7 @@ html[data-theme="light"] .bk-page {
 }
 
 .bk-call b {
-  font-family: "Teko", sans-serif;
+  font-family: var(--font-teko), sans-serif;
   font-weight: 700;
   font-style: italic;
   font-size: clamp(40px, 13vw, 104px);
@@ -789,7 +789,7 @@ html[data-theme="light"] .bk-page {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: "Teko", sans-serif;
+  font-family: var(--font-teko), sans-serif;
   font-weight: 600;
   font-size: clamp(17px, 4.6vw, 32px);
   line-height: 1;
@@ -954,7 +954,7 @@ html[data-theme="light"] .bk-booth.is-big .bk-call b {
 
 .bk-end-call {
   margin-bottom: 6px;
-  font-family: "Teko", sans-serif;
+  font-family: var(--font-teko), sans-serif;
   font-weight: 700;
   font-style: italic;
   font-size: 26px;
@@ -982,7 +982,7 @@ html[data-theme="light"] .bk-booth.is-big .bk-call b {
   border-radius: 10px;
   background: linear-gradient(180deg, #2f7bdc, var(--bk-hardwood));
   color: #fff;
-  font: 600 22px/1 "Teko", sans-serif;
+  font: 600 22px/1 var(--font-teko), sans-serif;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -1138,7 +1138,7 @@ html[data-theme="light"] .bk-booth.is-big .bk-call b {
   margin: 0 auto;
   padding: 18px 20px 48px;
   text-align: center;
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: var(--font-inter), system-ui, sans-serif;
   color: var(--bk-chalk);
 }
 
@@ -1148,7 +1148,7 @@ html[data-theme="light"] .bk-booth.is-big .bk-call b {
 
 .bki-wordmark {
   margin: 0;
-  font-family: "Teko", sans-serif;
+  font-family: var(--font-teko), sans-serif;
   font-size: 60px;
   font-weight: 700;
   line-height: 0.82;
@@ -1184,11 +1184,11 @@ html[data-theme="light"] .bk-booth.is-big .bk-call b {
   text-transform: uppercase;
   color: var(--bk-chalk-dim);
 }
-.bki-eyebrow b { font-family: "JetBrains Mono", monospace; letter-spacing: 0; color: var(--bk-buzzer); }
+.bki-eyebrow b { font-family: var(--font-jetbrains-mono), monospace; letter-spacing: 0; color: var(--bk-buzzer); }
 
 .bki-category {
   margin: 6px 0 8px;
-  font-family: "Teko", sans-serif;
+  font-family: var(--font-teko), sans-serif;
   font-size: 40px;
   font-weight: 600;
   line-height: 0.9;
@@ -1227,7 +1227,7 @@ html[data-theme="light"] .bk-booth.is-big .bk-call b {
 
 .bki-n {
   min-width: 20px;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: 12px;
   color: var(--bk-chalk-dim);
 }
@@ -1268,7 +1268,7 @@ html[data-theme="light"] .bk-booth.is-big .bk-call b {
   border-radius: 14px;
   background: var(--bk-buzzer);
   color: #1a1000;
-  font-family: "Teko", sans-serif;
+  font-family: var(--font-teko), sans-serif;
   font-size: 28px;
   font-weight: 600;
   letter-spacing: 0.03em;

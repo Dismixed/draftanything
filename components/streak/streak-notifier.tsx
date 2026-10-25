@@ -88,7 +88,7 @@ export function WinStreakLine({
         borderRadius: "999px",
         background: `color-mix(in srgb, ${accentColor} 12%, transparent)`,
         border: `1px solid color-mix(in srgb, ${accentColor} 35%, transparent)`,
-        fontFamily: "'Outfit', sans-serif",
+        fontFamily: "var(--font-outfit), sans-serif",
         fontSize: "12px",
         fontWeight: 600,
         color: accentColor,
@@ -113,7 +113,7 @@ export function StreakBadge() {
       className="streak-badge"
       style={{
         position: "relative",
-        fontFamily: "'Outfit', sans-serif",
+        fontFamily: "var(--font-outfit), sans-serif",
       }}
     >
       <summary

@@ -168,7 +168,7 @@ export function SlipperySlopeLobby({ initial, myPlayerId }: SlipperySlopeLobbyPr
         minHeight: "100vh",
         background: "var(--ss-bg)",
         color: "var(--ss-text)",
-        fontFamily: "'Inter', sans-serif",
+        fontFamily: "var(--font-inter), sans-serif",
         display: "flex",
         flexDirection: "column",
       }}
@@ -236,7 +236,7 @@ export function SlipperySlopeLobby({ initial, myPlayerId }: SlipperySlopeLobbyPr
             >
               <span
                 style={{
-                  fontFamily: "'Syne Mono', monospace",
+                  fontFamily: "var(--font-syne-mono), monospace",
                   fontSize: "0.68rem",
                   color: "var(--ss-muted)",
                   textTransform: "uppercase",
@@ -244,7 +244,7 @@ export function SlipperySlopeLobby({ initial, myPlayerId }: SlipperySlopeLobbyPr
               >
                 Players
               </span>
-              <span style={{ fontFamily: "'Syne Mono', monospace", fontSize: "0.68rem", color: "var(--ss-muted)" }}>
+              <span style={{ fontFamily: "var(--font-syne-mono), monospace", fontSize: "0.68rem", color: "var(--ss-muted)" }}>
                 {playerCount} / {room.maxPlayers}
               </span>
             </div>

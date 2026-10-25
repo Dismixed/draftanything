@@ -8,7 +8,7 @@
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
-  font-family: "Outfit", system-ui, sans-serif;
+  font-family: var(--font-outfit), system-ui, sans-serif;
 }
 html[data-theme="light"] .dal {
   --dal-on-gold: #fffdfa;
@@ -35,7 +35,7 @@ html[data-theme="light"] .dal {
 }
 .dal-top-back { color: var(--dal-muted); justify-self: start; white-space: nowrap; }
 .dal-top-back:hover { color: var(--text); }
-.dal-wordmark { font-family: "Playfair Display", serif; font-weight: 900; font-size: 20px; }
+.dal-wordmark { font-family: var(--font-playfair-display), serif; font-weight: 900; font-size: 20px; }
 .dal-wordmark em { color: var(--gold-hi); }
 
 .dal-hero {
@@ -53,7 +53,7 @@ html[data-theme="light"] .dal {
 }
 .dal-h1 {
   margin: 0;
-  font-family: "Playfair Display", serif;
+  font-family: var(--font-playfair-display), serif;
   font-weight: 900;
   font-size: clamp(38px, 6vw, 64px);
   line-height: 1.05;
@@ -119,10 +119,10 @@ html[data-theme="light"] .dal {
 .dal-chip:hover, .dal-idea:hover { border-color: var(--gold); }
 
 .dal-sec { max-width: 1125px; margin: 0 auto; padding: 56px 40px; border-top: 1px solid var(--border); }
-.dal-sec h2 { margin: 0 0 26px; font-family: "Playfair Display", serif; font-weight: 700; font-size: 32px; }
+.dal-sec h2 { margin: 0 0 26px; font-family: var(--font-playfair-display), serif; font-weight: 700; font-size: 32px; }
 
 .dal-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; margin: 0; padding: 0; list-style: none; }
-.dal-step-num { font-family: "Playfair Display", serif; font-weight: 900; font-size: 40px; line-height: 1; color: var(--gold-hi); }
+.dal-step-num { font-family: var(--font-playfair-display), serif; font-weight: 900; font-size: 40px; line-height: 1; color: var(--gold-hi); }
 .dal-steps h3 { margin: 10px 0 6px; font-size: 18px; font-weight: 600; }
 .dal-steps p { margin: 0; font-size: 15px; line-height: 1.55; color: var(--dal-muted); }
 
@@ -152,7 +152,7 @@ html[data-theme="light"] .dal {
 .dal-judge figcaption { font-size: 17px; font-weight: 600; }
 .dal-judge blockquote {
   margin: 8px 0 0;
-  font-family: "Playfair Display", serif;
+  font-family: var(--font-playfair-display), serif;
   font-style: italic;
   font-size: 17px;
   line-height: 1.45;

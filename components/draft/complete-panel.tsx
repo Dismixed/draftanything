@@ -96,7 +96,7 @@ export function CompletePanel({ projection, myPlayerId }: CompletePanelProps) {
           <h2
             id="complete-modal-title"
             style={{
-              fontFamily: '"Playfair Display", serif',
+              fontFamily: 'var(--font-playfair-display), serif',
               fontStyle: "italic",
               fontSize: "24px",
               color: "var(--text)",

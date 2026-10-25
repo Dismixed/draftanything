@@ -308,7 +308,7 @@ export function TopicSuggestions({ onSelect, initialInterests }: TopicSuggestion
                         background: "rgba(201,168,76,0.08)",
                         border: "1px solid rgba(201,168,76,0.25)",
                         color: "var(--gold)",
-                        fontFamily: "Outfit, sans-serif",
+                        fontFamily: "var(--font-outfit), sans-serif",
                         fontSize: "12px",
                         padding: "6px 12px",
                         cursor: loading ? "wait" : "pointer",

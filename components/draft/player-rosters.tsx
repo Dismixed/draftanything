@@ -43,7 +43,7 @@ export function RosterColumn({
       <div style={{ marginBottom: '8px' }}>
         <p
           style={{
-            fontFamily: '"Playfair Display", serif',
+            fontFamily: 'var(--font-playfair-display), serif',
             fontStyle: 'italic',
             fontSize: '16px',
             color: isOnClock ? 'var(--gold-hi)' : 'var(--text)',
@@ -177,7 +177,7 @@ export function PlayerRosters({
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '14px', gap: '12px' }}>
         <h2
           style={{
-            fontFamily: '"Playfair Display", serif',
+            fontFamily: 'var(--font-playfair-display), serif',
             fontStyle: 'italic',
             fontSize: '22px',
             color: 'var(--text)',

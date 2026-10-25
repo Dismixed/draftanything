@@ -21,11 +21,11 @@ export function WinnerReveal({ winner, topic }: WinnerRevealProps) {
         <p style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.35em', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '10px' }}>
           Winner
         </p>
-        <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: 'clamp(32px,8vw,48px)', fontWeight: 900, fontStyle: 'italic', color: 'var(--gold-hi)', textShadow: '0 0 40px rgba(240,200,96,0.25)', margin: '0 0 12px', lineHeight: 1 }}>
+        <h2 style={{ fontFamily: 'var(--font-playfair-display), serif', fontSize: 'clamp(32px,8vw,48px)', fontWeight: 900, fontStyle: 'italic', color: 'var(--gold-hi)', textShadow: '0 0 40px rgba(240,200,96,0.25)', margin: '0 0 12px', lineHeight: 1 }}>
           {winner.displayName}
         </h2>
         {winner.score !== null && (
-          <p style={{ fontSize: '52px', fontWeight: 900, fontFamily: '"Playfair Display", serif', color: 'var(--gold)', lineHeight: 1, marginBottom: '8px' }}>
+          <p style={{ fontSize: '52px', fontWeight: 900, fontFamily: 'var(--font-playfair-display), serif', color: 'var(--gold)', lineHeight: 1, marginBottom: '8px' }}>
             {winner.score.toFixed(1)}
             <span style={{ fontSize: '18px', color: 'var(--text-dim)', fontWeight: 400 }}>/10</span>
           </p>

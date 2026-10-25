@@ -297,7 +297,7 @@ export function DraftBoard({ initial, myPlayerId }: DraftBoardProps) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
           <h1
             style={{
-              fontFamily: '"Playfair Display", serif',
+              fontFamily: 'var(--font-playfair-display), serif',
               fontStyle: 'italic',
               fontSize: '18px',
               color: 'var(--text)',

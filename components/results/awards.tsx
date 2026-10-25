@@ -42,7 +42,7 @@ export function Awards({ awards }: AwardsProps) {
               <p style={{ fontSize: '8px', fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-dim)', margin: '8px 0 0' }}>
                 {meta.label}
               </p>
-              <p style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: '16px', color: 'var(--gold-hi)', marginTop: '6px', marginBottom: 0 }}>
+              <p style={{ fontFamily: 'var(--font-playfair-display), serif', fontStyle: 'italic', fontSize: '16px', color: 'var(--gold-hi)', marginTop: '6px', marginBottom: 0 }}>
                 {award.itemName}
               </p>
               <p style={{ fontSize: '11px', color: 'var(--text-dim)', margin: '4px 0 0' }}>

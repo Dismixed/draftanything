@@ -827,7 +827,7 @@ export default function SlipperySlopeGame() {
         minHeight: "100vh",
         background: "var(--ss-bg)",
         color: "var(--ss-text)",
-        fontFamily: "'Inter', sans-serif",
+        fontFamily: "var(--font-inter), sans-serif",
         display: "flex",
         flexDirection: "column",
       }}
@@ -1000,7 +1000,7 @@ export default function SlipperySlopeGame() {
                   color: "var(--ss-red)",
                   minHeight: "1.2em",
                   marginBottom: "0.6rem",
-                  fontFamily: "'Syne Mono', monospace",
+                  fontFamily: "var(--font-syne-mono), monospace",
                 }}
               >
                 {crErr}
@@ -1061,7 +1061,7 @@ export default function SlipperySlopeGame() {
                   maxLength={ROOM_CODE_LENGTH}
                   style={{
                     textTransform: "uppercase",
-                    fontFamily: "'Syne', sans-serif",
+                    fontFamily: "var(--font-syne), sans-serif",
                     fontSize: "1.4rem",
                     fontWeight: 800,
                     letterSpacing: "0.18em",
@@ -1077,7 +1077,7 @@ export default function SlipperySlopeGame() {
                   color: "var(--ss-red)",
                   minHeight: "1.2em",
                   marginBottom: "0.6rem",
-                  fontFamily: "'Syne Mono', monospace",
+                  fontFamily: "var(--font-syne-mono), monospace",
                 }}
               >
                 {jrErr}

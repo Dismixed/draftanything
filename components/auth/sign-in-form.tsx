@@ -16,7 +16,7 @@ const inputStyle: React.CSSProperties = {
   color: "var(--text)",
   fontSize: "14px",
   outline: "none",
-  fontFamily: "'Outfit', sans-serif",
+  fontFamily: "var(--font-outfit), sans-serif",
 };
 
 const btnPrimary: React.CSSProperties = {
@@ -28,7 +28,7 @@ const btnPrimary: React.CSSProperties = {
   color: "#fff",
   fontSize: "13px",
   fontWeight: 600,
-  fontFamily: "'Outfit', sans-serif",
+  fontFamily: "var(--font-outfit), sans-serif",
   cursor: "pointer",
 };
 
@@ -41,7 +41,7 @@ const btnGoogle: React.CSSProperties = {
   color: "var(--text)",
   fontSize: "13px",
   fontWeight: 600,
-  fontFamily: "'Outfit', sans-serif",
+  fontFamily: "var(--font-outfit), sans-serif",
   cursor: "pointer",
   display: "flex",
   alignItems: "center",

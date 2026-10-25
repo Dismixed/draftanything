@@ -249,7 +249,7 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
             <p style={{ margin: 0, fontSize: '9px', fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>
               Lobby
             </p>
-            <h1 style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: 'clamp(20px, 5vw, 28px)', fontWeight: 700, margin: '4px 0 0', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '360px' }}>
+            <h1 style={{ fontFamily: 'var(--font-playfair-display), serif', fontStyle: 'italic', fontSize: 'clamp(20px, 5vw, 28px)', fontWeight: 700, margin: '4px 0 0', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '360px' }}>
               {room.topic}
             </h1>
           </div>
@@ -287,7 +287,7 @@ export function Lobby({ initial, myPlayerId }: LobbyProps) {
               background: 'transparent',
               border: '1px solid var(--border-hi)',
               color: 'var(--text-dim)',
-              fontFamily: 'Outfit, sans-serif',
+              fontFamily: 'var(--font-outfit), sans-serif',
               fontSize: '11px',
               fontWeight: 500,
               letterSpacing: '0.12em',

@@ -42,7 +42,7 @@ export function TopUndraftedPick({ itemName }: TopUndraftedPickProps) {
         </p>
         <p
           style={{
-            fontFamily: '"Playfair Display", serif',
+            fontFamily: 'var(--font-playfair-display), serif',
             fontStyle: "italic",
             fontSize: "16px",
             color: "var(--gold-hi)",

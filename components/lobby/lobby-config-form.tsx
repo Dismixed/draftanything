@@ -126,7 +126,7 @@ export function LobbyConfigForm({
               background: "transparent",
               border: "1px solid var(--border-hi)",
               color: "var(--text-dim)",
-              fontFamily: "Outfit, sans-serif",
+              fontFamily: "var(--font-outfit), sans-serif",
               fontSize: "11px",
               fontWeight: 500,
               letterSpacing: "0.12em",

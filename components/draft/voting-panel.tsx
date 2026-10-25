@@ -222,7 +222,7 @@ export function VotingPanel({ projection, myPlayerId, onVoteSubmitted }: VotingP
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
                 <span
                   style={{
-                    fontFamily: '"Playfair Display", serif',
+                    fontFamily: 'var(--font-playfair-display), serif',
                     fontStyle: 'italic',
                     fontSize: '15px',
                     color: 'var(--text)',

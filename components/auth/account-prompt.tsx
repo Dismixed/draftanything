@@ -63,7 +63,7 @@ export function AccountPrompt({ onDismiss }: AccountPromptProps) {
           maxWidth: "340px",
           width: "100%",
           textAlign: "center",
-          fontFamily: "'Outfit', sans-serif",
+          fontFamily: "var(--font-outfit), sans-serif",
         }}
       >
         <h3
@@ -94,7 +94,7 @@ export function AccountPrompt({ onDismiss }: AccountPromptProps) {
               background: "transparent",
               border: "1px solid rgba(201,168,76,0.42)",
               color: "var(--gold)",
-              fontFamily: "'Outfit', sans-serif",
+              fontFamily: "var(--font-outfit), sans-serif",
               fontWeight: 600,
               fontSize: "12px",
               letterSpacing: "0.22em",
@@ -122,7 +122,7 @@ export function AccountPrompt({ onDismiss }: AccountPromptProps) {
               background: "transparent",
               border: "1px solid var(--border-hi)",
               color: "var(--text-dim)",
-              fontFamily: "'Outfit', sans-serif",
+              fontFamily: "var(--font-outfit), sans-serif",
               fontWeight: 500,
               fontSize: "11px",
               cursor: "pointer",

@@ -87,7 +87,7 @@ export function CurrentTurn({
         <p style={{ fontSize: '13px', color: 'var(--text)', margin: '0 0 2px 0' }}>
           <span
             style={{
-              fontFamily: '"Playfair Display", serif',
+              fontFamily: 'var(--font-playfair-display), serif',
               fontStyle: 'italic',
               color: isMyTurn ? 'var(--gold-hi)' : 'var(--text)',
             }}
@@ -145,7 +145,7 @@ export function CurrentTurn({
       <div style={{ textAlign: 'center', padding: '12px 0' }}>
         <p
           style={{
-            fontFamily: '"Playfair Display", serif',
+            fontFamily: 'var(--font-playfair-display), serif',
             fontStyle: 'italic',
             fontSize: '20px',
             color: isMyTurn ? 'var(--gold-hi)' : 'var(--text)',
