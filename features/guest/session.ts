@@ -86,15 +86,16 @@ async function resolveGuestSession(rawToken: string): Promise<string> {
 /**
  * Ensures a guest session exists. Creates a new one if the cookie is absent.
  * Persists the session in guest_sessions and returns its UUID primary key.
+ * `isNew` is true when this call minted the token: no cookie yet, or its session expired.
  *
  * Safe to call from any Server Component, Route Handler, or Server Action.
  */
-export async function ensureGuestSession(): Promise<{ guestId: string }> {
+export async function ensureGuestSession(): Promise<{ guestId: string; isNew: boolean }> {
   const existing = await readRawToken();
 
   if (existing) {
     try {
-      return { guestId: await resolveGuestSession(existing) };
+      return { guestId: await resolveGuestSession(existing), isNew: false };
     } catch (e) {
       if (!(e instanceof AppError && e.code === "UNAUTHORIZED")) {
         throw e;
@@ -107,7 +108,7 @@ export async function ensureGuestSession(): Promise<{ guestId: string }> {
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, rawToken, COOKIE_OPTIONS);
 
-  return { guestId: await resolveGuestSession(rawToken) };
+  return { guestId: await resolveGuestSession(rawToken), isNew: true };
 }
 
 /**

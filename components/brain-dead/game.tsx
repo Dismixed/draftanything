@@ -95,7 +95,11 @@ export default function BrainDeadGame({
   const isDaily = mode === "daily";
   // The daily's hub always shows first, even once today's run is done: it is also the way in
   // to free play. Free play has no intro.
-  const intro = useDailyIntro("brain-dead", { ready: !isDaily || checkedDaily, skip: !isDaily });
+  const intro = useDailyIntro("brain-dead", {
+    ready: !isDaily || checkedDaily,
+    skip: !isDaily,
+    done: screen === "played",
+  });
   const inIntro = intro.phase !== "game";
   const q = questions[qi];
   const [completeOpen, setCompleteOpen] = useState(false);

@@ -2,6 +2,8 @@ import { z } from "zod/v4";
 import { AppError } from "@/lib/errors";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { requireGuestSession } from "@/features/guest/session";
+import { captureDraftEvent } from "@/features/draft/events";
+import { getRoom } from "@/features/room/service";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const phaseSchema = z.object({
@@ -77,6 +79,13 @@ export async function POST(
     }
 
     const result = Array.isArray(data) ? data[0] : data;
+
+    if (result?.o_phase === "COMPLETE") {
+      // The draft has already moved on; failing to report it must not fail the request.
+      await getRoom(draftId)
+        .then((room) => captureDraftEvent(request, "draft_completed", room, guestId))
+        .catch((e) => console.error("[POST /api/drafts/:draftId/phase] draft_completed", e));
+    }
 
     return Response.json(result ?? { phase: "COMPLETE" });
   } catch (e) {
