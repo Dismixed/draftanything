@@ -1,0 +1,16 @@
+{
+  "experiment_id": "7174a5c8-dabb-40a3-9e62-8f9dda40775d",
+  "flag_key": "ga-anyguessr-finish-screen-collapse-the-rou-7174a5",
+  "hypothesis": "If AnyGuessr's round-by-round clue review is collapsed behind a \"See every round\" toggle (keeping the score and the 7-flag recap), Share and Up next move from about 1200px to within the first phone screen. Finish-to-next click-through for AnyGuessr then rises from 38% toward the 48–56% the other puzzle games get, a relative lift of about 25%.",
+  "target_metric": "finish_next_clicked (from=anyguessr) per AnyGuessr daily_completed, same person and day",
+  "method": "before_after",
+  "split": {
+    "test": 100,
+    "control": 0
+  },
+  "guardrails": [
+    "Share rate on AnyGuessr finish",
+    "Daily completions per AnyGuessr completer (multi-game depth)",
+    "Error rate"
+  ]
+}
