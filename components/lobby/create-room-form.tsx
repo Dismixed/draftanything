@@ -119,7 +119,7 @@ export function CreateRoomForm({ initialTopic = "", onSuccess }: CreateRoomFormP
             <h2
               style={{
                 margin: "4px 0 0",
-                fontFamily: '"Playfair Display", serif',
+                fontFamily: 'var(--font-playfair-display), serif',
                 fontSize: "20px",
                 fontWeight: 700,
                 color: "var(--text)",

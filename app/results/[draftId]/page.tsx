@@ -47,7 +47,7 @@ export default async function ResultsPage({ params }: Props) {
     return (
       <main style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
         <div style={{ textAlign: 'center' }}>
-          <h1 style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', color: 'var(--text)', fontSize: 'clamp(24px,6vw,32px)', margin: '0 0 8px' }}>
+          <h1 style={{ fontFamily: 'var(--font-playfair-display), serif', fontStyle: 'italic', color: 'var(--text)', fontSize: 'clamp(24px,6vw,32px)', margin: '0 0 8px' }}>
             Draft not found
           </h1>
           <p style={{ color: 'var(--text-dim)', fontSize: '14px', margin: 0 }}>This draft room does not exist.</p>
@@ -60,7 +60,7 @@ export default async function ResultsPage({ params }: Props) {
     return (
       <main style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
         <div style={{ textAlign: 'center', maxWidth: '400px' }}>
-          <h1 style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', color: 'var(--text)', fontSize: 'clamp(24px,6vw,32px)', margin: '0 0 8px' }}>
+          <h1 style={{ fontFamily: 'var(--font-playfair-display), serif', fontStyle: 'italic', color: 'var(--text)', fontSize: 'clamp(24px,6vw,32px)', margin: '0 0 8px' }}>
             {projection.draft.topic}
           </h1>
           <p style={{ color: 'var(--text-dim)', fontSize: '14px', margin: 0 }}>
@@ -88,7 +88,7 @@ export default async function ResultsPage({ params }: Props) {
           <p style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: '8px' }}>
             Draft Complete
           </p>
-          <h1 style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: 'clamp(24px,6vw,32px)', color: 'var(--text)', margin: 0 }}>
+          <h1 style={{ fontFamily: 'var(--font-playfair-display), serif', fontStyle: 'italic', fontSize: 'clamp(24px,6vw,32px)', color: 'var(--text)', margin: 0 }}>
             {result.topic}
           </h1>
         </div>

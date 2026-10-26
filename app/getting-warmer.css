@@ -48,7 +48,7 @@ html[data-theme="light"] {
     ),
     var(--gw-bg);
   color: var(--gw-ink);
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-inter), sans-serif;
   display: flex;
   justify-content: center;
   padding: 32px 16px 64px;
@@ -75,7 +75,7 @@ html[data-theme="light"] .gw-page {
 }
 
 .gw-sub {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-ibm-plex-mono), monospace;
   font-size: 12.5px;
   color: var(--gw-ink-dim);
   margin-top: 8px;
@@ -110,7 +110,7 @@ html[data-theme="light"] .gw-page {
   background: none;
   border: 1px solid color-mix(in srgb, var(--gw-ink) 22%, transparent);
   color: var(--gw-ink-dim);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-ibm-plex-mono), monospace;
   font-size: 12.5px;
   padding: 12px 14px;
   border-radius: var(--gw-radius);
@@ -136,7 +136,7 @@ html[data-theme="light"] .gw-page {
 }
 
 .gw-result-answer {
-  font-family: "Bebas Neue", sans-serif;
+  font-family: var(--font-bebas-neue), sans-serif;
   font-size: 34px;
   letter-spacing: 0.03em;
   color: var(--gw-white-hot);
@@ -149,17 +149,17 @@ html[data-theme="light"] .gw-page {
   font-size: 22px;
   display: block;
   margin: 4px 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-ibm-plex-mono), monospace;
 }
 
 .gw-result-score {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-ibm-plex-mono), monospace;
   font-size: 13px;
   color: var(--gw-ink-dim);
 }
 
 .gw-share-emoji {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-ibm-plex-mono), monospace;
   font-size: 13px;
   background: var(--gw-surface-2);
   border: 1px solid rgba(255, 107, 26, 0.25);
@@ -182,7 +182,7 @@ html[data-theme="light"] .gw-page {
 }
 
 .gw-lb-head h2 {
-  font-family: "Bebas Neue", sans-serif;
+  font-family: var(--font-bebas-neue), sans-serif;
   font-size: 20px;
   letter-spacing: 0.03em;
   color: var(--gw-ink);
@@ -190,7 +190,7 @@ html[data-theme="light"] .gw-page {
 }
 
 .gw-lb-head span {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-ibm-plex-mono), monospace;
   font-size: 10.5px;
   color: var(--gw-ink-dim);
 }
@@ -202,7 +202,7 @@ html[data-theme="light"] .gw-page {
   padding: 9px 12px;
   border-radius: 9px;
   margin-bottom: 4px;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-ibm-plex-mono), monospace;
   font-size: 13px;
   background: var(--gw-surface);
 }
@@ -240,7 +240,7 @@ html[data-theme="light"] .gw-page {
   border-radius: 8px;
   padding: 10px 12px;
   color: var(--gw-ink);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-ibm-plex-mono), monospace;
   font-size: 13px;
 }
 
@@ -260,7 +260,7 @@ html[data-theme="light"] .gw-page {
 }
 
 .gw-section-label {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-ibm-plex-mono), monospace;
   font-size: 10px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -269,7 +269,7 @@ html[data-theme="light"] .gw-page {
 }
 
 .gw-empty-note {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-ibm-plex-mono), monospace;
   font-size: 12px;
   color: var(--gw-cold-slate-text);
   text-align: center;
@@ -285,7 +285,7 @@ html[data-theme="light"] .gw-page {
   border: none;
   border-radius: 11px;
   padding: 14px;
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-inter), sans-serif;
   font-weight: 800;
   font-size: 15px;
   letter-spacing: 0.02em;
@@ -296,7 +296,7 @@ html[data-theme="light"] .gw-page {
 .gw-loading-page {
   text-align: center;
   padding: 60px 20px;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-ibm-plex-mono), monospace;
   color: var(--gw-ink-dim);
 }
 
@@ -304,7 +304,7 @@ html[data-theme="light"] .gw-page {
   text-align: center;
   padding: 40px 20px;
   color: var(--gw-danger);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-ibm-plex-mono), monospace;
   font-size: 13px;
 }
 
@@ -319,7 +319,7 @@ html[data-theme="light"] .gw-page {
   padding: 20px;
   background: rgba(10, 7, 5, 0.96);
   color: var(--gw-ink);
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-inter), sans-serif;
   overflow-y: auto;
 }
 
@@ -337,7 +337,7 @@ html[data-theme="light"] .gw-page {
 }
 
 .gw-results-eyebrow {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-ibm-plex-mono), monospace;
   font-size: 10px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -365,7 +365,7 @@ html[data-theme="light"] .gw-page {
   border-radius: 9px;
   background: rgba(255, 77, 77, 0.08);
   border: 1px solid rgba(255, 77, 77, 0.25);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-ibm-plex-mono), monospace;
   font-size: 12px;
   color: #ff8a8a;
   text-transform: uppercase;
@@ -409,7 +409,7 @@ html[data-theme="light"] .gw-page {
 
 .gw-wordmark {
   margin: 0;
-  font-family: "Bebas Neue", sans-serif;
+  font-family: var(--font-bebas-neue), sans-serif;
   font-weight: 400;
   font-size: 40px;
   line-height: 1;
@@ -420,7 +420,7 @@ html[data-theme="light"] .gw-page {
 
 .gw-guess-no {
   justify-self: end;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-ibm-plex-mono), monospace;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -522,7 +522,7 @@ html[data-theme="light"] .gw-page.is-live {
 }
 
 .gw-ticks li {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-ibm-plex-mono), monospace;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -573,7 +573,7 @@ html[data-theme="light"] .gw-page.is-live {
   display: flex;
   justify-content: space-between;
   margin: 4px 0 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-ibm-plex-mono), monospace;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -604,7 +604,7 @@ html[data-theme="light"] .gw-page.is-live {
   border-radius: 12px;
   background: color-mix(in srgb, var(--gw-c) 9%, var(--gw-surface));
   color: var(--gw-ink);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-ibm-plex-mono), monospace;
   font-size: 20px;
   font-weight: 500;
 }
@@ -618,7 +618,7 @@ html[data-theme="light"] .gw-page.is-live {
   border-radius: 50%;
   background: var(--gw-c);
   color: var(--gw-bg);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-ibm-plex-mono), monospace;
   font-size: 11px;
   font-weight: 700;
   line-height: 1;
@@ -638,7 +638,7 @@ html[data-theme="light"] .gw-page.is-live {
 .gw-clue-hot {
   padding: 20px;
   box-shadow: 0 0 calc(10px + var(--gw-t, 0) * 34px) color-mix(in srgb, var(--gw-c) 45%, transparent);
-  font-family: "Bebas Neue", sans-serif;
+  font-family: var(--font-bebas-neue), sans-serif;
   font-size: 54px;
   font-weight: 400;
   line-height: 1;
@@ -724,7 +724,7 @@ html[data-theme="light"] .gw-page.is-live {
   background: var(--gw-surface);
   box-shadow: 0 0 0 5px color-mix(in srgb, var(--gw-heat) 16%, transparent);
   color: var(--gw-ink);
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-inter), sans-serif;
   font-size: 19px;
   font-weight: 600;
   outline: none;
@@ -754,7 +754,7 @@ html[data-theme="light"] .gw-page.is-live {
   border-radius: 14px;
   background: var(--gw-orange);
   color: #1a0d04;
-  font-family: "Bebas Neue", sans-serif;
+  font-family: var(--font-bebas-neue), sans-serif;
   font-size: 24px;
   letter-spacing: 0.08em;
   cursor: pointer;
@@ -820,7 +820,7 @@ html[data-theme="light"] .gw-page.is-live {
   border-radius: 999px;
   background: transparent;
   color: var(--gw-danger);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-ibm-plex-mono), monospace;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -840,7 +840,7 @@ html[data-theme="light"] .gw-page.is-live {
   border: none;
   background: none;
   color: var(--gw-ink-dim);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-ibm-plex-mono), monospace;
   font-size: 12px;
   font-weight: 500;
   white-space: nowrap;
@@ -870,7 +870,7 @@ html[data-theme="light"] .gw-page.is-live {
 }
 
 .gw-outcome b {
-  font-family: "Bebas Neue", sans-serif;
+  font-family: var(--font-bebas-neue), sans-serif;
   font-size: 40px;
   font-weight: 400;
   line-height: 1;
@@ -879,7 +879,7 @@ html[data-theme="light"] .gw-page.is-live {
 }
 
 .gw-outcome span {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-ibm-plex-mono), monospace;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -1033,7 +1033,7 @@ html[data-theme="light"] .gw-page.is-live {
   padding: 18px 20px 48px;
   overflow: hidden;
   text-align: center;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-ibm-plex-mono), monospace;
   color: var(--gw-ink);
 }
 .gwi > :not(.gwi-warmth, .gwi-embers, .gwi-defs) { position: relative; z-index: 2; }
@@ -1084,7 +1084,7 @@ html[data-theme="light"] .gw-page.is-live {
 
 .gwi-wordmark {
   margin: 4px 0 0;
-  font-family: "Bebas Neue", sans-serif;
+  font-family: var(--font-bebas-neue), sans-serif;
   font-size: 64px;
   font-weight: 400;
   letter-spacing: 0.02em;
@@ -1182,7 +1182,7 @@ html[data-theme="light"] .gwi-lv2 { color: #b45309; }
   border-radius: 14px;
   background: var(--gw-orange);
   color: #1a0800;
-  font-family: "Bebas Neue", sans-serif;
+  font-family: var(--font-bebas-neue), sans-serif;
   font-size: 26px;
   letter-spacing: 0.04em;
   cursor: pointer;

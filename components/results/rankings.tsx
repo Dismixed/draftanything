@@ -66,13 +66,13 @@ export function Rankings({ ranking }: RankingsProps) {
               >
                 {player.rank ?? "-"}
               </span>
-              <span style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: '15px', color: 'var(--text)' }}>
+              <span style={{ fontFamily: 'var(--font-playfair-display), serif', fontStyle: 'italic', fontSize: '15px', color: 'var(--text)' }}>
                 {player.displayName}
                 {player.isBot && <AiTag />}
               </span>
             </div>
             {player.score !== null && (
-              <span style={{ color: 'var(--gold)', fontFamily: '"Playfair Display", serif', fontWeight: 700, fontSize: '18px' }}>
+              <span style={{ color: 'var(--gold)', fontFamily: 'var(--font-playfair-display), serif', fontWeight: 700, fontSize: '18px' }}>
                 {player.score.toFixed(1)}
               </span>
             )}

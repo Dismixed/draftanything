@@ -381,7 +381,7 @@ export function MultiplayerGame({ initial, myPlayerId }: MultiplayerGameProps) {
         minHeight: "100vh",
         background: "var(--ss-bg)",
         color: "var(--ss-text)",
-        fontFamily: "'Inter', sans-serif",
+        fontFamily: "var(--font-inter), sans-serif",
       }}
     >
       <div

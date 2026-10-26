@@ -266,7 +266,7 @@ export function RoomChat({
                   background: "rgba(0,0,0,0.25)",
                   border: "1px solid var(--border-hi)",
                   color: "var(--text)",
-                  fontFamily: "Outfit, sans-serif",
+                  fontFamily: "var(--font-outfit), sans-serif",
                   fontSize: "13px",
                   padding: "8px 10px",
                   outline: "none",

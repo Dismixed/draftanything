@@ -35,7 +35,7 @@ export function DraftLobbyPage({ initialTab = "create", initialTopic = "", initi
           <div style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.38em', textTransform: 'uppercase', color: 'var(--gold)', opacity: 0.8, marginBottom: '12px' }}>
             Private Draft Room
           </div>
-          <h1 style={{ fontFamily: '"Playfair Display", serif', fontSize: 'clamp(44px, 12vw, 58px)', fontWeight: 900, lineHeight: 0.92, textAlign: 'center', color: 'var(--text)', margin: 0, letterSpacing: '-0.01em' }}>
+          <h1 style={{ fontFamily: 'var(--font-playfair-display), serif', fontSize: 'clamp(44px, 12vw, 58px)', fontWeight: 900, lineHeight: 0.92, textAlign: 'center', color: 'var(--text)', margin: 0, letterSpacing: '-0.01em' }}>
             Draft<br />
             <em style={{ fontStyle: 'italic', color: 'var(--gold-hi)', textShadow: '0 0 40px rgba(240,200,96,0.2)' }}>Anything</em>
           </h1>
@@ -70,7 +70,7 @@ export function DraftLobbyPage({ initialTab = "create", initialTopic = "", initi
                 fontWeight: 500,
                 letterSpacing: '0.12em',
                 textTransform: 'uppercase',
-                fontFamily: 'Outfit, sans-serif',
+                fontFamily: 'var(--font-outfit), sans-serif',
                 background: activeTab === "create" ? 'rgba(201,168,76,0.04)' : 'transparent',
                 color: activeTab === "create" ? 'var(--gold)' : 'var(--text-dim)',
                 border: 'none',
@@ -98,7 +98,7 @@ export function DraftLobbyPage({ initialTab = "create", initialTopic = "", initi
                 fontWeight: 500,
                 letterSpacing: '0.12em',
                 textTransform: 'uppercase',
-                fontFamily: 'Outfit, sans-serif',
+                fontFamily: 'var(--font-outfit), sans-serif',
                 background: activeTab === "join" ? 'rgba(201,168,76,0.04)' : 'transparent',
                 color: activeTab === "join" ? 'var(--gold)' : 'var(--text-dim)',
                 border: 'none',
@@ -126,7 +126,7 @@ export function DraftLobbyPage({ initialTab = "create", initialTopic = "", initi
                 fontWeight: 500,
                 letterSpacing: '0.12em',
                 textTransform: 'uppercase',
-                fontFamily: 'Outfit, sans-serif',
+                fontFamily: 'var(--font-outfit), sans-serif',
                 background: activeTab === "solo" ? 'rgba(201,168,76,0.04)' : 'transparent',
                 color: activeTab === "solo" ? 'var(--gold)' : 'var(--text-dim)',
                 border: 'none',

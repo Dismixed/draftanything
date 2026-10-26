@@ -15,7 +15,7 @@ const seatButtonStyle: React.CSSProperties = {
   background: 'transparent',
   border: '1px solid var(--border-hi)',
   color: 'var(--text)',
-  fontFamily: 'Outfit, sans-serif',
+  fontFamily: 'var(--font-outfit), sans-serif',
   fontSize: '11px',
   fontWeight: 500,
   letterSpacing: '0.08em',
@@ -65,7 +65,7 @@ export function PlayerSeat({
           <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px dashed var(--border-hi)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <span style={{ fontSize: '10px', color: 'var(--text-dim)' }}>{seat}</span>
           </div>
-          <span style={{ fontSize: '11px', color: 'var(--text-dim)', fontStyle: 'normal', fontFamily: 'Outfit, sans-serif', flex: 1 }}>
+          <span style={{ fontSize: '11px', color: 'var(--text-dim)', fontStyle: 'normal', fontFamily: 'var(--font-outfit), sans-serif', flex: 1 }}>
             Waiting for player…
           </span>
           {canManageBots && (
@@ -82,13 +82,13 @@ export function PlayerSeat({
       ) : (
         <>
           {/* Monogram circle */}
-          <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid rgba(201,168,76,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: '"Playfair Display", serif', fontSize: '14px', color: 'var(--gold)' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid rgba(201,168,76,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: 'var(--font-playfair-display), serif', fontSize: '14px', color: 'var(--gold)' }}>
             {player.displayName.charAt(0).toUpperCase()}
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
             {/* Display name */}
-            <span style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: '14px', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span style={{ fontFamily: 'var(--font-playfair-display), serif', fontStyle: 'italic', fontSize: '14px', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {player.displayName}
             </span>
             {player.isBot && <AiTag />}
@@ -98,7 +98,7 @@ export function PlayerSeat({
               {player.isHost && (
                 <span
                   aria-label="Host"
-                  style={{ border: '1px solid rgba(201,168,76,0.3)', color: 'var(--gold)', fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '2px 7px', fontFamily: 'Outfit, sans-serif' }}
+                  style={{ border: '1px solid rgba(201,168,76,0.3)', color: 'var(--gold)', fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '2px 7px', fontFamily: 'var(--font-outfit), sans-serif' }}
                 >
                   Host
                 </span>
@@ -117,7 +117,7 @@ export function PlayerSeat({
               {player.isReady && !player.isBot && (
                 <span
                   aria-label="Ready"
-                  style={{ border: '1px solid rgba(0,229,255,0.3)', color: 'var(--cyan)', fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '2px 7px', fontFamily: 'Outfit, sans-serif' }}
+                  style={{ border: '1px solid rgba(0,229,255,0.3)', color: 'var(--cyan)', fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '2px 7px', fontFamily: 'var(--font-outfit), sans-serif' }}
                 >
                   Ready
                 </span>

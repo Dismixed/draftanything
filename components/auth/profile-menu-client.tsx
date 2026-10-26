@@ -37,7 +37,7 @@ export function ProfileMenuClient({ variant, displayName, avatarUrl }: ProfileMe
           fontSize: "12px",
           fontWeight: 500,
           textDecoration: "none",
-          fontFamily: "'Outfit', sans-serif",
+          fontFamily: "var(--font-outfit), sans-serif",
           letterSpacing: "0.04em",
           transition: "color 0.15s ease",
         }}
@@ -79,7 +79,7 @@ export function ProfileMenuClient({ variant, displayName, avatarUrl }: ProfileMe
           color: "var(--text-dim)",
           fontSize: "13px",
           fontWeight: 600,
-          fontFamily: "'Outfit', sans-serif",
+          fontFamily: "var(--font-outfit), sans-serif",
           transition: "border-color 0.2s, color 0.2s",
         }}
         onMouseEnter={(e) => {
@@ -125,7 +125,7 @@ export function ProfileMenuClient({ variant, displayName, avatarUrl }: ProfileMe
               fontSize: "12px",
               fontWeight: 600,
               color: "var(--text)",
-              fontFamily: "'Outfit', sans-serif",
+              fontFamily: "var(--font-outfit), sans-serif",
               borderBottom: "1px solid var(--border)",
             }}
           >
@@ -139,7 +139,7 @@ export function ProfileMenuClient({ variant, displayName, avatarUrl }: ProfileMe
               fontSize: "12px",
               color: "var(--text-dim)",
               textDecoration: "none",
-              fontFamily: "'Outfit', sans-serif",
+              fontFamily: "var(--font-outfit), sans-serif",
               transition: "color 0.15s ease, background 0.15s ease",
             }}
             onMouseEnter={(e) => {
@@ -166,7 +166,7 @@ export function ProfileMenuClient({ variant, displayName, avatarUrl }: ProfileMe
               border: "none",
               cursor: "pointer",
               textAlign: "left",
-              fontFamily: "'Outfit', sans-serif",
+              fontFamily: "var(--font-outfit), sans-serif",
               transition: "color 0.15s ease, background 0.15s ease",
             }}
             onMouseEnter={(e) => {

@@ -17,7 +17,7 @@ export function AiTag() {
         padding: '1px 5px 1px 6px',
         marginLeft: '6px',
         verticalAlign: 'middle',
-        fontFamily: 'Outfit, sans-serif',
+        fontFamily: 'var(--font-outfit), sans-serif',
         flexShrink: 0,
       }}
     >

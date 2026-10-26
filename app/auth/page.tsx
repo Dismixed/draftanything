@@ -14,7 +14,7 @@ const tabStyle = (active: boolean): React.CSSProperties => ({
   padding: "10px 16px",
   fontSize: "13px",
   fontWeight: 600,
-  fontFamily: "'Outfit', sans-serif",
+  fontFamily: "var(--font-outfit), sans-serif",
   border: "none",
   background: active ? "var(--panel)" : "transparent",
   color: active ? "var(--text)" : "var(--text-dim)",
@@ -58,7 +58,7 @@ function AuthPageInner() {
         <div style={{ textAlign: "center", marginBottom: "32px" }}>
           <h1
             style={{
-              fontFamily: "'Playfair Display', serif",
+              fontFamily: "var(--font-playfair-display), serif",
               fontSize: "clamp(28px, 6vw, 36px)",
               fontWeight: 900,
               lineHeight: 1,

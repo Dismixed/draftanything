@@ -117,7 +117,7 @@ export function DraftCompletePanel({ projection, myPlayerId }: DraftCompletePane
           <h2
             id="draft-complete-modal-title"
             style={{
-              fontFamily: '"Playfair Display", serif',
+              fontFamily: 'var(--font-playfair-display), serif',
               fontStyle: "italic",
               fontSize: "24px",
               color: "var(--text)",
