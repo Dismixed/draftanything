@@ -3,6 +3,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { requireGuestSession } from "@/features/guest/session";
 import { soloRoomSchema } from "@/features/room/schema";
 import { createSoloRoom } from "@/features/bots/solo";
+import { captureDraftEvent } from "@/features/draft/events";
 import { generateRequestId, setRequestIdHeader } from "@/lib/request-id";
 import { logRoute } from "@/lib/logger";
 import { getPostHogClient, withRequestIdentity } from "@/lib/posthog-server";
@@ -84,6 +85,8 @@ export async function POST(request: Request) {
       },
     }, guestId));
     await posthog.flush();
+    // Off-the-dome skips pool review, so the draft is already live. A pool draft starts on lock.
+    if (room.phase === "DRAFTING") await captureDraftEvent(request, "draft_started", room, guestId);
 
     return respond(room, 201, "success", room.draftId);
   } catch (e) {

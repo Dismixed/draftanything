@@ -3,7 +3,6 @@ import { AppError } from "@/lib/errors";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { requireGuestSession } from "@/features/guest/session";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getPostHogClient, withRequestIdentity } from "@/lib/posthog-server";
 
 const startDraftSchema = z.object({
   pickOrder: z.array(
@@ -22,6 +21,9 @@ const startDraftSchema = z.object({
  * Initializes the drafting phase after the pool has been locked.
  * Sets the pick order, current_pick_index (0), and first turn_deadline.
  * Only the host can call this.
+ *
+ * The app does not call this: drafts start through the pool route's lock and commence-draft
+ * actions, which send draft_started. It stays for the e2e suites, which set up drafts here.
  */
 export async function POST(
   request: Request,
@@ -78,15 +80,6 @@ export async function POST(
       return Response.json({ error: "INVALID_INPUT", message: msg }, { status: 400 });
     }
 
-    const posthog = getPostHogClient();
-    posthog.capture(withRequestIdentity(request, {
-      event: "draft_started",
-      properties: {
-        draft_id: draftId,
-        total_picks: parseResult.data.pickOrder.length,
-      },
-    }, guestId));
-    await posthog.flush();
     return Response.json({ success: true });
   } catch (e) {
     if (e instanceof AppError) {

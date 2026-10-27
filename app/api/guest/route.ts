@@ -18,13 +18,14 @@ export async function POST() {
   const start = performance.now();
 
   try {
-    const { guestId } = await ensureGuestSession();
+    const { guestId, isNew } = await ensureGuestSession();
     const posthog = getPostHogClient();
     posthog.identify({ distinctId: guestId });
     posthog.capture({
       distinctId: guestId,
       event: "guest_session_created",
-      properties: {},
+      // Sent on every call; is_new marks the ones that created the guest.
+      properties: { is_new: isNew },
     });
     await posthog.flush();
     const res = Response.json({ guestId });

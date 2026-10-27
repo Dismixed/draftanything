@@ -4,7 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/lib/analytics/track", () => ({ track: vi.fn() }));
 
 import { track } from "@/lib/analytics/track";
-import { clearDirectPlay, isDirectPlayRequested, requestDirectPlay } from "@/lib/daily-intro/direct-play";
+import {
+  clearDirectPlay,
+  isDirectPlayRequested,
+  requestDirectPlay,
+  requestDirectPlayFromFinish,
+} from "@/lib/daily-intro/direct-play";
 import { useDailyIntro } from "@/lib/daily-intro/use-daily-intro";
 import { useIntroCount } from "@/lib/daily-intro/use-intro-count";
 
@@ -109,6 +114,76 @@ describe("useDailyIntro opened from the home page", () => {
 
     const again = renderHook(() => useDailyIntro("chainlink", { ready: true, skip: false }));
     expect(again.result.current.phase).toBe("intro");
+  });
+});
+
+describe("useDailyIntro daily_started", () => {
+  const started = () => vi.mocked(track).mock.calls.filter(([event]) => event === "daily_started");
+
+  beforeEach(() => vi.mocked(track).mockClear());
+
+  afterEach(() => {
+    cleanup();
+    clearDirectPlay("chainlink");
+    window.history.replaceState(null, "", "/");
+  });
+
+  it("is sent once when Play starts the run from the intro", () => {
+    const { result } = renderHook(() => useDailyIntro("chainlink", { ready: true, skip: false }));
+    expect(started()).toEqual([]);
+
+    act(() => result.current.play());
+
+    expect(started()).toEqual([["daily_started", { game: "chainlink", entry: "intro" }]]);
+  });
+
+  it("marks a run started from a shared result link", () => {
+    window.history.replaceState(null, "", "/chainlink?ref=share");
+    const { result } = renderHook(() => useDailyIntro("chainlink", { ready: true, skip: false }));
+
+    act(() => result.current.play());
+
+    expect(started()).toEqual([["daily_started", { game: "chainlink", entry: "share" }]]);
+  });
+
+  it("marks a run opened from the home page or a finish screen", () => {
+    requestDirectPlay("chainlink");
+    const home = renderHook(() => useDailyIntro("chainlink", { ready: true, skip: false }));
+    home.unmount();
+
+    requestDirectPlayFromFinish("chainlink");
+    renderHook(() => useDailyIntro("chainlink", { ready: true, skip: false }));
+
+    expect(started()).toEqual([
+      ["daily_started", { game: "chainlink", entry: "direct" }],
+      ["daily_started", { game: "chainlink", entry: "finish" }],
+    ]);
+  });
+
+  it("waits for an async start, and is not sent when it fails", async () => {
+    const start = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+    const { result } = renderHook(() => useDailyIntro("freezeframes", { ready: true, skip: false, start }));
+
+    await act(async () => result.current.play());
+    expect(started()).toEqual([]);
+
+    await act(async () => result.current.play());
+    expect(started()).toEqual([["daily_started", { game: "freezeframes", entry: "intro" }]]);
+  });
+
+  it("is not sent for a run already in progress or finished", () => {
+    requestDirectPlay("chainlink");
+    renderHook(() => useDailyIntro("chainlink", { ready: true, skip: true }));
+    expect(started()).toEqual([]);
+  });
+
+  it("is not sent when the intro opens a run that is already done", () => {
+    const { result } = renderHook(() => useDailyIntro("brain-dead", { ready: true, skip: false, done: true }));
+
+    act(() => result.current.play());
+
+    expect(result.current.phase).toBe("game");
+    expect(started()).toEqual([]);
   });
 });
 

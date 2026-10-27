@@ -4,6 +4,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { requireGuestSession } from "@/features/guest/session";
 import { getMyPlayerId, getRoom } from "@/features/room/service";
 import { commenceOffTheDome, startDraft } from "@/features/draft/service";
+import { captureDraftEvent } from "@/features/draft/events";
 import {
   startPoolReview,
   getPool,
@@ -198,12 +199,14 @@ export async function POST(
         await lockPool(draftId, guestId);
         await startDraft(draftId, guestId);
         const room = await getRoom(draftId);
+        await captureDraftEvent(request, "draft_started", room, guestId);
         responseData = room;
         break;
       }
       case "commence-draft": {
         await commenceOffTheDome(draftId, guestId);
         const room = await getRoom(draftId);
+        await captureDraftEvent(request, "draft_started", room, guestId);
         responseData = room;
         break;
       }
