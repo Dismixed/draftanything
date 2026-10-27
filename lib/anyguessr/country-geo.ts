@@ -36,6 +36,10 @@ export function getNameForCca3(cca3: string): string | null {
   return byCca3.get(cca3)?.name ?? null;
 }
 
+export function getIso2ForCca3(cca3: string): string | null {
+  return byCca3.get(cca3)?.cca2 ?? null;
+}
+
 /** The country's name and other spellings from the bundled data, for accepting typed guesses. */
 export function getAltNamesForCca3(cca3: string): string[] {
   const entry = byCca3.get(cca3);
