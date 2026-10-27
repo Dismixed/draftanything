@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import ClueCard from "@/components/anyguessr/clue-card";
 import { stampTone } from "@/components/anyguessr/stamps";
+import { track } from "@/lib/analytics/track";
 import { DAILY_CLUE_TYPE_LABEL, DAILY_MAX_ROUND_SCORE, formatDistanceKm } from "@/lib/anyguessr/daily";
 import { useCountUp } from "@/lib/motion/count-up";
 import { useAnyGuessrStore } from "@/lib/anyguessr/store";
@@ -18,14 +19,26 @@ function count(n: number, word: string): string {
 export default function Results({
   scoreActive,
   embedded,
+  foldRounds,
 }: {
   scoreActive?: boolean;
   embedded?: boolean;
+  /** Starts with the round-by-round review folded away, so Share and Up next fit on a phone screen. */
+  foldRounds?: boolean;
 }) {
   const store = useAnyGuessrStore();
   const isWin = store.status === "won";
   const rounds = store.roundResults;
   const [cardIndex, setCardIndex] = useState(0);
+  // Read once, so the review never folds away under a player who is already looking at it.
+  const [canFold] = useState(Boolean(foldRounds));
+  const [roundsOpen, setRoundsOpen] = useState(!canFold);
+
+  const openRounds = (via: "toggle" | "stamp") => {
+    if (roundsOpen) return;
+    setRoundsOpen(true);
+    track("anyguessr_rounds_review_opened", { via });
+  };
 
   const displayScore = useCountUp(store.totalScore, scoreActive ?? isWin, 900);
 
@@ -75,9 +88,12 @@ export default function Results({
             key={round.roundIndex}
             type="button"
             role="tab"
-            aria-selected={i === shown}
-            className={`ag-pass${i === shown ? " is-open" : ""}`}
-            onClick={() => setCardIndex(i)}
+            aria-selected={roundsOpen && i === shown}
+            className={`ag-pass${roundsOpen && i === shown ? " is-open" : ""}`}
+            onClick={() => {
+              setCardIndex(i);
+              openRounds("stamp");
+            }}
           >
             <span
               className={`ag-stamp is-got is-${tones[i]}`}
@@ -96,7 +112,18 @@ export default function Results({
         ))}
       </div>
 
-      {activeRound && activeClue ? (
+      {canFold && rounds.length > 0 ? (
+        <button
+          type="button"
+          className="ag-quiet-btn ag-rounds-toggle"
+          aria-expanded={roundsOpen}
+          onClick={() => (roundsOpen ? setRoundsOpen(false) : openRounds("toggle"))}
+        >
+          {roundsOpen ? "Hide the rounds" : "See every round"}
+        </button>
+      ) : null}
+
+      {roundsOpen && activeRound && activeClue ? (
         <RoundDetail
           key={activeRound.roundIndex}
           round={activeRound}

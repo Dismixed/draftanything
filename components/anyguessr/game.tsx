@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import { useFeatureFlagVariant } from "@/lib/analytics/use-feature-flag";
 import { clueDisplayUrl } from "@/lib/anyguessr/clue-image-url";
 import { LINEUP_ROUNDS } from "@/lib/anyguessr/lineup";
 import { roundStreak } from "@/lib/anyguessr/reveal";
@@ -60,6 +61,8 @@ export default function AnyGuessrGame() {
     enabled: storeReady && !loading && isOver,
     record: playedThisVisit,
   });
+  // Read once the daily is over, so only players who reach the finish screen count as exposed.
+  const foldRounds = useFeatureFlagVariant(FINISH_FOLD_FLAG, { enabled: isOver }) === "test";
   // The round just played stamps the passport when its recap closes, not while it is still playing out.
   const stampedResults = showRoundRecap ? store.roundResults.slice(0, -1) : store.roundResults;
 
@@ -334,7 +337,7 @@ export default function AnyGuessrGame() {
         open={mounted && showResultsOverlay}
         onClose={() => setShowResultsOverlay(false)}
         ariaLabel="Puzzle results"
-        result={<Results scoreActive embedded />}
+        result={<Results scoreActive embedded foldRounds={foldRounds} />}
         shareText={anyGuessrShare(store.roundResults, store.totalScore, store.date)}
         curve={finishCurve("anyguessr", standing)}
         theme={{ "--fin-result-w": "640px" } as CSSProperties}
@@ -342,6 +345,9 @@ export default function AnyGuessrGame() {
     </div>
   );
 }
+
+/** Experiment: "test" folds the round-by-round review on the finish screen. */
+const FINISH_FOLD_FLAG = "ga-anyguessr-finish-screen-collapse-the-rou-7174a5";
 
 /** Space the map leaves clear for the header and the guess bar when it frames the world. */
 const MAP_INSET = { top: 170, bottom: 120 };

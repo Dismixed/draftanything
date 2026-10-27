@@ -1027,6 +1027,8 @@ html[data-theme="light"] {
   white-space: nowrap;
 }
 
+.ag-rounds-toggle { margin-top: 16px; }
+
 .ag-round {
   --ink: var(--ag-accent);
   margin-top: 16px;
