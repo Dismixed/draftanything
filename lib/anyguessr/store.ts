@@ -259,7 +259,7 @@ export const useAnyGuessrStore = create<AnyGuessrStore>()(
         });
 
         if (isFinal) {
-          void postDailyAttempt(get(), get().totalScore, get().roundResults.length);
+          recordDailyFinish(get());
         }
       },
 
@@ -395,25 +395,8 @@ export const useAnyGuessrStore = create<AnyGuessrStore>()(
   ),
 );
 
-function postDailyAttempt(
-  state: PersistedData,
-  totalScore: number,
-  roundsPlayed: number,
-): void {
+// The score itself is stored by the finish screen through /api/daily-finish.
+function recordDailyFinish(state: PersistedData): void {
   if (!state.puzzleId) return;
   recordDailyCompletion("anyguessr", state.date);
-  void fetch("/api/anyguessr/attempt", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      puzzleId: state.puzzleId,
-      mode: "daily",
-      completed: true,
-      surrendered: false,
-      correct: state.roundResults.some((r) => r.exact),
-      score: totalScore,
-      guesses: roundsPlayed,
-      cluesRevealed: roundsPlayed,
-    }),
-  }).catch(() => {});
 }
