@@ -1142,6 +1142,36 @@ export type Database = {
         }
         Relationships: []
       }
+      dead_reckoning_plays: {
+        Row: {
+          created_at: string
+          days: number
+          guest_id: string | null
+          guesses: Json
+          id: string
+          play_date: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          days: number
+          guest_id?: string | null
+          guesses: Json
+          id?: string
+          play_date: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          days?: number
+          guest_id?: string | null
+          guesses?: Json
+          id?: string
+          play_date?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       daily_review_emails: {
         Row: {
           id: string
