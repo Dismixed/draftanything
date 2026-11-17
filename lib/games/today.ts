@@ -1,12 +1,12 @@
-import { FEATURED_GAMES, PUZZLE_GAMES, type DailyGameId, type GameId, type PuzzleGameId } from "@/lib/games/registry";
+import { FEATURED_GAMES, PINNED_FEATURED_GAME, PUZZLE_GAMES, type DailyGameId, type GameId, type PuzzleGameId } from "@/lib/games/registry";
 
 export { dailyDayNumber, msUntilNextDailyDay } from "@/lib/daily-day";
 
-/** The three featured games, starting from the one whose turn it is on this day. */
+/** The pinned game, then the three rotating featured games starting from the one whose turn it is. */
 function featuredRotation(dayNumber: number): PuzzleGameId[] {
   const count = FEATURED_GAMES.length;
   const start = ((dayNumber % count) + count) % count;
-  return FEATURED_GAMES.map((_, i) => FEATURED_GAMES[(start + i) % count]);
+  return [PINNED_FEATURED_GAME, ...FEATURED_GAMES.map((_, i) => FEATURED_GAMES[(start + i) % count])];
 }
 
 export function featuredGameForDay(dayNumber: number): PuzzleGameId {
@@ -25,7 +25,7 @@ export interface TodayView {
 
 export function buildTodayView(dayNumber: number, played: ReadonlySet<DailyGameId>): TodayView {
   const rotation = featuredRotation(dayNumber);
-  // The slot works through the three featured games first, then the remaining dailies, so
+  // The slot works through the pinned game and the three featured games first, then the remaining dailies, so
   // it always has something to offer until every puzzle is played.
   const candidates = [...rotation, ...PUZZLE_GAMES.filter((id) => !rotation.includes(id))];
   const featured = candidates.find((id) => !played.has(id)) ?? null;

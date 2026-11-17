@@ -5,9 +5,9 @@ import { games as seoGames } from "@/lib/seo";
 import { GAME_META } from "@/lib/streak/types";
 
 describe("game registry", () => {
-  it("has nine games, seven of them daily", () => {
-    expect(GAME_IDS).toHaveLength(9);
-    expect(DAILY_GAMES).toHaveLength(7);
+  it("has ten games, eight of them daily", () => {
+    expect(GAME_IDS).toHaveLength(10);
+    expect(DAILY_GAMES).toHaveLength(8);
     expect(GAMES.filter((game) => game.kind === "party").map((game) => game.id)).toEqual([
       "draft-anything",
       "slippery-slope",

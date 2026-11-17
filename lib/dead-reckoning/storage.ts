@@ -3,7 +3,6 @@
 import type { Guess } from "./scoring";
 
 const DAY_KEY = (date: string) => `dead-reckoning:v2:day:${date}`;
-const FINISHED_KEY = "dead-reckoning:v1:finished";
 
 function read(key: string): unknown {
   try {
@@ -40,16 +39,6 @@ export function loadGuesses(date: string): Guess[] {
 
 export function saveGuesses(date: string, guesses: Guess[]) {
   write(DAY_KEY(date), guesses);
-}
-
-export function loadFinishedDays(): string[] {
-  const raw = read(FINISHED_KEY);
-  return Array.isArray(raw) ? raw.filter((d): d is string => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d)) : [];
-}
-
-export function markFinished(date: string) {
-  const days = loadFinishedDays();
-  if (!days.includes(date)) write(FINISHED_KEY, [...days, date].sort().slice(-400));
 }
 
 /** Current streak (ending today or yesterday) and the longest run of consecutive days. */

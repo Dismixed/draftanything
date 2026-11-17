@@ -4,6 +4,7 @@ import { AllGamesNav } from "@/components/home/all-games-nav";
 import { GameCard } from "@/components/home/game-card";
 import { Today } from "@/components/home/today";
 import { playHref as draftPlayHref } from "@/lib/draft-landing/play-href";
+import { DAILY_COUNT_WORD } from "@/lib/games/registry";
 import { dailyDayNumber } from "@/lib/games/today";
 import { getDailyCategoryForPlay } from "@/lib/hot-takes/daily-service";
 import { shareImage } from "@/lib/og/metadata";
@@ -14,8 +15,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 // <Today /> corrects any remaining gap from the browser's clock.
 export const revalidate = 300;
 
-const DESCRIPTION =
-  "Seven free daily games: trivia, geography, word chains, pop culture and tier lists, in the style of Wordle and Connections. New puzzles every day, no sign-up.";
+const COUNT = DAILY_COUNT_WORD[0].toUpperCase() + DAILY_COUNT_WORD.slice(1);
+
+const DESCRIPTION = `${COUNT} free daily games: trivia, geography, word chains, estimation, pop culture and tier lists, in the style of Wordle and Connections. New puzzles every day, no sign-up.`;
 
 export const metadata: Metadata = {
   title: { absolute: "Stim Games: Free Daily Games, New Puzzles Every Day" },
@@ -62,10 +64,10 @@ export default async function StimGames() {
             Stim <em>Games</em>
           </h1>
         </header>
-        <p className="home-tagline">Seven free daily games. New puzzles every day.</p>
+        <p className="home-tagline">{COUNT} free daily games. New puzzles every day.</p>
         <p className="home-subline">
-          Trivia, geography, word chains, pop culture and tier lists, in the style of Wordle and
-          Connections. No sign-up.
+          Trivia, geography, word chains, estimation, pop culture and tier lists, in the style of
+          Wordle and Connections. No sign-up.
         </p>
 
         <Today dayNumber={dayNumber} debateCategory={debateCategory} />

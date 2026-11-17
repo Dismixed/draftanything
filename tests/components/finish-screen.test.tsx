@@ -87,7 +87,7 @@ describe("FinishScreen", () => {
     expect(screen.getByTestId("finish-chip-anyguessr")).toHaveTextContent("next");
     expect(screen.getByTestId("finish-chip-freezeframes")).not.toHaveClass("is-next");
     expect(screen.queryByTestId("finish-chip-hot-takes")).toBeNull();
-    expect(screen.getByTestId("finish-sweep-line")).toHaveTextContent("2 of 6 today · 4 to go for a Sweep");
+    expect(screen.getByTestId("finish-sweep-line")).toHaveTextContent("2 of 7 today · 5 to go for a Sweep");
   });
 
   it("guides to the next unplayed game and lists the rest with what they are", () => {
@@ -104,6 +104,7 @@ describe("FinishScreen", () => {
       "/freezeframes/daily",
       "/ball-knowledge/daily",
       "/getting-warmer/daily",
+      "/dead-reckoning",
     ]);
     expect(others[0]).toHaveTextContent(getGame("freezeframes").blurb);
   });
@@ -131,7 +132,7 @@ describe("FinishScreen", () => {
     renderScreen();
 
     expect(screen.getByTestId("finish-chip-brain-dead")).toHaveClass("is-done", "is-current");
-    expect(screen.getByTestId("finish-sweep-line")).toHaveTextContent("1 of 6 today · 5 to go for a Sweep");
+    expect(screen.getByTestId("finish-sweep-line")).toHaveTextContent("1 of 7 today · 6 to go for a Sweep");
     expect(within(screen.getByTestId("finish-up-next")).getByRole("link")).toHaveAttribute("href", "/chainlink");
     expect(screen.getByTestId("finish-streak")).toHaveTextContent("Day 1 of your streak. Come back tomorrow to make it 2.");
   });
@@ -180,11 +181,11 @@ describe("FinishScreen", () => {
     expect(screen.queryByTestId("finish-debate")).toBeNull();
     expect(screen.queryByTestId("finish-countdown")).toBeNull();
     const sweep = screen.getByTestId("finish-sweep");
-    expect(sweep).toHaveTextContent("Sweep. All six done today.");
+    expect(sweep).toHaveTextContent("Sweep. All seven done today.");
     expect(sweep).toHaveTextContent("Your 1st Sweep.");
     expect(sweep).toHaveTextContent("New puzzles in 12h 37m");
     expect(within(sweep).getByRole("link", { name: "Now settle today's debate →" })).toHaveAttribute("href", "/hot-takes");
-    expect(screen.getByTestId("finish-sweep-line")).toHaveTextContent("Sweep. All six done today.");
+    expect(screen.getByTestId("finish-sweep-line")).toHaveTextContent("Sweep. All seven done today.");
   });
 
   it("offers a Draft room after a Sweep when the debate is already settled", () => {
@@ -206,7 +207,7 @@ describe("FinishScreen", () => {
       expect(screen.queryByTestId("finish-others")).toBeNull();
       expect(screen.queryByTestId("finish-debate")).toBeNull();
       const back = screen.getByTestId("finish-back-to-puzzles");
-      expect(within(back).getByRole("link", { name: "Back to the puzzles · 4 left →" })).toHaveAttribute(
+      expect(within(back).getByRole("link", { name: "Back to the puzzles · 5 left →" })).toHaveAttribute(
         "href",
         "/anyguessr",
       );
@@ -218,7 +219,7 @@ describe("FinishScreen", () => {
       streaks = streaksWithPlayed([...PUZZLE_GAMES]);
       renderScreen({ gameId: "hot-takes" });
 
-      expect(screen.getByTestId("finish-back-to-puzzles")).toHaveTextContent("All six puzzles done today.");
+      expect(screen.getByTestId("finish-back-to-puzzles")).toHaveTextContent("All seven puzzles done today.");
       expect(screen.queryByTestId("finish-sweep")).toBeNull();
     });
   });

@@ -6,7 +6,7 @@ import { FinishDebate } from "@/components/daily/finish-debate";
 import { track } from "@/lib/analytics/track";
 import { requestDirectPlayFromFinish } from "@/lib/daily-intro/direct-play";
 import { nextDaily, remainingDailies } from "@/lib/games/next";
-import { DEBATE_GAME, getGame, type DailyGameId } from "@/lib/games/registry";
+import { DEBATE_GAME, PUZZLE_COUNT_WORD, getGame, type DailyGameId } from "@/lib/games/registry";
 
 function ordinal(n: number): string {
   const tens = n % 100;
@@ -30,7 +30,7 @@ export function FinishUpNext({ gameId, played, sweeps, countdown }: FinishUpNext
   if (!next) {
     return (
       <section className="fin-sweep" data-testid="finish-sweep">
-        <h3>Sweep. All six done today.</h3>
+        <h3>Sweep. All {PUZZLE_COUNT_WORD} done today.</h3>
         <p>
           Your {ordinal(Math.max(1, sweeps))} Sweep. New puzzles in {countdown}.
         </p>

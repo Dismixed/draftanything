@@ -11,6 +11,8 @@ import {
 
 const STORAGE_KEY = "stim_daily_streaks";
 const BRAIN_DEAD_LEGACY_KEY = "bd_personal_stats";
+/** Dead Reckoning kept its own list of finished days before it joined the shared streaks. */
+const DEAD_RECKONING_LEGACY_KEY = "dead-reckoning:v1:finished";
 
 function emptyStore(): StreakStore {
   return {
@@ -23,6 +25,7 @@ function emptyStore(): StreakStore {
       "ball-knowledge": { playDates: [] },
       "hot-takes": { playDates: [] },
       "getting-warmer": { playDates: [] },
+      "dead-reckoning": { playDates: [] },
     },
   };
 }
@@ -48,14 +51,16 @@ function parseStore(raw: string | null): StreakStore {
   }
 }
 
-function readLegacyBrainDeadDates(): string[] {
+function readLegacyDates(key: string): string[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(BRAIN_DEAD_LEGACY_KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return [];
-    const parsed = JSON.parse(raw) as { playDates?: unknown };
-    if (!Array.isArray(parsed.playDates)) return [];
-    return parsed.playDates.filter((d): d is string => typeof d === "string");
+    const parsed = JSON.parse(raw) as unknown;
+    // Brain Dead kept { playDates }, Dead Reckoning a bare list of dates.
+    const dates = Array.isArray(parsed) ? parsed : (parsed as { playDates?: unknown } | null)?.playDates;
+    if (!Array.isArray(dates)) return [];
+    return dates.filter((d): d is string => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d));
   } catch {
     return [];
   }
@@ -72,15 +77,20 @@ function ensureMigrated(store: StreakStore): StreakStore {
   if (migrated || typeof window === "undefined") return store;
   migrated = true;
 
-  const legacyDates = readLegacyBrainDeadDates();
-  if (legacyDates.length === 0) return store;
-
-  const merged = new Set([
-    ...store.games["brain-dead"].playDates,
-    ...legacyDates,
-  ]);
-  store.games["brain-dead"].playDates = [...merged];
-  writeStore(store);
+  const legacy: [DailyGameId, string][] = [
+    ["brain-dead", BRAIN_DEAD_LEGACY_KEY],
+    ["dead-reckoning", DEAD_RECKONING_LEGACY_KEY],
+  ];
+  let changed = false;
+  for (const [id, key] of legacy) {
+    const dates = readLegacyDates(key);
+    const known = store.games[id].playDates;
+    const added = dates.filter((d) => !known.includes(d));
+    if (added.length === 0) continue;
+    store.games[id].playDates = [...known, ...added];
+    changed = true;
+  }
+  if (changed) writeStore(store);
   return store;
 }
 

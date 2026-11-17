@@ -65,5 +65,6 @@ export function decodeResult(value: string | undefined): SharedResult | null {
 export function shareDare(gameId: DailyGameId): string {
   if (gameId === "hot-takes") return "Would you rank it the same?";
   if (gameId === "ball-knowledge") return "Can you name more?";
+  if (gameId === "dead-reckoning") return "Can you sail it faster?";
   return "Can you beat it?";
 }

@@ -23,7 +23,7 @@ test.describe("Home page", () => {
     await page.goto("/");
 
     await expect(page.getByRole("heading", { level: 1, name: "Stim Games" })).toBeVisible();
-    await expect(page.getByText("Seven free daily games. New puzzles every day.")).toBeVisible();
+    await expect(page.getByText("Eight free daily games. New puzzles every day.")).toBeVisible();
     await expect(page.getByTestId("home-featured")).toBeVisible();
     await expect(page.getByTestId("home-lineup").getByRole("link")).toHaveCount(6);
     await expect(page.getByTestId("home-progress")).toHaveText("7 new puzzles today");

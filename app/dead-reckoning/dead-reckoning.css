@@ -970,3 +970,20 @@
 .dr-nowrap {
   white-space: nowrap;
 }
+
+/* The shared finish pieces (today's games, the Sweep, up next) inside the end sheet */
+.dr .dr-fin {
+  width: 100%;
+  font-family: var(--dr-body);
+}
+.dr .dr-fin .fin-run {
+  margin: 8px 0 18px;
+}
+.dr .dr-fin .fin-up,
+.dr .dr-fin .fin-others,
+.dr .dr-fin .fin-debate,
+.dr .dr-fin .fin-sweep {
+  max-width: 420px;
+  margin-left: auto;
+  margin-right: auto;
+}
