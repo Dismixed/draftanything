@@ -22,7 +22,7 @@ describe("nextDaily", () => {
     expect(nextDaily(played(...DAILY_GAMES))).toBeNull();
   });
 
-  it("never offers Hot Takes, and is done once the six puzzles are", () => {
+  it("never offers Hot Takes, and is done once the seven puzzles are", () => {
     expect(nextDaily(played(...PUZZLE_GAMES))).toBeNull();
     expect(nextDaily(played("chainlink", "brain-dead", "anyguessr", "freezeframes", "ball-knowledge"))).toBe(
       "getting-warmer",
@@ -36,11 +36,12 @@ describe("remainingDailies", () => {
       "freezeframes",
       "ball-knowledge",
       "getting-warmer",
+      "dead-reckoning",
     ]);
   });
 
   it("is empty when one game is left, and when none are", () => {
-    expect(remainingDailies(played(...PUZZLE_GAMES.filter((id) => id !== "getting-warmer")))).toEqual([]);
+    expect(remainingDailies(played(...PUZZLE_GAMES.filter((id) => id !== "dead-reckoning")))).toEqual([]);
     expect(remainingDailies(played(...DAILY_GAMES))).toEqual([]);
   });
 });

@@ -27,6 +27,7 @@ const PALETTES: Record<ShareImageId, Palette> = {
   freezeframes: { bg: "#0c0812", panel: "#130f1e", line: "#2d2550", text: "#f0eaff", dim: "#b3a9cc", brand: "#a855f7", accent: "#a855f7" },
   "ball-knowledge": { bg: "#0a1830", panel: "#122a52", line: "#24457c", text: "#eef4ff", dim: "#a5b9d9", brand: "#5b9ee8", accent: "#ffb020" },
   "getting-warmer": { bg: "#0a0705", panel: "#150e08", line: "#33241a", text: "#fff3ea", dim: "#c2b0a3", brand: "#ff6b1a", accent: "#ff6b1a" },
+  "dead-reckoning": { bg: "#0b1d26", panel: "#102631", line: "#24404c", text: "#e4eef0", dim: "#93a9b3", brand: "#5fb4cf", accent: "#e9d29b" },
   "draft-anything": { bg: "#07090f", panel: "#0f1320", line: "#232a40", text: "#ddd8cc", dim: "#a3a9bf", brand: "#f0c860", accent: "#f0c860" },
   "slippery-slope": { bg: "#0d1117", panel: "#131c27", line: "#1f3050", text: "#e8f4ff", dim: "#a4b6cc", brand: "#b5f23d", accent: "#b5f23d" },
 };
@@ -37,14 +38,19 @@ const col: CSSProperties = { display: "flex", flexDirection: "column" };
 /** A small picture of how each game plays, drawn from boxes so it needs no artwork. */
 const MOTIFS: Record<ShareImageId, (p: Palette) => ReactNode> = {
   home: (p) => (
-    <div style={{ ...row, flexWrap: "wrap", width: 348, gap: 12 }}>
-      {GAMES.map((game) => (
+    // The dailies, four to a row, so they fill two even rows.
+    <div style={{ ...row, flexWrap: "wrap", width: 402, gap: 10 }}>
+      {GAMES.filter((game) => game.kind === "daily").map((game) => (
         <div
           key={game.id}
-          style={{ ...col, justifyContent: "flex-end", width: 108, height: 108, padding: 12, borderRadius: 18, background: p.panel, border: `2px solid ${p.line}` }}
+          style={{ ...col, justifyContent: "flex-end", width: 93, height: 108, padding: 11, borderRadius: 16, background: p.panel, border: `2px solid ${p.line}` }}
         >
           <div style={{ display: "flex", width: 26, height: 26, borderRadius: 13, background: PALETTES[game.id].brand, marginBottom: 12 }} />
-          <div style={{ display: "flex", fontSize: 15, fontWeight: 800, color: p.text, lineHeight: 1.1 }}>{game.name}</div>
+          {/* Each name on two lines, split as the brand is, so the dots line up. */}
+          <div style={{ ...col, fontSize: 13, fontWeight: 800, color: p.text, lineHeight: 1.15 }}>
+            <span>{game.brand.first.trim()}</span>
+            <span>{game.brand.second}</span>
+          </div>
         </div>
       ))}
     </div>
@@ -201,6 +207,29 @@ const MOTIFS: Record<ShareImageId, (p: Palette) => ReactNode> = {
         {bars.map((color, i) => (
           <div key={color} style={{ display: "flex", width: 45, height: 90 + i * 62, borderRadius: 12, background: color }} />
         ))}
+      </div>
+    );
+  },
+  "dead-reckoning": (p) => {
+    // Islands joined by crossings, coloured by how close each guess was, then the share squares.
+    const legs = ["#c2408f", "#2f8fb3", "#3f9a55", "#c08a1e"];
+    const tiles = ["#a855f7", "#3b82f6", "#22c55e", "#eab308", "#92400e", "#3b82f6", "#22c55e"];
+    return (
+      <div style={{ ...col, alignItems: "center", width: 340, gap: 56 }}>
+        <div style={{ ...row }}>
+          {legs.map((color, i) => (
+            <div key={color} style={{ ...row }}>
+              <div style={{ display: "flex", width: 40, height: 40, borderRadius: 20, background: p.accent, border: `5px solid ${p.line}` }} />
+              <div style={{ display: "flex", width: 38, height: 8, borderRadius: 4, background: color, marginTop: i % 2 ? -26 : 26 }} />
+            </div>
+          ))}
+          <div style={{ display: "flex", width: 40, height: 40, borderRadius: 20, background: p.accent, border: `5px solid ${p.line}` }} />
+        </div>
+        <div style={{ ...row, gap: 8 }}>
+          {tiles.map((color, i) => (
+            <div key={i} style={{ display: "flex", width: 40, height: 40, borderRadius: 8, background: color }} />
+          ))}
+        </div>
       </div>
     );
   },

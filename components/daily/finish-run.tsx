@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import { requestDirectPlayFromFinish } from "@/lib/daily-intro/direct-play";
 import { nextDaily } from "@/lib/games/next";
-import { PUZZLE_GAMES } from "@/lib/games/registry";
+import { PUZZLE_COUNT_WORD, PUZZLE_GAMES } from "@/lib/games/registry";
 import { GAME_META, type DailyGameId } from "@/lib/streak/types";
 
 export function FinishRun({ gameId, played }: { gameId: DailyGameId; played: ReadonlySet<DailyGameId> }) {
@@ -44,7 +44,7 @@ export function FinishRun({ gameId, played }: { gameId: DailyGameId; played: Rea
       </nav>
       <p className="fin-sweep-line" data-testid="finish-sweep-line">
         {left === 0
-          ? "Sweep. All six done today."
+          ? `Sweep. All ${PUZZLE_COUNT_WORD} done today.`
           : `${done} of ${PUZZLE_GAMES.length} today · ${left} to go for a Sweep`}
       </p>
     </div>

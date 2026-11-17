@@ -1147,7 +1147,7 @@ html[data-theme="light"] .fin-play[data-game="freezeframes"] { color: #fff; }
 .fin-back a { color: var(--text); text-decoration: none; border-bottom: 1.5px solid color-mix(in srgb, var(--text) 30%, transparent); }
 .fin-back a:hover { border-bottom-color: var(--text); }
 
-/* All six puzzles done */
+/* All puzzles done */
 .fin-sweep {
   --nx: var(--gold-hi);
   margin-top: 20px;

@@ -1,0 +1,47 @@
+/* ── Dead Reckoning outside its own page: home cards, finish screens, the preview chart ── */
+:root {
+  --drs-page: #0b1d26;
+  --drs-surface: #102631;
+  --drs-border: #24404c;
+  --drs-accent: #5fb4cf;
+  --drs-brand: #5fb4cf;
+  --drs-text: #e4eef0;
+  --drs-muted: #93a9b3;
+  /* the preview chart */
+  --drs-sea1: #12313d;
+  --drs-sea2: #0d2530;
+  --drs-shoal: #1d5a68;
+  --drs-grid: rgba(255, 255, 255, 0.06);
+  --drs-route: #cfe3e8;
+}
+
+html[data-theme="light"] {
+  --drs-page: #e3eef0;
+  --drs-surface: #ffffff;
+  --drs-border: #b7cbcc;
+  --drs-accent: #17698a;
+  --drs-brand: #17698a;
+  --drs-text: #10283a;
+  --drs-muted: #46606f;
+  --drs-sea1: #d4e9ec;
+  --drs-sea2: #bcdde3;
+  --drs-shoal: #9fd3dc;
+  --drs-grid: rgba(16, 40, 58, 0.08);
+  --drs-route: #10283a;
+}
+
+.drs-chart {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The preview is a picture that fills its box, rather than a motif scaled up or down. */
+.od-preview-frame.is-fill,
+.home-featured-preview .od-preview-frame.is-fill,
+.home-card-preview .od-preview-frame.is-fill {
+  place-self: stretch;
+  width: 100%;
+  height: 100%;
+  transform: none;
+}

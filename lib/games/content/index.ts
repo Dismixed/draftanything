@@ -6,6 +6,7 @@ import { anyguessr } from "./anyguessr";
 import { ballKnowledge } from "./ball-knowledge";
 import { brainDead } from "./brain-dead";
 import { chainlink } from "./chainlink";
+import { deadReckoning } from "./dead-reckoning";
 import { draftAnything } from "./draft-anything";
 import { freezeframes } from "./freezeframes";
 import { gettingWarmer } from "./getting-warmer";
@@ -23,6 +24,7 @@ export const GAME_CONTENT: Record<GameId, GameContent> = {
   freezeframes,
   "ball-knowledge": ballKnowledge,
   "getting-warmer": gettingWarmer,
+  "dead-reckoning": deadReckoning,
   "draft-anything": draftAnything,
   "slippery-slope": slipperySlope,
 };

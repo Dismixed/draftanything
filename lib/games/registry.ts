@@ -6,6 +6,7 @@ export const GAME_IDS = [
   "freezeframes",
   "ball-knowledge",
   "getting-warmer",
+  "dead-reckoning",
   "draft-anything",
   "slippery-slope",
 ] as const;
@@ -21,6 +22,7 @@ export const DAILY_GAMES = [
   "ball-knowledge",
   "hot-takes",
   "getting-warmer",
+  "dead-reckoning",
 ] as const;
 
 export type DailyGameId = (typeof DAILY_GAMES)[number];
@@ -35,7 +37,18 @@ export const PUZZLE_GAMES = DAILY_GAMES.filter(
 
 export type PuzzleGameId = (typeof PUZZLE_GAMES)[number];
 
-/** The only games shown in the home page's featured slot, in rotation order. */
+const NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"];
+
+/** "seven": how many puzzles there are each day, for copy like "All seven done". */
+export const PUZZLE_COUNT_WORD = NUMBER_WORDS[PUZZLE_GAMES.length] ?? String(PUZZLE_GAMES.length);
+
+/** "eight": how many dailies there are, counting the debate. */
+export const DAILY_COUNT_WORD = NUMBER_WORDS[DAILY_GAMES.length] ?? String(DAILY_GAMES.length);
+
+/** Sits in the home page's featured slot every day, ahead of the rotation. */
+export const PINNED_FEATURED_GAME = "dead-reckoning" as const satisfies PuzzleGameId;
+
+/** Rotate through the featured slot once the pinned game is played, in rotation order. */
 export const FEATURED_GAMES = ["chainlink", "brain-dead", "anyguessr"] as const satisfies readonly PuzzleGameId[];
 
 export interface GameTheme {
@@ -251,6 +264,33 @@ const REGISTRY: Record<GameId, GameEntry> = {
       genre: ["Word game", "Daily puzzle"],
       playMode: ["SinglePlayer"],
       priority: 0.8,
+    },
+  },
+  "dead-reckoning": {
+    id: "dead-reckoning",
+    kind: "daily",
+    name: "Dead Reckoning",
+    brand: { first: "Dead ", second: "Reckoning", color: "var(--drs-brand)" },
+    playHref: "/dead-reckoning",
+    canonicalPath: "/dead-reckoning",
+    category: "Estimation",
+    blurb: "Seven questions, one number each. Guess close, sail fast.",
+    pitch: "Seven questions, one number each. The closer your guess, the quicker you sail to the next island.",
+    duration: "~3 min",
+    theme: {
+      page: "var(--drs-page)",
+      background: "var(--drs-surface)",
+      border: "var(--drs-border)",
+      accent: "var(--drs-accent)",
+      text: "var(--drs-text)",
+      muted: "var(--drs-muted)",
+    },
+    seo: {
+      description:
+        "A daily estimation game: seven questions, one number each, and the closer your guess the quicker you sail between islands.",
+      genre: ["Estimation game", "Trivia", "Daily puzzle"],
+      playMode: ["SinglePlayer"],
+      priority: 0.85,
     },
   },
   "draft-anything": {

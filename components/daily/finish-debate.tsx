@@ -5,7 +5,7 @@ import Link from "next/link";
 import { track } from "@/lib/analytics/track";
 import { requestDirectPlayFromFinish } from "@/lib/daily-intro/direct-play";
 import { nextDaily } from "@/lib/games/next";
-import { DEBATE_GAME, PUZZLE_GAMES, getGame, type DailyGameId } from "@/lib/games/registry";
+import { DEBATE_GAME, PUZZLE_COUNT_WORD, PUZZLE_GAMES, getGame, type DailyGameId } from "@/lib/games/registry";
 
 /** On a puzzle's finish screen: Hot Takes, offered apart from the puzzle run. */
 export function FinishDebate({ gameId }: { gameId: DailyGameId }) {
@@ -38,7 +38,7 @@ export function FinishBackToPuzzles({ played }: { played: ReadonlySet<DailyGameI
   if (!next) {
     return (
       <p className="fin-back" data-testid="finish-back-to-puzzles">
-        All six puzzles done today.
+        All {PUZZLE_COUNT_WORD} puzzles done today.
       </p>
     );
   }

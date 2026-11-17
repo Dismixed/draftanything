@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Today } from "@/components/home/today";
 import { track } from "@/lib/analytics/track";
 import { DAILY_GAMES, PUZZLE_GAMES, getGame, type DailyGameId } from "@/lib/games/registry";
-import { featuredGameForDay, dailyDayNumber } from "@/lib/games/today";
+import { buildTodayView, featuredGameForDay, dailyDayNumber } from "@/lib/games/today";
 import type { GameStreakInfo } from "@/lib/streak/types";
 
 let streaks: GameStreakInfo[] = [];
@@ -47,7 +47,7 @@ describe("Today", () => {
     vi.useRealTimers();
   });
 
-  it("shows the day's featured game and five puzzle cards for a first-time visitor", () => {
+  it("features Dead Reckoning with six puzzle cards for a first-time visitor", () => {
     render(<Today dayNumber={DAY} debateCategory="Fast food chains" />);
 
     const featured = getGame(featuredGameForDay(DAY));
@@ -55,16 +55,17 @@ describe("Today", () => {
     expect(slot).toHaveTextContent("Today's featured game");
     expect(slot).toHaveTextContent(featured.name);
     expect(within(slot).getByRole("link")).toHaveAttribute("href", featured.playHref);
+    expect(featured.id).toBe("dead-reckoning");
 
     const lineup = within(screen.getByTestId("home-lineup")).getAllByRole("link");
-    expect(lineup).toHaveLength(5);
+    expect(lineup).toHaveLength(6);
     expect(lineup.map((link) => link.getAttribute("href"))).not.toContain("/hot-takes");
-    expect(screen.getByTestId("home-progress")).toHaveTextContent("6 new puzzles today");
+    expect(screen.getByTestId("home-progress")).toHaveTextContent("7 new puzzles today");
   });
 
   it("features the next unplayed game and counts what is done", () => {
     const first = featuredGameForDay(DAY);
-    const second = featuredGameForDay(DAY + 1);
+    const second = buildTodayView(DAY, new Set([first])).featured!;
     streaks = streaksWithPlayed([first, "getting-warmer", "hot-takes"]);
 
     render(<Today dayNumber={DAY} debateCategory="Fast food chains" />);
@@ -72,12 +73,12 @@ describe("Today", () => {
     const slot = screen.getByTestId("home-featured");
     expect(slot).toHaveTextContent("Up next");
     expect(slot).toHaveTextContent(getGame(second).name);
-    expect(screen.getByTestId("home-progress")).toHaveTextContent("2 of 6 done today");
+    expect(screen.getByTestId("home-progress")).toHaveTextContent("2 of 7 done today");
 
     const cards = within(screen.getByTestId("home-lineup")).getAllByRole("link");
-    expect(cards).toHaveLength(5);
-    expect(cards[3]).toHaveTextContent("Done today");
+    expect(cards).toHaveLength(6);
     expect(cards[4]).toHaveTextContent("Done today");
+    expect(cards[5]).toHaveTextContent("Done today");
     expect(cards[0]).not.toHaveTextContent("Done today");
   });
 
@@ -88,12 +89,12 @@ describe("Today", () => {
 
     expect(screen.queryByTestId("home-featured")).toBeNull();
     const done = screen.getByTestId("home-all-done");
-    expect(done).toHaveTextContent("All six done.");
+    expect(done).toHaveTextContent("All seven done.");
     expect(done).toHaveTextContent("New puzzles in 12h 37m");
     expect(done).not.toHaveTextContent("Hot Takes");
     expect(within(done).getByRole("link")).toHaveAttribute("href", "/draft-anything/play");
-    expect(within(screen.getByTestId("home-lineup")).getAllByRole("link")).toHaveLength(6);
-    expect(screen.getByTestId("home-progress")).toHaveTextContent("6 of 6 done today");
+    expect(within(screen.getByTestId("home-lineup")).getAllByRole("link")).toHaveLength(7);
+    expect(screen.getByTestId("home-progress")).toHaveTextContent("7 of 7 done today");
   });
 
   it("offers today's debate apart from the lineup, by category", () => {
@@ -113,7 +114,7 @@ describe("Today", () => {
     expect(debate).toHaveTextContent("You've ranked it.");
     expect(debate).toHaveTextContent("🔥 3");
     expect(within(debate).getByRole("link", { name: "See your takes →" })).toHaveAttribute("href", "/hot-takes");
-    expect(screen.getByTestId("home-progress")).toHaveTextContent("6 new puzzles today");
+    expect(screen.getByTestId("home-progress")).toHaveTextContent("7 new puzzles today");
   });
 
   it("leaves out the category when it is missing or from a cached earlier day", () => {

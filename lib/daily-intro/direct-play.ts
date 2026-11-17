@@ -27,10 +27,10 @@ export function clearDirectPlay(game: DailyGameId): void {
   if (pending?.game === game) pending = null;
 }
 
-/**
- * Opening another daily from a finish screen skips its intro, except Ball Knowledge: its clock
- * starts as soon as play begins, so the player lands on its intro and starts when ready.
- */
+/** Games whose clock starts as soon as play begins, so the player lands on the intro and starts when ready. */
+const TIMED: ReadonlySet<DailyGameId> = new Set(["ball-knowledge", "dead-reckoning"]);
+
+/** Opening another daily from a finish screen skips its intro, except for the timed games. */
 export function requestDirectPlayFromFinish(game: DailyGameId): void {
-  if (game !== "ball-knowledge") requestDirectPlay(game, "finish");
+  if (!TIMED.has(game)) requestDirectPlay(game, "finish");
 }

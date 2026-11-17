@@ -9,7 +9,7 @@ import { GameTitle } from "@/components/ui/game-title";
 import { track } from "@/lib/analytics/track";
 import { requestDirectPlay } from "@/lib/daily-intro/direct-play";
 import { playHref as draftPlayHref } from "@/lib/draft-landing/play-href";
-import { DEBATE_GAME, PUZZLE_GAMES, getGame, type DailyGameId } from "@/lib/games/registry";
+import { DEBATE_GAME, PUZZLE_COUNT_WORD, PUZZLE_GAMES, getGame, type DailyGameId } from "@/lib/games/registry";
 import {
   buildTodayView,
   formatCountdown,
@@ -81,7 +81,8 @@ export function Today({ dayNumber, debateCategory }: TodayProps) {
                 });
               }}
             >
-              Play today&apos;s {featured.name} →
+              {/* The arrow stays on the line with the last word. */}
+              Play today&apos;s {featured.name}{"\u00a0"}→
             </Link>
           </div>
           <div className="home-featured-preview">
@@ -92,7 +93,7 @@ export function Today({ dayNumber, debateCategory }: TodayProps) {
         <section className="home-featured is-all-done" data-testid="home-all-done">
           <div className="home-featured-copy">
             <p className="home-kicker">Today</p>
-            <h2 className="home-featured-title">All six done.</h2>
+            <h2 className="home-featured-title">All {PUZZLE_COUNT_WORD} done.</h2>
             <p className="home-featured-pitch">
               {now === null
                 ? "New puzzles arrive at midnight ET."

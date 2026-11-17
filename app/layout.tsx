@@ -14,6 +14,7 @@ import "./freezeframes.css";
 import "./ball-knowledge.css";
 import "./getting-warmer.css";
 import "./hot-takes.css";
+import "./dead-reckoning-site.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

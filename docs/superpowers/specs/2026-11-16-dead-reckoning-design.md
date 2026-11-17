@@ -73,10 +73,19 @@ In beats: the number clears from fog and counts up; a log-scale line drops the a
 ## Saved on the device
 
 - Today's guesses, after each leg, so a refresh resumes the voyage or goes straight to the end screen.
-- The dates of finished voyages, for the streak.
+- A finished voyage goes into the shared daily streak store, like every other daily. Dates kept in the game's own list before it joined are carried over once.
 - Both are best-effort: the game works without storage.
 
-## Out of scope for the soft launch
+## On the rest of the site
 
-- Registry entry, home lineup, Sweep, daily intro screen, OG image, share links, admin page for the bank, daily review.
+- It is one of the dailies: on the home page, in the footer, the sitemap and search, with its own share image.
+- It holds the home page's featured slot every day. Once it is played, the slot goes to Chain Link, Brain Dead and AnyGuessr in their usual rotation, and Dead Reckoning drops into the lineup.
+- It counts towards the Sweep from the day it joined (`SWEEP_SINCE` in `lib/streak/sweep.ts`). Days before that are judged without it, so nobody loses the Sweeps they already have. The end screen shows today's games, what is left for a Sweep, and what to play next, under the voyage's own result.
+- Opening it from the home page or another finish screen lands on its intro, as with Ball Knowledge, because each question starts a clock.
+- The share text uses the shared format and links to the shared result page.
+
+## Out of scope
+
+- The shared daily intro screen and the about text below the game: the voyage fills the window.
+- An admin page for the question bank, and daily review: the questions are picked from the date.
 - Sound.

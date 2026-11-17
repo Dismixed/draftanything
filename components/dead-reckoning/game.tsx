@@ -1,12 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { FinishRun } from "@/components/daily/finish-run";
+import { FinishUpNext } from "@/components/daily/finish-up-next";
 import { msUntilNextDailyDay } from "@/lib/daily-day";
 import { buildFleet, type Fleet } from "@/lib/dead-reckoning/fleet";
 import { formatFull, inWords, parseGuess } from "@/lib/dead-reckoning/numbers";
 import { FLAVOUR, LEGS, PAR, SQUARES, closeness, dayStr, grade, quickerThan, tierTable, totalDays, type Guess } from "@/lib/dead-reckoning/scoring";
-import { loadFinishedDays, loadGuesses, markFinished, saveGuesses, streaks } from "@/lib/dead-reckoning/storage";
+import { loadGuesses, saveGuesses, streaks } from "@/lib/dead-reckoning/storage";
+import { PUZZLE_GAMES, type DailyGameId } from "@/lib/games/registry";
+import { formatCountdown } from "@/lib/games/today";
+import { buildShareText, formatShareDate } from "@/lib/share/share-text";
+import { useStreak } from "@/lib/streak/context";
+import { readStreakStore, recordDailyCompletion } from "@/lib/streak/storage";
+import { sweepCount } from "@/lib/streak/sweep";
 import type { Leg } from "@/lib/dead-reckoning/voyage";
 import { CrowdStrip, GapLine } from "./charts";
 import { createIsles, type IslesHandle } from "./isles";
@@ -54,7 +62,8 @@ export default function DeadReckoningGame() {
   const legIndex = guesses.length - (phase === "reveal" || phase === "sail" ? 1 : 0);
 
   const finish = useCallback(async (d: Day, all: Guess[]) => {
-    markFinished(d.date);
+    // Counts towards the daily streak and the Sweep, like every other daily.
+    recordDailyCompletion("dead-reckoning", d.date);
     let result: Fleet;
     try {
       const res = await fetch("/api/dead-reckoning/finish", {
@@ -520,6 +529,14 @@ function Countdown() {
   );
 }
 
+/** The shared finish pieces take their colours from these, so they match the voyage. */
+const FIN_VARS = {
+  "--bg": "var(--dr-bg)",
+  "--text": "var(--dr-ink)",
+  "--text-dim": "var(--dr-ink2)",
+  "--fin-acc": "var(--dr-t1)",
+} as CSSProperties;
+
 function End({ day, guesses, fleet }: { day: Day; guesses: Guess[]; fleet: Fleet | null }) {
   const [missed, setMissed] = useState(false);
   const stripsRef = useRef<HTMLDivElement>(null);
@@ -532,11 +549,25 @@ function End({ day, guesses, fleet }: { day: Day; guesses: Guess[]; fleet: Fleet
   const tiers = day.legs.map((l, i) => grade(guesses[i] ?? null, l.answer));
   const total = totalDays(guesses, answers);
   const over = total - PAR;
-  const finished = typeof window === "undefined" ? [] : loadFinishedDays();
-  const { current, longest } = streaks(finished, day.date);
+  const { streaks: all } = useStreak();
+  // The voyage is over, so today counts even before the streak store has caught up.
+  const played = useMemo(
+    () => new Set<DailyGameId>(["dead-reckoning", ...all.filter((s) => s.playedToday).map((s) => s.id)]),
+    [all],
+  );
+  const dates = typeof window === "undefined" ? [day.date] : readStreakStore().games["dead-reckoning"].playDates;
+  const { current, longest } = streaks([...dates, day.date], day.date);
+  const allDone = PUZZLE_GAMES.every((id) => played.has(id));
+  const sweeps = allDone && typeof window !== "undefined" ? sweepCount(readStreakStore()) : 0;
+  // "3h 12m", read once: the end screen's own countdown ticks beside it.
+  const [nextIn] = useState(() => formatCountdown(msUntilNextDailyDay(Date.now())));
   const pct = fleet ? quickerThan(total, fleet.days) : null;
   const avg = fleet && fleet.days.length ? fleet.days.reduce((s, x) => s + x, 0) / fleet.days.length : null;
-  const share = `dead reckoning · voyage ${day.voyage}\n${tiers.map((t) => SQUARES[t.index]).join("")}  ${dayStr(total)} at sea (par ${PAR})`;
+  const share = buildShareText({
+    gameId: "dead-reckoning",
+    label: formatShareDate(day.date),
+    lines: [tiers.map((t) => SQUARES[t.index]).join(""), `${dayStr(total)} at sea (par ${PAR})`],
+  });
 
   useEffect(() => {
     const m = window.matchMedia("(max-width: 560px)");
@@ -603,6 +634,10 @@ function End({ day, guesses, fleet }: { day: Day; guesses: Guess[]; fleet: Fleet
               {missed ? "hide the guesses" : "see what you missed"}
             </button>
           </div>
+          <div className="fin dr-fin" style={FIN_VARS}>
+            <FinishRun gameId="dead-reckoning" played={played} />
+            <FinishUpNext gameId="dead-reckoning" played={played} sweeps={sweeps} countdown={nextIn} />
+          </div>
           {missed ? (
             <div className="dr-strips" ref={stripsRef}>
               {day.legs.map((l, i) => (
@@ -620,7 +655,8 @@ function End({ day, guesses, fleet }: { day: Day; guesses: Guess[]; fleet: Fleet
               ))}
             </div>
           ) : null}
-          <div className="dr-sharetxt">{share}</div>
+          {/* The result link goes in what is copied, but is too long to be worth showing. */}
+          <div className="dr-sharetxt">{share.split("\n").slice(0, -1).join("\n")}</div>
         </div>
       </div>
     </div>

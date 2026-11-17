@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DAILY_GAMES, FEATURED_GAMES, PUZZLE_GAMES, type DailyGameId } from "@/lib/games/registry";
+import { DAILY_GAMES, FEATURED_GAMES, PINNED_FEATURED_GAME, PUZZLE_GAMES, type DailyGameId } from "@/lib/games/registry";
 import {
   buildTodayView,
   featuredGameForDay,
@@ -25,86 +25,80 @@ describe("dailyDayNumber", () => {
 });
 
 describe("featuredGameForDay", () => {
-  it("returns the same game for the same day", () => {
-    expect(featuredGameForDay(DAY)).toBe(featuredGameForDay(DAY));
-  });
-
-  it("only ever features Chain Link, Brain Dead or AnyGuessr", () => {
-    expect([...FEATURED_GAMES]).toEqual(["chainlink", "brain-dead", "anyguessr"]);
-    for (let i = 0; i < 30; i++) expect(FEATURED_GAMES).toContain(featuredGameForDay(DAY + i));
-  });
-
-  it("features each of the three once in any three consecutive days", () => {
-    const run = Array.from({ length: 3 }, (_, i) => featuredGameForDay(DAY + i));
-    expect([...run].sort()).toEqual([...FEATURED_GAMES].sort());
-  });
-
-  it("returns a valid game for negative day numbers", () => {
-    expect(FEATURED_GAMES).toContain(featuredGameForDay(-1));
-    expect(FEATURED_GAMES).toContain(featuredGameForDay(-15));
+  it("features Dead Reckoning every day", () => {
+    expect(PINNED_FEATURED_GAME).toBe("dead-reckoning");
+    for (let i = 0; i < 30; i++) expect(featuredGameForDay(DAY + i)).toBe("dead-reckoning");
+    expect(featuredGameForDay(-1)).toBe("dead-reckoning");
   });
 });
 
 describe("buildTodayView", () => {
-  const featured = featuredGameForDay(DAY);
+  const pinned = new Set<DailyGameId>([PINNED_FEATURED_GAME]);
 
-  it("features the day's game with nothing played", () => {
+  it("features Dead Reckoning with nothing played, and every other puzzle in the lineup", () => {
     const view = buildTodayView(DAY, new Set());
-    expect(view.featured).toBe(featured);
+    expect(view.featured).toBe("dead-reckoning");
     expect(view.isUpNext).toBe(false);
     expect(view.doneCount).toBe(0);
-    expect(view.lineup).toHaveLength(5);
-    expect(view.lineup).not.toContain(featured);
+    expect(view.lineup).toHaveLength(6);
+    expect(view.lineup).not.toContain("dead-reckoning");
     expect(view.lineup).not.toContain("hot-takes");
   });
 
-  it("moves to the next unplayed game once the featured one is played", () => {
-    const view = buildTodayView(DAY, new Set<DailyGameId>([featured]));
-    expect(view.featured).toBe(featuredGameForDay(DAY + 1));
+  it("offers one of the three rotating games next once Dead Reckoning is played", () => {
+    const view = buildTodayView(DAY, pinned);
+    expect(FEATURED_GAMES).toContain(view.featured);
     expect(view.isUpNext).toBe(true);
     expect(view.doneCount).toBe(1);
   });
 
-  it("works through the three featured games before any other daily", () => {
-    const view = buildTodayView(DAY, new Set<DailyGameId>([featured, featuredGameForDay(DAY + 1)]));
-    expect(view.featured).toBe(featuredGameForDay(DAY + 2));
-    expect(view.isUpNext).toBe(true);
+  it("rotates which of the three comes next, each once in any three consecutive days", () => {
+    const run = Array.from({ length: 3 }, (_, i) => buildTodayView(DAY + i, pinned).featured);
+    expect([...run].sort()).toEqual([...FEATURED_GAMES].sort());
+    expect(FEATURED_GAMES).toContain(buildTodayView(-15, pinned).featured);
   });
 
-  it("moves on to the other dailies once all three featured games are played", () => {
-    const view = buildTodayView(DAY, new Set<DailyGameId>(FEATURED_GAMES));
+  it("works through the three rotating games before any other daily", () => {
+    const first = buildTodayView(DAY, pinned).featured!;
+    const view = buildTodayView(DAY, new Set<DailyGameId>([PINNED_FEATURED_GAME, first]));
+    expect(FEATURED_GAMES).toContain(view.featured);
+    expect(view.featured).not.toBe(first);
+  });
+
+  it("moves on to the other dailies once Dead Reckoning and the three are played", () => {
+    const view = buildTodayView(DAY, new Set<DailyGameId>([PINNED_FEATURED_GAME, ...FEATURED_GAMES]));
     expect(view.featured).toBe("freezeframes");
     expect(view.isUpNext).toBe(true);
-    expect(view.doneCount).toBe(3);
+    expect(view.doneCount).toBe(4);
   });
 
   it("features the last unplayed puzzle, whichever it is", () => {
     const allButOne = new Set<DailyGameId>(DAILY_GAMES.filter((id) => id !== "getting-warmer"));
     const view = buildTodayView(DAY, allButOne);
     expect(view.featured).toBe("getting-warmer");
-    expect(view.doneCount).toBe(5);
+    expect(view.doneCount).toBe(6);
   });
 
   it("never features Hot Takes and does not count it as done", () => {
     const view = buildTodayView(DAY, new Set<DailyGameId>([...PUZZLE_GAMES]));
     expect(view.featured).toBeNull();
-    expect(view.doneCount).toBe(6);
+    expect(view.doneCount).toBe(7);
     expect(buildTodayView(DAY, new Set<DailyGameId>(["hot-takes"])).doneCount).toBe(0);
   });
 
   it("puts unplayed games before played games in the lineup", () => {
     const playedGame: DailyGameId = "getting-warmer";
     const view = buildTodayView(DAY, new Set<DailyGameId>([playedGame]));
-    expect(view.featured).toBe(featured);
+    expect(view.featured).toBe("dead-reckoning");
     expect(view.lineup[view.lineup.length - 1]).toBe(playedGame);
-    expect(view.lineup.slice(0, 4)).not.toContain(playedGame);
+    expect(view.lineup.slice(0, 5)).not.toContain(playedGame);
   });
 
-  it("has no featured game and all six puzzles in the lineup when everything is played", () => {
+  it("has no featured game and all seven puzzles in the lineup when everything is played", () => {
     const view = buildTodayView(DAY, new Set<DailyGameId>(DAILY_GAMES));
     expect(view.featured).toBeNull();
     expect(view.isUpNext).toBe(false);
-    expect(view.doneCount).toBe(6);
+    expect(view.doneCount).toBe(7);
     expect(view.lineup).toEqual([...PUZZLE_GAMES]);
   });
 });
