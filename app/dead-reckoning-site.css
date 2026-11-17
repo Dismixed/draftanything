@@ -7,6 +7,8 @@
   --drs-brand: #5fb4cf;
   --drs-text: #e4eef0;
   --drs-muted: #93a9b3;
+  --drs-cta: #5fb4cf;
+  --drs-cta-text: #06202a;
   /* the preview chart */
   --drs-sea1: #12313d;
   --drs-sea2: #0d2530;
@@ -23,6 +25,8 @@ html[data-theme="light"] {
   --drs-brand: #17698a;
   --drs-text: #10283a;
   --drs-muted: #46606f;
+  --drs-cta: #17698a;
+  --drs-cta-text: #ffffff;
   --drs-sea1: #d4e9ec;
   --drs-sea2: #bcdde3;
   --drs-shoal: #9fd3dc;
@@ -44,4 +48,210 @@ html[data-theme="light"] {
   width: 100%;
   height: 100%;
   transform: none;
+}
+
+/* ── The one-time launch notice: a pop-up on the home page, a banner on the other games ── */
+.ln-kick {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--drs-brand);
+}
+.ln-x {
+  background: none;
+  border: 0;
+  color: inherit;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  opacity: 0.65;
+}
+.ln-x:hover,
+.ln-x:focus-visible {
+  opacity: 1;
+}
+
+.ln-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px))
+    max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  background: rgba(5, 10, 18, 0.55);
+  backdrop-filter: blur(3px);
+  animation: ln-fade 0.25s ease both;
+}
+.ln-modal {
+  outline: none;
+  width: min(440px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--drs-border);
+  border-radius: 20px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+  animation: ln-rise 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.ln-art {
+  position: relative;
+  height: 190px;
+  overflow: hidden;
+}
+.ln-art .od-preview-frame.is-fill,
+.ln-art .drs-chart {
+  height: 190px;
+}
+.ln-art .ln-x {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  opacity: 1;
+}
+.ln-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 22px 24px 24px;
+}
+.ln-title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+.ln-title span {
+  color: var(--drs-brand);
+}
+.ln-body p {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 15.5px;
+  line-height: 1.45;
+}
+.ln-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ln-tags span {
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--drs-brand);
+  background: color-mix(in srgb, var(--drs-brand) 14%, transparent);
+}
+.ln-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+}
+.ln-cta {
+  display: inline-flex;
+  align-items: center;
+  padding: 11px 18px;
+  border-radius: 10px;
+  background: var(--drs-cta);
+  color: var(--drs-cta-text);
+  font-weight: 700;
+  font-size: 15px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ln-cta:focus-visible {
+  outline: 2px solid var(--drs-brand);
+  outline-offset: 3px;
+}
+.ln-later {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.ln-banner {
+  position: relative;
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px 48px 10px max(16px, env(safe-area-inset-left, 0px));
+  background: linear-gradient(90deg, var(--drs-sea2), var(--drs-sea1));
+  color: var(--drs-text);
+  border-bottom: 1px solid var(--drs-border);
+  font-size: 14.5px;
+  animation: ln-fade 0.3s ease both;
+}
+.ln-banner b {
+  font-weight: 800;
+}
+.ln-banner a {
+  color: var(--drs-brand);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ln-new {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--drs-cta);
+  color: var(--drs-cta-text);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.ln-banner .ln-x {
+  position: absolute;
+  right: max(6px, env(safe-area-inset-right, 0px));
+}
+
+@media (max-width: 560px) {
+  .ln-banner {
+    justify-content: flex-start;
+  }
+  .ln-long {
+    display: none;
+  }
+  .ln-title {
+    font-size: 28px;
+  }
+}
+
+@keyframes ln-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes ln-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ln-scrim,
+  .ln-modal,
+  .ln-banner {
+    animation: none;
+  }
 }

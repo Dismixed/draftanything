@@ -84,6 +84,12 @@ In beats: the number clears from fog and counts up; a log-scale line drops the a
 - Opening it from the home page or another finish screen lands on its intro, as with Ball Knowledge, because each question starts a clock.
 - The share text uses the shared format and links to the shared result page.
 
+## Launch notice
+
+- Every visitor is told once (`lib/launch-notice.ts`, `components/launch-notice/`). On the home page it is a pop-up card. On another game it is a banner, but only for a visit that started away from the home page: someone who came in through the home page has already been offered the pop-up.
+- It ends for good, in that browser, on closing or clicking either, on opening Dead Reckoning, or for anyone who has already finished a voyage. It never shows on Dead Reckoning itself, and nobody sees it after `NOTICE_UNTIL` (2026-12-01).
+- `launch_notice_shown`, `launch_notice_clicked` and `launch_notice_dismissed` record how it does.
+
 ## Out of scope
 
 - The shared daily intro screen and the about text below the game: the voyage fills the window.
