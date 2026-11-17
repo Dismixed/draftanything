@@ -1,3 +1,4 @@
+import { LaunchNotice } from "@/components/launch-notice/launch-notice";
 import type { Metadata, Viewport } from "next";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Providers } from "./providers";
@@ -59,6 +60,7 @@ export default function RootLayout({
       </head>
       <body>
         <Providers>
+          <LaunchNotice />
           <ProfileMenuWrapper />
           {children}
         </Providers>

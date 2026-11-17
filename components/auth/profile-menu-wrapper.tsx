@@ -10,7 +10,8 @@ export function ProfileMenuWrapper() {
     <div
       style={{
         position: "fixed",
-        top: 16,
+        // Sits below the launch banner while it shows.
+        top: "calc(16px + var(--notice-h, 0px))",
         right: 16,
         zIndex: 100,
         display: "flex",
