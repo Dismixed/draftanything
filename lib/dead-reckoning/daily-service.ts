@@ -1,6 +1,6 @@
 import "server-only";
 
-import { BANK, CATEGORIES } from "./bank";
+import { BANK, CATEGORIES, TREASURE } from "./bank";
 import { daysSinceLaunch, type Leg } from "./voyage";
 
 /**
@@ -15,4 +15,11 @@ export function legsFor(date: string): Leg[] {
     const q = list[((day % list.length) + list.length) % list.length];
     return { ...q, category };
   });
+}
+
+/** The treasure island's question for `date`, in the same day-by-day order. */
+export function treasureFor(date: string): Leg {
+  const day = daysSinceLaunch(date);
+  const q = TREASURE[((day % TREASURE.length) + TREASURE.length) % TREASURE.length];
+  return { ...q, category: "treasure" };
 }

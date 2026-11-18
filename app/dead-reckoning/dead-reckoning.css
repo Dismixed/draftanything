@@ -14,7 +14,10 @@
   --dr-t3: #9a6408;
   --dr-t4: #5e4e8e;
   --dr-t5: #66737d;
-  --dr-t6: #8a969e;
+  --dr-t6: #a33a2b;
+  --dr-t7: #8a969e;
+  /* the treasure round */
+  --dr-gold: #a8740a;
   --dr-display: var(--font-dr-display), "Iowan Old Style", Georgia, serif;
   --dr-body: var(--font-dr-body), system-ui, -apple-system, "Segoe UI", sans-serif;
   --dr-mono: var(--font-dr-mono), ui-monospace, Menlo, Consolas, monospace;
@@ -34,7 +37,9 @@
   --dr-t3: #edb64b;
   --dr-t4: #b4a3e6;
   --dr-t5: #8c9aa5;
-  --dr-t6: #6b7a84;
+  --dr-t6: #e07a68;
+  --dr-t7: #6b7a84;
+  --dr-gold: #f2c45a;
   color-scheme: dark;
 }
 
@@ -156,6 +161,12 @@
 
 .dr-squares i.now {
   border-color: var(--dr-ink);
+}
+
+/* the treasure island's square, once it is earned */
+.dr-squares i.gold {
+  border-color: var(--dr-gold);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--dr-gold) 60%, transparent);
 }
 
 .dr-squares i.pop {
@@ -598,11 +609,12 @@
 }
 
 .dr-tier.on.t4 .word,
-.dr-tier.on.t5 .word {
+.dr-tier.on.t5 .word,
+.dr-tier.on.t6 .word {
   animation: dr-wobble 1.2s ease-in-out 0.5s;
 }
 
-.dr-tier.on.t6 .word {
+.dr-tier.on.t7 .word {
   animation: dr-droop 1s ease-in 0.5s forwards;
 }
 
@@ -638,6 +650,12 @@
   font-weight: 400;
   opacity: 0;
   transition: opacity 0.3s 0.4s;
+}
+
+/* days the treasure took off */
+.dr-gain.off {
+  color: var(--dr-gold);
+  font-weight: 600;
 }
 
 .dr-tier.on .dr-gain {
@@ -986,4 +1004,14 @@
   max-width: 420px;
   margin-left: auto;
   margin-right: auto;
+}
+
+/* the treasure round */
+.dr .dr-gold {
+  color: var(--dr-gold);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+.dr-treasure .dr-q {
+  text-shadow: 0 0 24px color-mix(in srgb, var(--dr-gold) 35%, transparent);
 }

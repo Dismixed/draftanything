@@ -7,7 +7,7 @@ import { FinishUpNext } from "@/components/daily/finish-up-next";
 import { msUntilNextDailyDay } from "@/lib/daily-day";
 import { buildFleet, type Fleet } from "@/lib/dead-reckoning/fleet";
 import { formatFull, inWords, parseGuess } from "@/lib/dead-reckoning/numbers";
-import { FLAVOUR, LEGS, PAR, SQUARES, closeness, dayStr, grade, quickerThan, tierTable, totalDays, type Guess } from "@/lib/dead-reckoning/scoring";
+import { FLAVOUR, LEGS, PAR, SQUARES, TREASURE_DAYS, TREASURE_MARK, closeness, dayStr, earnsTreasure, grade, quickerThan, tierTable, totalDays, treasureDays, voyage, type Guess } from "@/lib/dead-reckoning/scoring";
 import { loadGuesses, saveGuesses, streaks } from "@/lib/dead-reckoning/storage";
 import { PUZZLE_GAMES, type DailyGameId } from "@/lib/games/registry";
 import { formatCountdown } from "@/lib/games/today";
@@ -23,15 +23,17 @@ interface Day {
   date: string;
   voyage: number;
   legs: Leg[];
+  /** The treasure island's question, for a voyage that reaches the last island under par. */
+  treasure: Leg;
 }
 
-type Phase = "loading" | "failed" | "intro" | "question" | "reveal" | "sail" | "end";
+type Phase = "loading" | "failed" | "intro" | "question" | "reveal" | "sail" | "treasure" | "end";
 
 /** Seconds on the clock for each question. */
 const CLOCK = 20;
 
 /** How the wind fills the sails on the crossing, by tier. */
-const WIND = ["full sails", "a fair wind", "a steady breeze", "a light breeze", "barely a breath", "limp sails", "not a breath of wind"];
+const WIND = ["full sails", "a fair wind", "a steady breeze", "a light breeze", "barely a breath", "limp sails", "a broken mast", "not a breath of wind"];
 
 function dateLabel(date: string): string {
   return new Date(`${date}T12:00:00Z`)
@@ -75,7 +77,7 @@ export default function DeadReckoningGame() {
       result = ((await res.json()) as { fleet: Fleet }).fleet;
     } catch {
       // No server: the estimated fleet still gives the end screen something to compare with.
-      result = buildFleet(d.date, d.legs, []);
+      result = buildFleet(d.date, [...d.legs, d.treasure], []);
     }
     setFleet(result);
   }, []);
@@ -105,19 +107,27 @@ export default function DeadReckoningGame() {
       rootRef.current!,
       { odo: odoRef.current!, where: whereRef.current!, flash: flashRef.current! },
       day.date,
-      { onLanded: setLanded },
+      { onLanded: setLanded, days: tierTable().map((t) => t.days) },
     );
     islesRef.current = isles;
     setNames(isles.names());
-    const saved = loadGuesses(day.date).slice(0, LEGS);
-    const tiers = saved.map((g, i) => grade(g, day.legs[i].answer).index);
-    isles.place(tiers);
+    const all = loadGuesses(day.date);
+    const crossings = all.slice(0, LEGS);
+    const unlocked = crossings.length === LEGS && earnsTreasure(totalDays(crossings, day.legs.map((l) => l.answer)));
+    // The treasure guess only stands if the voyage really earned the treasure island.
+    const saved = unlocked ? all.slice(0, LEGS + 1) : crossings;
+    const treasureGuess = saved.length > LEGS ? saved[LEGS] : undefined;
+    const tiers = saved.map((g, i) => grade(g, i < LEGS ? day.legs[i].answer : day.treasure.answer).index);
+    isles.place(tiers, treasureGuess === undefined ? 0 : treasureDays(treasureGuess, day.treasure.answer), unlocked);
     setGuesses(saved);
     setShown(saved.length);
-    if (saved.length === LEGS) {
+    if (saved.length > LEGS || (saved.length === LEGS && !unlocked)) {
       isles.end();
       setPhase("end");
       void finish(day, saved);
+    } else if (saved.length === LEGS) {
+      isles.unlock();
+      setPhase("treasure");
     } else if (saved.length > 0) {
       isles.ask();
       setPhase("question");
@@ -147,11 +157,18 @@ export default function DeadReckoningGame() {
 
   const sailOn = () => {
     if (!day) return;
-    const last = guesses.length >= LEGS;
+    const arriving = guesses.length;
     setLanded(null);
     setPhase("sail");
     islesRef.current?.sail(() => {
-      if (last) {
+      const underPar = earnsTreasure(totalDays(guesses.slice(0, LEGS), day.legs.map((l) => l.answer)));
+      if (arriving === LEGS && underPar) {
+        // In under par: the treasure island appears, with one more question.
+        islesRef.current?.unlock();
+        setPhase("treasure");
+        return;
+      }
+      if (arriving >= LEGS) {
         islesRef.current?.end();
         setPhase("end");
         void finish(day, guesses);
@@ -162,7 +179,14 @@ export default function DeadReckoningGame() {
     });
   };
 
-  const leg = day && phase !== "end" ? day.legs[Math.min(legIndex, LEGS - 1)] : null;
+  const toTreasure = () => {
+    islesRef.current?.ask();
+    setPhase("question");
+  };
+
+  const onTreasure = legIndex >= LEGS;
+  const leg = day && phase !== "end" ? (onTreasure ? day.treasure : day.legs[legIndex]) : null;
+  const unlockedHud = day !== null && guesses.length >= LEGS && earnsTreasure(totalDays(guesses.slice(0, LEGS), day.legs.map((l) => l.answer)));
   const nextIsland = names[Math.min(legIndex + 1, names.length - 1)] ?? "the next island";
 
   return (
@@ -172,12 +196,13 @@ export default function DeadReckoningGame() {
         <div className="dr-brand">dead reckoning</div>
         <div>{day ? `voyage ${day.voyage} · ${dateLabel(day.date)}` : " "}</div>
         <div className="dr-squares" aria-hidden="true">
-          {Array.from({ length: LEGS }, (_, i) => {
-            const g = i < shown && day ? grade(guesses[i] ?? null, day.legs[i].answer) : null;
+          {Array.from({ length: unlockedHud ? LEGS + 1 : LEGS }, (_, i) => {
+            const answer = day ? (i < LEGS ? day.legs[i].answer : day.treasure.answer) : 0;
+            const g = i < shown && day ? grade(guesses[i] ?? null, answer) : null;
             return (
               <i
                 key={i}
-                className={`${g ? "pop" : ""}${!g && i === legIndex && phase === "question" ? "now" : ""}`}
+                className={`${g ? "pop" : ""}${!g && i === legIndex && phase === "question" ? "now" : ""}${i === LEGS ? " gold" : ""}`}
                 style={g ? { background: `var(--dr-t${g.index})`, borderColor: `var(--dr-t${g.index})` } : undefined}
               />
             );
@@ -207,7 +232,10 @@ export default function DeadReckoningGame() {
           </div>
         ) : null}
         {phase === "intro" ? <Intro onGo={firstQuestion} /> : null}
-        {phase === "question" && leg ? <Question key={legIndex} leg={leg} onSubmit={submit} /> : null}
+        {phase === "treasure" && day ? (
+          <TreasureFound days={totalDays(guesses.slice(0, LEGS), day.legs.map((l) => l.answer))} onGo={toTreasure} />
+        ) : null}
+        {phase === "question" && leg ? <Question key={legIndex} leg={leg} treasure={onTreasure} onSubmit={submit} /> : null}
         {phase === "reveal" && leg && day ? (
           <Reveal
             key={legIndex}
@@ -215,14 +243,23 @@ export default function DeadReckoningGame() {
             index={legIndex}
             guess={guesses[legIndex] ?? null}
             nextIsland={nextIsland}
+            treasure={onTreasure}
             onLand={(tier) => {
               setShown(legIndex + 1);
-              islesRef.current?.land(tier);
+              if (onTreasure) islesRef.current?.landTreasure(tier, treasureDays(guesses[legIndex] ?? null, leg.answer));
+              else islesRef.current?.land(tier);
             }}
             onNext={sailOn}
           />
         ) : null}
-        {phase === "sail" && leg ? <Crossing tier={grade(guesses[legIndex] ?? null, leg.answer).index} to={nextIsland} landed={landed} /> : null}
+        {phase === "sail" && leg ? (
+          <Crossing
+            tier={grade(guesses[legIndex] ?? null, leg.answer).index}
+            to={nextIsland}
+            landed={landed}
+            saved={onTreasure ? treasureDays(guesses[legIndex] ?? null, leg.answer) : null}
+          />
+        ) : null}
         {phase === "end" && day ? <End day={day} guesses={guesses} fleet={fleet} /> : null}
       </section>
     </div>
@@ -247,6 +284,10 @@ function HowTo() {
           ))}
         </tbody>
       </table>
+      <p>
+        par is {PAR} days. Reach the last island under par and a treasure island appears: one more question that can take up to{" "}
+        {dayStr(TREASURE_DAYS[0])} off.
+      </p>
     </details>
   );
 }
@@ -264,7 +305,7 @@ function Intro({ onGo }: { onGo: () => void }) {
   );
 }
 
-function Question({ leg, onSubmit }: { leg: Leg; onSubmit: (g: Guess) => void }) {
+function Question({ leg, treasure = false, onSubmit }: { leg: Leg; treasure?: boolean; onSubmit: (g: Guess) => void }) {
   const [raw, setRaw] = useState("");
   const [nudge, setNudge] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -335,6 +376,7 @@ function Question({ leg, onSubmit }: { leg: Leg; onSubmit: (g: Guess) => void })
 
   return (
     <div className="dr-inner">
+      {treasure ? <div className="dr-meta dr-gold">treasure island · within 1% takes 2 days off</div> : null}
       <h1 className="dr-q">{leg.prompt}</h1>
       <div className="dr-unit">in {leg.unit}</div>
       <div className="dr-clue">{leg.clue}</div>
@@ -394,6 +436,7 @@ function Reveal({
   index,
   guess,
   nextIsland,
+  treasure = false,
   onLand,
   onNext,
 }: {
@@ -401,10 +444,12 @@ function Reveal({
   index: number;
   guess: Guess;
   nextIsland: string;
+  treasure?: boolean;
   onLand: (tier: number) => void;
   onNext: () => void;
 }) {
   const tier = grade(guess, leg.answer);
+  const saved = treasure ? treasureDays(guess, leg.answer) : 0;
   /** 0 fog · 1 answer landed · 2 your guess · 3 the gap · 4 tier · 5 the fact. */
   const [beat, setBeat] = useState(0);
   const [clear, setClear] = useState(false);
@@ -454,8 +499,8 @@ function Reveal({
 
   return (
     <div className="dr-inner">
-      <div className="dr-meta">
-        leg {index + 1} of {LEGS} · {leg.prompt.toLowerCase().replace(/\?$/, "")}
+      <div className={`dr-meta${treasure ? " dr-gold" : ""}`}>
+        {treasure ? "treasure island" : `leg ${index + 1} of ${LEGS}`} · {leg.prompt.toLowerCase().replace(/\?$/, "")}
       </div>
       <div className={`dr-ans${clear ? "" : " fog"}`}>
         <div className="dr-num" ref={countRef}>
@@ -475,9 +520,13 @@ function Reveal({
             </span>
           ))}
         </span>
-        <span className="dr-gain">+{dayStr(tier.days)}</span>
+        <span className={`dr-gain${treasure && saved ? " off" : ""}`}>
+          {treasure ? (saved ? `−${dayStr(saved)}` : "no days off") : `+${dayStr(tier.days)}`}
+        </span>
       </div>
-      <div className={`dr-flav${beat >= 4 ? " on" : ""}`}>{FLAVOUR[tier.index]}</div>
+      <div className={`dr-flav${beat >= 4 ? " on" : ""}`}>
+        {treasure ? (saved ? "you found the treasure" : "the chest stays buried") : FLAVOUR[tier.index]}
+      </div>
       <div className={`dr-later${beat >= 5 ? " on" : ""}`}>
         <div className="dr-fact">{leg.fact}</div>
         <button
@@ -491,7 +540,7 @@ function Reveal({
           }}
           tabIndex={beat >= 5 ? 0 : -1}
         >
-          sail on to {nextIsland}
+          {treasure ? `sail for ${nextIsland}` : `sail on to ${nextIsland}`}
         </button>
       </div>
     </div>
@@ -499,15 +548,34 @@ function Reveal({
 }
 
 /** On the crossing: where you're bound, and how the wind is. Says how close you got once you arrive. */
-function Crossing({ tier, to, landed }: { tier: number; to: string; landed: string | null }) {
+function Crossing({ tier, to, landed, saved }: { tier: number; to: string; landed: string | null; saved: number | null }) {
   const t = tierTable()[tier];
+  const wind = saved === null ? `${WIND[tier]} · ${dayStr(t.days)}` : saved ? `full sails · ${dayStr(saved)} off the voyage` : "a fair wind · no days off";
   return (
     <div className="dr-inner">
       <div className="dr-meta">
         <span style={{ color: `var(--dr-t${tier})` }}>{t.name.toLowerCase()}</span> · bound for
       </div>
       <h1 className="dr-q">{to}</h1>
-      <div className="dr-clue">{landed ?? `${WIND[tier]} · ${dayStr(t.days)}`}</div>
+      <div className="dr-clue">{landed ?? wind}</div>
+    </div>
+  );
+}
+
+/** In at the last island under par: the treasure island appears, with one more question. */
+function TreasureFound({ days, onGo }: { days: number; onGo: () => void }) {
+  return (
+    <div className="dr-inner dr-intro dr-treasure">
+      <div className="dr-meta dr-gold">
+        {num(PAR - days)} under par · {dayStr(days)} at sea
+      </div>
+      <h1 className="dr-q">A treasure island appears.</h1>
+      <p className="dr-lede">
+        One more question. Within 1% takes {dayStr(TREASURE_DAYS[0])} off your voyage, within 10% takes {dayStr(TREASURE_DAYS[1])}. Miss, and it costs nothing.
+      </p>
+      <button type="button" className="dr-cta dr-solid" onClick={onGo} autoFocus>
+        dig for it
+      </button>
     </div>
   );
 }
@@ -547,7 +615,9 @@ function End({ day, guesses, fleet }: { day: Day; guesses: Guess[]; fleet: Fleet
   const [narrow, setNarrow] = useState(false);
   const answers = day.legs.map((l) => l.answer);
   const tiers = day.legs.map((l, i) => grade(guesses[i] ?? null, l.answer));
-  const total = totalDays(guesses, answers);
+  const trip = voyage(guesses.slice(0, LEGS), answers, guesses.length > LEGS ? guesses[LEGS] : undefined, day.treasure.answer);
+  const treasureTier = trip.treasure && guesses.length > LEGS ? grade(guesses[LEGS] ?? null, day.treasure.answer) : null;
+  const total = trip.days;
   const over = total - PAR;
   const { streaks: all } = useStreak();
   // The voyage is over, so today counts even before the streak store has caught up.
@@ -566,7 +636,10 @@ function End({ day, guesses, fleet }: { day: Day; guesses: Guess[]; fleet: Fleet
   const share = buildShareText({
     gameId: "dead-reckoning",
     label: formatShareDate(day.date),
-    lines: [tiers.map((t) => SQUARES[t.index]).join(""), `${dayStr(total)} at sea (par ${PAR})`],
+    lines: [
+      tiers.map((t) => SQUARES[t.index]).join("") + (trip.treasure ? ` ${trip.saved ? TREASURE_MARK.found : TREASURE_MARK.missed}` : ""),
+      `${dayStr(total)} at sea (par ${PAR})`,
+    ],
   });
 
   useEffect(() => {
@@ -596,7 +669,14 @@ function End({ day, guesses, fleet }: { day: Day; guesses: Guess[]; fleet: Fleet
           <h1 className="dr-headline">
             seven islands in <em>{dayStr(total)}</em>
           </h1>
-          <div className="dr-meta">{over > 0 ? `par is ${PAR} · ${num(over)} over` : "a perfect voyage · par"}</div>
+          <div className="dr-meta">
+            {over > 0 ? `par is ${PAR} · ${num(over)} over` : over < 0 ? `par is ${PAR} · ${num(-over)} under` : `right on par`}
+          </div>
+          {trip.treasure ? (
+            <div className="dr-meta dr-gold">
+              {trip.saved ? `treasure found · ${dayStr(trip.saved)} off` : "reached the treasure island · the chest stayed buried"}
+            </div>
+          ) : null}
           <div className="dr-pct">
             {pct !== null && avg !== null ? (
               <>
@@ -653,6 +733,20 @@ function End({ day, guesses, fleet }: { day: Day; guesses: Guess[]; fleet: Fleet
                   narrow={narrow}
                 />
               ))}
+              {treasureTier ? (
+                <CrowdStrip
+                  key={day.treasure.id}
+                  index={LEGS}
+                  label="treasure island"
+                  prompt={day.treasure.prompt}
+                  answer={day.treasure.answer}
+                  guess={guesses[LEGS] ?? null}
+                  tier={treasureTier.index}
+                  days={-trip.saved}
+                  crowd={fleet?.guesses[LEGS] ?? []}
+                  narrow={narrow}
+                />
+              ) : null}
             </div>
           ) : null}
           {/* The result link goes in what is copied, but is too long to be worth showing. */}

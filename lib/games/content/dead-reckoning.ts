@@ -13,14 +13,15 @@ export const deadReckoning: GameContent = {
       body: [
         "Each day's voyage has seven islands, and each island asks one question with a number for an answer: how many keys on a piano, how tall Mount Everest is, how many calories in a Big Mac.",
         "Type your best estimate before the 20-second fuse burns out. Shorthand works, so 4m, 2.5k and 1.2b are all fine. If the fuse runs out, whatever you have typed is taken.",
-        "Every crossing takes between one and five days, depending on how close you were. Your score for the day is the total days at sea. A perfect voyage takes seven.",
+        "Every crossing takes between one and five days, depending on how close you were. Your score for the day is the total days at sea, and par is 14.",
+        "Reach the last island under par and a treasure island appears, with one more, harder question. Nail it and it takes up to two days off your voyage; miss it and it costs you nothing.",
       ],
     },
     {
       heading: "How close counts",
       body: [
         "Closeness is measured as a ratio, so being 10% out on a big number counts the same as being 10% out on a small one.",
-        "Within 10% of the answer is a Dead Reckoning, and the crossing takes one day. Within 25% takes a day and a half, within 50% takes two days, within 2× takes two and a half, within 5× takes three, and anything further takes four. A blank answer leaves you becalmed for five.",
+        "Within 1% of the answer is a Dead Reckoning, and the crossing takes one day. Within 10% takes two days, within 25% two and a half, within 50% three, within 2× three and a half, within 5× four, and anything further four and a half. A blank answer leaves you becalmed for five.",
       ],
     },
     {
@@ -43,11 +44,11 @@ export const deadReckoning: GameContent = {
     {
       question: "How is Dead Reckoning scored?",
       answer:
-        "In days at sea. Each of the seven crossings takes one to five days depending on how close your estimate was, so the best possible voyage is seven days.",
+        "In days at sea. Each of the seven crossings takes one to five days depending on how close your estimate was, and par is 14. Finish under par and the treasure island can take up to two more days off, so the best possible voyage is five days.",
     },
     {
       question: "Do I need the exact number?",
-      answer: "No. Anything within 10% of the answer counts as a perfect crossing.",
+      answer: "Nearly. A perfect crossing needs a guess within 1% of the answer. Within 10% still gets you there in two days.",
     },
     {
       question: "How long do I get for each question?",

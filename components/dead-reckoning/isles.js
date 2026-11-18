@@ -28,38 +28,43 @@ const POOL=[{n:'lantern rock',k:'light',r:30},{n:'palm cove',k:'cove',r:46},{n:"
  {n:'wreck bay',k:'wreck',r:40},{n:'smoke isle',k:'volcano',r:50},{n:'the old fort',k:'fort',r:46},{n:'treasure isle',k:'treasure',r:44},{n:'whalebone isle',k:'bones',r:44},
  {n:'orchard isle',k:'orchard',r:50},{n:'windmill key',k:'mill',r:44},{n:'gull cay',k:'cay',r:30},{n:'the old temple',k:'temple',r:46}];
 let ISLES=[];
-function pickIsles(){const p=[...POOL];for(let i=p.length-1;i>0;i--){const j=Math.floor(SR()*(i+1));[p[i],p[j]]=[p[j],p[i]]}ISLES=[HOME,...p.slice(0,7)]}
+/* treasure isle is kept for the treasure round: if the shuffle deals it, the next island takes its place */
+function pickIsles(){const p=[...POOL];for(let i=p.length-1;i>0;i--){const j=Math.floor(SR()*(i+1));[p[i],p[j]]=[p[j],p[i]]}
+  const t=p.findIndex(q=>q.k==='treasure');if(t<7)[p[t],p[7]]=[p[7],p[t]];ISLES=[HOME,...p.slice(0,7),p.find(q=>q.k==='treasure')]}
 pickIsles();
 const LAYOUTS={
- sea:{name:'open sea',bend:1,gen:()=>{const pts=[[0,0]];let h=-.5+SR()*.3;for(let i=1;i<8;i++){h+=(i%2?1:-1)*(.6+SR()*.5);const L=420+SR()*110,[x,y]=pts[i-1];pts.push([x+Math.cos(h)*L,y+Math.sin(h)*L])}return pts}}
+ sea:{name:'open sea',bend:1,gen:()=>{const pts=[[0,0]];let h=-.5+SR()*.3;for(let i=1;i<9;i++){h+=(i%2?1:-1)*(.6+SR()*.5);const L=420+SR()*110,[x,y]=pts[i-1];pts.push([x+Math.cos(h)*L,y+Math.sin(h)*L])}return pts}}
 };
-let LAY=LAYOUTS.sea,ISL=[];
+let LAY=LAYOUTS.sea,ISL=[];const TREASURE=8;
 function buildLayout(){
   if(LAY.gen)LAY.pts=LAY.gen();const pts=LAY.pts,N=pts.length;LAY.ctr=[0,1].map(k=>pts.reduce((a,p)=>a+p[k],0)/N);
   ISL=pts.map((c,i)=>{const s=ISLES[i];
     // the jetty faces the way the route comes and goes
     let tx=0,ty=0;[i-1,i+1].forEach(k=>{if(k<0||k>=N)return;tx+=pts[k][0]-c[0];ty+=pts[k][1]-c[1]});const L=Math.hypot(tx,ty)||1,to=[tx/L,ty/L],off=s.r*1.35+20;
     return{...s,c,to,a:Math.atan2(to[1],to[0]),d:[c[0]+to[0]*off,c[1]+to[1]*off]}});
+  /* the treasure island stays off the chart until it is earned (dup hides an island everywhere) */
+  ISL[TREASURE].dup=true;
 }
 buildLayout();
 const nextOf=i=>Math.min(i+1,ISL.length-1);
 /* every crossing is a smooth arc; a poor reckoning puts weather on the direct line and you bend round it */
 /* every crossing is a straight line. how close you reckoned decides where you stop:
    right at the dock, anchored just offshore, or out in open water with a rowboat to paddle in */
-const OFF=[0,45,85,135,185,240,280],WIND=[1,.85,.65,.45,.3,.15,0];
-const LANDTXT=['right up to the dock','alongside the dock','anchored just offshore','anchored offshore','anchored well out · rowing in','out in open water · rowing in','drifted in at last · rowing in'];
-const WINDTXT=['full sails','a fair wind','a steady breeze','a light breeze','barely a breath','limp sails','not a breath of wind'];
+const OFF=[0,45,85,135,185,225,260,280],WIND=[1,.85,.65,.45,.3,.2,.1,0];
+const LANDTXT=['right up to the dock','alongside the dock','anchored just offshore','anchored offshore','anchored well out · rowing in','out in open water · rowing in','aground on the reef · rowing in','drifted in at last · rowing in'];
+const WINDTXT=['full sails','a fair wind','a steady breeze','a light breeze','barely a breath','limp sails','a broken mast','not a breath of wind'];
 function startOf(j){return j===0?ISL[0].d:anchorOf(j-1)}
 function anchorOf(j){const A=startOf(j),D=ISL[nextOf(j)].d,r=S.results[j];if(!r)return D;const v=[D[0]-A[0],D[1]-A[1]],L=Math.hypot(v[0],v[1])||1,o=Math.min(OFF[r.i],L*.6);return[D[0]-v[0]/L*o,D[1]-v[1]/L*o]}
 /* a wrong answer makes you tack: a few smooth, shallow swings either side of the straight line */
-const TACK=[[0,0],[0,0],[2,10],[2,16],[3,20],[3,24],[4,24]];
+const TACK=[[0,0],[0,0],[2,10],[2,16],[3,20],[3,24],[4,26],[4,24]];
 function segPt(j,u){const A=startOf(j),B=anchorOf(j),v=[B[0]-A[0],B[1]-A[1]],L=Math.hypot(v[0],v[1])||1,r=S.results[j],[n,amp]=r?TACK[r.i]:[0,0];let off=0;
   if(n>1)off=amp*Math.sin(Math.PI*n*u)
   return[A[0]+v[0]*u-v[1]/L*off,A[1]+v[1]*u+v[0]/L*off]}
 function segAng(j,u){const a=segPt(j,Math.max(0,u-.01)),b=segPt(j,Math.min(1,u+.01));return Math.atan2(b[0]-a[0],-(b[1]-a[1]))}
 const boatPos=()=>S.sail?segPt(S.sail.j,S.u):S.done?anchorOf(S.done-1):ISL[0].d;
-/* the score: days at sea. a perfect reckoning crosses in a day, so par for seven islands is 7 */
-const DAYS=[1,1.5,2,2.5,3,4,5],PAR=7;
+/* the score: days at sea */
+/* days per tier come from the game's scoring, so the two can't drift apart */
+const DAYS=hooks.days||[1,2,2.5,3,3.5,4,4.5,5],BECALMED=DAYS.length-1;
 const num=d=>{const w=Math.floor(d),h=d-w>=.5;return (w||!h?String(w):'')+(h?'½':'')};
 const dayStr=d=>num(d)+(d===1?' day':' days');
 /* ---------- palettes ---------- */
@@ -84,12 +89,14 @@ function follow(){
   if(S.sail){const p=segPt(S.sail.j,S.u),B=ISL[nextOf(S.sail.j)].c;S.camT={x:p[0]+(B[0]-p[0])*.3,y:p[1]+(B[1]-p[1])*.3,z:ph?.7:1,ay:.36};return}
   // the voyage opens on the chart: home port, the ship at its jetty, the sea ahead
   if(S.phase==='intro'){const a=ISL[0].c,b=ISL[1].c;S.camT={x:a[0]+(b[0]-a[0])*.4,y:a[1]+(b[1]-a[1])*.4,z:ph?.8:1.05,ay:ph?.3:.34};return}
+  // the treasure island has just appeared: pull back to show it beside the last island
+  if(S.phase==='treasure'){const a=ISL[TREASURE-1].c,b=ISL[TREASURE].c;S.camT={x:(a[0]+b[0])/2,y:(a[1]+b[1])/2,z:ph?.62:.9,ay:ph?.3:.34};return}
   // just arrived: hold on the chart a moment before stepping ashore
   if(S.phase==='landed'){const s=ISL[S.node];S.camT={x:s.c[0]*.7+s.d[0]*.3,y:s.c[1]*.7+s.d[1]*.3,z:ph?.85:1.15,ay:.36};return}
   // docked: close in on the island, the boat at its jetty
   const s=ISL[S.node];S.camT={x:s.c[0]*.55+s.d[0]*.45,y:s.c[1]*.55+s.d[1]*.45,z:(ph?1.45:1.8)*(1+S.sh*.8),ay:S.phase==='intro'?.32:ph?.2:.25}}
 function fitEnd(){let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;const add=(x,y,r)=>{x0=Math.min(x0,x-r);x1=Math.max(x1,x+r);y0=Math.min(y0,y-r);y1=Math.max(y1,y+r)};
-  ISL.forEach(s=>add(s.c[0],s.c[1],s.r*1.5+10));for(let j=0;j<S.done;j++)for(let u=0;u<=1;u+=.05){const p=segPt(j,u);add(p[0],p[1],14)}
+  ISL.forEach(s=>{if(!s.dup)add(s.c[0],s.c[1],s.r*1.5+10)});for(let j=0;j<S.done;j++)for(let u=0;u<=1;u+=.05){const p=segPt(j,u);add(p[0],p[1],14)}
   const top=104,bot=H*(W<560?.44:.48),z=Math.min((W-30)/(x1-x0),(bot-top)/(y1-y0),1);S.camT={x:(x0+x1)/2,y:(y0+y1)/2,z,ay:(top+bot)/2/H}}
 
 /* ---------- the sea ---------- */
@@ -236,7 +243,7 @@ function trail(){
   const n=S.done+(S.sail?1:0);
   for(let j=0;j<n;j++){const u1=S.sail&&j===S.sail.j?S.u:1;if(u1<=0)continue;seg(j,u1);
     const r=S.results[j];ctx.strokeStyle=theme==='dark'?'rgba(0,0,0,.35)':'rgba(255,255,255,.7)';ctx.lineWidth=5.5/z;ctx.stroke();ctx.strokeStyle=css('--t'+r.i);ctx.lineWidth=3/z;
-    if(r.i===6){ctx.save();ctx.setLineDash([2/z,5/z]);ctx.stroke();ctx.restore()}else ctx.stroke()}
+    if(r.i===BECALMED){ctx.save();ctx.setLineDash([2/z,5/z]);ctx.stroke();ctx.restore()}else ctx.stroke()}
 }
 function ship(t){const p=boatPos();windLines(t,p);if(S.sail)S.ang=segAng(S.sail.j,S.u);const s=toScreen(p[0],p[1]);shipAt(s.x,s.y,S.ang,t,false,Math.max(.62,(W<560?1.1:1.25)*Math.min(1.2,S.cam.z*.8)))}
 /* the ship from above: a three-masted pirate ship, square sails bellied out, a black flag at the stern */
@@ -287,7 +294,7 @@ function shipAt(x,y,a,t,ghost,k){
 
 /* ---------- the uncharted: paper over everything you haven't sailed near ---------- */
 /* light fog: how far you can see on a crossing depends on how well you reckoned */
-const VIS=[560,470,390,310,240,190,150];
+const VIS=[560,470,390,310,240,190,165,150];
 const visOf=j=>VIS[S.results[j].i];
 function fog(){
   const f=fctx;f.setTransform(DPR,0,0,DPR,0,0);f.globalCompositeOperation='source-over';f.fillStyle=P.parch;f.fillRect(0,0,W,H);f.fillStyle=hatchPat;f.fillRect(0,0,W,H);
@@ -298,7 +305,7 @@ function fog(){
   ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=S.phase==='end'?.45:theme==='dark'?.66:.7;ctx.drawImage(fcv,0,0);ctx.globalAlpha=1;
 }
 /* the next island, sketched in on the paper before you get there */
-function nextUnseen(){for(let i=1;i<ISL.length;i++)if(!S.seen.has(i))return i;return -1}
+function nextUnseen(){for(let i=1;i<ISL.length;i++)if(!S.seen.has(i)&&!ISL[i].dup)return i;return -1}
 function sketches(){const i=nextUnseen();if(i<0||S.phase==='end')return;worldT();const z=S.cam.z,s=ISL[i];ctx.save();ctx.setLineDash([5/z,4/z]);ctx.lineWidth=1.3/z;ctx.strokeStyle=P.ink2;ctx.globalAlpha=.6;blobPath(s.c[0],s.c[1],s.r,10+i,14,1.3,.85);ctx.stroke();ctx.restore()}
 function labels(){
   ctx.setTransform(DPR,0,0,DPR,0,0);const end=S.phase==='end',nu=nextUnseen();ctx.textAlign='center';
@@ -448,7 +455,7 @@ function crew(t,s,hy,bx,by,bs,bx0,jx,o){
       if(k<he){const v=k/he;px=deck[0]+(land-deck[0])*v;py=deck[1]+(hy+1*s-deck[1])*v-Math.sin(v*Math.PI)*18*s;pose='jump';inBoat=far&&v<.12}
       else{const v=(k-he)/(1-he);px=land+(spot-land)*v;pose='walk';ph=t/85}}
     else if(W_.dir==='out'){px=deck[0];py=deck[1];inBoat=far;pose=far?'sit':'wave';face=-1;if(far)rowDx=-Math.min(1,(u-1)/.5)*80*s}}
-  if(!W_||(W_.dir==='in'&&t-W_.t0>1500)){const r=S.react;if(r&&S.phase!=='question'){const d=t-r.t0;pose=r.i<=1?(d<2200?'cheer':'wave'):r.i<=3?'wave':r.i===6?'shrug':'slump'}}
+  if(!W_||(W_.dir==='in'&&t-W_.t0>1500)){const r=S.react;if(r&&S.phase!=='question'){const d=t-r.t0;pose=r.i<=1?(d<2200?'cheer':'wave'):r.i<=3?'wave':r.i===BECALMED?'shrug':'slump'}}
   px+=inBoat?rowDx:0;
   if(far){if(inBoat){sailorP(px,py,s,t,pose,face,ph);rowS(bx0+40*s+rowDx,hy+20*s,s,t)}else{rowS(bx0+40*s+rowDx,hy+20*s,s,t);sailorP(px,py,s,t,pose,face,ph)}}
   else sailorP(px,py,s,t,pose,face,ph)}
@@ -690,8 +697,8 @@ function frame(t){const dt=Math.min(50,t-(lastT||t));lastT=t;
 let hudA='',hudB='';function odoTick(){const d=Math.floor(S.T*2+1e-6)/2,a=dayStr(d)+' at sea',D=darkAt(S.T),b=S.sail?(S.sail.days?(D>.5?'at sea · night':'at sea · day '+(Math.floor(S.T)+1)):'setting out'):ISL[S.node].n;if(a!==hudA){hudA=a;els.odo.textContent=a}if(b!==hudB){hudB=b;els.where.textContent=b}}
 /* splash, sparks and flash around the ship when a tier lands */
 /* fireworks over the island for a good reckoning, a passing rain cloud for a poor one */
-function celebrate(i){const now=performance.now();S.punchT=now;S.punchK=[.07,.055,.04,.025,.015,.012,.01][i];S.fw=[];
-  const n=[6,4,3,1,0,0,0][i];for(let k=0;k<n;k++)S.fw.push({fx:(Math.random()-.5)*.9,fy:.55+Math.random()*.45,t0:now+220+k*260+Math.random()*120,col:k%3===2?'#FFE7A3':css('--t'+i),seed:Math.random()*1e4});
+function celebrate(i){const now=performance.now();S.punchT=now;S.punchK=[.07,.055,.04,.025,.015,.012,.011,.01][i];S.fw=[];
+  const n=[6,4,3,1,0,0,0,0][i];for(let k=0;k<n;k++)S.fw.push({fx:(Math.random()-.5)*.9,fy:.55+Math.random()*.45,t0:now+220+k*260+Math.random()*120,col:k%3===2?'#FFE7A3':css('--t'+i),seed:Math.random()*1e4});
   S.rainT=i>=4?now:0;try{navigator.vibrate?.(i===0?[30,50,40]:i<=2?25:0)}catch(e){}
   const o=els.odo;o.classList.remove('bump');void o.offsetWidth;o.classList.add('bump')}
 function fireworks(t,s,cx,hy){
@@ -706,7 +713,7 @@ function fireworks(t,s,cx,hy){
 function burst(i){
   const p=S.sh>.5?(()=>{ashoreGeom();ctx.save();ctx.globalAlpha=0;const sa=SA;SA=0;const m=(MARK[ISL[S.node].k]||MARK.torch)(ASH.cx,ASH.hy,ASH.s,performance.now(),'#000000',1);SA=sa;ctx.restore();return{x:m[0],y:m[1]}})():(()=>{const q0=boatPos();return toScreen(q0[0],q0[1])})(),c=css('--t'+i),now=performance.now();
   const rings=i<=1?3:i<=3?2:1;for(let k=0;k<rings;k++)FX.push({type:'ring',x:p.x,y:p.y,t0:now+k*140,life:1100,max:i===0?190:i<=2?130:80,c:k===0?c:(theme==='dark'?P.ink:'#FFFFFF')});
-  const n=[60,40,22,10,0,0,0][i];for(let k=0;k<n;k++){const a=Math.random()*6.283,sp=2+Math.random()*(i===0?7:5);
+  const n=[60,40,22,10,0,0,0,0][i];for(let k=0;k<n;k++){const a=Math.random()*6.283,sp=2+Math.random()*(i===0?7:5);
     FX.push({type:'spark',x:p.x,y:p.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,t0:now,life:900+Math.random()*700,c:Math.random()<.5?c:(theme==='dark'?'#FFE7A3':'#FFFFFF'),r:1.5+Math.random()*2.5})}
   if(i<=1){const f=els.flash;f.style.background=`radial-gradient(circle at ${p.x}px ${p.y}px, ${c}, transparent 60%)`;f.classList.remove('on');void f.offsetWidth;f.classList.add('on')}
   if(i===0){cv.classList.remove('shake');void cv.offsetWidth;cv.classList.add('shake')}
@@ -722,6 +729,7 @@ function drawFx(t){
 /* back aboard before the ship leaves: walk the jetty and hop on, or row back out */
 function board(go){if(S.phase==='board')return;const ar=S.node?S.results[S.node-1]:null,far=ar&&OFF[ar.i]>0;S.phase='board';S.react=null;S.walk={t0:performance.now(),dir:'out'};timers.push(setTimeout(go,far?2150:1700))}
 function setSail(j,done){S.phase='sail';const r=S.results[j];
+  if(j===TREASURE-1){S.sail={j,t0:performance.now()+200,dur:2600,done,T0:S.T,days:-S.saved,wind:1};return}
   const days=r?DAYS[r.i]:0;S.sail={j,t0:performance.now()+200,dur:r?500+days*1150:2200,done,T0:S.T,days,wind:r?WIND[r.i]:.8}}
 /* ---------- the handle the game drives ---------- */
 const ro = new ResizeObserver(() => resize());
@@ -735,15 +743,38 @@ const resultOf = (i) => ({ i });
 return {
   /** The islands of this voyage, home port first. */
   names: () => ISL.map((s) => s.n),
-  /** Picks up a voyage part-way: the tiers so far, in order. */
-  place(tiers) {
+  /**
+   * Picks up a voyage part-way: the tiers so far, in order. An eighth tier is the treasure
+   * island's, and `saved` the days it took off; `unlocked` shows the treasure island.
+   */
+  place(tiers, saved = 0, unlocked = tiers.length > TREASURE - 1) {
     S.results = tiers.map(resultOf);
     S.done = tiers.length;
     S.node = Math.min(tiers.length, ISL.length - 1);
-    S.T = tiers.reduce((a, i) => a + DAYS[i], 0);
+    S.saved = saved;
+    S.T = tiers.slice(0, TREASURE - 1).reduce((a, i) => a + DAYS[i], 0) - (tiers.length > TREASURE - 1 ? saved : 0);
     S.total = S.T;
     for (let j = 0; j <= S.node; j++) S.seen.add(j);
     tiers.forEach((i, j) => { S.flags[j] = i; });
+    if (unlocked) ISL[TREASURE].dup = false;
+  },
+  /** The voyage came in under par: the treasure island appears on the chart, with a flourish. */
+  unlock() {
+    ISL[TREASURE].dup = false;
+    S.treasureT = performance.now();
+    S.phase = "treasure";
+    S.seen.add(TREASURE);
+  },
+  /** The treasure guess lands: its tier marks the island, and `saved` days come off the voyage. */
+  landTreasure(i, saved) {
+    S.results[S.node] = resultOf(i);
+    S.saved = saved;
+    burst(saved ? Math.min(i, 1) : 3);
+    S.total -= saved;
+    S.flags[S.node] = i;
+    S.flagT = performance.now();
+    celebrate(i);
+    S.react = { t0: performance.now(), i };
   },
   intro() { S.phase = "intro"; },
   /** Ashore for a question; the sailor walks up from the boat. */
