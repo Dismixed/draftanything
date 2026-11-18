@@ -31,9 +31,16 @@ async function findOwn(db: Db, date: string, player: Player): Promise<{ guesses:
  * Stores the player's voyage for the day and returns the one that counts. The first
  * voyage of the day is kept; a later post never replaces it.
  */
-export async function recordPlay(db: Db, date: string, guesses: Guess[], days: number, player: Player): Promise<{ guesses: Guess[]; days: number }> {
+/** `created` is true only for the call that stored the play; repeats return the first one. */
+export async function recordPlay(
+  db: Db,
+  date: string,
+  guesses: Guess[],
+  days: number,
+  player: Player,
+): Promise<{ guesses: Guess[]; days: number; created: boolean }> {
   const existing = await findOwn(db, date, player);
-  if (existing) return existing;
+  if (existing) return { ...existing, created: false };
 
   const { error } = await db.from("dead_reckoning_plays").insert({
     play_date: date,
@@ -45,10 +52,10 @@ export async function recordPlay(db: Db, date: string, guesses: Guess[], days: n
   if (error) {
     // Two posts from the same player can race; the unique index lets one in.
     const raced = await findOwn(db, date, player);
-    if (raced) return raced;
+    if (raced) return { ...raced, created: false };
     throw new Error(error.message);
   }
-  return { guesses, days };
+  return { guesses, days, created: true };
 }
 
 export async function loadDay(db: Db, date: string): Promise<Guess[][]> {

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { FinishRun } from "@/components/daily/finish-run";
 import { FinishUpNext } from "@/components/daily/finish-up-next";
+import { track } from "@/lib/analytics/track";
 import { msUntilNextDailyDay } from "@/lib/daily-day";
 import { buildFleet, type Fleet } from "@/lib/dead-reckoning/fleet";
 import { formatFull, inWords, parseGuess } from "@/lib/dead-reckoning/numbers";
@@ -142,6 +143,10 @@ export default function DeadReckoningGame() {
   }, [day, finish]);
 
   const firstQuestion = () => {
+    // Same events the other dailies send from useDailyIntro, so the start → finish funnel works here too.
+    const entry = new URLSearchParams(window.location.search).get("ref") === "share" ? "share" : "intro";
+    track("daily_intro_play_clicked", { game: "dead-reckoning" });
+    track("daily_started", { game: "dead-reckoning", entry });
     islesRef.current?.ask();
     setPhase("question");
   };
@@ -651,6 +656,7 @@ function End({ day, guesses, fleet }: { day: Day; guesses: Guess[]; fleet: Fleet
   }, []);
 
   const copy = () => {
+    track("result_shared", { game: "dead-reckoning", method: "copy" });
     if (!navigator.clipboard) {
       setCopied("select the text below");
       return;
