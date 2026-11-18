@@ -4,8 +4,8 @@ import "server-only";
  * The Dead Reckoning question bank, one list per category. Kept on the server so
  * the whole bank never ships to the browser; only the day's seven legs do.
  *
- * Every answer should be stable and well sourced: tiers start at 10%, so an answer
- * that is off by a few percent can cost a player a tier. These were written for the
+ * Every answer should be stable and well sourced: the best tier needs a guess within
+ * 1%, so an answer that is off by even a percent or two can cost a player a tier. These were written for the
  * soft launch and still need a fact check before a full launch.
  */
 
@@ -671,3 +671,155 @@ export const BANK: Record<Category, readonly BankQuestion[]> = {
     },
   ],
 };
+
+/**
+ * The treasure island's questions: harder ones, kept apart from the categories so a
+ * treasure question never comes back as an ordinary leg. Each has a fixed answer, many
+ * of them worked out rather than looked up, since the treasure needs a guess within 1%.
+ */
+export const TREASURE: readonly BankQuestion[] = [
+  {
+    id: "t-minutes-week",
+    prompt: "How many minutes are there in a week?",
+    unit: "minutes",
+    clue: "For scale: a day has 1,440 minutes.",
+    answer: 10_080,
+    fact: "7 days × 24 hours × 60 minutes.",
+    source: "arithmetic",
+  },
+  {
+    id: "t-seconds-day",
+    prompt: "How many seconds are there in a day?",
+    unit: "seconds",
+    clue: "For scale: an hour has 3,600 seconds.",
+    answer: 86_400,
+    fact: "24 hours × 60 minutes × 60 seconds.",
+    source: "arithmetic",
+  },
+  {
+    id: "t-hours-leap-year",
+    prompt: "How many hours are there in a leap year?",
+    unit: "hours",
+    clue: "For scale: a leap year has 366 days.",
+    answer: 8_784,
+    fact: "366 days × 24 hours.",
+    source: "arithmetic",
+  },
+  {
+    id: "t-chessboard-squares",
+    prompt: "How many squares are there on a chessboard, counting squares of every size?",
+    unit: "squares",
+    clue: "For scale: there are 64 of the smallest size alone.",
+    answer: 204,
+    fact: "64 + 49 + 36 + 25 + 16 + 9 + 4 + 1: every square size from 1×1 up to the whole board.",
+    source: "arithmetic",
+  },
+  {
+    id: "t-die-dots",
+    prompt: "How many dots are there on a standard six-sided die, all faces together?",
+    unit: "dots",
+    clue: "For scale: opposite faces always add up to 7.",
+    answer: 21,
+    fact: "1 + 2 + 3 + 4 + 5 + 6, or three pairs of opposite faces that each make 7.",
+    source: "arithmetic",
+  },
+  {
+    id: "t-hexagon-angles",
+    prompt: "What do the interior angles of a hexagon add up to?",
+    unit: "degrees",
+    clue: "For scale: a triangle's add up to 180 degrees.",
+    answer: 720,
+    fact: "A hexagon splits into four triangles from one corner: 4 × 180.",
+    source: "geometry",
+  },
+  {
+    id: "t-un-members",
+    prompt: "How many countries are members of the United Nations?",
+    unit: "countries",
+    clue: "For scale: the UN started with 51 in 1945.",
+    answer: 193,
+    fact: "South Sudan, in 2011, was the most recent to join.",
+    source: "United Nations",
+  },
+  {
+    id: "t-elements",
+    prompt: "How many elements are in the periodic table?",
+    unit: "elements",
+    clue: "For scale: the first row of the table has 2 elements and the second has 8.",
+    answer: 118,
+    fact: "The last four were named in 2016, completing the seventh row.",
+    source: "IUPAC",
+  },
+  {
+    id: "t-burj-khalifa",
+    prompt: "How tall is the Burj Khalifa?",
+    unit: "metres",
+    clue: "For scale: the Eiffel Tower is about 330 m tall.",
+    answer: 828,
+    fact: "It has been the world's tallest building since it opened in 2010.",
+    source: "Emaar Properties",
+  },
+  {
+    id: "t-kilimanjaro",
+    prompt: "How tall is Mount Kilimanjaro?",
+    unit: "metres",
+    clue: "For scale: Mount Everest is 8,849 m.",
+    answer: 5_895,
+    fact: "It is the highest mountain in Africa, and the tallest free-standing mountain in the world.",
+    source: "Tanzania National Parks",
+  },
+  {
+    id: "t-hand-bones",
+    prompt: "How many bones are in one human hand, wrist included?",
+    unit: "bones",
+    clue: "For scale: there are 206 in the whole adult body.",
+    answer: 27,
+    fact: "8 in the wrist, 5 in the palm and 14 in the fingers.",
+    source: "Gray's Anatomy",
+  },
+  {
+    id: "t-speed-of-sound",
+    prompt: "How fast does sound travel through air at room temperature?",
+    unit: "metres per second",
+    clue: "For scale: you hear thunder about 3 seconds per kilometre after the flash.",
+    answer: 343,
+    fact: "That is at 20 °C; sound travels a little faster in warmer air.",
+    source: "National Physical Laboratory",
+  },
+  {
+    id: "t-freezing-kelvin",
+    prompt: "What is the freezing point of water in kelvin?",
+    unit: "kelvin",
+    clue: "For scale: absolute zero is 0 K, and a kelvin is the same size as a degree Celsius.",
+    answer: 273.15,
+    fact: "So 0 °C is 273.15 K, and absolute zero is −273.15 °C.",
+    source: "BIPM",
+  },
+  {
+    id: "t-octopus-hearts",
+    prompt: "How many hearts does an octopus have?",
+    unit: "hearts",
+    clue: "For scale: a human has one, and an octopus has blue blood.",
+    answer: 3,
+    fact: "Two pump blood through the gills and one through the rest of the body.",
+    source: "Smithsonian",
+  },
+  {
+    id: "t-venus-year",
+    prompt: "How long does Venus take to go once round the Sun?",
+    unit: "Earth days",
+    clue: "For scale: Venus is closer to the Sun than Earth is, so its year is shorter.",
+    answer: 225,
+    fact: "A Venus year is shorter than a Venus day, which lasts 243 Earth days.",
+    source: "NASA",
+  },
+  {
+    id: "t-cricket-pitch",
+    prompt: "How long is a cricket pitch, from stumps to stumps?",
+    unit: "yards",
+    clue: "For scale: a tennis court is 26 yards long.",
+    answer: 22,
+    fact: "The same length as a chain, an old surveyor's measure.",
+    source: "Laws of Cricket (MCC)",
+  },
+];

@@ -5,7 +5,7 @@
 
 ## Goal
 
-A new daily estimation game. Everyone gets the same seven questions each day. Each answer is a number. You sail a pirate ship from home port across seven islands, and each question is asked ashore on one of them. The closer your guess, the quicker the next crossing. The score is days at sea; par is 7. At the end you see your route and how you compare with everyone else who sailed that day.
+A new daily estimation game. Everyone gets the same seven questions each day. Each answer is a number. You sail a pirate ship from home port across seven islands, and each question is asked ashore on one of them. The closer your guess, the quicker the next crossing. The score is days at sea; par is 14. A voyage that reaches the last island under par earns a treasure island and one more question. At the end you see your route and how you compare with everyone else who sailed that day.
 
 ## Soft launch
 
@@ -42,15 +42,25 @@ Ratio `r = max(guess/answer, answer/guess)`.
 
 | Tier | Guess | Crossing takes | Wind | Where you stop |
 |---|---|---|---|---|
-| Dead Reckoning | within 10% | 1 day | full sails | right up to the dock |
-| True North | within 25% | 1½ days | a fair wind | alongside the dock |
-| Land Ho | within 50% | 2 days | a steady breeze | anchored just offshore |
-| Off Course | within 2× | 2½ days | a light breeze | anchored offshore |
-| Lost at Sea | within 5× | 3 days | barely a breath | anchored well out, rowing in |
-| Adrift | beyond 5× | 4 days | limp sails | open water, rowing in |
+| Dead Reckoning | within 1% | 1 day | full sails | right up to the dock |
+| True North | within 10% | 2 days | a fair wind | alongside the dock |
+| Land Ho | within 25% | 2½ days | a steady breeze | anchored just offshore |
+| Off Course | within 50% | 3 days | a light breeze | anchored offshore |
+| Lost at Sea | within 2× | 3½ days | barely a breath | anchored well out, rowing in |
+| Adrift | within 5× | 4 days | limp sails | open water, rowing in |
+| Shipwrecked | beyond 5× | 4½ days | a broken mast | aground on the reef, rowing in |
 | Becalmed | blank | 5 days | not a breath of wind | drifted in, rowing in |
 
-A crossing is a straight line for Dead Reckoning and True North; worse guesses tack in a few smooth swings either side of it. The voyage is 7 to 35 days. The server recomputes the days from the guesses; the client never sends a score.
+A crossing is a straight line for Dead Reckoning and True North; worse guesses tack in a few smooth swings either side of it. The seven crossings take 7 to 35 days. The server recomputes the days from the guesses; the client never sends a score.
+
+## The treasure island
+
+- Reach the last island under par (fewer than 14 days) and a hidden treasure island appears on the chart beside it, with one more, harder question from its own list (`TREASURE` in `bank.ts`, picked by day like the others, never repeated as an ordinary leg).
+- Within 1% takes 2 days off the voyage, within 10% takes 1, anything else costs nothing. So the best voyage is 5 days.
+- The ship then sails to the treasure island, the odometer counting down by the days saved, and the voyage ends there.
+- The treasure guess is sent as an eighth guess. The server only counts it when the seven crossings came in under par.
+- The share text adds 💰 after the squares when the treasure was found, 🏝️ when it was reached but missed.
+- The simulated fleet models people who simply know an answer, so a few in a hundred reach the treasure island.
 
 ## The reveal
 
@@ -58,11 +68,11 @@ In beats: the number clears from fog and counts up; a log-scale line drops the a
 
 ## The end
 
-- "seven islands in N days", then "par is 7 · N over" (or "a perfect voyage · par").
+- "seven islands in N days", then "par is 14 · N over" or "N under", and a gold line for the treasure island when it was reached.
 - The chart pulls back to show the whole route, crossing by crossing in tier colours.
 - "quicker than X% of the fleet", the fleet average, your streak, your longest streak and a countdown to the next voyage.
 - "see what you missed": per leg, everyone's guesses as a histogram on a log scale, with the answer and your guess.
-- Copy result: `dead reckoning · voyage N`, the seven coloured squares, and `N days at sea (par 7)`.
+- Copy result: the shared format with the seven coloured squares (and 💰 or 🏝️), `N days at sea (par 14)` and a link to the result page.
 
 ## The fleet
 

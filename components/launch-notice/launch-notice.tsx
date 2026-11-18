@@ -92,7 +92,6 @@ function Popup({ onClose }: { onClose: Close }) {
           <p>{game.pitch}</p>
           <div className="ln-tags">
             <span>{game.duration}</span>
-            <span>Counts toward your Sweep</span>
           </div>
           <div className="ln-row">
             <Link href={game.playHref} className="ln-cta" onClick={() => onClose("clicked")}>

@@ -1,10 +1,10 @@
 import { z } from "zod/v4";
 import { ensureGuestSession } from "@/features/guest/session";
 import { dailyDate } from "@/lib/daily-day";
-import { legsFor } from "@/lib/dead-reckoning/daily-service";
+import { legsFor, treasureFor } from "@/lib/dead-reckoning/daily-service";
 import { buildFleet, type Fleet } from "@/lib/dead-reckoning/fleet";
 import { loadDay, recordPlay, type Player } from "@/lib/dead-reckoning/play-service";
-import { LEGS, totalDays, type Guess } from "@/lib/dead-reckoning/scoring";
+import { LEGS, voyage, type Guess } from "@/lib/dead-reckoning/scoring";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -17,7 +17,8 @@ const guessSchema = z.union([z.null(), positive]);
 
 const bodySchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  guesses: z.array(guessSchema).length(LEGS),
+  // The seven crossings, then the treasure island's guess if the voyage reached it.
+  guesses: z.array(guessSchema).min(LEGS).max(LEGS + 1),
 });
 
 const invalid = (error = "INVALID_INPUT", status = 400) => Response.json({ error }, { status });
@@ -44,7 +45,8 @@ function compact(fleet: Fleet): Fleet {
 
 /**
  * Records today's voyage (the first one counts) and answers with the days at sea that
- * count and the day's fleet. The days are worked out here from the guesses.
+ * count and the day's fleet. The days are worked out here from the guesses, the treasure
+ * island included when the crossings earned it.
  * If the database can't be reached, the voyage is not stored and the fleet is the
  * estimated one.
  */
@@ -73,9 +75,14 @@ export async function POST(request: Request) {
   if (parsed.data.date !== date) return invalid("DAY_OVER", 409);
 
   const legs = legsFor(date);
+  const treasure = treasureFor(date);
   const answers = legs.map((l) => l.answer);
-  const guesses = parsed.data.guesses as Guess[];
-  let counted = { guesses, days: totalDays(guesses, answers) };
+  const posted = parsed.data.guesses as Guess[];
+  const crossings = posted.slice(0, LEGS);
+  // A treasure guess counts only when the crossings really came in under par.
+  const result = voyage(crossings, answers, posted[LEGS], treasure.answer);
+  const guesses = result.treasure && posted.length > LEGS ? [...crossings, posted[LEGS]] : crossings;
+  let counted = { guesses, days: result.days };
   let real: Guess[][] = [];
   let stored = false;
 
@@ -93,6 +100,6 @@ export async function POST(request: Request) {
   return Response.json({
     days: counted.days,
     guesses: counted.guesses,
-    fleet: compact(buildFleet(date, legs, stored ? real : [])),
+    fleet: compact(buildFleet(date, [...legs, treasure], stored ? real : [])),
   });
 }

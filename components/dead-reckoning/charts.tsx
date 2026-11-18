@@ -62,6 +62,7 @@ export function GapLine({ answer, guess, tier, beat }: { answer: number; guess: 
 /** One leg on the end screen: everyone's guesses as a histogram, the answer, and yours. */
 export function CrowdStrip({
   index,
+  label,
   prompt,
   answer,
   guess,
@@ -71,10 +72,13 @@ export function CrowdStrip({
   narrow,
 }: {
   index: number;
+  /** Shown instead of the leg number, as for the treasure island. */
+  label?: string;
   prompt: string;
   answer: number;
   guess: Guess;
   tier: number;
+  /** Days the leg cost; negative for days the treasure took off. */
   days: number;
   crowd: number[];
   narrow: boolean;
@@ -101,11 +105,12 @@ export function CrowdStrip({
     <div className="dr-strip">
       <h4>
         <span>
-          {index + 1}. {prompt}
+          {label ? `${label} · ` : `${index + 1}. `}
+          {prompt}
         </span>
-        <span style={{ color: `var(--dr-t${tier})` }}>{dayStr(days)}</span>
+        <span style={{ color: `var(--dr-t${tier})` }}>{days < 0 ? `−${dayStr(-days)}` : days === 0 ? "no days off" : dayStr(days)}</span>
       </h4>
-      <svg viewBox={`0 0 ${VW} 74`} role="img" aria-label={`Everyone's guesses for leg ${index + 1}`}>
+      <svg viewBox={`0 0 ${VW} 74`} role="img" aria-label={label ? `Everyone's guesses for the ${label}` : `Everyone's guesses for leg ${index + 1}`}>
         <line x1={14} y1={40} x2={VW - 14} y2={40} stroke="var(--dr-ink2)" />
         {bins.map((c, b) =>
           c ? <rect key={b} x={14 + b * bw + 1} y={40 - (c / mx) * 26} width={bw - 2} height={(c / mx) * 26} fill="var(--dr-line)" /> : null,

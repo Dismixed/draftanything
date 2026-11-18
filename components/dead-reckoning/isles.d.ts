@@ -8,15 +8,24 @@ export interface IslesElements {
 }
 
 export interface IslesHooks {
+  /** Days each tier's crossing takes, best tier first, Becalmed last. */
+  days?: readonly number[];
   /** The ship has arrived; says how close it got ("anchored just offshore"). */
   onLanded?: (text: string) => void;
 }
 
 export interface IslesHandle {
-  /** The islands of this voyage, home port first (eight in all). */
+  /** The islands of this voyage, home port first, then the seven, then the treasure island. */
   names: () => string[];
-  /** Picks up a voyage part-way, given the tier of each crossing so far. */
-  place: (tiers: number[]) => void;
+  /**
+   * Picks up a voyage part-way, given the tier of each crossing so far. An eighth tier is the
+   * treasure island's, with `saved` the days it took off; `unlocked` shows the treasure island.
+   */
+  place: (tiers: number[], saved?: number, unlocked?: boolean) => void;
+  /** The voyage came in under par: the treasure island appears. */
+  unlock: () => void;
+  /** The treasure guess lands with this tier, taking `saved` days off. */
+  landTreasure: (tier: number, saved: number) => void;
   intro: () => void;
   ask: () => void;
   reveal: () => void;
