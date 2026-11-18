@@ -388,7 +388,7 @@ function hill(cx,hy,s,h,dk,seed){const rr=rng(seed),t=performance.now();beach(cx
   // grass on the crest, moving in the breeze
   ctx.strokeStyle=dk?'#2E5A3C':'#79B866';ctx.lineWidth=1.3*s;ctx.lineCap='round';
   for(let i=0;i<22;i++){const x=cx+(-232+i*23+rr()*10)*s,y=hillY(cx,hy,s,h,seed,x)+2.5*s,sw=Math.sin(t/800+i*.7)*2.4*s;for(const d of[-3,0,3]){ctx.beginPath();ctx.moveTo(x+d*s,y);ctx.quadraticCurveTo(x+d*1.3*s,y-4*s,x+d*1.6*s+sw,y-(7+Math.abs(d))*s);ctx.stroke()}}}
-function glowS(x,y,r,col='255,200,110',al=.55){const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(${col},${al})`);g.addColorStop(1,`rgba(${col},0)`);ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2)}
+function glowS(x,y,r,col='255,200,110',al=.55){if(!(r>0))return;const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(${col},${al})`);g.addColorStop(1,`rgba(${col},0)`);ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2)}
 function smoke(x,y,s,t,dk,n=6,k=1){for(let i=0;i<n;i++){const u=((t/4200)+i/n)%1,r=k*(3+u*9)*s;ctx.fillStyle=dk?`rgba(170,170,185,${.32*(1-u)*SA})`:`rgba(255,255,255,${.78*(1-u)*SA})`;ctx.beginPath();ctx.arc(x+u*30*s*k+Math.sin(u*5+i)*3*s,y-u*52*s*k,r,0,7);ctx.fill()}}
 function birdS(x,y,s,f,dk){ctx.strokeStyle=dk?'rgba(220,230,240,.65)':'rgba(40,52,64,.7)';ctx.lineWidth=1.6*s;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x-8*s,y-f*s);ctx.quadraticCurveTo(x-3.5*s,y-3*s,x,y);ctx.quadraticCurveTo(x+3.5*s,y-3*s,x+8*s,y-f*s);ctx.stroke()}
 function butterfly(x,y,s,t,col){const f=Math.abs(Math.sin(t/70));ctx.fillStyle=col;ctx.beginPath();ctx.ellipse(x-2.5*s*f,y,3*s*f+.4,2.4*s,0,0,7);ctx.ellipse(x+2.5*s*f,y,3*s*f+.4,2.4*s,0,0,7);ctx.fill()}
@@ -615,7 +615,7 @@ const SCENE={
 let SA=1;
 /* ---------- each island shows your result its own way, in the tier's colour ---------- */
 const clear=c=>/^#[0-9a-f]{6}$/i.test(c)?c+'00':'rgba(0,0,0,0)';
-function glow(x,y,r,col,al){const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,col);g.addColorStop(1,clear(col));ctx.globalAlpha=SA*al;ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);ctx.globalAlpha=SA}
+function glow(x,y,r,col,al){if(!(r>0))return;const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,col);g.addColorStop(1,clear(col));ctx.globalAlpha=SA*al;ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);ctx.globalAlpha=SA}
 function flame(x,y,h,col,t){const f=1+.22*Math.sin(t/80)+.1*Math.sin(t/37);ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(x-h*.32,y);ctx.quadraticCurveTo(x-h*.2,y-h*.6*f,x,y-h*f);ctx.quadraticCurveTo(x+h*.2,y-h*.6*f,x+h*.32,y);ctx.closePath();ctx.fill();
   ctx.fillStyle='rgba(255,250,220,.85)';ctx.beginPath();ctx.moveTo(x-h*.13,y);ctx.quadraticCurveTo(x,y-h*.55*f,x+h*.13,y);ctx.fill()}
 const MARK={
@@ -670,7 +670,7 @@ function ashore(t){
   sceneFront(cx,hy,s,t,dk,D,lit);
   ctx.strokeStyle=dk?'rgba(220,240,245,.55)':'rgba(255,255,255,.95)';ctx.lineWidth=2.2;ctx.beginPath();for(let x=cx-380*s;x<=cx+380*s;x+=8){const y=hy+6+Math.sin(x/18+t/500)*1.6;x===cx-380*s?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.stroke();
   signpost(cx-150*s,hy-24*s,s,isl.n);
-  const fi=S.flags[S.node];if(fi!=null){const u=1-Math.pow(1-Math.min(1,(t-(S.flagT||0))/1100),3);(MARK[isl.k]||MARK.torch)(cx,hy,s,t,css('--t'+fi),u)}
+  const fi=S.flags[S.node];if(fi!=null){const u=1-Math.pow(1-Math.min(1,Math.max(0,(t-(S.flagT||0))/1100)),3);(MARK[isl.k]||MARK.torch)(cx,hy,s,t,css('--t'+fi),u)}
   fireworks(t,s,cx,hy);
   const ar=S.node?S.results[S.node-1]:null,o=ar?OFF[ar.i]/280:0,bx0=Math.max(cx-300*s,60),bx=Math.max(34,bx0-o*60*s),jx=cx-150*s,by=hy+30*s-o*22*s,bs=s*.78*(1-o*.5);
   boatS(bx,by,bs,t);jettyS(bx0-30*s,jx,hy+6*s,s,false);
