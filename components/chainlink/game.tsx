@@ -133,13 +133,6 @@ function WordRow({
     return fullGuess;
   }, [word, revealedLetters]);
 
-  const isCompleteCorrectGuess = useCallback((typed: string) => {
-    if (typed.length < unrevealedCount) return false;
-    const normalizedGuess = buildFullGuess(typed.trim()).trim().toLowerCase().replace(/\s+/g, "");
-    const normalizedTarget = word.toLowerCase().replace(/\s+/g, "");
-    return normalizedGuess === normalizedTarget;
-  }, [buildFullGuess, unrevealedCount, word]);
-
   const trySubmit = useCallback(async () => {
     if (!localGuess.trim() || !onSubmitGuess || submitting) return;
     if (localGuess.length < unrevealedCount) return;
@@ -169,13 +162,6 @@ function WordRow({
       play("ui.tap");
     }
   }, [localGuess, unrevealedCount, onSubmitGuess, submitting, buildFullGuess, play]);
-
-  useEffect(() => {
-    if (status !== "active" || unrevealedCount === 0) return;
-    if (localGuess.length === unrevealedCount && isCompleteCorrectGuess(localGuess)) {
-      void trySubmit();
-    }
-  }, [localGuess, unrevealedCount, status, trySubmit, isCompleteCorrectGuess]);
 
   const handleLocalKeyDown = (e: React.KeyboardEvent) => {
     if (e.key !== "Enter" || !localGuess.trim() || !onSubmitGuess || submitting) return;
