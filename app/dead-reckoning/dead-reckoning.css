@@ -267,6 +267,16 @@
   z-index: 2;
   padding: 90px max(20px, env(safe-area-inset-right, 0px)) calc(clamp(44px, 10vh, 110px) + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
   background: linear-gradient(to bottom, rgba(var(--dr-scrim), 0), rgba(var(--dr-scrim), 0.8) 90px, rgba(var(--dr-scrim), 0.92));
+  /* Never taller than the space under the header: on a short screen, or with the
+     keyboard up, the stage scrolls instead of climbing over the brand and score. */
+  max-height: calc(100% - 108px - env(safe-area-inset-top, 0px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.dr-stage::-webkit-scrollbar {
+  display: none;
 }
 
 .dr-inner {
@@ -842,7 +852,10 @@
   max-height: 50vh;
   overflow-y: auto;
   width: 100%;
-  padding-bottom: 4px;
+  /* The last lines fade out so a cut-off sheet reads as "more below"; the padding lets
+     the real last line clear the fade once scrolled to the end. */
+  padding-bottom: 28px;
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
   scrollbar-width: thin;
   transition: max-height 0.4s ease;
 }
@@ -968,6 +981,46 @@
   }
   .dr-toast {
     font-size: 25px;
+  }
+}
+
+/* Short screens: phones with the browser bars showing, or with the keyboard up. */
+@media (max-height: 700px) {
+  .dr-stage {
+    padding-top: 36px;
+  }
+  .dr-inner {
+    gap: 10px;
+  }
+  .dr-q {
+    font-size: 24px;
+  }
+  .dr-clue {
+    font-size: 15px;
+  }
+  .dr-gi {
+    font-size: 26px;
+  }
+}
+
+/* Touch: every control gets a finger-sized target, without moving the layout. */
+@media (pointer: coarse) {
+  .dr-chips {
+    gap: 8px;
+  }
+  .dr-chips button {
+    min-height: 40px;
+    padding: 6px 14px;
+    font-size: 13px;
+  }
+  .dr-cta {
+    min-height: 46px;
+  }
+  .dr-home,
+  .dr-link,
+  .dr-howto summary {
+    padding: 12px 0;
+    margin: -12px 0;
   }
 }
 

@@ -90,14 +90,14 @@ function follow(){
   // the voyage opens on the chart: home port, the ship at its jetty, the sea ahead
   if(S.phase==='intro'){const a=ISL[0].c,b=ISL[1].c;S.camT={x:a[0]+(b[0]-a[0])*.4,y:a[1]+(b[1]-a[1])*.4,z:ph?.8:1.05,ay:ph?.3:.34};return}
   // the treasure island has just appeared: pull back to show it beside the last island
-  if(S.phase==='treasure'){const a=ISL[TREASURE-1].c,b=ISL[TREASURE].c;S.camT={x:(a[0]+b[0])/2,y:(a[1]+b[1])/2,z:ph?.62:.9,ay:ph?.3:.34};return}
+  if(S.phase==='treasure'){const a=ISL[TREASURE-1].c,b=ISL[TREASURE].c,d=Math.hypot(b[0]-a[0],b[1]-a[1]);S.camT={x:(a[0]+b[0])/2,y:(a[1]+b[1])/2,z:ph?Math.min(.62,(W-170)/d):.9,ay:ph?.3:.34};return}
   // just arrived: hold on the chart a moment before stepping ashore
   if(S.phase==='landed'){const s=ISL[S.node];S.camT={x:s.c[0]*.7+s.d[0]*.3,y:s.c[1]*.7+s.d[1]*.3,z:ph?.85:1.15,ay:.36};return}
   // docked: close in on the island, the boat at its jetty
   const s=ISL[S.node];S.camT={x:s.c[0]*.55+s.d[0]*.45,y:s.c[1]*.55+s.d[1]*.45,z:(ph?1.45:1.8)*(1+S.sh*.8),ay:S.phase==='intro'?.32:ph?.2:.25}}
 function fitEnd(){let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;const add=(x,y,r)=>{x0=Math.min(x0,x-r);x1=Math.max(x1,x+r);y0=Math.min(y0,y-r);y1=Math.max(y1,y+r)};
   ISL.forEach(s=>{if(!s.dup)add(s.c[0],s.c[1],s.r*1.5+10)});for(let j=0;j<S.done;j++)for(let u=0;u<=1;u+=.05){const p=segPt(j,u);add(p[0],p[1],14)}
-  const top=104,bot=H*(W<560?.44:.48),z=Math.min((W-30)/(x1-x0),(bot-top)/(y1-y0),1);S.camT={x:(x0+x1)/2,y:(y0+y1)/2,z,ay:(top+bot)/2/H}}
+  const top=104,bot=H*(W<560?.44:.48),pad=W<560?130:30,z=Math.min((W-pad)/(x1-x0),(bot-top)/(y1-y0),1);S.camT={x:(x0+x1)/2,y:(y0+y1)/2,z,ay:(top+bot)/2/H}}
 
 /* ---------- the sea ---------- */
 function drawSea(t){
