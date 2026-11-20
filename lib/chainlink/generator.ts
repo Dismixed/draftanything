@@ -33,6 +33,11 @@ export interface BuildOptions extends GenerateOptions {
   excludeLinks?: ReadonlySet<string>;
   /** Lowercase "a|b|c|d|e" keys of chains that already exist as puzzles. */
   excludeChains?: ReadonlySet<string>;
+  /**
+   * Each past daily's links. A chain sharing two or more links with any one of
+   * them reads as a rerun ("ball park bench mark" again), however long ago it ran.
+   */
+  pastDailies?: ReadonlyArray<ReadonlySet<string>>;
   random?: () => number;
 }
 
@@ -205,6 +210,7 @@ export function buildChains(phrases: PhraseNode[], options: BuildOptions = {}): 
     minLinkScore = 1,
     excludeLinks,
     excludeChains,
+    pastDailies,
     random = Math.random,
   } = options;
 
@@ -232,6 +238,7 @@ export function buildChains(phrases: PhraseNode[], options: BuildOptions = {}): 
 
     const result = walkChain(graph, startWord, length, random, (words, links) => {
       if (excludeChains?.has(words.map((w) => w.toLowerCase()).join("|"))) return false;
+      if (pastDailies && rerunsADaily(words, pastDailies)) return false;
       return !difficulty || classifyDifficulty(links.map((l) => l.commonness_score)) === difficulty;
     });
     if (!result) continue;
@@ -246,6 +253,33 @@ export function buildChains(phrases: PhraseNode[], options: BuildOptions = {}): 
   }
 
   return candidates.sort((a, b) => b.score - a.score);
+}
+
+/** Most links a new chain may share with any single past daily. */
+export const MAX_SHARED_LINKS = 1;
+
+function rerunsADaily(words: readonly string[], pastDailies: ReadonlyArray<ReadonlySet<string>>): boolean {
+  const mine = words.slice(0, -1).map((w, i) => linkKey(w, words[i + 1]));
+  return pastDailies.some((links) => mine.filter((l) => links.has(l)).length > MAX_SHARED_LINKS);
+}
+
+/** Every daily ever scheduled, as one set of links each. */
+async function loadAllDailyLinks(db: SupabaseClient<Database>): Promise<Set<string>[]> {
+  const dailies: Set<string>[] = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await db
+      .from("daily_chain_puzzles")
+      .select("chain_puzzles(words)")
+      .order("publish_date", { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw new Error(`Failed to load past dailies: ${error.message}`);
+    for (const row of data ?? []) {
+      const puzzle = row.chain_puzzles as { words: unknown } | null;
+      const words = Array.isArray(puzzle?.words) ? (puzzle.words as string[]) : [];
+      dailies.push(new Set(words.slice(0, -1).map((w, i) => linkKey(w, words[i + 1]))));
+    }
+    if (!data || data.length < PAGE_SIZE) return dailies;
+  }
 }
 
 /** Every active phrase, paged because a single response stops at 1000 rows. */
@@ -318,10 +352,11 @@ export async function generateChains(
 ): Promise<CandidateChain[]> {
   const length = options.length ?? 5;
 
-  const [phrases, recentLinks, existing] = await Promise.all([
+  const [phrases, recentLinks, existing, pastDailies] = await Promise.all([
     loadActivePhrases(db),
     loadRecentDailyLinks(db),
     loadExistingChainIndex(db),
+    loadAllDailyLinks(db),
   ]);
 
   if (phrases.length < length - 1) {
@@ -334,6 +369,7 @@ export async function generateChains(
     ...options,
     excludeLinks: recentLinks,
     excludeChains: existing.chains,
+    pastDailies,
   });
 }
 

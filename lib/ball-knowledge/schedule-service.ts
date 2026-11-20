@@ -86,6 +86,19 @@ export async function unretireCategory(db: SupabaseClient<Database>, category: s
   if (error) throw new Error(`Failed to un-retire category: ${error.message}`);
 }
 
+/**
+ * Retired categories, or none when they can't be read. Retirement is a review
+ * preference; failing to load it must not stop the day being scheduled.
+ */
+async function retiredOrNone(db: SupabaseClient<Database>): Promise<string[]> {
+  try {
+    return await listRetiredCategories(db);
+  } catch (err) {
+    console.error("[ball-knowledge] scheduling without retired categories:", err);
+    return [];
+  }
+}
+
 /** The rotation pool, in CATEGORIES order, without retired categories. */
 export function activeCategories(retired: readonly string[]): string[] {
   const skip = new Set(retired);
@@ -113,7 +126,7 @@ export async function getScheduledCategory(
 export async function pickLruCategory(
   db: SupabaseClient<Database>,
 ): Promise<string | null> {
-  const [rows, retired] = await Promise.all([listScheduleRows(db), listRetiredCategories(db)]);
+  const [rows, retired] = await Promise.all([listScheduleRows(db), retiredOrNone(db)]);
   const lastUsed = computeLastUsedByCategory(rows);
   return pickLru(activeCategories(retired), (category) => category, lastUsed);
 }
@@ -153,7 +166,7 @@ export async function autoScheduleCategories(
     throw new Error("startDate must be YYYY-MM-DD format");
   }
 
-  const [rows, retired] = await Promise.all([listScheduleRows(db), listRetiredCategories(db)]);
+  const [rows, retired] = await Promise.all([listScheduleRows(db), retiredOrNone(db)]);
   const occupiedDates = new Set(rows.map((row) => row.publish_date));
   const lastUsed = computeLastUsedByCategory(rows);
 

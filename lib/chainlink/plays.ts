@@ -4,8 +4,13 @@ import type { Database } from "@/lib/supabase/database.types";
 /**
  * Plays were not recorded before this date, so earlier dailies are assumed
  * to have been played. Safe to delete once it is more than 30 days old.
+ *
+ * Tracking was meant to start on 2026-10-09, but every insert failed the
+ * table's identity check until attempts carried a user or guest id, so no
+ * play was stored. This must not be earlier than the day that fix is live:
+ * a day without stored plays counts as unseen, and its links get reused.
  */
-export const PLAY_TRACKING_SINCE = "2026-10-09";
+export const PLAY_TRACKING_SINCE = "2026-11-23";
 
 export interface Attempt {
   puzzleId: string;
@@ -24,8 +29,20 @@ export function parseAttempt(body: unknown): Attempt | null {
   return { puzzleId, mode, completed };
 }
 
-export async function recordAttempt(db: SupabaseClient<Database>, attempt: Attempt): Promise<void> {
+/** Who played. The table requires one of the two. */
+export interface AttemptPlayer {
+  userId: string | null;
+  guestId: string | null;
+}
+
+export async function recordAttempt(
+  db: SupabaseClient<Database>,
+  attempt: Attempt,
+  player: AttemptPlayer,
+): Promise<void> {
   const { error } = await db.from("chain_puzzle_attempts").insert({
+    user_id: player.userId,
+    guest_id: player.userId ? null : player.guestId,
     puzzle_id: attempt.puzzleId,
     mode: attempt.mode,
     completed: attempt.completed,

@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { countedDailyIds, parseAttempt } from "./plays";
+import { describe, expect, it, vi } from "vitest";
+import { countedDailyIds, parseAttempt, recordAttempt } from "./plays";
 
 describe("parseAttempt", () => {
   const id = "98613b54-3d45-40db-b404-8910ffab4b74";
@@ -46,5 +46,26 @@ describe("countedDailyIds", () => {
   it("counts dailies from before plays were recorded, since nobody can know", () => {
     const ids = countedDailyIds([daily("old", "2026-10-07")], new Set(), options);
     expect(ids).toEqual(["old"]);
+  });
+});
+
+describe("recordAttempt", () => {
+  const attempt = { puzzleId: "98613b54-3d45-40db-b404-8910ffab4b74", mode: "daily" as const, completed: true };
+  const fakeDb = () => {
+    const insert = vi.fn().mockResolvedValue({ error: null });
+    return { db: { from: vi.fn(() => ({ insert })) } as never, insert };
+  };
+
+  // The table rejects a row with neither id, which is how every play went unrecorded.
+  it("stores the guest when nobody is signed in", async () => {
+    const { db, insert } = fakeDb();
+    await recordAttempt(db, attempt, { userId: null, guestId: "g-1" });
+    expect(insert).toHaveBeenCalledWith(expect.objectContaining({ user_id: null, guest_id: "g-1" }));
+  });
+
+  it("stores only the user when signed in", async () => {
+    const { db, insert } = fakeDb();
+    await recordAttempt(db, attempt, { userId: "u-1", guestId: "g-1" });
+    expect(insert).toHaveBeenCalledWith(expect.objectContaining({ user_id: "u-1", guest_id: null }));
   });
 });

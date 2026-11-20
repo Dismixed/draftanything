@@ -28,7 +28,9 @@ export async function getDailyCategory(
       const result = await scheduleDailyCategory(db, today);
       category = result?.category ?? getTodayCategory();
     }
-  } catch {
+  } catch (err) {
+    // The rotation repeats the LRU order, so falling back for long replays recent days.
+    console.error("[ball-knowledge] daily category fell back to the fixed rotation:", err);
     category = getTodayCategory();
   }
 

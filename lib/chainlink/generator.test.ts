@@ -28,6 +28,13 @@ describe("buildChains", () => {
     expect(chains[0].phrases).toEqual(["sun light", "light house", "house boat", "boat yard"]);
   });
 
+  it("skips a chain sharing two links with a past daily, but allows one", () => {
+    const rerun = buildChains(PATH, { length: 5, count: 10, pastDailies: [new Set(["light house", "house boat"])] });
+    expect(rerun).toEqual([]);
+    const oneShared = buildChains(PATH, { length: 5, count: 10, pastDailies: [new Set(["light house"]), new Set(["boat yard"])] });
+    expect(chainWords(oneShared)).toEqual(["sun light house boat yard"]);
+  });
+
   it("never routes through an ambiguous link", () => {
     // "house boat" and "house boot" look identical to the player: h _ _ _.
     const chains = buildChains([...PATH, phrase("house", "boot")], { length: 5, count: 10 });

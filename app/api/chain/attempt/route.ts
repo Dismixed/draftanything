@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ensureGuestSession } from "@/features/guest/session";
+import { parseAttempt, recordAttempt, type AttemptPlayer } from "@/lib/chainlink/plays";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { parseAttempt, recordAttempt } from "@/lib/chainlink/plays";
+import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rate-limit";
+
+async function signedInUserId(): Promise<string | null> {
+  try {
+    const supa = await createClient();
+    const { data } = await supa.auth.getUser();
+    return data.user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * POST /api/chain/attempt
@@ -28,7 +40,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    await recordAttempt(createAdminClient(), attempt);
+    // The table requires a user or a guest; an attempt without either is rejected.
+    const userId = await signedInUserId();
+    const player: AttemptPlayer = { userId, guestId: userId ? null : (await ensureGuestSession()).guestId };
+    await recordAttempt(createAdminClient(), attempt, player);
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("Failed to record attempt:", err);
